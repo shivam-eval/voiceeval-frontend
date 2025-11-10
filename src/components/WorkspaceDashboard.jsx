@@ -94,7 +94,7 @@ Schedule appointment, get email for confirmation, thank them warmly.
 - **Energy:** 7/10 (upbeat but natural)
 
 ## Required Variables
-- `[DEALERSHIP_NAME]`, `[Customer Name]`, `[VEHICLE]` (Year/Make/Model), `[Offer Expiration Date]`
+- [DEALERSHIP_NAME], [Customer Name], [VEHICLE] (Year/Make/Model), [Offer Expiration Date]
 
 ## Success Goals
 1. Primary: Book appointment/confirm interest

@@ -34,7 +34,7 @@ const EVALUATION_DATA = {
       priority: 1,
       priorityLabel: "High Impact",
       items: [
-        { title: "Poor Connection Handling", description: "Develop better fallback scripts for technical issues" },
+        { title: "High-Interruption Handling", description: "Improve conversational threading" },
         { title: "Price Objection Scripts", description: "Strengthen value proposition breakdown" },
         { title: "Competitor Loyalty", description: "Create more compelling differentiation points" }
       ]
@@ -43,7 +43,6 @@ const EVALUATION_DATA = {
       priority: 2,
       priorityLabel: "Medium Impact",
       items: [
-        { title: "High-Interruption Handling", description: "Improve conversational threading" },
         { title: "Sentiment Recovery", description: "Better empathy responses for frustrated customers" },
         { title: "Energy Matching", description: "Fine-tune energy level adaptation" }
       ]
@@ -359,7 +358,7 @@ const EvaluationDashboard = ({ onBack }) => {
                       {details ? (
                         <div className="mt-2 animate-slide-up">
                           <EvaluationTimeline testCaseData={details} />
-                        </div>
+                    </div>
                       ) : (
                         <div className="mt-2 p-6 bg-dark-input rounded-lg border border-gray-700 animate-slide-up">
                           <div className="text-center py-8">

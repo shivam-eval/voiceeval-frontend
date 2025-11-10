@@ -76,8 +76,8 @@ const DashboardLayout = ({ children, activeView, onNavigate, hideRightPanel }) =
 
   return (
     <div className="min-h-screen bg-dark-bg flex">
-      {/* Side Panel */}
-      <div className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-dark-panel border-r border-gray-800/50 transition-all duration-300 flex flex-col h-screen`}>
+      {/* Side Panel - Fixed */}
+      <div className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-dark-panel border-r border-gray-800/50 transition-all duration-300 flex flex-col fixed left-0 top-0 bottom-0 z-10`}>
         {/* Logo Section */}
         <div className="p-6 border-b border-gray-800/50 flex-shrink-0">
           <div className="flex items-center gap-3">
@@ -160,7 +160,7 @@ const DashboardLayout = ({ children, activeView, onNavigate, hideRightPanel }) =
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className={`flex-1 flex overflow-hidden ${isSidebarOpen ? 'ml-64' : 'ml-20'} transition-all duration-300`}>
         {/* Main Content */}
         <div className="flex-1 overflow-y-auto">
           {children}

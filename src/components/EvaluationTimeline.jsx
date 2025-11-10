@@ -141,7 +141,7 @@ This closing aligns perfectly with the "If Interested" section. Continue using t
     { time: 52, speaker: "AGENT", text: "How many miles do you have on it now?" },
     { time: 55, speaker: "SARAH", text: "Hmm, around 32,000 miles I think." },
     { time: 88, speaker: "SARAH", text: "Oh, I'd definitely say a 9. The car runs beautifully!" },
-    { time: 89, speaker: "AGENT", text: "A 9! That's wonderful. So are you planning to keep it long-term?" },
+    { time: 89, speaker: "AGENT", text: "A 9! So are you planning to keep it long-term?" },
     { time: 135, speaker: "AGENT", text: "So this includes three complimentary oil changes..." },
     { time: 190, speaker: "SARAH", text: "That sounds great, let's book it." },
     { time: 210, speaker: "AGENT", text: "Perfect! You're scheduled for next Wednesday at 2 PM." },

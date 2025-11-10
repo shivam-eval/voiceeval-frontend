@@ -10,7 +10,7 @@ const EVALUATION_DATA = {
     sentimentImprovement: 0.36
   },
   testCases: [
-    { id: 1, title: "Happy Customer", score: 94, duration: "3:12", outcome: "Appointment", status: "success" },
+    { id: 1, title: "Happy Customer", score: 87, duration: "3:42", outcome: "Appointment", status: "success" },
     { id: 2, title: "Upgrade Seeker", score: 91, duration: "2:38", outcome: "Appointment", status: "success" },
     { id: 3, title: "Skeptical", score: 79, duration: "4:02", outcome: "Email Sent", status: "warning" },
     { id: 4, title: "Busy Customer", score: 89, duration: "0:45", outcome: "Callback", status: "success" },
@@ -60,7 +60,88 @@ const EVALUATION_DATA = {
   sentimentData: [8, 6, 7, 8, 9, 6, 8, 5, 7, 8] // Sample sentiment scores for trend
 }
 
+// Detailed results for test case 1
+const TEST_CASE_1_DETAILS = {
+  name: "Sarah Martinez",
+  scenario: "Happy Customer Service Package",
+  overallResult: "PASS",
+  overallScore: 87,
+  outcome: "Appointment booked successfully",
+  duration: "3:42 min",
+  durationRange: "2–4 min",
+  conversion: true,
+  verdict: "Ready for Production (with monitoring)",
+  categories: [
+    { name: "Overall Performance", score: 87, target: 85, status: "PASS" },
+    { name: "Call Structure & Flow", score: 89, target: 85, status: "PASS" },
+    { name: "Conversational Quality", score: 76, target: 80, status: "NEEDS_POLISH" },
+    { name: "Technical Performance", score: 96, target: 90, status: "PASS" },
+    { name: "Compliance", score: 100, target: 100, status: "PASS" },
+    { name: "Sentiment Change", score: 0.13, target: 0, status: "POSITIVE", isSentiment: true }
+  ],
+  strengths: [
+    "Smooth call flow and appointment booking",
+    "Perfect compliance (100%) and technical stability (96%)",
+    "Positive sentiment improvement (+0.13)",
+    "Clear offer presentation and professional tone"
+  ],
+  weaknesses: [
+    "Missed empathy cues after positive feedback",
+    "Slight interruption during mileage question",
+    "Offer presented in one long block (information overload)",
+    "Overuse of customer name (4×) and scripted phrases"
+  ],
+  majorIssues: [
+    "Empathy Gap: Missed opportunity to engage after 9/10 rating.",
+    "Rushed Verification: Interrupted customer mid-response.",
+    "Offer Delivery: Too dense; needs pauses and micro-confirmations."
+  ],
+  minorIssues: [
+    "Name overuse",
+    "Scripted phrasing",
+    "Missed micro-confirmation",
+    "Slight overtime (3:42)"
+  ],
+  improvementPriorities: {
+    high: [
+      "Add empathy response variations",
+      "Improve pause detection (+0.5s)",
+      "Break offers into shorter parts"
+    ],
+    medium: [
+      "Reduce scripted phrases",
+      "Optimize timing (trim 10–15s)",
+      "Limit name usage (2–3 times)"
+    ],
+    low: [
+      "Add micro-confirmations",
+      "Smoother transition phrasing"
+    ]
+  },
+  detailedScores: {
+    scriptAdherence: 89,
+    naturalConversation: 75,
+    empathyConnection: 70,
+    technicalPerformance: 96,
+    compliance: 100,
+    timingEfficiency: 82,
+    sentimentManagement: 83
+  },
+  finalVerdict: {
+    status: "PASS",
+    criticalFailures: 0,
+    majorIssues: 3,
+    minorIssues: 4,
+    summary: "The agent achieved the main goal (appointment booking) with strong compliance and technical performance. Needs minor improvements in empathy, pacing, and conversational naturalness to exceed 90%."
+  }
+}
+
 const EvaluationDashboard = ({ onBack }) => {
+  const [expandedTestCase, setExpandedTestCase] = useState(null)
+
+  const toggleTestCase = (testCaseId) => {
+    setExpandedTestCase(expandedTestCase === testCaseId ? null : testCaseId)
+  }
   const getStatusIcon = (status) => {
     switch (status) {
       case "success":
@@ -221,42 +302,287 @@ const EvaluationDashboard = ({ onBack }) => {
             <span className="text-gray-400 text-sm">[10 Tests]</span>
           </div>
           <div className="space-y-2">
-            {EVALUATION_DATA.testCases.map((testCase) => (
-              <div
-                key={testCase.id}
-                className="flex items-center gap-4 p-4 bg-dark-input rounded-lg border border-gray-700 hover:border-gray-600 transition-colors"
-              >
-                <div className="flex-shrink-0">
-                  {getStatusIcon(testCase.status)}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-medium">TC{testCase.id}: {testCase.title}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-6 text-sm">
-                  <div className="text-right w-16">
-                    <div className="text-white font-semibold">{testCase.score}%</div>
-                    <div className="h-1.5 w-16 bg-dark-panel rounded-full mt-1 overflow-hidden">
-                      <div
-                        className={`h-full ${
-                          testCase.score >= 90 ? 'bg-green-400' :
-                          testCase.score >= 80 ? 'bg-yellow-400' :
-                          testCase.score >= 70 ? 'bg-orange-400' : 'bg-red-400'
-                        }`}
-                        style={{ width: `${testCase.score}%` }}
-                      />
+            {EVALUATION_DATA.testCases.map((testCase) => {
+              const isExpanded = expandedTestCase === testCase.id
+              const hasDetails = testCase.id === 1
+              const details = hasDetails ? TEST_CASE_1_DETAILS : null
+              
+              return (
+                <div key={testCase.id}>
+                  <div
+                    onClick={() => toggleTestCase(testCase.id)}
+                    className="flex items-center gap-4 p-4 bg-dark-input rounded-lg border border-gray-700 transition-colors cursor-pointer hover:border-gray-600"
+                  >
+                    <div className="flex-shrink-0">
+                      {getStatusIcon(testCase.status)}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-white font-medium">TC{testCase.id}: {testCase.title}</span>
+                        <svg 
+                          className={`w-4 h-4 text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          fill="none" 
+                          stroke="currentColor" 
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="text-right w-16">
+                        <div className="text-white font-semibold">{testCase.score}%</div>
+                        <div className="h-1.5 w-16 bg-dark-panel rounded-full mt-1 overflow-hidden">
+                          <div
+                            className={`h-full ${
+                              testCase.score >= 90 ? 'bg-green-400' :
+                              testCase.score >= 80 ? 'bg-yellow-400' :
+                              testCase.score >= 70 ? 'bg-orange-400' : 'bg-red-400'
+                            }`}
+                            style={{ width: `${testCase.score}%` }}
+                          />
+                        </div>
+                      </div>
+                      <div className="text-right w-20">
+                        <div className="text-gray-300">[{testCase.duration}]</div>
+                      </div>
+                      <div className="text-right w-40">
+                        <div className="text-gray-300">{testCase.outcome}</div>
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right w-20">
-                    <div className="text-gray-300">[{testCase.duration}]</div>
-                  </div>
-                  <div className="text-right w-40">
-                    <div className="text-gray-300">{testCase.outcome}</div>
-                  </div>
+                  
+                  {/* Expanded Details */}
+                  {isExpanded && (
+                    <>
+                      {details ? (
+                    <div className="mt-2 p-6 bg-dark-input rounded-lg border border-gray-700 animate-slide-up">
+                      <div className="space-y-6">
+                        {/* Header */}
+                        <div>
+                          <h3 className="text-2xl font-bold text-white mb-2">
+                            Test Case {testCase.id} – {details.name} ({details.scenario})
+                          </h3>
+                          <div className="flex items-center gap-4 flex-wrap">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400">Overall Result:</span>
+                              <span className="text-green-400 font-semibold">✅ {details.overallResult} ({details.overallScore}%)</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400">Outcome:</span>
+                              <span className="text-white">{details.outcome}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400">Duration:</span>
+                              <span className="text-white">{details.duration} (Acceptable range: {details.durationRange})</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400">Conversion:</span>
+                              <span className="text-green-400">✅ {details.conversion ? 'Yes' : 'No'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400">Verdict:</span>
+                              <span className="text-teal-400">{details.verdict}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Category Scores Table */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-3">Category Scores</h4>
+                          <div className="overflow-x-auto">
+                            <table className="w-full border-collapse">
+                              <thead>
+                                <tr className="border-b border-gray-700">
+                                  <th className="text-left text-gray-400 text-sm font-medium pb-2">Category</th>
+                                  <th className="text-center text-gray-400 text-sm font-medium pb-2">Score</th>
+                                  <th className="text-center text-gray-400 text-sm font-medium pb-2">Target</th>
+                                  <th className="text-center text-gray-400 text-sm font-medium pb-2">Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {details.categories.map((category, idx) => (
+                                  <tr key={idx} className="border-b border-gray-800/50">
+                                    <td className="py-2 text-white text-sm">{category.name}</td>
+                                    <td className="py-2 text-center text-white text-sm font-semibold">
+                                      {category.isSentiment ? `+${category.score}` : `${category.score}%`}
+                                    </td>
+                                    <td className="py-2 text-center text-gray-400 text-sm">
+                                      {category.isSentiment ? `≥${category.target}` : `≥${category.target}%`}
+                                    </td>
+                                    <td className="py-2 text-center">
+                                      {category.status === "PASS" && <span className="text-green-400">✅ PASS</span>}
+                                      {category.status === "NEEDS_POLISH" && <span className="text-yellow-400">⚠️ Needs polish</span>}
+                                      {category.status === "POSITIVE" && <span className="text-green-400">✅ Positive</span>}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Key Observations */}
+                        <div className="grid grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="text-lg font-semibold text-white mb-3">Strengths ✅</h4>
+                            <ul className="space-y-2">
+                              {details.strengths.map((strength, idx) => (
+                                <li key={idx} className="text-gray-300 text-sm flex items-start gap-2">
+                                  <span className="text-green-400 mt-1">•</span>
+                                  <span>{strength}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-semibold text-white mb-3">Weaknesses ⚠️</h4>
+                            <ul className="space-y-2">
+                              {details.weaknesses.map((weakness, idx) => (
+                                <li key={idx} className="text-gray-300 text-sm flex items-start gap-2">
+                                  <span className="text-yellow-400 mt-1">•</span>
+                                  <span>{weakness}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Issues */}
+                        <div className="grid grid-cols-2 gap-6">
+                          <div>
+                            <h4 className="text-lg font-semibold text-white mb-3">Major Issues ({details.majorIssues.length})</h4>
+                            <ul className="space-y-2">
+                              {details.majorIssues.map((issue, idx) => (
+                                <li key={idx} className="text-gray-300 text-sm flex items-start gap-2">
+                                  <span className="text-red-400 mt-1">•</span>
+                                  <span>{issue}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <h4 className="text-lg font-semibold text-white mb-3">Minor Issues ({details.minorIssues.length})</h4>
+                            <ul className="space-y-2">
+                              {details.minorIssues.map((issue, idx) => (
+                                <li key={idx} className="text-gray-300 text-sm flex items-start gap-2">
+                                  <span className="text-yellow-400 mt-1">•</span>
+                                  <span>{issue}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Improvement Priorities */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-3">Improvement Priorities</h4>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div>
+                              <h5 className="text-red-400 font-semibold mb-2">🔴 High</h5>
+                              <ul className="space-y-1">
+                                {details.improvementPriorities.high.map((item, idx) => (
+                                  <li key={idx} className="text-gray-300 text-sm">• {item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="text-yellow-400 font-semibold mb-2">🟡 Medium</h5>
+                              <ul className="space-y-1">
+                                {details.improvementPriorities.medium.map((item, idx) => (
+                                  <li key={idx} className="text-gray-300 text-sm">• {item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="text-green-400 font-semibold mb-2">🟢 Low</h5>
+                              <ul className="space-y-1">
+                                {details.improvementPriorities.low.map((item, idx) => (
+                                  <li key={idx} className="text-gray-300 text-sm">• {item}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Detailed Scores */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-white mb-3">Detailed Performance Scores</h4>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div>
+                              <div className="text-gray-400 text-xs mb-1">Script Adherence</div>
+                              <div className="text-white font-semibold">{details.detailedScores.scriptAdherence}%</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-400 text-xs mb-1">Natural Conversation</div>
+                              <div className="text-white font-semibold">{details.detailedScores.naturalConversation}%</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-400 text-xs mb-1">Empathy & Connection</div>
+                              <div className="text-white font-semibold">{details.detailedScores.empathyConnection}%</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-400 text-xs mb-1">Technical Performance</div>
+                              <div className="text-white font-semibold">{details.detailedScores.technicalPerformance}%</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-400 text-xs mb-1">Compliance</div>
+                              <div className="text-white font-semibold">{details.detailedScores.compliance}%</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-400 text-xs mb-1">Timing & Efficiency</div>
+                              <div className="text-white font-semibold">{details.detailedScores.timingEfficiency}%</div>
+                            </div>
+                            <div>
+                              <div className="text-gray-400 text-xs mb-1">Sentiment Management</div>
+                              <div className="text-white font-semibold">{details.detailedScores.sentimentManagement}%</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Final Verdict */}
+                        <div className="bg-dark-panel rounded-lg p-4 border border-gray-700">
+                          <h4 className="text-lg font-semibold text-white mb-3">Final Verdict</h4>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-400">Status:</span>
+                              <span className="text-green-400 font-semibold">✅ {details.finalVerdict.status}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-400">Critical Failures:</span>
+                                <span className="text-white">{details.finalVerdict.criticalFailures}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-400">Major Issues:</span>
+                                <span className="text-white">{details.finalVerdict.majorIssues}</span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-gray-400">Minor Issues:</span>
+                                <span className="text-white">{details.finalVerdict.minorIssues}</span>
+                              </div>
+                            </div>
+                            <div className="mt-3 pt-3 border-t border-gray-700">
+                              <p className="text-gray-300 text-sm">{details.finalVerdict.summary}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                      ) : (
+                        <div className="mt-2 p-6 bg-dark-input rounded-lg border border-gray-700 animate-slide-up">
+                          <div className="text-center py-8">
+                            <p className="text-gray-400 text-sm">
+                              Detailed results for this test case are not yet available.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 

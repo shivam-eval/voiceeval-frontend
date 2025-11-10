@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import DashboardOverview from './DashboardOverview'
 
-const DashboardLayout = ({ children, activeView, onNavigate }) => {
+const DashboardLayout = ({ children, activeView, onNavigate, hideRightPanel }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const navigationItems = [
@@ -166,10 +166,12 @@ const DashboardLayout = ({ children, activeView, onNavigate }) => {
           {children}
         </div>
 
-        {/* Right Sidebar - Dashboard Overview */}
-        <div className="w-80 bg-dark-bg border-l border-gray-800/50 p-6 overflow-y-auto">
-          <DashboardOverview />
-        </div>
+        {/* Right Sidebar - Dashboard Overview (only shown when not on landing dashboard and not hidden) */}
+        {activeView !== 'dashboard' && !hideRightPanel && (
+          <div className="w-80 bg-dark-bg border-l border-gray-800/50 p-6 overflow-y-auto">
+            <DashboardOverview />
+          </div>
+        )}
       </div>
     </div>
   )

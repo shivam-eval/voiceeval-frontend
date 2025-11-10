@@ -1,5 +1,113 @@
 import { useState } from 'react'
 
+// Call flow script for all test cases
+const CALL_FLOW_SCRIPT = `### Call Flow
+
+**[Phone Rings]**
+
+**SARAH:** "Hello?"
+
+---
+
+**[After agent greeting and purpose]**
+
+**SARAH:** "Sure, I have a few minutes. What's this about?"
+
+---
+
+**[Vehicle confirmation]**
+
+**SARAH:** "Yes, absolutely! I love that car."
+
+---
+
+**[Mileage question]**
+
+**SARAH:** *[pause 1.5s]* "Um, let me think... I believe it's around 32,000 miles. Yeah, about 32,000."
+
+---
+
+**[Last service question]**
+
+**SARAH:** *[pause 1s]* "I think it was about four months ago? I got an oil change and tire rotation."
+
+---
+
+**[Satisfaction rating]**
+
+**SARAH:** "Oh, I'd definitely say a 9. The car runs beautifully, and your service team is always so helpful."
+
+---
+
+**[Future plans question]**
+
+**SARAH:** "Oh no, I'm definitely keeping it. It's perfect for my needs right now."
+
+---
+
+**[During offer presentation - listening]**
+
+**SARAH:** "Oh? What does that include?"
+
+---
+
+**[After full offer details]**
+
+**SARAH:** *[pause 2.5s, typing sounds]* "Wow, that actually sounds like a really good deal. I was going to need those oil changes anyway..."
+
+---
+
+**[Clarifying question]**
+
+**SARAH:** "That makes sense. And this is good for a full year?"
+
+---
+
+**[After confirmation]**
+
+**SARAH:** *[pause 1s]* "Okay, you know what? I think I'd like to do this. How do we get started?"
+
+---
+
+**[Scheduling appointment]**
+
+**SARAH:** "Let me check my calendar real quick..." *[pause 3s, typing/clicking sounds]* "Do you have anything available next Wednesday afternoon?"
+
+---
+
+**[After time confirmation]**
+
+**SARAH:** "Perfect! That works great."
+
+---
+
+**[Email request]**
+
+**SARAH:** "It's sarah.martinez@email.com"
+
+---
+
+**[After agent confirms email]**
+
+**SARAH:** "Great, thank you so much!"
+
+---
+
+**[Final goodbye]**
+
+**SARAH:** "You too, Jessica. Thanks again! Bye!"
+
+---`
+
+const EXPECTED_RESPONSE = `The agent should successfully:
+1. Greet the customer warmly and confirm they have time
+2. Verify vehicle details conversationally
+3. Gather key information (mileage, service history, satisfaction, future plans)
+4. Present the appropriate offer based on customer responses
+5. Handle any questions or concerns
+6. Schedule an appointment and capture email
+7. End the call on a positive note`
+
 const TEST_CASES = [
   {
     id: 1,
@@ -155,6 +263,15 @@ const TEST_CASES = [
 ]
 
 const TestCasesScreen = ({ onRunTests, onBack }) => {
+  const [expandedScripts, setExpandedScripts] = useState({})
+
+  const toggleScript = (testCaseId) => {
+    setExpandedScripts(prev => ({
+      ...prev,
+      [testCaseId]: !prev[testCaseId]
+    }))
+  }
+
   return (
     <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">
       <div className="space-y-6">
@@ -200,10 +317,46 @@ const TestCasesScreen = ({ onRunTests, onBack }) => {
               {/* Persona Details */}
               <div className="ml-14">
                 <div className="mb-3">
-                  <h5 className="text-sm font-semibold text-teal-400 mb-2 uppercase tracking-wide">
-                    Simulator Persona
-                  </h5>
+                  <button
+                    onClick={() => toggleScript(testCase.id)}
+                    className="flex items-center gap-2 text-sm font-semibold text-teal-400 hover:text-teal-300 uppercase tracking-wide transition-colors"
+                  >
+                    {expandedScripts[testCase.id] ? (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                        </svg>
+                        Hide Script & Expected Response
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                        View Script & Expected Response
+                      </>
+                    )}
+                  </button>
                 </div>
+
+                {/* Expanded Script Section */}
+                {expandedScripts[testCase.id] && (
+                  <div className="mb-4 p-4 bg-dark-input rounded-lg border border-gray-700 space-y-4 animate-slide-up">
+                    <div>
+                      <h6 className="text-sm font-semibold text-white mb-2">Script Simulation Agent Will Follow:</h6>
+                      <div className="text-sm text-gray-300 whitespace-pre-line leading-relaxed font-mono">
+                        {CALL_FLOW_SCRIPT}
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-gray-700">
+                      <h6 className="text-sm font-semibold text-white mb-2">Expected Response:</h6>
+                      <div className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">
+                        {EXPECTED_RESPONSE}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="text-gray-400">Gender:</span>

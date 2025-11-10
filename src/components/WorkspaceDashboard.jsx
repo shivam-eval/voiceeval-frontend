@@ -108,7 +108,7 @@ Schedule appointment, get email for confirmation, thank them warmly.
 
 // ═══════════════════════════════════════════════════════════════
 
-const WorkspaceDashboard = () => {
+const WorkspaceDashboard = ({ onEvaluationDashboardChange }) => {
   const [showSystemPrompt, setShowSystemPrompt] = useState(false)
   const [showCanonicalFlow, setShowCanonicalFlow] = useState(false)
   const [showTestCasesGeneration, setShowTestCasesGeneration] = useState(false)
@@ -133,11 +133,13 @@ const WorkspaceDashboard = () => {
   const handleTestComplete = () => {
     setShowTestLoading(false)
     setShowEvaluationDashboard(true)
+    onEvaluationDashboardChange?.(true)
   }
 
   const handleBackToTestCases = () => {
     setShowEvaluationDashboard(false)
     setShowTestCasesScreen(true)
+    onEvaluationDashboardChange?.(false)
   }
 
   const handleBackToWorkspace = () => {

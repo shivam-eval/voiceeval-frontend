@@ -17,6 +17,7 @@ function App() {
   const [showWorkspaceDashboard, setShowWorkspaceDashboard] = useState(false)
   const [selectedPlatform, setSelectedPlatform] = useState(null)
   const [isConnecting, setIsConnecting] = useState(false)
+  const [showEvaluationDashboard, setShowEvaluationDashboard] = useState(false)
 
   useEffect(() => {
     // Show dashboard loader first, then transition to dashboard with layout
@@ -123,7 +124,7 @@ function App() {
   // Show layout with side panel after initialization
   if (showLayout) {
     return (
-      <DashboardLayout activeView={activeView} onNavigate={handleNavigate}>
+      <DashboardLayout activeView={activeView} onNavigate={handleNavigate} hideRightPanel={showEvaluationDashboard}>
         {/* Dashboard - Default view */}
         {activeView === 'dashboard' && !showPlatformSelection && !showConnectionForm && !showConnectionLoading && !showWorkspaceDashboard && (
           <div className="p-8">
@@ -160,7 +161,7 @@ function App() {
         {/* Workspace Dashboard - Shown after connection complete */}
         {showWorkspaceDashboard && (
           <div className="p-8">
-            <WorkspaceDashboard />
+            <WorkspaceDashboard onEvaluationDashboardChange={setShowEvaluationDashboard} />
           </div>
         )}
       </DashboardLayout>

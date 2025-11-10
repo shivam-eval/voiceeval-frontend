@@ -2,11 +2,15 @@ import { useState, useEffect } from 'react'
 import DashboardLoader from './components/DashboardLoader'
 import PlatformSelection from './components/PlatformSelection'
 import ConnectionForm from './components/ConnectionForm'
+import ConnectionLoading from './components/ConnectionLoading'
+import WorkspaceDashboard from './components/WorkspaceDashboard'
 
 function App() {
   const [showDashboard, setShowDashboard] = useState(true)
   const [showPlatformSelection, setShowPlatformSelection] = useState(false)
   const [showConnectionForm, setShowConnectionForm] = useState(false)
+  const [showConnectionLoading, setShowConnectionLoading] = useState(false)
+  const [showWorkspaceDashboard, setShowWorkspaceDashboard] = useState(false)
   const [selectedPlatform, setSelectedPlatform] = useState(null)
   const [isConnecting, setIsConnecting] = useState(false)
 
@@ -37,8 +41,13 @@ function App() {
   const handleConnect = async ({ apiKey, assistantId }) => {
     setIsConnecting(true)
     // Simulate API connection
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    await new Promise((resolve) => setTimeout(resolve, 1500))
     setIsConnecting(false)
+    // Show connection loading screen
+    setShowConnectionForm(false)
+    setTimeout(() => {
+      setShowConnectionLoading(true)
+    }, 300)
     // Here you would handle the actual API connection
     console.log('Connecting with:', { platform: selectedPlatform, apiKey, assistantId })
   }
@@ -84,6 +93,25 @@ function App() {
             isConnecting={isConnecting}
             onBack={handleBackToPlatforms}
           />
+        </div>
+      )}
+
+      {/* Connection Loading Screen */}
+      {showConnectionLoading && !showWorkspaceDashboard && (
+        <div className="animate-slide-up">
+          <ConnectionLoading 
+            onComplete={() => {
+              setShowConnectionLoading(false)
+              setTimeout(() => setShowWorkspaceDashboard(true), 300)
+            }}
+          />
+        </div>
+      )}
+
+      {/* Workspace Dashboard */}
+      {showWorkspaceDashboard && (
+        <div className="animate-slide-up">
+          <WorkspaceDashboard />
         </div>
       )}
     </div>

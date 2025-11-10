@@ -18,6 +18,7 @@ export default {
         'fade-in': 'fadeIn 0.5s ease-in',
         'slide-up': 'slideUp 0.6s ease-out',
         'dashboard-load': 'dashboardLoad 1.5s ease-in-out',
+        'shimmer': 'shimmer 2s linear infinite',
       },
       keyframes: {
         glow: {
@@ -36,6 +37,10 @@ export default {
           '0%': { opacity: '0', transform: 'scale(0.95)' },
           '50%': { opacity: '0.5', transform: 'scale(1.02)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
         },
       },
     },

@@ -19,13 +19,13 @@ const CanonicalFlowDiagram = () => {
         </p>
       </div>
       
-      <div className="bg-dark-bg rounded-lg border border-gray-800 overflow-auto p-4">
-        <div className="flex items-center justify-center">
+      <div className="bg-dark-bg rounded-lg border border-gray-800 p-4" style={{ height: '70vh', maxHeight: '800px', minHeight: '500px', overflow: 'hidden' }}>
+        <div className="w-full h-full flex items-center justify-center">
           <img
             src={canonicalFlowSvg}
             alt="Canonical Flow Diagram"
-            className="max-w-full h-auto"
-            style={{ maxHeight: '800px' }}
+            className="w-full h-full"
+            style={{ objectFit: 'contain', objectPosition: 'center' }}
           />
         </div>
       </div>

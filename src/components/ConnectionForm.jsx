@@ -24,22 +24,14 @@ const ConnectionForm = ({ platform, onConnect, isConnecting, onBack }) => {
     : apiKey.trim()
 
   return (
-    <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">
-      <div className="grid grid-cols-3 gap-8">
-        {/* Left Section - Main Content */}
-        <div className="col-span-2 space-y-8">
+    <div className="w-full max-w-screen-2xl mx-auto">
+      <div className="space-y-8">
           {/* Logo and Feature Tag */}
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
                 Voice<span className="text-teal-400">Eval</span>
               </h1>
-              <button className="px-4 py-1.5 bg-dark-input border border-teal-400/50 text-teal-400 rounded-lg text-sm font-medium flex items-center gap-2 hover:border-teal-400 transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                AI-Powered Evaluation
-              </button>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -116,7 +108,7 @@ const ConnectionForm = ({ platform, onConnect, isConnecting, onBack }) => {
                 </label>
                 <div className="relative">
                   <input
-                    type="text"
+                    type="password"
                     value={apiKey}
                     onChange={(e) => setApiKey(e.target.value)}
                     onFocus={() => setFocusedField('apiKey')}
@@ -144,7 +136,7 @@ const ConnectionForm = ({ platform, onConnect, isConnecting, onBack }) => {
                   </label>
                   <div className="relative">
                     <input
-                      type="text"
+                      type="password"
                       value={assistantId}
                       onChange={(e) => setAssistantId(e.target.value)}
                       onFocus={() => setFocusedField('assistantId')}
@@ -253,12 +245,6 @@ const ConnectionForm = ({ platform, onConnect, isConnecting, onBack }) => {
               <span className="text-white text-sm font-medium">Auto-scoring</span>
             </div>
           </div>
-        </div>
-
-        {/* Right Section - Dashboard Overview */}
-        <div className="col-span-1">
-          <DashboardOverview />
-        </div>
       </div>
     </div>
   )

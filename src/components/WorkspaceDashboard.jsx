@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import DashboardOverview from './DashboardOverview'
 import SystemPromptViewer from './SystemPromptViewer'
 import CanonicalFlowDiagram from './CanonicalFlowDiagram'
+import TestCasesGenerationLoading from './TestCasesGenerationLoading'
+import TestCasesScreen from './TestCasesScreen'
+import TestExecutionLoading from './TestExecutionLoading'
+import EvaluationDashboard from './EvaluationDashboard'
 
 // ═══════════════════════════════════════════════════════════════
 // SYSTEM PROMPT CONFIGURATION
@@ -108,24 +111,68 @@ Schedule appointment, get email for confirmation, thank them warmly.
 const WorkspaceDashboard = () => {
   const [showSystemPrompt, setShowSystemPrompt] = useState(false)
   const [showCanonicalFlow, setShowCanonicalFlow] = useState(false)
+  const [showTestCasesGeneration, setShowTestCasesGeneration] = useState(false)
+  const [showTestCasesScreen, setShowTestCasesScreen] = useState(false)
+  const [showTestLoading, setShowTestLoading] = useState(false)
+  const [showEvaluationDashboard, setShowEvaluationDashboard] = useState(false)
+
+  const handleGenerateTestCases = () => {
+    setShowTestCasesGeneration(true)
+  }
+
+  const handleTestCasesGenerated = () => {
+    setShowTestCasesGeneration(false)
+    setShowTestCasesScreen(true)
+  }
+
+  const handleRunTests = () => {
+    setShowTestCasesScreen(false)
+    setShowTestLoading(true)
+  }
+
+  const handleTestComplete = () => {
+    setShowTestLoading(false)
+    setShowEvaluationDashboard(true)
+  }
+
+  const handleBackToTestCases = () => {
+    setShowEvaluationDashboard(false)
+    setShowTestCasesScreen(true)
+  }
+
+  const handleBackToWorkspace = () => {
+    setShowTestCasesScreen(false)
+  }
+
+  // Show loading screen when generating test cases
+  if (showTestCasesGeneration) {
+    return <TestCasesGenerationLoading onComplete={handleTestCasesGenerated} />
+  }
+
+  // Show test cases screen after generation
+  if (showTestCasesScreen) {
+    return <TestCasesScreen onRunTests={handleRunTests} onBack={handleBackToWorkspace} />
+  }
+
+  // Show loading screen when tests are running
+  if (showTestLoading) {
+    return <TestExecutionLoading onComplete={handleTestComplete} />
+  }
+
+  // Show evaluation dashboard when tests are complete
+  if (showEvaluationDashboard) {
+    return <EvaluationDashboard onBack={handleBackToTestCases} />
+  }
 
   return (
-    <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">
-      <div className="grid grid-cols-3 gap-8">
-        {/* Left Section - Main Content */}
-        <div className="col-span-2 space-y-8">
+    <div className="w-full max-w-screen-2xl mx-auto">
+      <div className="space-y-8">
           {/* Logo and Feature Tag */}
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
                 Voice<span className="text-teal-400">Eval</span>
               </h1>
-              <button className="px-4 py-1.5 bg-dark-input border border-teal-400/50 text-teal-400 rounded-lg text-sm font-medium flex items-center gap-2 hover:border-teal-400 transition-colors">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                AI-Powered Evaluation
-              </button>
             </div>
           </div>
 
@@ -246,7 +293,10 @@ const WorkspaceDashboard = () => {
 
             {/* Generate Test Cases Button */}
             <div className="pt-4 border-t border-gray-800">
-              <button className="w-full px-6 py-4 bg-teal-400 hover:bg-teal-500 text-white rounded-xl font-semibold text-base transition-all duration-300 shadow-lg shadow-teal-400/50 hover:scale-105 flex items-center justify-center gap-3">
+              <button 
+                onClick={handleGenerateTestCases}
+                className="w-full px-6 py-4 bg-teal-400 hover:bg-teal-500 text-white rounded-xl font-semibold text-base transition-all duration-300 shadow-lg shadow-teal-400/50 hover:scale-105 flex items-center justify-center gap-3"
+              >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
@@ -254,40 +304,6 @@ const WorkspaceDashboard = () => {
               </button>
             </div>
           </div>
-
-          {/* Footer Icons */}
-          <div className="flex items-center gap-8 pt-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-dark-input border border-gray-700 flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
-              </div>
-              <span className="text-white text-sm font-medium">Real-time Testing</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-dark-input border border-gray-700 flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <span className="text-white text-sm font-medium">Analytics</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-dark-input border border-gray-700 flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <span className="text-white text-sm font-medium">Auto-scoring</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Section - Dashboard Overview */}
-        <div className="col-span-1">
-          <DashboardOverview />
-        </div>
       </div>
     </div>
   )

@@ -23,8 +23,8 @@ const DashboardLoader = () => {
   }, [])
 
   return (
-    <div className="w-full max-w-5xl mx-auto px-6">
-      <div className="bg-dark-panel rounded-3xl p-12 shadow-2xl border border-gray-800/50 relative overflow-hidden">
+    <div className="w-full max-w-6xl mx-auto px-6">
+      <div className="bg-dark-panel rounded-3xl p-14 shadow-2xl border border-gray-800/50 relative overflow-hidden">
         {/* Subtle background gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-gray-900/50 to-transparent pointer-events-none" />
 
@@ -44,14 +44,14 @@ const DashboardLoader = () => {
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <div
                 key={item}
-                className="h-28 bg-dark-input rounded-xl border border-gray-800 animate-dashboard-load"
+                className="h-32 bg-dark-input rounded-xl border border-gray-800 animate-dashboard-load"
                 style={{
                   animationDelay: `${item * 0.1}s`,
                   opacity: progress / 100,
                 }}
               >
                 <div className="h-full flex items-center justify-center">
-                  <div className="w-14 h-14 bg-gray-700 rounded-lg animate-pulse-slow" />
+                  <div className="w-16 h-16 bg-gray-700 rounded-lg animate-pulse-slow" />
                 </div>
               </div>
             ))}

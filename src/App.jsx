@@ -35,10 +35,14 @@ function App() {
     setActiveView(viewId)
     
     if (viewId === 'connect-agent') {
-      setShowWorkspaceDashboard(false)
-      setShowPlatformSelection(true)
-      setShowConnectionForm(false)
-      setShowConnectionLoading(false)
+      // Only reset to platform selection if we're not already in the connect flow
+      // If workspace dashboard is showing, keep it but maintain connect-agent selection
+      if (!showWorkspaceDashboard) {
+        setShowPlatformSelection(true)
+        setShowConnectionForm(false)
+        setShowConnectionLoading(false)
+      }
+      // Don't hide workspace dashboard if it's already showing - user might be generating/running tests
     } else if (viewId === 'dashboard') {
       setShowPlatformSelection(false)
       setShowConnectionForm(false)
@@ -51,11 +55,15 @@ function App() {
   const handlePlatformSelect = (platformId) => {
     setSelectedPlatform(platformId)
     setShowPlatformSelection(false)
+    // Ensure activeView stays as 'connect-agent'
+    setActiveView('connect-agent')
     setTimeout(() => setShowConnectionForm(true), 300)
   }
 
   const handleBackToPlatforms = () => {
     setShowConnectionForm(false)
+    // Ensure activeView stays as 'connect-agent'
+    setActiveView('connect-agent')
     setTimeout(() => {
       setShowPlatformSelection(true)
       setSelectedPlatform(null)
@@ -64,6 +72,8 @@ function App() {
 
   const handleConnect = async ({ apiKey, assistantId }) => {
     setIsConnecting(true)
+    // Ensure activeView stays as 'connect-agent'
+    setActiveView('connect-agent')
     // Simulate API connection
     await new Promise((resolve) => setTimeout(resolve, 1500))
     setIsConnecting(false)
@@ -79,7 +89,9 @@ function App() {
   const handleConnectionComplete = () => {
     setShowConnectionLoading(false)
     setShowWorkspaceDashboard(true)
-    setActiveView('workspace')
+    // Explicitly set activeView to 'connect-agent' to maintain selection throughout the flow
+    // This includes test case generation, running tests, and evaluation dashboard
+    setActiveView('connect-agent')
   }
 
   // Show loader before layout

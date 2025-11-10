@@ -120,9 +120,9 @@ const EvaluationDashboard = ({ onBack }) => {
   }
 
   return (
-    <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">
-      <div className="space-y-6">
-        {/* Header */}
+    <div className="w-full max-w-screen-2xl mx-auto h-full flex flex-col">
+      {/* Fixed Header */}
+      <div className="flex-shrink-0 px-8 pt-8 pb-4">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-white mb-2">
@@ -149,6 +149,11 @@ const EvaluationDashboard = ({ onBack }) => {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Scrollable Content */}
+      <div className="flex-1 overflow-y-auto px-8 pb-8">
+        <div className="space-y-6">
 
         {/* Summary Metrics */}
         <div className="grid grid-cols-4 gap-4">
@@ -444,6 +449,7 @@ const EvaluationDashboard = ({ onBack }) => {
               )
             })}
           </div>
+        </div>
         </div>
       </div>
     </div>

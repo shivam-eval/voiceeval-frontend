@@ -77,9 +77,9 @@ const DashboardLayout = ({ children, activeView, onNavigate }) => {
   return (
     <div className="min-h-screen bg-dark-bg flex">
       {/* Side Panel */}
-      <div className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-dark-panel border-r border-gray-800/50 transition-all duration-300 flex flex-col`}>
+      <div className={`${isSidebarOpen ? 'w-64' : 'w-20'} bg-dark-panel border-r border-gray-800/50 transition-all duration-300 flex flex-col h-screen`}>
         {/* Logo Section */}
-        <div className="p-6 border-b border-gray-800/50">
+        <div className="p-6 border-b border-gray-800/50 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-teal-400/20 flex items-center justify-center">
               <span className="text-2xl font-bold text-teal-400">V</span>
@@ -93,7 +93,7 @@ const DashboardLayout = ({ children, activeView, onNavigate }) => {
         </div>
 
         {/* Navigation Items */}
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto py-4 min-h-0">
           <div className="px-3 space-y-1">
             {navigationItems.map((item) => (
               <button
@@ -143,8 +143,8 @@ const DashboardLayout = ({ children, activeView, onNavigate }) => {
           </div>
         </div>
 
-        {/* User Profile */}
-        <div className="p-4 border-t border-gray-800/50">
+        {/* User Profile - Fixed at bottom */}
+        <div className="p-4 border-t border-gray-800/50 flex-shrink-0 bg-dark-panel">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-teal-400/20 flex items-center justify-center flex-shrink-0">
               <span className="text-teal-400 font-semibold">SG</span>

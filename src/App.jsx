@@ -6,6 +6,7 @@ import PlatformSelection from './components/PlatformSelection'
 import ConnectionForm from './components/ConnectionForm'
 import ConnectionLoading from './components/ConnectionLoading'
 import WorkspaceDashboard from './components/WorkspaceDashboard'
+import { extractAgent,flowGenerationMermaid } from './api'
 
 function App() {
   const [showDashboard, setShowDashboard] = useState(true)
@@ -18,6 +19,15 @@ function App() {
   const [selectedPlatform, setSelectedPlatform] = useState(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const [showEvaluationDashboard, setShowEvaluationDashboard] = useState(false)
+  const [extractedConfig, setExtractedConfig] = useState(null)
+  const [setupResult, setSetupResult] = useState(null)
+
+  console.log('App state:', {
+    showConnectionLoading,
+    showWorkspaceDashboard,
+    hasExtractedConfig: !!extractedConfig,
+    hasSetupResult: !!setupResult
+  })
 
   useEffect(() => {
     // Show dashboard loader first, then transition to dashboard with layout
@@ -25,7 +35,6 @@ function App() {
       setShowDashboard(false)
       setTimeout(() => {
         setShowLayout(true)
-        // Dashboard view is shown by default (activeView is already 'dashboard')
       }, 300)
     }, 2000)
 
@@ -33,37 +42,34 @@ function App() {
   }, [])
 
   const handleNavigate = (viewId) => {
+    console.log('Navigating to:', viewId)
     setActiveView(viewId)
     
     if (viewId === 'connect-agent') {
-      // Only reset to platform selection if we're not already in the connect flow
-      // If workspace dashboard is showing, keep it but maintain connect-agent selection
       if (!showWorkspaceDashboard) {
         setShowPlatformSelection(true)
         setShowConnectionForm(false)
         setShowConnectionLoading(false)
       }
-      // Don't hide workspace dashboard if it's already showing - user might be generating/running tests
     } else if (viewId === 'dashboard') {
       setShowPlatformSelection(false)
       setShowConnectionForm(false)
       setShowConnectionLoading(false)
       setShowWorkspaceDashboard(false)
     }
-    // Add other navigation handlers as needed
   }
 
   const handlePlatformSelect = (platformId) => {
+    console.log('Platform selected:', platformId)
     setSelectedPlatform(platformId)
     setShowPlatformSelection(false)
-    // Ensure activeView stays as 'connect-agent'
     setActiveView('connect-agent')
     setTimeout(() => setShowConnectionForm(true), 300)
   }
 
   const handleBackToPlatforms = () => {
+    console.log('Back to platforms')
     setShowConnectionForm(false)
-    // Ensure activeView stays as 'connect-agent'
     setActiveView('connect-agent')
     setTimeout(() => {
       setShowPlatformSelection(true)
@@ -72,43 +78,84 @@ function App() {
   }
 
   const handleConnect = async ({ apiKey, assistantId }) => {
+    console.log('🔄 Starting connection...')
     setIsConnecting(true)
-    // Ensure activeView stays as 'connect-agent'
-    setActiveView('connect-agent')
-    // Simulate API connection
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    setIsConnecting(false)
-    // Show connection loading screen
-    setShowConnectionForm(false)
-    setTimeout(() => {
-      setShowConnectionLoading(true)
-    }, 300)
-    // Here you would handle the actual API connection
-    console.log('Connecting with:', { platform: selectedPlatform, apiKey, assistantId })
+    setActiveView("connect-agent")
+
+    try {
+      const payload = {
+        platform: selectedPlatform,
+        api_key: apiKey,
+        agent_id: assistantId,
+      }
+
+      console.log("📤 Sending extract request:", payload)
+
+      const res = await extractAgent(payload)
+
+      console.log("📥 Extraction result:", res.data)
+
+      // Save extracted config
+      setExtractedConfig(res.data)
+      console.log('✅ Config extracted successfully')
+
+      // UI transitions
+      setIsConnecting(false)
+      setShowConnectionForm(false)
+
+      setTimeout(() => {
+        console.log('➡️ Showing connection loading screen')
+        setShowConnectionLoading(true)
+      }, 300)
+
+    } catch (err) {
+      console.error("❌ Connection failed:", err)
+      console.error("Error details:", {
+        message: err.message,
+        response: err?.response?.data,
+        stack: err.stack
+      })
+      
+      alert("Failed to connect: " + (err.response?.data?.detail || err.message))
+      setIsConnecting(false)
+    }
   }
 
-  const handleConnectionComplete = () => {
+  const handleConnectionComplete = (result) => {
+    console.log('🎉 Connection complete with result:', result)
+    
+    // Store the setup result (flowData + mermaid)
+    setSetupResult(result)
+    
+    // Also merge into extractedConfig for persistence
+    setExtractedConfig(prev => ({
+      ...prev,
+      flowData: result?.flowData,
+      mermaid: result?.mermaid
+    }))
+
+    console.log('➡️ Transitioning to workspace dashboard')
+    
+    // Hide loader, show workspace
     setShowConnectionLoading(false)
     setShowWorkspaceDashboard(true)
-    // Explicitly set activeView to 'connect-agent' to maintain selection throughout the flow
-    // This includes test case generation, running tests, and evaluation dashboard
     setActiveView('connect-agent')
   }
 
   // Show loader before layout
   if (showDashboard) {
     return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center relative overflow-hidden">
         {/* Animated background particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           {[...Array(20)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-1 h-1 bg-accent-green rounded-full opacity-20"
+              className="absolute w-1 h-1 bg-teal-400 rounded-full opacity-20"
               style={{
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
-                animation: `pulse-slow ${2 + Math.random() * 2}s ease-in-out infinite`,
+                animation: `pulse ${2 + Math.random() * 2}s ease-in-out infinite`,
                 animationDelay: `${Math.random() * 2}s`,
               }}
             />
@@ -124,7 +171,11 @@ function App() {
   // Show layout with side panel after initialization
   if (showLayout) {
     return (
-      <DashboardLayout activeView={activeView} onNavigate={handleNavigate} hideRightPanel={showEvaluationDashboard}>
+      <DashboardLayout 
+        activeView={activeView} 
+        onNavigate={handleNavigate} 
+        hideRightPanel={showEvaluationDashboard}
+      >
         {/* Dashboard - Default view */}
         {activeView === 'dashboard' && !showPlatformSelection && !showConnectionForm && !showConnectionLoading && !showWorkspaceDashboard && (
           <div className="p-8">
@@ -151,19 +202,36 @@ function App() {
           </div>
         )}
 
-        {/* Connection Loading Screen - Connect Agent flow */}
-        {showConnectionLoading && (
+        {/* Connection Loading - Setup flow with API calls */}
+        {showConnectionLoading && extractedConfig && (
           <div className="p-8">
-            <ConnectionLoading onComplete={handleConnectionComplete} />
+            <ConnectionLoading
+              extractedConfig={extractedConfig}
+              onComplete={handleConnectionComplete}
+            />
           </div>
         )}
 
         {/* Workspace Dashboard - Shown after connection complete */}
-        {showWorkspaceDashboard && (
+        {showWorkspaceDashboard && extractedConfig && setupResult && (
           <div className="p-8">
-            <WorkspaceDashboard onEvaluationDashboardChange={setShowEvaluationDashboard} />
+            <WorkspaceDashboard
+              systemConfig={{
+                agentId: extractedConfig.agent_id,
+                config: extractedConfig.config,
+                systemPrompt: extractedConfig.system_prompt,
+                platform: extractedConfig.platform,
+                tools: extractedConfig.tools,
+                metadata: extractedConfig.metadata,
+                // Use setup result directly to avoid race conditions
+                flowData: setupResult.flowData,
+                mermaid: setupResult.mermaid
+              }}
+              onEvaluationDashboardChange={setShowEvaluationDashboard}
+            />
           </div>
         )}
+
       </DashboardLayout>
     )
   }
@@ -172,4 +240,3 @@ function App() {
 }
 
 export default App
-

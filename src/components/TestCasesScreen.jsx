@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { runSimulation } from '../api'
 
 // Call flow script for all test cases
+
 const CALL_FLOW_SCRIPT = `### Call Flow
 
 **[Phone Rings]**
@@ -108,7 +110,8 @@ const EXPECTED_RESPONSE = `The agent should successfully:
 6. Schedule an appointment and capture email
 7. End the call on a positive note`
 
-const TEST_CASES = [
+// Default test cases (fallback if no testSuite provided)
+const DEFAULT_TESTS_CASES = [
   {
     id: 1,
     title: "Happy Customer - Service Package Success",
@@ -262,14 +265,184 @@ const TEST_CASES = [
   }
 ]
 
-const TestCasesScreen = ({ onRunTests, onBack }) => {
-  const [expandedScripts, setExpandedScripts] = useState({})
+const DEFAULT_TEST_CASES = [
+  // your default cases — keep the array you already had, but add `script: CALL_FLOW_SCRIPT`
+].map((c) => ({ ...c, script: CALL_FLOW_SCRIPT }))
+
+// Helper: build a readable script from the API 'steps' array.
+// The exact step shape may vary; this function attempts to extract common fields.
+function buildScriptFromSteps(steps = [], persona = {}) {
+  if (!Array.isArray(steps) || steps.length === 0) return CALL_FLOW_SCRIPT
+
+  const lines = []
+  let visibleStep = 1
+
+  steps.forEach((step) => {
+    const t = step.type || step.step_type || ''
+    const isAgent = step.role === 'agent'
+
+    const speaker = isAgent
+      ? 'AGENT'
+      : persona?.name || 'USER'
+
+    const text =
+      step.utterance ??
+      step.text ??
+      step.user_input ??
+      step.expected_response ??
+      ''
+
+    if (!text || !text.toString().trim()) return
+
+    if (
+      t.toLowerCase().includes('speak') ||
+      t.toLowerCase().includes('utterance')
+    ) {
+      lines.push(`**[Step ${visibleStep++}]**`)
+      lines.push(`**${speaker}:** "${String(text).trim()}"`)
+      lines.push('')
+    } else if (
+      t.toLowerCase().includes('wait') ||
+      t.toLowerCase().includes('listen') ||
+      t.toLowerCase().includes('user')
+    ) {
+      lines.push(`**[Step ${visibleStep++} - wait for user response]**`)
+      lines.push(`**${speaker}:** "${String(text).trim()}"`)
+      lines.push('')
+    }
+  })
+
+  return lines.length ? lines.join('\n') : CALL_FLOW_SCRIPT
+}
+
+
+const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
+  const [expandedScripts, setExpandedScripts] = useState({}) // { [id]: boolean }
+  const [testCases, setTestCases] = useState(DEFAULT_TEST_CASES)
+  
+
+
+  const runSimulationNow = () => {
+  if (!testSuitePath) {
+    alert("Test suite path missing. Please regenerate test cases.")
+    return
+  }
+
+  onRunTests(testSuitePath)
+}
+
+
+
+
+  useEffect(() => {
+    if (testSuite?.test_paths && Array.isArray(testSuite.test_paths)) {
+      const transformedCases = testSuite.test_paths.map((path, index) => {
+        const id = index + 1
+        const title = path.name || `Test Case ${id}`
+        const pathType = path.path_type
+        const icon = getIconForPathType(pathType)
+        const steps = path.steps || []
+        const script = buildScriptFromSteps(steps, path)
+        const persona = generatePersonaFromSteps(steps, path)
+
+        return {
+          id,
+          title,
+          icon,
+          pathId: path.path_id,
+          pathType,
+          goal: path.goal,
+          description: path.description,
+          nodeSequence: path.node_sequence,
+          steps,
+          script,
+          persona
+        }
+      })
+
+      // initialize expandedScripts to false for each id
+      const expandedInit = {}
+      transformedCases.forEach((c) => { expandedInit[c.id] = false })
+
+      setTestCases(transformedCases)
+      setExpandedScripts(expandedInit)
+    } else {
+      // no testSuite: ensure defaults have scripts and collapse
+      const defaultsWithScript = DEFAULT_TEST_CASES.map((c, idx) => ({ ...c, id: idx + 1 }))
+      const expandedInit = {}
+      defaultsWithScript.forEach((c) => { expandedInit[c.id] = false })
+      setTestCases(defaultsWithScript)
+      setExpandedScripts(expandedInit)
+    }
+  }, [testSuite])
+
+  const getIconForPathType = (pathType) => {
+    if (!pathType) return '🧪'
+    const icons = {
+      edge_case: '⚠️',
+      happy_path: '✅',
+      error: '❌',
+      boundary: '🔄'
+    }
+    return icons[pathType] || '🧪'
+  }
+
+  const generatePersonaFromSteps = (steps = [], path = {}) => {
+  const p = path?.assigned_personas?.[0]
+
+  // Backend persona exists (primary path)
+  if (p) {
+    return {
+      gender: p.gender ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1) : 'Unknown',
+      name: p.name || 'Persona',
+
+      speakingRate:
+        p.behavior_traits?.verbosity === 'verbose'
+          ? 'Slow (100–110 WPM)'
+          : p.behavior_traits?.verbosity === 'balanced'
+          ? 'Moderate (120–130 WPM)'
+          : 'Fast (150–160 WPM)',
+
+      interruptionTendency:
+        p.behavior_traits?.patience_level === 'high'
+          ? 'Low (waits for pauses)'
+          : p.behavior_traits?.patience_level === 'medium'
+          ? 'Medium (occasional interruptions)'
+          : 'High (frequent interruptions)',
+
+      dialect: `${p.native_language?.toUpperCase() || 'Unknown'} (${p.region || 'Global'})`,
+
+      personality: p.description || 'Polite and cooperative',
+
+      backgroundEnvironment:
+        p.occupation === 'sales_consultant'
+          ? 'Office environment'
+          : 'Quiet environment',
+
+      vehicle: path?.metadata?.vehicle || 'N/A',
+
+      currentSituation: path.goal || 'Test scenario'
+    }
+  }
+
+  // 🟡 Fallback (your existing logic untouched)
+  const firstUser = steps.find(s => s.user_input || s.utterance || s.text)
+
+  return {
+    gender: 'Dynamic',
+    name: 'Test Persona',
+    speakingRate: 'Varies',
+    interruptionTendency: 'Scenario-based',
+    dialect: 'Standard',
+    personality: path.description || 'Test-driven behavior',
+    backgroundEnvironment: 'Simulated',
+    vehicle: path?.metadata?.vehicle || 'N/A',
+    currentSituation: firstUser?.user_input || path.goal || 'Testing agent behavior'
+  }
+}
 
   const toggleScript = (testCaseId) => {
-    setExpandedScripts(prev => ({
-      ...prev,
-      [testCaseId]: !prev[testCaseId]
-    }))
+    setExpandedScripts(prev => ({ ...prev, [testCaseId]: !prev[testCaseId] }))
   }
 
   return (
@@ -278,9 +451,7 @@ const TestCasesScreen = ({ onRunTests, onBack }) => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Generated Test Cases
-            </h1>
+            <h1 className="text-4xl font-bold text-white mb-2">Generated Test Cases</h1>
             <p className="text-gray-400">
               Review the test cases and personas below, then run all tests to evaluate your Voice AI agent.
             </p>
@@ -297,7 +468,7 @@ const TestCasesScreen = ({ onRunTests, onBack }) => {
 
         {/* Test Cases List */}
         <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-          {TEST_CASES.map((testCase) => (
+          {testCases.map((testCase) => (
             <div
               key={testCase.id}
               className="bg-dark-panel rounded-xl p-6 border border-gray-800/50 hover:border-gray-700 transition-colors"
@@ -345,56 +516,67 @@ const TestCasesScreen = ({ onRunTests, onBack }) => {
                     <div>
                       <h6 className="text-sm font-semibold text-white mb-2">Script Simulation Agent Will Follow:</h6>
                       <div className="text-sm text-gray-300 whitespace-pre-line leading-relaxed font-mono">
-                        {CALL_FLOW_SCRIPT}
+                        {testCase.script || CALL_FLOW_SCRIPT}
                       </div>
                     </div>
-                    <div className="pt-4 border-t border-gray-700">
-                      <h6 className="text-sm font-semibold text-white mb-2">Expected Response:</h6>
-                      <div className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">
-                        {EXPECTED_RESPONSE}
-                      </div>
-                    </div>
+                
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-gray-400">Gender:</span>
-                    <span className="text-white ml-2">{testCase.persona.gender}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Name:</span>
-                    <span className="text-white ml-2">{testCase.persona.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Speaking Rate:</span>
-                    <span className="text-white ml-2">{testCase.persona.speakingRate}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Interruption Tendency:</span>
-                    <span className="text-white ml-2">{testCase.persona.interruptionTendency}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400">Dialect:</span>
-                    <span className="text-white ml-2">{testCase.persona.dialect}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400">Personality:</span>
-                    <span className="text-white ml-2">{testCase.persona.personality}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400">Background Environment:</span>
-                    <span className="text-white ml-2">{testCase.persona.backgroundEnvironment}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400">Vehicle:</span>
-                    <span className="text-white ml-2">{testCase.persona.vehicle}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400">Current Situation:</span>
-                    <span className="text-white ml-2">{testCase.persona.currentSituation}</span>
-                  </div>
-                </div>
+
+  {/* Row 1 */}
+  <div>
+    <span className="text-gray-400">Gender:</span>
+    <span className="text-white ml-2">{testCase.persona.gender}</span>
+  </div>
+  <div>
+    <span className="text-gray-400">Name:</span>
+    <span className="text-white ml-2">{testCase.persona.name}</span>
+  </div>
+
+  {/* Row 2 */}
+  <div>
+    <span className="text-gray-400">Speaking Rate:</span>
+    <span className="text-white ml-2">{testCase.persona.speakingRate}</span>
+  </div>
+  <div>
+    <span className="text-gray-400">Interruption Tendency:</span>
+    <span className="text-white ml-2">{testCase.persona.interruptionTendency}</span>
+  </div>
+
+  {/* Row 3 */}
+  <div className="col-span-2">
+    <span className="text-gray-400">Dialect:</span>
+    <span className="text-white ml-2">{testCase.persona.dialect}</span>
+  </div>
+
+  {/* Row 4 */}
+  <div className="col-span-2">
+    <span className="text-gray-400">Personality:</span>
+    <span className="text-white ml-2">{testCase.persona.personality}</span>
+  </div>
+
+  {/* Row 5 */}
+  <div className="col-span-2">
+    <span className="text-gray-400">Background Environment:</span>
+    <span className="text-white ml-2">{testCase.persona.backgroundEnvironment}</span>
+  </div>
+
+  {/* Row 6 */}
+  <div className="col-span-2">
+    <span className="text-gray-400">Vehicle:</span>
+    <span className="text-white ml-2">{testCase.persona.vehicle}</span>
+  </div>
+
+  {/* Row 7 */}
+  <div className="col-span-2">
+    <span className="text-gray-400">Current Situation:</span>
+    <span className="text-white ml-2">{testCase.persona.currentSituation}</span>
+  </div>
+
+</div>
+
               </div>
             </div>
           ))}
@@ -403,7 +585,7 @@ const TestCasesScreen = ({ onRunTests, onBack }) => {
         {/* Run Tests Button */}
         <div className="pt-4 border-t border-gray-800">
           <button
-            onClick={onRunTests}
+            onClick={runSimulationNow}
             className="w-full px-6 py-4 bg-teal-400 hover:bg-teal-500 text-white rounded-xl font-semibold text-base transition-all duration-300 shadow-lg shadow-teal-400/50 hover:scale-105 flex items-center justify-center gap-3"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -419,4 +601,3 @@ const TestCasesScreen = ({ onRunTests, onBack }) => {
 }
 
 export default TestCasesScreen
-

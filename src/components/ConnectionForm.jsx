@@ -1,22 +1,18 @@
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
 import DashboardOverview from './DashboardOverview'
+import { extractAgent } from '../api'
 
 const ConnectionForm = ({ platform, onConnect, isConnecting, onBack }) => {
   const [apiKey, setApiKey] = useState('')
   const [assistantId, setAssistantId] = useState('')
   const [focusedField, setFocusedField] = useState(null)
 
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (platform === 'vapi') {
-      if (apiKey.trim() && assistantId.trim()) {
-        onConnect({ apiKey, assistantId })
-      }
-    } else {
-      if (apiKey.trim()) {
-        onConnect({ apiKey, assistantId: null })
-      }
-    }
+    onConnect({
+      platform, apiKey, assistantId:platform==="vapi"?assistantId:null,
+    })
   }
 
   const isFormValid = platform === 'vapi' 

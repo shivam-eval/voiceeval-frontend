@@ -1,36 +1,82 @@
-// ═══════════════════════════════════════════════════════════════
-// CANONICAL FLOW DIAGRAM SVG
-// ═══════════════════════════════════════════════════════════════
-// 
-// TO UPDATE THE FLOW DIAGRAM:
-// 1. Place your SVG file in: src/assets/canonical-flow.svg
-// 2. Or replace the import path below with your SVG file location
-// 3. The SVG will be displayed in the component below
-//
-import canonicalFlowSvg from '../assets/canonical-flow.svg'
+import { useEffect, useRef, useState } from "react";
+import mermaid from "mermaid";
 
-const CanonicalFlowDiagram = () => {
+mermaid.initialize({
+  startOnLoad: false,
+  theme: "base",
+  themeVariables: {
+    fontFamily: "Inter, sans-serif",
+    fontSize: "10px",
+    primaryColor: "#E5F0FF",
+    primaryTextColor: "#1F2937",
+    primaryBorderColor: "#93C5FD",
+    lineColor: "#9CA3AF",
+    edgeLabelBackground: "#ffffff",
+  },
+  flowchart: {
+    curve: "linear",
+    nodeSpacing: 20,
+    rankSpacing: 30,
+  },
+});
+
+const CanonicalFlowDiagram = ({ mermaidCode }) => {
+  const ref = useRef(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!mermaidCode || !ref.current) {
+      console.log("No mermaid code or ref", { mermaidCode, hasRef: !!ref.current });
+      return;
+    }
+
+    const renderDiagram = async () => {
+      try {
+        console.log("Rendering mermaid diagram:", mermaidCode);
+        
+        // Clear previous content
+        ref.current.innerHTML = "";
+        setError(null);
+
+        // Generate unique ID for this render
+        const id = `flowchart_${Date.now()}`;
+
+        // Use the modern async API
+        const { svg } = await mermaid.render(id, mermaidCode);
+        
+        if (ref.current) {
+          ref.current.innerHTML = svg;
+          console.log("Mermaid diagram rendered successfully");
+        }
+      } catch (err) {
+        console.error("Mermaid rendering error:", err);
+        setError(err.message || "Failed to render diagram");
+        
+        // Display error in the component
+        if (ref.current) {
+          ref.current.innerHTML = `
+            <div style="padding: 10px; color: #ef4444; border: 1px solid #ef4444; border-radius: 8px; background: #fef2f2;">
+              <strong>Diagram Rendering Error:</strong>
+              <pre style="margin-top: 5px; font-size: 6px;">${err.message}</pre>
+            </div>
+          `;
+        }
+      }
+    };
+
+    renderDiagram();
+  }, [mermaidCode]);
+
   return (
-    <div className="bg-dark-input rounded-xl p-6 border border-gray-700">
-      <div className="mb-4">
-        <h5 className="text-base font-semibold text-white mb-2">Canonical Flow Diagram</h5>
-        <p className="text-gray-400 text-sm">
-          Visual representation of your Voice Agent's conversation flow and decision points.
-        </p>
-      </div>
-      
-      <div className="bg-dark-bg rounded-lg border border-gray-800 p-4" style={{ height: '70vh', maxHeight: '800px', minHeight: '500px', overflow: 'hidden' }}>
-        <div className="w-full h-full flex items-center justify-center">
-          <img
-            src={canonicalFlowSvg}
-            alt="Canonical Flow Diagram"
-            className="w-full h-full"
-            style={{ objectFit: 'contain', objectPosition: 'center' }}
-          />
+    <div className="bg-white rounded-xl p-2 overflow-auto max-h-[600px]">
+      {!mermaidCode && (
+        <div className="text-gray-400 text-center py-8">
+          No diagram data available
         </div>
-      </div>
+      )}
+      <div ref={ref} className="min-w-max" />
     </div>
-  )
-}
+  );
+};
 
-export default CanonicalFlowDiagram
+export default CanonicalFlowDiagram;

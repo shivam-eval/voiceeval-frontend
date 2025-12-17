@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import EvaluationTimeline from './EvaluationTimeline'
+import { transformEvaluationData, hasEvaluationData } from '../utils/evaluationTransform'
 
 // Evaluation data based on the provided metrics
 const EVALUATION_DATA = {
@@ -136,8 +137,15 @@ const TEST_CASE_1_DETAILS = {
   }
 }
 
-const EvaluationDashboard = ({ onBack }) => {
+const EvaluationDashboard = ({ evaluationData, onBack }) => {
   const [expandedTestCase, setExpandedTestCase] = useState(null)
+  
+  // Use real evaluation data if available, otherwise fall back to mock data
+  const displayData = hasEvaluationData(evaluationData) 
+    ? transformEvaluationData(evaluationData) 
+    : EVALUATION_DATA;
+  
+  const isRealData = hasEvaluationData(evaluationData);
 
   const toggleTestCase = (testCaseId) => {
     setExpandedTestCase(expandedTestCase === testCaseId ? null : testCaseId)
@@ -207,10 +215,12 @@ const EvaluationDashboard = ({ onBack }) => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-white mb-2">
-              VAPI CALL TESTING DASHBOARD
+              {isRealData ? 'EVALUATION RESULTS' : 'VAPI CALL TESTING DASHBOARD'}
             </h1>
             <p className="text-gray-400">
-              Test Suite: Car Dealership Outbound | Date: {new Date().toLocaleDateString()}
+              {isRealData 
+                ? `Overall Score: ${Math.round(evaluationData.overall_score * 100)}% | ${evaluationData.passed ? 'PASSED' : 'NEEDS IMPROVEMENT'}`
+                : `Test Suite: Car Dealership Outbound | Date: ${new Date().toLocaleDateString()}`}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -242,7 +252,7 @@ const EvaluationDashboard = ({ onBack }) => {
             <div className="text-gray-400 text-sm mb-2">SUCCESS RATE</div>
             <div className="flex items-baseline gap-2 mb-2">
               <div className="w-3 h-3 rounded-full bg-teal-400"></div>
-              <span className="text-3xl font-bold text-white">{EVALUATION_DATA.summary.successRate}%</span>
+              <span className="text-3xl font-bold text-white">{displayData.summary.successRate}%</span>
             </div>
             <div className="flex items-center gap-1 text-green-400 text-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -256,7 +266,7 @@ const EvaluationDashboard = ({ onBack }) => {
             <div className="text-gray-400 text-sm mb-2">CONVERSION RATE</div>
             <div className="flex items-baseline gap-2 mb-2">
               <div className="w-3 h-3 rounded-full bg-teal-400"></div>
-              <span className="text-3xl font-bold text-white">{EVALUATION_DATA.summary.conversionRate}%</span>
+              <span className="text-3xl font-bold text-white">{displayData.summary.conversionRate || displayData.summary.overallScore}%</span>
             </div>
             <div className="flex items-center gap-1 text-green-400 text-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,7 +280,7 @@ const EvaluationDashboard = ({ onBack }) => {
             <div className="text-gray-400 text-sm mb-2">AVG CALL DURATION</div>
             <div className="flex items-baseline gap-2 mb-2">
               <div className="w-3 h-3 rounded-full bg-teal-400"></div>
-              <span className="text-3xl font-bold text-white">{EVALUATION_DATA.summary.avgCallDuration}</span>
+              <span className="text-3xl font-bold text-white">{displayData.summary.avgCallDuration}</span>
             </div>
             <div className="flex items-center gap-1 text-green-400 text-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -284,7 +294,7 @@ const EvaluationDashboard = ({ onBack }) => {
             <div className="text-gray-400 text-sm mb-2">COMPLIANCE SCORE</div>
             <div className="flex items-baseline gap-2 mb-2">
               <div className="w-3 h-3 rounded-full bg-teal-400"></div>
-              <span className="text-3xl font-bold text-white">{EVALUATION_DATA.summary.complianceScore}%</span>
+              <span className="text-3xl font-bold text-white">{displayData.summary.complianceScore}%</span>
             </div>
             <div className="flex items-center gap-1 text-green-400 text-sm">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -296,13 +306,14 @@ const EvaluationDashboard = ({ onBack }) => {
         </div>
 
         {/* Test Case Results */}
-        <div className="bg-dark-panel rounded-xl p-6 border border-gray-800/50">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-white">TEST CASE RESULTS</h2>
-            <span className="text-gray-400 text-sm">[10 Tests]</span>
-          </div>
-          <div className="space-y-2">
-            {EVALUATION_DATA.testCases.map((testCase) => {
+        {displayData.testCases && displayData.testCases.length > 0 && (
+          <div className="bg-dark-panel rounded-xl p-6 border border-gray-800/50">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-white">TEST CASE RESULTS</h2>
+              <span className="text-gray-400 text-sm">[{displayData.testCases.length} Tests]</span>
+            </div>
+            <div className="space-y-2">
+              {displayData.testCases.map((testCase) => {
               const isExpanded = expandedTestCase === testCase.id
               const hasDetails = testCase.id === 1
               const details = hasDetails ? TEST_CASE_1_DETAILS : null
@@ -374,7 +385,8 @@ const EvaluationDashboard = ({ onBack }) => {
               )
             })}
           </div>
-        </div>
+          </div>
+        )}
 
         {/* Category Scores and Sentiment Trend */}
         <div className="grid grid-cols-2 gap-6">
@@ -382,7 +394,7 @@ const EvaluationDashboard = ({ onBack }) => {
           <div className="bg-dark-panel rounded-xl p-6 border border-gray-800/50">
             <h2 className="text-xl font-semibold text-white mb-4">CATEGORY SCORES</h2>
             <div className="space-y-4">
-              {EVALUATION_DATA.categoryScores.map((category) => (
+              {displayData.categoryScores.map((category) => (
                 <div key={category.name}>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-gray-300 text-sm">{category.name}</span>
@@ -400,6 +412,7 @@ const EvaluationDashboard = ({ onBack }) => {
           </div>
 
           {/* Sentiment Trend */}
+          {displayData.sentimentData && displayData.sentimentData.length > 0 && (
           <div className="bg-dark-panel rounded-xl p-6 border border-gray-800/50">
             <div className="mb-4">
               <h2 className="text-xl font-semibold text-white">SENTIMENT TREND</h2>
@@ -438,8 +451,8 @@ const EvaluationDashboard = ({ onBack }) => {
                     </defs>
                     {/* Area under line */}
                     <path
-                      d={`M 0 ${100 - (EVALUATION_DATA.sentimentData[0] / 10) * 100} ${EVALUATION_DATA.sentimentData.slice(1).map((value, index) => {
-                        const x = ((index + 1) / (EVALUATION_DATA.sentimentData.length - 1)) * 100
+                      d={`M 0 ${100 - (displayData.sentimentData[0] / 10) * 100} ${displayData.sentimentData.slice(1).map((value, index) => {
+                        const x = ((index + 1) / (displayData.sentimentData.length - 1)) * 100
                         const y = 100 - (value / 10) * 100
                         return `L ${x} ${y}`
                       }).join(' ')} L 100 100 L 0 100 Z`}
@@ -447,8 +460,8 @@ const EvaluationDashboard = ({ onBack }) => {
                     />
                     {/* Trend line */}
                     <polyline
-                      points={EVALUATION_DATA.sentimentData.map((value, index) => {
-                        const x = (index / (EVALUATION_DATA.sentimentData.length - 1)) * 100
+                      points={displayData.sentimentData.map((value, index) => {
+                        const x = (index / (displayData.sentimentData.length - 1)) * 100
                         const y = 100 - (value / 10) * 100
                         return `${x},${y}`
                       }).join(' ')}
@@ -459,8 +472,8 @@ const EvaluationDashboard = ({ onBack }) => {
                       strokeLinejoin="round"
                     />
                     {/* Data points */}
-                    {EVALUATION_DATA.sentimentData.map((value, index) => {
-                      const x = (index / (EVALUATION_DATA.sentimentData.length - 1)) * 100
+                    {displayData.sentimentData.map((value, index) => {
+                      const x = (index / (displayData.sentimentData.length - 1)) * 100
                       const y = 100 - (value / 10) * 100
                       return (
                         <circle
@@ -477,7 +490,7 @@ const EvaluationDashboard = ({ onBack }) => {
                   </svg>
 
                   {/* Bars with hover effects */}
-                  {EVALUATION_DATA.sentimentData.map((value, index) => (
+                  {displayData.sentimentData.map((value, index) => (
                     <div key={index} className="flex-1 flex flex-col items-center group relative">
                       <div className="relative w-full flex flex-col items-center justify-end">
                         {/* Bar */}
@@ -513,6 +526,7 @@ const EvaluationDashboard = ({ onBack }) => {
               Test Case Number
             </div>
           </div>
+          )}
         </div>
 
         {/* Priority Improvements */}
@@ -522,7 +536,7 @@ const EvaluationDashboard = ({ onBack }) => {
             <span className="text-gray-400 text-sm">[9 Total]</span>
           </div>
           <div className="space-y-6">
-            {EVALUATION_DATA.improvements.map((priorityGroup) => {
+            {displayData.improvements.map((priorityGroup) => {
               const colors = getPriorityColor(priorityGroup.priority)
               return (
                 <div key={priorityGroup.priority} className="space-y-3">

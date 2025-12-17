@@ -6,6 +6,7 @@ import TestCasesScreen from "./TestCasesScreen"
 import TestExecutionLoading from "./TestExecutionLoading"
 import EvaluationDashboard from "./EvaluationDashboard"
 import RegionDropdown from "./RegionDropDown"
+import QueueStatsWidget from "./QueueStatsWidget"
 import { runSimulation } from "../api"
 
 const WorkspaceDashboard = ({
@@ -31,7 +32,9 @@ const WorkspaceDashboard = ({
   const [showTestCasesScreen, setShowTestCasesScreen] = useState(false)
   const [showTestLoading, setShowTestLoading] = useState(false)
   const [showEvaluationDashboard, setShowEvaluationDashboard] = useState(false)
-const [testSuitePath, setTestSuitePath] = useState(null)
+  const [testSuitePath, setTestSuitePath] = useState(null)
+  const [simulationId, setSimulationId] = useState(null)
+  const [evaluationResults, setEvaluationResults] = useState(null)
 
   const [selectedRegion, setSelectedRegion] = useState("")
 
@@ -102,25 +105,29 @@ const [testSuitePath, setTestSuitePath] = useState(null)
   }
 
  const handleRunTests = async (testSuitePath) => {
-  // 1️⃣ Show loading screen immediately
-  setShowTestCasesScreen(false)
-  setShowTestLoading(true)
-
   try {
-    // 2️⃣ Hit API
-    await runSimulation({
-      agent_phone_number: "+917982693803",
+    // 1️⃣ Hit API to start simulation first
+    const response = await runSimulation({
+      agent_phone_number: import.meta.env.VITE_AGENT_PHONE_NUMBER || "+919876543210",
       test_suite_path: testSuitePath
     })
 
-    // 3️⃣ Simulation finished → go to dashboard
-    setShowTestLoading(false)
-    setShowEvaluationDashboard(true)
-    onEvaluationDashboardChange?.(true)
+    // 2️⃣ Store simulation ID for polling
+    const simId = response.data.simulation_id
+    if (!simId) {
+      throw new Error("No simulation ID returned from API")
+    }
+    setSimulationId(simId)
+    
+    // 3️⃣ Show loading screen after we have the ID
+    setShowTestCasesScreen(false)
+    setShowTestLoading(true)
+    
+    // Note: TestExecutionLoading will handle polling and completion
 
   } catch (err) {
     console.error("Simulation failed:", err)
-    alert(err?.response?.data?.detail || "Simulation failed")
+    alert(err?.response?.data?.detail || "Failed to start simulation")
 
     // rollback UI if needed
     setShowTestLoading(false)
@@ -129,10 +136,22 @@ const [testSuitePath, setTestSuitePath] = useState(null)
 }
 
 
-  const handleTestComplete = () => {
+  const handleTestComplete = (results) => {
+    // Store evaluation results
+    setEvaluationResults(results.evaluationData)
+    
     setShowTestLoading(false)
     setShowEvaluationDashboard(true)
     onEvaluationDashboardChange?.(true)
+  }
+
+  const handleTestError = (error) => {
+    console.error("Test execution error:", error)
+    alert(error?.message || "Test execution failed")
+    
+    // Return to test cases screen
+    setShowTestLoading(false)
+    setShowTestCasesScreen(true)
   }
 
   const handleBackToTestCases = () => {
@@ -169,11 +188,22 @@ const [testSuitePath, setTestSuitePath] = useState(null)
   }
 
   if (showTestLoading) {
-    return <TestExecutionLoading onComplete={handleTestComplete} />
+    return (
+      <TestExecutionLoading 
+        simulationId={simulationId}
+        onComplete={handleTestComplete}
+        onError={handleTestError}
+      />
+    )
   }
 
   if (showEvaluationDashboard) {
-    return <EvaluationDashboard onBack={handleBackToTestCases} />
+    return (
+      <EvaluationDashboard 
+        evaluationData={evaluationResults}
+        onBack={handleBackToTestCases} 
+      />
+    )
   }
 
   // Main UI
@@ -291,6 +321,9 @@ const [testSuitePath, setTestSuitePath] = useState(null)
            
               />
             </div>
+
+            {/* Queue Stats */}
+            <QueueStatsWidget />
           </div>
 
           {/* Generate Test Cases */}

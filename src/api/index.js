@@ -2,13 +2,13 @@ import axios from "axios";
 
 // Configure API base URL from environment variables
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1",
+  baseURL: "http://localhost:8000/api/v1",
   timeout: 60000, // 30 seconds default
 });
 
 // Create a separate instance for long-running operations (LLM-based)
 const API_LONG = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1",
+  baseURL: "http://localhost:8000/api/v1",
   timeout: 180000, // 3 minutes for LLM operations
 });
 
@@ -225,7 +225,7 @@ export const getQueueStats = async () => {
  * Evaluate simulation results
  * @param {Object} payload - { simulation_id, transcript_steps, test_case, flow_tree, persona, config_overrides }
  */
-export const evaluateSimulation = async (payload) => {
+export const evaluateTranscript = async (payload) => {
   return API_LONG.post("/evaluate", payload);
 };
 

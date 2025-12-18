@@ -7,7 +7,8 @@ import TestExecutionLoading from "./TestExecutionLoading"
 import EvaluationDashboard from "./EvaluationDashboard"
 import RegionDropdown from "./RegionDropDown"
 import QueueStatsWidget from "./QueueStatsWidget"
-import { runSimulation } from "../api"
+import { runSimulation,evaluateTranscript } from "../api"
+import transcript from '../data/transcript_steps.json'
 
 const WorkspaceDashboard = ({
   onEvaluationDashboardChange,
@@ -108,10 +109,22 @@ const WorkspaceDashboard = ({
   try {
     // 1️⃣ Hit API to start simulation first
     const response = await runSimulation({
-      agent_phone_number: import.meta.env.VITE_AGENT_PHONE_NUMBER || "+919876543210",
-      test_suite_path: testSuitePath
-    })
-
+      agent_phone_number:"+917982693803",
+      test_suite_path: testSuitePath,
+  platform: "telephony",
+  tts_provider: "elevenlabs",
+  stt_provider: "gladia",
+  priority: 1,
+  config_overrides: {
+    enable_audio_recording: true,
+    vad_provider: "dual",
+    enable_dual_vad: true,
+    dual_vad_logic: "or",
+  vad_min_silence_duration_ms: 500
+  }
+}
+    )
+ 
     // 2️⃣ Store simulation ID for polling
     const simId = response.data.simulation_id
     if (!simId) {
@@ -136,14 +149,37 @@ const WorkspaceDashboard = ({
 }
 
 
-  const handleTestComplete = (results) => {
-    // Store evaluation results
-    setEvaluationResults(results.evaluationData)
-    
+ const handleTestComplete = async () => {
+  try {
+    // 🔥 SEND DUMMY TRANSCRIPT TO BACKEND FOR REAL EVALUATION
+    const evalResponse = await evaluateTranscript({
+      transcript_steps: transcript
+    })
+
+    setEvaluationResults({
+  ...evalResponse.data,
+  steps: transcript.steps   // 👈 inject dummy transcript steps
+})
+
+
     setShowTestLoading(false)
     setShowEvaluationDashboard(true)
     onEvaluationDashboardChange?.(true)
+
+  } catch (err) {
+    console.error("Evaluation failed:", err)
+    alert(
+      err?.response?.data?.detail ||
+      err.message ||
+      "Evaluation failed"
+    )
+
+    setShowTestLoading(false)
+    setShowTestCasesScreen(true)
   }
+}
+
+
 
   const handleTestError = (error) => {
     console.error("Test execution error:", error)

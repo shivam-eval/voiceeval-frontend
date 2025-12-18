@@ -1,0 +1,245 @@
+{
+  "test_id": "edge_case_unexpected_responses",
+  "session_id": "sim_1734095431000",
+  "start_time": 1734095431000,
+  "end_time": 1734095493800,
+  "status": "completed",
+  "steps": [
+    {
+      "kind": "agent_speak",
+      "text": "Hello, am I speaking with Mr. Aditya?",
+      "confidence": 0.95,
+      "timestamp": 1734095431000,
+      "audio_path": "output/audio/agent_turn_0.wav",
+      "response_latency_ms": 1200,
+      "ttft_ms": 300,
+      "ttct_ms": 800,
+      "validation_criteria": [
+        "Agent should introduce themselves professionally",
+        "Agent should confirm the customer's identity"
+      ],
+      "expected_keywords": ["Aditya", "speaking"]
+    },
+  {
+    "kind": "user_speak",
+    "text": "Who's calling?",
+    "timestamp": 1734095434500,
+    "audio_path": "output/audio/user_turn_1.wav"
+  },
+  {
+    "kind": "agent_speak",
+    "text": "Hi Mr. Aditya, this is Priya calling from Greentech Realtors, Bengaluru. You had recently shown interest in one of our properties listed on 99Acres. Would this be a good time to have a quick 2-minute chat to understand your requirements better?",
+    "confidence": 0.92,
+    "timestamp": 1734095436200,
+    "audio_path": "output/audio/agent_turn_1.wav",
+    "response_latency_ms": 1700,
+    "ttft_ms": 400,
+    "ttct_ms": 950,
+    "validation_criteria": [
+      "Agent should clearly state company name",
+      "Agent should mention the lead source (99Acres)",
+      "Agent should ask for permission to continue the call"
+    ],
+    "expected_keywords": ["Greentech Realtors", "interest", "properties", "99Acres"]
+  },
+  {
+    "kind": "user_speak",
+    "text": "Okay, yes, I remember. Go ahead.",
+    "timestamp": 1734095442000,
+    "audio_path": "output/audio/user_turn_2.wav"
+  },
+  {
+    "kind": "agent_speak",
+    "text": "Great. I see you've been exploring options on Sarjapur Road. Would you like me to focus only on that area, or are you open to nearby locations as well?",
+    "confidence": 0.94,
+    "timestamp": 1734095443800,
+    "audio_path": "output/audio/agent_turn_2.wav",
+    "response_latency_ms": 1800,
+    "ttft_ms": 450,
+    "ttct_ms": 980,
+    "validation_criteria": [
+      "Agent should confirm location preference",
+      "Agent should offer flexibility with nearby areas"
+    ],
+    "expected_keywords": ["Sarjapur Road", "location", "nearby"]
+  },
+  {
+    "kind": "user_speak",
+    "text": "Yes, Sarjapur Road would be perfect.",
+    "timestamp": 1734095448500,
+    "audio_path": "output/audio/user_turn_3.wav"
+  },
+  {
+    "kind": "agent_speak",
+    "text": "Perfect. We have some excellent projects in that area. Are you looking for a 2 BHK, 3 BHK, or something larger?",
+    "confidence": 0.91,
+    "timestamp": 1734095450100,
+    "audio_path": "output/audio/agent_turn_3.wav",
+    "response_latency_ms": 1600,
+    "ttft_ms": 380,
+    "ttct_ms": 920,
+    "validation_criteria": [
+      "Agent should inquire about property configuration",
+      "Agent should provide specific options (2 BHK, 3 BHK)"
+    ],
+    "expected_keywords": ["2 BHK", "3 BHK", "configuration"]
+  },
+  {
+    "kind": "user_speak",
+    "text": "I'm looking for a 3 BHK apartment.",
+    "timestamp": 1734095454000,
+    "audio_path": "output/audio/user_turn_4.wav"
+  },
+  {
+    "kind": "agent_speak",
+    "text": "Great choice. When are you planning to move in? We have both ready-to-move-in properties and under-construction projects.",
+    "confidence": 0.93,
+    "timestamp": 1734095455700,
+    "audio_path": "output/audio/agent_turn_4.wav",
+    "response_latency_ms": 1700,
+    "ttft_ms": 420,
+    "ttct_ms": 950,
+    "validation_criteria": [
+      "Agent should inquire about possession timeline",
+      "Agent should mention ready and under-construction options"
+    ],
+    "expected_keywords": ["move in", "ready-to-move", "under-construction"]
+  },
+  {
+    "kind": "user_speak",
+    "text": "I'm flexible, but preferably within the next 6 months.",
+    "timestamp": 1734095460200,
+    "audio_path": "output/audio/user_turn_5.wav"
+  },
+  {
+    "kind": "agent_speak",
+    "text": "That works well. May I know what budget range you're considering? This will help me suggest the most suitable properties.",
+    "confidence": 0.90,
+    "timestamp": 1734095462000,
+    "audio_path": "output/audio/agent_turn_5.wav",
+    "response_latency_ms": 1800,
+    "ttft_ms": 460,
+    "ttct_ms": 980,
+    "validation_criteria": [
+      "Agent should inquire about budget",
+      "Agent should explain why budget information is needed"
+    ],
+    "expected_keywords": ["budget", "range", "suitable"]
+  },
+  {
+    "kind": "user_speak",
+    "text": "Around 1.2 to 1.5 crores.",
+    "timestamp": 1734095466500,
+    "audio_path": "output/audio/user_turn_6.wav"
+  },
+  {
+    "kind": "agent_speak",
+    "text": "Perfect, we have several excellent options in that range. Are there any specific amenities you're looking for, like a clubhouse, swimming pool, or gym?",
+    "confidence": 0.94,
+    "timestamp": 1734095468200,
+    "audio_path": "output/audio/agent_turn_6.wav",
+    "response_latency_ms": 1700,
+    "ttft_ms": 410,
+    "ttct_ms": 940,
+    "validation_criteria": [
+      "Agent should inquire about amenities",
+      "Agent should provide specific examples"
+    ],
+    "expected_keywords": ["amenities", "clubhouse", "gym", "pool"]
+  },
+  {
+    "kind": "user_speak",
+    "text": "A gym and kids play area would be nice.",
+    "timestamp": 1734095473000,
+    "audio_path": "output/audio/user_turn_7.wav"
+  },
+  {
+    "kind": "agent_speak",
+    "text": "Excellent. I have a few properties that match your requirements perfectly. Would you be interested in scheduling a site visit? I can arrange one at your convenience.",
+    "confidence": 0.92,
+    "timestamp": 1734095474800,
+    "audio_path": "output/audio/agent_turn_7.wav",
+    "response_latency_ms": 1800,
+    "ttft_ms": 440,
+    "ttct_ms": 970,
+    "validation_criteria": [
+      "Agent should propose next steps (site visit)",
+      "Agent should offer scheduling flexibility"
+    ],
+    "expected_keywords": ["site visit", "schedule", "convenience"]
+  },
+  {
+    "kind": "user_speak",
+    "text": "Yes, that would be great. How about this weekend?",
+    "timestamp": 1734095479500,
+    "audio_path": "output/audio/user_turn_8.wav"
+  },
+  {
+    "kind": "agent_speak",
+    "text": "Perfect! This weekend works well. Would Saturday or Sunday be better for you?",
+    "confidence": 0.95,
+    "timestamp": 1734095481200,
+    "audio_path": "output/audio/agent_turn_8.wav",
+    "response_latency_ms": 1700,
+    "ttft_ms": 400,
+    "ttct_ms": 930,
+    "validation_criteria": [
+      "Agent should confirm availability",
+      "Agent should offer specific day options"
+    ],
+    "expected_keywords": ["Saturday", "Sunday", "weekend"]
+  },
+  {
+    "kind": "user_speak",
+    "text": "Saturday morning would be ideal.",
+    "timestamp": 1734095484800,
+    "audio_path": "output/audio/user_turn_9.wav"
+  },
+  {
+    "kind": "agent_speak",
+    "text": "Wonderful! I'll schedule the site visit for Saturday morning. I'll send you the property details and location via WhatsApp. Is there anything else you'd like to know?",
+    "confidence": 0.93,
+    "timestamp": 1734095486600,
+    "audio_path": "output/audio/agent_turn_9.wav",
+    "response_latency_ms": 1800,
+    "ttft_ms": 450,
+    "ttct_ms": 960,
+    "validation_criteria": [
+      "Agent should confirm the appointment",
+      "Agent should mention communication method (WhatsApp)",
+      "Agent should offer additional help"
+    ],
+    "expected_keywords": ["schedule", "WhatsApp", "details", "confirmation"]
+  },
+  {
+    "kind": "user_speak",
+    "text": "No, that's all. Thank you!",
+    "timestamp": 1734095492000,
+    "audio_path": "output/audio/user_turn_10.wav"
+  },
+  {
+    "kind": "agent_speak",
+    "text": "Thank you, Mr. Aditya! I'll send you the details shortly. Looking forward to meeting you on Saturday. Have a great day!",
+    "confidence": 0.96,
+    "timestamp": 1734095493800,
+    "audio_path": "output/audio/agent_turn_10.wav",
+    "response_latency_ms": 1800,
+    "ttft_ms": 430,
+    "ttct_ms": 950,
+    "validation_criteria": [
+      "Agent should end call politely",
+      "Agent should confirm follow-up actions",
+      "Agent should express enthusiasm for meeting"
+    ],
+    "expected_keywords": ["thank you", "looking forward", "great day"]
+  }
+  ],
+  "metadata": {
+    "total_turns": 22,
+    "agent_turns": 11,
+    "user_turns": 11,
+    "avg_response_latency_ms": 1700,
+    "avg_confidence": 0.93,
+    "duration_ms": 62800
+  }
+}

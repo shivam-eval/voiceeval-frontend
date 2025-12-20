@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import EvaluationTimeline from './EvaluationTimeline'
 import { transformEvaluationData, hasEvaluationData } from '../utils/evaluationTransform'
 
@@ -140,10 +140,13 @@ const TEST_CASE_1_DETAILS = {
 const EvaluationDashboard = ({ evaluationData, onBack }) => {
   const [expandedTestCase, setExpandedTestCase] = useState(null)
   
-  // Use real evaluation data if available, otherwise fall back to mock data
-  const displayData = hasEvaluationData(evaluationData) 
-    ? transformEvaluationData(evaluationData) 
-    : EVALUATION_DATA;
+const displayData = useMemo(() => {
+  if (hasEvaluationData(evaluationData)) {
+    return transformEvaluationData(evaluationData)
+  }
+  return EVALUATION_DATA
+}, [evaluationData])
+
   
   const isRealData = hasEvaluationData(evaluationData);
 
@@ -394,20 +397,50 @@ const EvaluationDashboard = ({ evaluationData, onBack }) => {
           <div className="bg-dark-panel rounded-xl p-6 border border-gray-800/50">
             <h2 className="text-xl font-semibold text-white mb-4">CATEGORY SCORES</h2>
             <div className="space-y-4">
-              {displayData.categoryScores.map((category) => (
-                <div key={category.name}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-300 text-sm">{category.name}</span>
-                    <span className="text-white font-semibold">{category.score}%</span>
-                  </div>
-                  <div className="h-2 bg-dark-input rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-500"
-                      style={{ width: `${category.score}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
+           {displayData.categoryScores.map((category) => (
+  <div
+    key={category.name}
+    className="flex items-center gap-4"
+  >
+    {/* Label */}
+    <div className="w-40 text-gray-300 text-sm">
+      {category.name}
+    </div>
+
+    {/* Bar OR Pill */}
+    <div className="flex-1">
+      {category.type === 'pill' ? (
+        <span
+          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+            ${
+              category.level === 'good'
+                ? 'bg-green-400/10 text-green-400 border border-green-400/40'
+                : category.level === 'ok'
+                ? 'bg-yellow-400/10 text-yellow-400 border border-yellow-400/40'
+                : 'bg-red-400/10 text-red-400 border border-red-400/40'
+            }`}
+        >
+          {category.value}
+        </span>
+      ) : (
+        <div className="h-2 bg-dark-input rounded-full overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-500"
+            style={{ width: `${category.score}%` }}
+          />
+        </div>
+      )}
+    </div>
+
+    {/* Percentage (only for bars) */}
+    {category.type !== 'pill' && (
+      <div className="w-12 text-right text-white font-semibold text-sm">
+        {category.score}%
+      </div>
+    )}
+  </div>
+))}
+
             </div>
           </div>
 

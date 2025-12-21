@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, memo } from "react"
 
 const REGIONS = [
   { label: "India", value: "apac_india" },
@@ -86,4 +86,4 @@ const RegionDropdown = ({ value, onChange, customValue, onCustomChange }) => {
   )
 }
 
-export default RegionDropdown
+export default memo(RegionDropdown)

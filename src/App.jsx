@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import DashboardLoader from "./components/DashboardLoader";
-import DashboardLayout from "./components/DashboardLayout";
-import Dashboard from "./components/Dashboard";
-import PlatformSelection from "./components/PlatformSelection";
-import ConnectionForm from "./components/ConnectionForm";
-import ConnectionLoading from "./components/ConnectionLoading";
-import WorkspaceDashboard from "./components/WorkspaceDashboard";
-import AuthScreen from "./components/AuthScreen";
-import { extractAgent, flowGenerationMermaid } from "./api";
+import DashboardLoader from "./components/common/Loader/DashboardLoader";
+import DashboardLayout from "./components/layout/DashboardLayout/DashboardLayout";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import PlatformSelection from "./components/features/connection/PlatformSelection";
+import ConnectionForm from "./components/features/connection/ConnectionForm";
+import ConnectionLoading from "./components/features/connection/ConnectionLoading";
+import WorkspaceDashboard from "./pages/Workspace/WorkspaceDashboard";
+import AuthScreen from "./pages/Connection/AuthScreen";
+import { extractAgent } from "./api";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'))
@@ -33,6 +33,14 @@ function App() {
   const [showEvaluationDashboard, setShowEvaluationDashboard] = useState(false);
   const [extractedConfig, setExtractedConfig] = useState(null);
   const [setupResult, setSetupResult] = useState(null);
+
+  const [particles] = useState(() => [...Array(20)].map((_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    top: `${Math.random() * 100}%`,
+    animationDuration: `${2 + Math.random() * 2}s`,
+    animationDelay: `${Math.random() * 2}s`
+  })))
 
   console.log("App state:", {
     showConnectionLoading,
@@ -166,17 +174,15 @@ function App() {
       <div className="min-h-screen bg-gray-950 flex items-center justify-center relative overflow-hidden">
         {/* Animated background particles */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
+          {particles.map((p) => (
             <div
-              key={i}
+              key={p.id}
               className="absolute w-1 h-1 bg-teal-400 rounded-full opacity-20"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `pulse ${
-                  2 + Math.random() * 2
-                }s ease-in-out infinite`,
-                animationDelay: `${Math.random() * 2}s`,
+                left: p.left,
+                top: p.top,
+                animation: `pulse ${p.animationDuration} ease-in-out infinite`,
+                animationDelay: p.animationDelay,
               }}
             />
           ))}

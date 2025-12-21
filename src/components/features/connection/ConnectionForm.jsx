@@ -1,6 +1,4 @@
-import { useState,useEffect } from 'react'
-import DashboardOverview from './DashboardOverview'
-import { extractAgent } from '../api'
+import { useState } from 'react'
 
 const ConnectionForm = ({ platform, onConnect, isConnecting, onBack }) => {
   const [apiKey, setApiKey] = useState('')

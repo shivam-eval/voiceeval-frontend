@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { getSimulationStatus } from '../api'
-import transcript from '../data/transcript_steps.json'
+import { getSimulationStatus } from '../../../api'
+import { TRANSCRIPT_STEPS_DUMMY as transcript } from '../../../config/dummy'
 
 const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
   // backend state

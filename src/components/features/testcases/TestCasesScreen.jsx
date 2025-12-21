@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react'
-import { runSimulation } from '../api'
+import { useState, useMemo } from 'react'
 
 // Call flow script for all test cases
 
@@ -101,14 +100,7 @@ const CALL_FLOW_SCRIPT = `### Call Flow
 
 ---`
 
-const EXPECTED_RESPONSE = `The agent should successfully:
-1. Greet the customer warmly and confirm they have time
-2. Verify vehicle details conversationally
-3. Gather key information (mileage, service history, satisfaction, future plans)
-4. Present the appropriate offer based on customer responses
-5. Handle any questions or concerns
-6. Schedule an appointment and capture email
-7. End the call on a positive note`
+
 
 // Default test cases (fallback if no testSuite provided)
 const DEFAULT_TESTS_CASES = [
@@ -265,9 +257,7 @@ const DEFAULT_TESTS_CASES = [
   }
 ]
 
-const DEFAULT_TEST_CASES = [
-  // your default cases — keep the array you already had, but add `script: CALL_FLOW_SCRIPT`
-].map((c) => ({ ...c, script: CALL_FLOW_SCRIPT }))
+const DEFAULT_TEST_CASES = DEFAULT_TESTS_CASES.map((c) => ({ ...c, script: CALL_FLOW_SCRIPT }))
 
 // Helper: build a readable script from the API 'steps' array.
 // The exact step shape may vary; this function attempts to extract common fields.
@@ -318,9 +308,6 @@ function buildScriptFromSteps(steps = [], persona = {}) {
 
 const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
   const [expandedScripts, setExpandedScripts] = useState({}) // { [id]: boolean }
-  const [testCases, setTestCases] = useState(DEFAULT_TEST_CASES)
-  
-
 
   const runSimulationNow = () => {
   if (!testSuitePath) {
@@ -334,16 +321,50 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
 
 
 
-  useEffect(() => {
+  const getIconForPathType = (pathType) => {
+    if (!pathType) return '🧪'
+    const icons = {
+      edge_case: '⚠️',
+      happy_path: '✅',
+      error: '❌',
+      boundary: '🔄'
+    }
+    return icons[pathType] || '🧪'
+  }
+
+  const generatePersonaFromSteps = (path = {}) => {
+  const p = path?.assigned_personas?.[0]
+
+  // Backend persona exists (primary path)
+  if (p) {
+    return {
+      gender: p.gender ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1) : 'Unknown',
+      name: p.name || 'Persona',
+
+      speakingRate: '1.0x', // Default, backend doesn't give rate yet
+      mood: p.traits ? p.traits.join(', ') : 'Neutral'
+    }
+  }
+
+  // Fallback if no backend persona (e.g. simple flow)
+  return {
+    gender: 'Female',
+    name: 'Sarah',
+    speakingRate: '1.0x',
+    mood: 'Professional'
+  }
+}
+
+  const testCases = useMemo(() => {
     if (testSuite?.test_paths && Array.isArray(testSuite.test_paths)) {
-      const transformedCases = testSuite.test_paths.map((path, index) => {
+      return testSuite.test_paths.map((path, index) => {
         const id = index + 1
         const title = path.name || `Test Case ${id}`
         const pathType = path.path_type
         const icon = getIconForPathType(pathType)
         const steps = path.steps || []
         const script = buildScriptFromSteps(steps, path)
-        const persona = generatePersonaFromSteps(steps, path)
+        const persona = generatePersonaFromSteps(path)
 
         return {
           id,
@@ -359,87 +380,11 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
           persona
         }
       })
-
-      // initialize expandedScripts to false for each id
-      const expandedInit = {}
-      transformedCases.forEach((c) => { expandedInit[c.id] = false })
-
-      setTestCases(transformedCases)
-      setExpandedScripts(expandedInit)
     } else {
-      // no testSuite: ensure defaults have scripts and collapse
-      const defaultsWithScript = DEFAULT_TEST_CASES.map((c, idx) => ({ ...c, id: idx + 1 }))
-      const expandedInit = {}
-      defaultsWithScript.forEach((c) => { expandedInit[c.id] = false })
-      setTestCases(defaultsWithScript)
-      setExpandedScripts(expandedInit)
+      // no testSuite: ensure defaults have scripts
+      return DEFAULT_TEST_CASES.map((c, idx) => ({ ...c, id: idx + 1 }))
     }
   }, [testSuite])
-
-  const getIconForPathType = (pathType) => {
-    if (!pathType) return '🧪'
-    const icons = {
-      edge_case: '⚠️',
-      happy_path: '✅',
-      error: '❌',
-      boundary: '🔄'
-    }
-    return icons[pathType] || '🧪'
-  }
-
-  const generatePersonaFromSteps = (steps = [], path = {}) => {
-  const p = path?.assigned_personas?.[0]
-
-  // Backend persona exists (primary path)
-  if (p) {
-    return {
-      gender: p.gender ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1) : 'Unknown',
-      name: p.name || 'Persona',
-
-      speakingRate:
-        p.behavior_traits?.verbosity === 'verbose'
-          ? 'Slow (100–110 WPM)'
-          : p.behavior_traits?.verbosity === 'balanced'
-          ? 'Moderate (120–130 WPM)'
-          : 'Fast (150–160 WPM)',
-
-      interruptionTendency:
-        p.behavior_traits?.patience_level === 'high'
-          ? 'Low (waits for pauses)'
-          : p.behavior_traits?.patience_level === 'medium'
-          ? 'Medium (occasional interruptions)'
-          : 'High (frequent interruptions)',
-
-      dialect: `${p.native_language?.toUpperCase() || 'Unknown'} (${p.region || 'Global'})`,
-
-      personality: p.description || 'Polite and cooperative',
-
-      backgroundEnvironment:
-        p.occupation === 'sales_consultant'
-          ? 'Office environment'
-          : 'Quiet environment',
-
-      vehicle: path?.metadata?.vehicle || 'N/A',
-
-      currentSituation: path.goal || 'Test scenario'
-    }
-  }
-
-  // 🟡 Fallback (your existing logic untouched)
-  const firstUser = steps.find(s => s.user_input || s.utterance || s.text)
-
-  return {
-    gender: 'Dynamic',
-    name: 'Test Persona',
-    speakingRate: 'Varies',
-    interruptionTendency: 'Scenario-based',
-    dialect: 'Standard',
-    personality: path.description || 'Test-driven behavior',
-    backgroundEnvironment: 'Simulated',
-    vehicle: path?.metadata?.vehicle || 'N/A',
-    currentSituation: firstUser?.user_input || path.goal || 'Testing agent behavior'
-  }
-}
 
   const toggleScript = (testCaseId) => {
     setExpandedScripts(prev => ({ ...prev, [testCaseId]: !prev[testCaseId] }))

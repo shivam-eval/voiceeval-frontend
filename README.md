@@ -50,17 +50,34 @@ The built files will be in the `dist` directory.
 
 ```
 voiceeval-frontend/
+├── public/
+│   └── assets/                    # Static assets for build (icons, SVGs)
 ├── src/
+│   ├── api/                       # API integration services
+│   │   ├── clients/               # HTTP clients (Axios)
+│   │   └── services/              # Domain-specific services
 │   ├── components/
-│   │   ├── DashboardLoader.jsx    # Dashboard loading animation
-│   │   └── ConnectionForm.jsx     # API key input form
-│   ├── App.jsx                    # Main app component
-│   ├── main.jsx                   # React entry point
-│   └── index.css                  # Global styles
-├── index.html                     # HTML entry point
-├── package.json                   # Dependencies
-├── vite.config.js                # Vite configuration
-└── tailwind.config.js            # Tailwind configuration
+│   │   ├── common/                # Reusable UI components
+│   │   ├── features/              # Feature-specific components
+│   │   └── layout/                # Layout components
+│   ├── config/                    # Configuration files
+│   ├── data/                      # Static JSON and datasets
+│   ├── hooks/                     # Custom React hooks
+│   ├── pages/                     # Page components
+│   │   ├── Connection/            # Connection & Auth pages
+│   │   ├── Dashboard/             # Main dashboard
+│   │   ├── Evaluation/            # Evaluation metrics
+│   │   └── Workspace/             # Workspace view
+│   ├── styles/                    # Global styles (Tailwind CSS)
+│   ├── utils/                     # Utility functions
+│   ├── App.jsx                    # Main application component
+│   └── main.jsx                   # Entry point
+├── index.html
+├── package.json
+├── eslint.config.js
+├── postcss.config.js
+├── vite.config.js
+└── tailwind.config.js
 ```
 
 ## Features in Detail

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 
 const DashboardLoader = () => {
   const [progress, setProgress] = useState(0)
-  const [showText, setShowText] = useState(false)
 
   useEffect(() => {
     // Animate progress bar
@@ -15,9 +14,6 @@ const DashboardLoader = () => {
         return prev + 2
       })
     }, 30)
-
-    // Show text after a short delay
-    setTimeout(() => setShowText(true), 500)
 
     return () => clearInterval(progressInterval)
   }, [])

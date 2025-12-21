@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
-import { testGeneration } from '../api'
+import { testGeneration } from '../../../api'
 
 const TestCasesGenerationLoading = ({ flowData, onComplete, onError,region }) => {
   const [progress, setProgress] = useState(0)
   const [status, setStatus] = useState('Initializing...')
   const [error, setError] = useState(null)
-  const [filepath,setFilePath] = useState("");
 
   useEffect(() => {
     let isMounted = true
@@ -53,7 +52,6 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError,region }) =>
         
         console.log('📥 Test generation response:', res)
         setProgress(60)
-        setFilePath(res.data.file_name)
         // Stage 4: Processing response (60-80%)
         setStatus('Generating test scenarios...')
         await new Promise(resolve => setTimeout(resolve, 300))

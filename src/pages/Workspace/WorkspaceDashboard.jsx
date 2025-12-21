@@ -1,22 +1,19 @@
-import { useState, useEffect, useRef } from "react"
-import SystemPromptViewer from "./SystemPromptViewer"
-import CanonicalFlowDiagram from "./CanonicalFlowDiagram"
-import TestCasesGenerationLoading from "./TestCasesGenerationLoading"
-import TestCasesScreen from "./TestCasesScreen"
-import TestExecutionLoading from "./TestExecutionLoading"
-import EvaluationDashboard from "./EvaluationDashboard"
-import RegionDropdown from "./RegionDropDown"
-import QueueStatsWidget from "./QueueStatsWidget"
-import { runSimulation,evaluateTranscript } from "../api"
-import transcript from '../data/transcript_steps.json'
+import { useState, useEffect, useRef, useCallback } from "react"
+import SystemPromptViewer from "../../components/features/workspace/SystemPromptViewer"
+import CanonicalFlowDiagram from "../../components/features/workspace/CanonicalFlowDiagram"
+import TestCasesGenerationLoading from "../../components/features/testcases/TestCasesGenerationLoading"
+import TestCasesScreen from "../../components/features/testcases/TestCasesScreen"
+import TestExecutionLoading from "../../components/features/evaluation/TestExecutionLoading"
+import EvaluationDashboard from "../Evaluation/EvaluationDashboard"
+import RegionDropdown from "../../components/features/connection/RegionDropDown"
+import QueueStatsWidget from "../../components/features/dashboard/QueueStatsWidget"
+import { runSimulation,evaluateTranscript } from "../../api"
+import { TRANSCRIPT_STEPS_DUMMY as transcript } from '../../config/dummy'
 
 const WorkspaceDashboard = ({
   onEvaluationDashboardChange,
   systemConfig: {
-    agentId,
-    config,
     systemPrompt,
-    tools,
     flowData: preloadedFlowData,
     mermaid: preloadedMermaid
   }
@@ -43,7 +40,6 @@ const WorkspaceDashboard = ({
   // Data states
   const [flowData, setFlowData] = useState(preloadedFlowData || null)
   const [testSuite, setTestSuite] = useState(null)
-  const [flowError, setFlowError] = useState(null)
   const [mermaidDiagram, setMermaidDiagram] = useState(preloadedMermaid || null)
 
   // Use preloaded data only
@@ -53,7 +49,7 @@ const WorkspaceDashboard = ({
   }, [preloadedFlowData, preloadedMermaid])
 
   // Handle system prompt toggle with scroll
-  const handleToggleSystemPrompt = () => {
+  const handleToggleSystemPrompt = useCallback(() => {
     setShowSystemPrompt(prev => {
       const newState = !prev
       if (newState) {
@@ -66,10 +62,10 @@ const WorkspaceDashboard = ({
       }
       return newState
     })
-  }
+  }, [])
 
   // Handle canonical flow toggle with scroll
-  const handleToggleCanonicalFlow = () => {
+  const handleToggleCanonicalFlow = useCallback(() => {
     setShowCanonicalFlow(prev => {
       const newState = !prev
       if (newState) {
@@ -82,30 +78,30 @@ const WorkspaceDashboard = ({
       }
       return newState
     })
-  }
+  }, [])
 
   // Generate Test Suite
-  const handleGenerateTestCases = () => {
+  const handleGenerateTestCases = useCallback(() => {
     if (!flowData) {
       alert("Flow data not available.")
       return
     }
     setShowTestCasesGeneration(true)
-  }
+  }, [flowData])
 
-  const handleTestGenerationComplete = (generatedData) => {
+  const handleTestGenerationComplete = useCallback((generatedData) => {
      setTestSuite(generatedData)
   setTestSuitePath(generatedData.file_name) 
     setShowTestCasesGeneration(false)
     setShowTestCasesScreen(true)
-  }
+  }, [])
 
-  const handleTestGenerationError = (error) => {
+  const handleTestGenerationError = useCallback((error) => {
     alert("Failed to generate test cases: " + error)
     setShowTestCasesGeneration(false)
-  }
+  }, [])
 
- const handleRunTests = async (testSuitePath) => {
+ const handleRunTests = useCallback(async (testSuitePath) => {
   try {
     // 1️⃣ Hit API to start simulation first
     const response = await runSimulation({
@@ -146,10 +142,10 @@ const WorkspaceDashboard = ({
     setShowTestLoading(false)
     setShowTestCasesScreen(true)
   }
-}
+}, [])
 
 
- const handleTestComplete = async () => {
+ const handleTestComplete = useCallback(async () => {
   try {
     // 🔥 SEND DUMMY TRANSCRIPT TO BACKEND FOR REAL EVALUATION
     const evalResponse = await evaluateTranscript({
@@ -177,28 +173,32 @@ const WorkspaceDashboard = ({
     setShowTestLoading(false)
     setShowTestCasesScreen(true)
   }
-}
+}, [onEvaluationDashboardChange])
 
 
 
-  const handleTestError = (error) => {
+  const handleTestError = useCallback((error) => {
     console.error("Test execution error:", error)
     alert(error?.message || "Test execution failed")
     
     // Return to test cases screen
     setShowTestLoading(false)
     setShowTestCasesScreen(true)
-  }
+  }, [])
 
-  const handleBackToTestCases = () => {
+  const handleBackToTestCases = useCallback(() => {
     setShowEvaluationDashboard(false)
     setShowTestCasesScreen(true)
     onEvaluationDashboardChange?.(false)
-  }
+  }, [onEvaluationDashboardChange])
 
-  const handleBackToWorkspace = () => {
+  const handleBackToWorkspace = useCallback(() => {
     setShowTestCasesScreen(false)
-  }
+  }, [])
+
+  const handleRegionChange = useCallback((value) => {
+    setSelectedRegion(value)
+  }, [])
 
   // Screens
   if (showTestCasesGeneration) {
@@ -351,10 +351,7 @@ const WorkspaceDashboard = ({
               </p>
               <RegionDropdown
                 value={selectedRegion}
-                onChange={(value) => {
-                  setSelectedRegion(value)
-                }}
-           
+                onChange={handleRegionChange}
               />
             </div>
 
@@ -373,11 +370,6 @@ const WorkspaceDashboard = ({
             >
               {flowData ? "Generate Test Cases" : "Loading Flow Data..."}
             </button>
-            {flowError && (
-              <p className="text-red-400 text-sm mt-2 text-center">
-                {flowError}
-              </p>
-            )}
           </div>
 
         </div>

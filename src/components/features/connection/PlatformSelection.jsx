@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import DashboardOverview from './DashboardOverview'
+
+
 
 const platforms = [
   { id: 'vapi', name: 'Vapi', color: 'from-blue-500 to-cyan-500' },
@@ -10,8 +10,6 @@ const platforms = [
 ]
 
 const PlatformSelection = ({ onSelectPlatform }) => {
-  const [hoveredPlatform, setHoveredPlatform] = useState(null)
-
   return (
     <div className="w-full max-w-screen-2xl mx-auto">
       <div className="space-y-8">
@@ -69,8 +67,6 @@ const PlatformSelection = ({ onSelectPlatform }) => {
                 <button
                   key={platform.id}
                   onClick={() => onSelectPlatform(platform.id)}
-                  onMouseEnter={() => setHoveredPlatform(platform.id)}
-                  onMouseLeave={() => setHoveredPlatform(null)}
                   className="group relative p-6 bg-dark-input border border-gray-700 hover:border-teal-400/50 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-teal-400/10"
                   style={{
                     animationDelay: `${index * 0.1}s`,
@@ -109,7 +105,7 @@ const PlatformSelection = ({ onSelectPlatform }) => {
             {/* Footer */}
             <div className="text-center pt-4 border-t border-gray-800">
               <p className="text-gray-500 text-sm">
-                Don't see your platform?{' '}
+                Don&apos;t see your platform?{' '}
                 <a href="#" className="text-teal-400 hover:text-teal-300 transition-colors">
                   Contact us
                 </a>

@@ -1,5 +1,3 @@
-import { useState } from 'react'
-
 const Dashboard = () => {
   // Sample data
   const kpiData = {

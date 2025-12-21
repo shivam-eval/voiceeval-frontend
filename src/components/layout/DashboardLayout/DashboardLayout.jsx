@@ -1,5 +1,5 @@
 import { useState } from "react";
-import DashboardOverview from "./DashboardOverview";
+import DashboardOverview from "../../features/dashboard/DashboardOverview";
 
 const DashboardLayout = ({
   children,
@@ -8,7 +8,7 @@ const DashboardLayout = ({
   hideRightPanel,
   onLogout,
 }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen] = useState(true);
 
   const navigationItems = [
     {

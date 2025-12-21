@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, memo } from "react";
 import mermaid from "mermaid";
 
 mermaid.initialize({
@@ -22,7 +22,6 @@ mermaid.initialize({
 
 const CanonicalFlowDiagram = ({ mermaidCode }) => {
   const ref = useRef(null);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (!mermaidCode || !ref.current) {
@@ -36,7 +35,6 @@ const CanonicalFlowDiagram = ({ mermaidCode }) => {
         
         // Clear previous content
         ref.current.innerHTML = "";
-        setError(null);
 
         // Generate unique ID for this render
         const id = `flowchart_${Date.now()}`;
@@ -50,7 +48,6 @@ const CanonicalFlowDiagram = ({ mermaidCode }) => {
         }
       } catch (err) {
         console.error("Mermaid rendering error:", err);
-        setError(err.message || "Failed to render diagram");
         
         // Display error in the component
         if (ref.current) {
@@ -79,4 +76,4 @@ const CanonicalFlowDiagram = ({ mermaidCode }) => {
   );
 };
 
-export default CanonicalFlowDiagram;
+export default memo(CanonicalFlowDiagram);

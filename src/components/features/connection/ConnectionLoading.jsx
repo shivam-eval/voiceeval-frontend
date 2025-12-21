@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { flowGeneration, flowGenerationMermaid } from '../api'
+import { flowGeneration, flowGenerationMermaid } from '../../../api'
 
 const loadingSteps = [
   { id: 1, text: 'Extracting System Prompts', completed: false },
@@ -11,7 +11,6 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState(null)
-  const [waitingForConfig, setWaitingForConfig] = useState(!extractedConfig)
 
   useEffect(() => {
     let mounted = true
@@ -21,12 +20,7 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
 
     if (!extractedConfig) {
       console.log('⏳ Waiting for extractedConfig...')
-      setWaitingForConfig(true)
-      setProgress(0)
-      setCurrentStep(0)
       return
-    } else {
-      setWaitingForConfig(false)
     }
 
     const runSetup = async () => {
@@ -182,7 +176,7 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
               Setting up your workspace
             </h3>
             <p className="text-gray-400 text-base">
-              {waitingForConfig ? 'Waiting for agent configuration...' : 'Processing your Voice Agent configuration'}
+              {!extractedConfig ? 'Waiting for agent configuration...' : 'Processing your Voice Agent configuration'}
             </p>
           </div>
 
@@ -190,7 +184,6 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
             {loadingSteps.map((step, index) => {
               const isActive = index === currentStep
               const isCompleted = index < currentStep
-              const isPending = index > currentStep
 
               return (
                 <div

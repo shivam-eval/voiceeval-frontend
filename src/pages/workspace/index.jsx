@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from "react"
 import SystemPromptViewer from "./SystemPromptViewer"
 import CanonicalFlowDiagram from "./CanonicalFlowDiagram"
-import TestCasesGenerationLoading from "./TestCasesGenerationLoading"
-import TestCasesScreen from "./TestCasesScreen"
-import TestExecutionLoading from "./TestExecutionLoading"
-import EvaluationDashboard from "./EvaluationDashboard"
-import RegionDropdown from "./RegionDropDown"
+import TestCasesGenerationLoading from "../../components//TestCasesGenerationLoading"
+import TestCasesScreen from "../../pages/testCases/TestCasesScreen"
+import TestExecutionLoading from "../../components/TestExecutionLoading"
+import EvaluationDashboard from "../../pages/EvaluationDashboard"
 import QueueStatsWidget from "./QueueStatsWidget"
-import { runSimulation,evaluateTranscript } from "../api"
-import transcript from '../data/transcript_steps.json'
+import { runSimulation,evaluateTranscript } from "../../api"
+import transcript from '../../data/transcript_steps.json'
+import RegionDropDown from "./RegionDropDown"
+
 
 const WorkspaceDashboard = ({
   onEvaluationDashboardChange,
@@ -342,21 +343,7 @@ const WorkspaceDashboard = ({
             </div>
 
             {/* Region Selection */}
-            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-              <h4 className="text-lg font-semibold text-white mb-2">
-                Target Region
-              </h4>
-              <p className="text-gray-400 text-sm mb-4">
-                Select the primary region for evaluation
-              </p>
-              <RegionDropdown
-                value={selectedRegion}
-                onChange={(value) => {
-                  setSelectedRegion(value)
-                }}
-           
-              />
-            </div>
+         <RegionDropDown/>
 
             {/* Queue Stats */}
             <QueueStatsWidget />

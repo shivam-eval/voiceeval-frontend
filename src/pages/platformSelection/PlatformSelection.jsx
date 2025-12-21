@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import DashboardOverview from './DashboardOverview'
+import DashboardOverview from '../../components/DashboardOverview'
 
 const platforms = [
   { id: 'vapi', name: 'Vapi', color: 'from-blue-500 to-cyan-500' },

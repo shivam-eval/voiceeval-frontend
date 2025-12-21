@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { loginUser, signupUser } from "../api";
+import { loginUser, signupUser } from "../../api";
 
 const AuthScreen = ({ onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);

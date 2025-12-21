@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
 import DashboardLoader from "./components/DashboardLoader";
 import DashboardLayout from "./components/DashboardLayout";
-import Dashboard from "./components/Dashboard";
-import PlatformSelection from "./components/PlatformSelection";
-import ConnectionForm from "./components/ConnectionForm";
+import Dashboard from "./pages/dasbhboard/index"
+import PlatformSelection from "./pages/platformSelection/PlatformSelection";
+import ConnectionForm from "./pages/connectAgent/index"
 import ConnectionLoading from "./components/ConnectionLoading";
-import WorkspaceDashboard from "./components/WorkspaceDashboard";
-import AuthScreen from "./components/AuthScreen";
+import WorkspaceDashboard from "./pages/workspace/index"
+import AuthScreen from "./pages/auth/AuthScreen";
 import { extractAgent, flowGenerationMermaid } from "./api";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'))
+  const [isAuthenticated, setIsAuthenticated] = useState(true)
   
   const handleAuthSuccess = () => setIsAuthenticated(true)
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { runSimulation } from '../api'
+import { runSimulation } from '../../api'
 
 // Call flow script for all test cases
 

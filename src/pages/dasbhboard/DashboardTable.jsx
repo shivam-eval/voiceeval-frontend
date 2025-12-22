@@ -1,4 +1,4 @@
-import GenericTable from "../../components/TestCaseTable";
+import GenericTable from "../../components/Table";
   const testResults = [
     { id: 'TC-001', scenario: 'Happy Customer - Service Package', score: 94, duration: '3:12', outcome: 'Appointment', status: 'success' },
     { id: 'TC-002', scenario: 'Upgrade Seeker - Trade-In', score: 91, duration: '2:38', outcome: 'Appointment', status: 'success' },

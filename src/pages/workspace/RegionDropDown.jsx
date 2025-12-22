@@ -1,4 +1,4 @@
-
+import { useState } from "react";
 const REGIONS = [
   { label: "India", value: "apac_india" },
   { label: "Europe (EU)", value: "eu" },
@@ -7,7 +7,7 @@ const REGIONS = [
 ]
 
 import GenericDropdown from "../../components/DropDown";
-const RegionDropDown = () => {
+const RegionDropDown = ({selectedRegion,setSelectedRegion}) => {
     return ( 
 
            <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">

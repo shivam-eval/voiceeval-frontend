@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import EvaluationTimeline from '../components/EvaluationTimeline'
-import { transformEvaluationData, hasEvaluationData } from '../utils/evaluationTransform'
+import EvaluationTimeline from '../../components/EvaluationTimeline'
+import { transformEvaluationData, hasEvaluationData } from '../../utils/evaluationTransform'
 
 // Evaluation data based on the provided metrics
 const EVALUATION_DATA = {

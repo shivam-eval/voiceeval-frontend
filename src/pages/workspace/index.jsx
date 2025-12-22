@@ -4,7 +4,7 @@ import CanonicalFlowDiagram from "./CanonicalFlowDiagram"
 import TestCasesGenerationLoading from "../../components//TestCasesGenerationLoading"
 import TestCasesScreen from "../../pages/testCases/TestCasesScreen"
 import TestExecutionLoading from "../../components/TestExecutionLoading"
-import EvaluationDashboard from "../../pages/EvaluationDashboard"
+import EvaluationDashboard from "../../pages/evaluation/index"
 import QueueStatsWidget from "./QueueStatsWidget"
 import { runSimulation,evaluateTranscript } from "../../api"
 import transcript from '../../data/transcript_steps.json'
@@ -343,7 +343,10 @@ const WorkspaceDashboard = ({
             </div>
 
             {/* Region Selection */}
-         <RegionDropDown/>
+         <RegionDropDown
+          selectedRegion={selectedRegion}
+          setSelectedRegion={setSelectedRegion}
+         />
 
             {/* Queue Stats */}
             <QueueStatsWidget />

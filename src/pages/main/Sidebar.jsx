@@ -1,16 +1,11 @@
-import { useState } from "react";
-import DashboardOverview from "./DashboardOverview";
-
-const DashboardLayout = ({
-  children,
+const Sidebar = ({
+  isSidebarOpen,
+  setIsSidebarOpen,
   activeView,
   onNavigate,
-  hideRightPanel,
   onLogout,
 }) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-  const navigationItems = [
+const navigationItems = [
     {
       id: "dashboard",
       label: "Dashboard",
@@ -156,16 +151,14 @@ const DashboardLayout = ({
   ];
   const userEmail = localStorage.getItem("userEmail") || "user@voiceeval.com";
   const userInitial = userEmail.charAt(0).toUpperCase();
+
   return (
-    <div className="min-h-screen bg-dark-bg flex">
-      {/* Side Panel - Fixed */}
-      <div
-        className={`${
-          isSidebarOpen ? "w-64" : "w-20"
-        } bg-dark-panel border-r border-gray-800/50 transition-all duration-300 flex flex-col fixed left-0 top-0 bottom-0 z-10`}
-      >
-        {/* Logo Section */}
-        <div className="p-6 border-b border-gray-800/50 flex-shrink-0">
+    <div
+      className={`${isSidebarOpen ? "w-64" : "w-20"}
+      bg-dark-panel border-r border-gray-800/50 transition-all duration-300
+      flex flex-col fixed left-0 top-0 bottom-0 z-10`}
+    >
+     <div className="p-6 border-b border-gray-800/50 flex-shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-lg bg-teal-400/20 flex items-center justify-center">
               <span className="text-2xl font-bold text-teal-400">V</span>
@@ -271,25 +264,8 @@ const DashboardLayout = ({
           </div>
         </div>
       </div>
-
-      {/* Main Content Area */}
-      <div
-        className={`flex-1 flex overflow-hidden ${
-          isSidebarOpen ? "ml-64" : "ml-20"
-        } transition-all duration-300`}
-      >
-        {/* Main Content */}
-        <div className="flex-1 overflow-y-auto">{children}</div>
-
-        {/* Right Sidebar - Dashboard Overview (only shown when not on landing dashboard and not hidden) */}
-        {activeView !== "dashboard" && !hideRightPanel && (
-          <div className="w-80 bg-dark-bg border-l border-gray-800/50 p-6 overflow-y-auto">
-            <DashboardOverview />
-          </div>
-        )}
-      </div>
-    </div>
+    
   );
 };
 
-export default DashboardLayout;
+export default Sidebar;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import DashboardLoader from "./components/DashboardLoader";
-import DashboardLayout from "./components/DashboardLayout";
+import DashboardLayout from "./pages/main/index"
 import Dashboard from "./pages/dasbhboard/index"
 import PlatformSelection from "./pages/platformSelection/PlatformSelection";
 import ConnectionForm from "./pages/connectAgent/index"

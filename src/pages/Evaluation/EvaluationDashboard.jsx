@@ -349,8 +349,7 @@ const EvaluationDashboard = ({ evaluationData, onBack }) => {
                               testCase.score >= 90 ? 'bg-green-400' :
                               testCase.score >= 80 ? 'bg-yellow-400' :
                               testCase.score >= 70 ? 'bg-orange-400' : 'bg-red-400'
-                            }`}
-                            style={{ width: `${testCase.score}%` }}
+                            } w-pct-${Math.max(0, Math.min(100, Math.round(testCase.score)))}`}
                           />
                         </div>
                       </div>
@@ -402,8 +401,7 @@ const EvaluationDashboard = ({ evaluationData, onBack }) => {
                   </div>
                   <div className="h-2 bg-dark-input rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-500"
-                      style={{ width: `${category.score}%` }}
+                      className={`h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-500 w-pct-${Math.max(0, Math.min(100, Math.round(category.score)))}`}
                     />
                   </div>
                 </div>
@@ -435,14 +433,14 @@ const EvaluationDashboard = ({ evaluationData, onBack }) => {
                 {/* Grid Lines */}
                 <div className="absolute inset-0 flex flex-col justify-between">
                   {[0, 1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="border-t border-gray-700/50" style={{ height: `${100 / 5}%` }} />
+                    <div key={i} className="border-t border-gray-700/50 h-20p" />
                   ))}
                 </div>
 
                 {/* Bars and Line Chart */}
                 <div className="relative h-full flex items-end justify-between gap-1">
                   {/* SVG for line chart */}
-                  <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ paddingBottom: '8px' }} viewBox="0 0 100 100" preserveAspectRatio="none">
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none pb-8px" viewBox="0 0 100 100" preserveAspectRatio="none">
                     <defs>
                       <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                         <stop offset="0%" stopColor="#2dd4bf" stopOpacity="0.3" />
@@ -495,16 +493,13 @@ const EvaluationDashboard = ({ evaluationData, onBack }) => {
                       <div className="relative w-full flex flex-col items-center justify-end">
                         {/* Bar */}
                         <div
-                          className="w-full rounded-t transition-all duration-300 hover:opacity-80 cursor-pointer relative"
-                          style={{ 
-                            height: `${(value / 10) * 100}%`,
-                            minHeight: '2px',
-                            background: value >= 8 
-                              ? 'linear-gradient(to top, #34d399, #2dd4bf)' 
+                          className={`w-full rounded-t transition-all duration-300 hover:opacity-80 cursor-pointer relative min-h-2px ${
+                            value >= 8 
+                              ? 'bg-gradient-to-t from-green-400 to-teal-400' 
                               : value >= 6 
-                              ? 'linear-gradient(to top, #fbbf24, #f59e0b)'
-                              : 'linear-gradient(to top, #f87171, #ef4444)'
-                          }}
+                              ? 'bg-gradient-to-t from-yellow-400 to-amber-500'
+                              : 'bg-gradient-to-t from-red-400 to-rose-500'
+                          } h-pct-${Math.max(0, Math.min(100, Math.round((value / 10) * 100)))}`}
                         >
                           {/* Bar value on hover */}
                           <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-gray-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap pointer-events-none z-10">

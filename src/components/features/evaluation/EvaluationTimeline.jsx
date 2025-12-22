@@ -275,8 +275,7 @@ const EvaluationTimeline = ({ testCaseData }) => {
             return (
               <div
                 key={issue.id}
-                className="absolute top-0"
-                style={{ left: `${position}%`, transform: 'translateX(-50%)' }}
+                className={`absolute top-0 left-pct-${Math.max(0, Math.min(100, Math.round(position)))} -translate-x-1/2`}
                 data-marker-id={issue.id}
               >
                 <div
@@ -297,24 +296,18 @@ const EvaluationTimeline = ({ testCaseData }) => {
         </div>
         
         {/* Popups rendered outside the overflow-hidden container */}
-        {data.issues.map((issue) => {
-          const position = (issue.time / data.duration) * 100
-          const isActive = activeMarker === issue.id
-          
-          if (!isActive) return null
-          
-          return (
-            <div
-              key={`popup-${issue.id}`}
-              className="marker-popup absolute bg-gray-800 shadow-2xl p-4 w-80 rounded-xl border border-gray-600 z-50"
-              style={{ 
-                left: `${position}%`,
-                bottom: '100%',
-                marginBottom: '12px',
-                animation: 'popupFadeIn 0.2s ease-out forwards'
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
+          {data.issues.map((issue) => {
+            const position = (issue.time / data.duration) * 100
+            const isActive = activeMarker === issue.id
+            
+            if (!isActive) return null
+            
+            return (
+              <div
+                key={`popup-${issue.id}`}
+                className={`marker-popup absolute bg-gray-800 shadow-2xl p-4 w-80 rounded-xl border border-gray-600 z-50 left-pct-${Math.max(0, Math.min(100, Math.round(position)))} -translate-x-1/2`}
+                onClick={(e) => e.stopPropagation()}
+              >
               <div className="flex justify-between items-start mb-2">
                 <div className="flex-1">
                   <p className="font-semibold text-white text-sm">{issue.label}</p>

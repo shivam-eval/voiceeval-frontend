@@ -32,3 +32,8 @@ export const layoutGraph = (nodes, edges) => {
     edges
   }
 }
+
+export const percentClass = (base, value) => {
+  const v = Math.max(0, Math.min(100, Math.round(value || 0)))
+  return `${base}-${v}`
+}

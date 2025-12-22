@@ -7,7 +7,7 @@ import "reactflow/dist/style.css"
 
 const GraphRenderer = ({ graph }) => {
   return (
-    <div style={{ width: "100%", height: "100%" }}>
+    <div className="w-full h-full">
       <ReactFlow
         nodes={graph.nodes}
         edges={graph.edges}

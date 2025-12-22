@@ -67,10 +67,7 @@ const PlatformSelection = ({ onSelectPlatform }) => {
                 <button
                   key={platform.id}
                   onClick={() => onSelectPlatform(platform.id)}
-                  className="group relative p-6 bg-dark-input border border-gray-700 hover:border-teal-400/50 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-teal-400/10"
-                  style={{
-                    animationDelay: `${index * 0.1}s`,
-                  }}
+                  className={`group relative p-6 bg-dark-input border border-gray-700 hover:border-teal-400/50 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-teal-400/10 anim-delay-${index * 100}`}
                 >
                   {/* Subtle gradient background on hover */}
                   <div

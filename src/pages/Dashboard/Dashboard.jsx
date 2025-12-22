@@ -116,7 +116,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="h-1 bg-dark-input rounded-full overflow-hidden">
-              <div className="h-full bg-teal-400" style={{ width: `${kpiData.successRate.value}%` }} />
+              <div className={`h-full bg-teal-400 w-pct-${Math.max(0, Math.min(100, Math.round(kpiData.successRate.value)))}`} />
             </div>
           </div>
 
@@ -132,7 +132,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="h-1 bg-dark-input rounded-full overflow-hidden">
-              <div className="h-full bg-teal-400" style={{ width: `${kpiData.conversionRate.value}%` }} />
+              <div className={`h-full bg-teal-400 w-pct-${Math.max(0, Math.min(100, Math.round(kpiData.conversionRate.value)))}`} />
             </div>
           </div>
 
@@ -146,7 +146,7 @@ const Dashboard = () => {
             <div className="text-gray-400 text-sm mb-2">Compliance Score</div>
             <div className="text-3xl font-bold text-white mb-2">{kpiData.complianceScore}%</div>
             <div className="h-1 bg-dark-input rounded-full overflow-hidden">
-              <div className="h-full bg-green-400" style={{ width: `${kpiData.complianceScore}%` }} />
+              <div className={`h-full bg-green-400 w-pct-${Math.max(0, Math.min(100, Math.round(kpiData.complianceScore)))}`} />
             </div>
           </div>
         </div>
@@ -222,8 +222,7 @@ const Dashboard = () => {
                   </div>
                   <div className="h-2 bg-dark-input rounded-full overflow-hidden">
                     <div
-                      className={`h-full ${getBarColor(category.score, category.target)} transition-all duration-500`}
-                      style={{ width: `${category.score}%` }}
+                      className={`h-full ${getBarColor(category.score, category.target)} transition-all duration-500 w-pct-${Math.max(0, Math.min(100, Math.round(category.score)))}`}
                     />
                   </div>
                 </div>

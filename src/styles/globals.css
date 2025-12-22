@@ -1,3 +1,6 @@
+@import "./utilities.css";
+@import "./workspace.css";
+@import "./evaluation.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,28 +38,3 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #3a3a3a;
 }
-.mermaid .node rect {
-  rx: 10;
-  ry: 10;
-  padding: 12px;
-}
-.mermaid .edgeLabel {
-  background: rgba(0,0,0,0.6);
-  padding: 4px 8px;
-  border-radius: 6px;
-  color: white;
-}
-
-
-/* Popup animation that doesn't conflict with transform positioning */
-@keyframes popupFadeIn {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-

@@ -34,13 +34,17 @@ function App() {
   const [extractedConfig, setExtractedConfig] = useState(null);
   const [setupResult, setSetupResult] = useState(null);
 
-  const [particles] = useState(() => [...Array(20)].map((_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    animationDuration: `${2 + Math.random() * 2}s`,
-    animationDelay: `${Math.random() * 2}s`
-  })))
+  const [particles] = useState(() => {
+    const durationClasses = ['anim-dur-2000','anim-dur-2500','anim-dur-3000','anim-dur-3500','anim-dur-4000']
+    const delayClasses = ['anim-delay-0','anim-delay-100','anim-delay-200','anim-delay-300','anim-delay-400','anim-delay-500','anim-delay-600']
+    return [...Array(20)].map((_, i) => ({
+      id: i,
+      left: Math.floor(Math.random() * 101),
+      top: Math.floor(Math.random() * 101),
+      duration: durationClasses[Math.floor(Math.random() * durationClasses.length)],
+      delay: delayClasses[Math.floor(Math.random() * delayClasses.length)]
+    }))
+  })
 
   console.log("App state:", {
     showConnectionLoading,
@@ -177,13 +181,7 @@ function App() {
           {particles.map((p) => (
             <div
               key={p.id}
-              className="absolute w-1 h-1 bg-teal-400 rounded-full opacity-20"
-              style={{
-                left: p.left,
-                top: p.top,
-                animation: `pulse ${p.animationDuration} ease-in-out infinite`,
-                animationDelay: p.animationDelay,
-              }}
+              className={`absolute w-1 h-1 bg-teal-400 rounded-full opacity-20 pulse-particle ${p.duration} ${p.delay} left-pct-${p.left} top-pct-${p.top}`}
             />
           ))}
         </div>

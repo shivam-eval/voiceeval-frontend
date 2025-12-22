@@ -223,22 +223,21 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
                   {isActive && (
                     <div className="flex-shrink-0">
                       <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-                        <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                        <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+                        <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce anim-delay-0" />
+                        <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce anim-delay-200" />
+                        <div className="w-2 h-2 bg-teal-400 rounded-full animate-bounce anim-delay-400" />
                       </div>
                     </div>
                   )}
                 </div>
               )
-            })}
+              })}
           </div>
 
           <div className="mb-4">
             <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-300 ease-out"
-                style={{ width: `${progress}%` }}
+                className={`h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-300 ease-out w-pct-${Math.max(0, Math.min(100, Math.round(progress)))}`}
               />
             </div>
           </div>

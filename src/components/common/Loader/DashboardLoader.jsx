@@ -40,11 +40,7 @@ const DashboardLoader = () => {
             {[1, 2, 3, 4, 5, 6].map((item) => (
               <div
                 key={item}
-                className="h-32 bg-dark-input rounded-xl border border-gray-800 animate-dashboard-load"
-                style={{
-                  animationDelay: `${item * 0.1}s`,
-                  opacity: progress / 100,
-                }}
+                className={`h-32 bg-dark-input rounded-xl border border-gray-800 animate-dashboard-load anim-delay-${item * 100}`}
               >
                 <div className="h-full flex items-center justify-center">
                   <div className="w-16 h-16 bg-gray-700 rounded-lg animate-pulse-slow" />
@@ -58,8 +54,7 @@ const DashboardLoader = () => {
         <div className="mb-6">
           <div className="h-1.5 bg-dark-input rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-accent-green to-green-400 transition-all duration-300 ease-out relative"
-              style={{ width: `${progress}%` }}
+              className={`h-full bg-gradient-to-r from-accent-green to-green-400 transition-all duration-300 ease-out relative w-pct-${Math.max(0, Math.min(100, Math.round(progress)))}`}
             >
               <div className="h-full w-full bg-accent-green animate-glow" />
             </div>

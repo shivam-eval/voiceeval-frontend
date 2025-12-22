@@ -52,9 +52,9 @@ const CanonicalFlowDiagram = ({ mermaidCode }) => {
         // Display error in the component
         if (ref.current) {
           ref.current.innerHTML = `
-            <div style="padding: 10px; color: #ef4444; border: 1px solid #ef4444; border-radius: 8px; background: #fef2f2;">
-              <strong>Diagram Rendering Error:</strong>
-              <pre style="margin-top: 5px; font-size: 6px;">${err.message}</pre>
+            <div class="diagram-error">
+              <strong class="diagram-error__title">Diagram Rendering Error:</strong>
+              <pre class="diagram-error__message">${err.message}</pre>
             </div>
           `;
         }

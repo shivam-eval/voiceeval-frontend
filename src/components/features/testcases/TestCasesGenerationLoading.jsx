@@ -160,9 +160,8 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError,region }) =>
                   progress === 100 
                     ? 'bg-gradient-to-r from-green-400 to-emerald-400' 
                     : 'bg-gradient-to-r from-teal-400 to-cyan-400'
-                }`}
-                style={{ width: `${progress}%` }}
-              >
+                } w-pct-${Math.max(0, Math.min(100, Math.round(progress)))}`
+              }>
                 <div className="h-full w-full animate-pulse opacity-50" />
               </div>
             </div>

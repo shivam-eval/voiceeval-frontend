@@ -94,8 +94,7 @@ const DashboardOverview = () => {
                   <div
                     className={`h-full rounded-full ${
                       call.status === 'success' ? 'bg-teal-400' : 'bg-orange-400'
-                    }`}
-                    style={{ width: `${(call.score / 10) * 100}%` }}
+                    } w-pct-${Math.max(0, Math.min(100, Math.round((call.score / 10) * 100)))}`}
                   />
                 </div>
               </div>

@@ -121,8 +121,7 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
         <div className="mb-4">
           <div className="h-3 bg-dark-input rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-300"
-              style={{ width: `${displayProgress}%` }}
+              className={`h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-300 w-pct-${Math.max(0, Math.min(100, Math.round(displayProgress)))}`}
             />
           </div>
           <div className="flex justify-between mt-2 text-sm text-gray-400">

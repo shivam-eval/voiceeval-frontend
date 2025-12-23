@@ -110,24 +110,14 @@ const WorkspaceDashboard = ({
   try {
     // 1️⃣ Hit API to start simulation first
     const response = await runSimulation({
-      agent_phone_number:"+917982693803",
-      test_suite_path: testSuitePath,
-  platform: "telephony",
-  tts_provider: "elevenlabs",
-  stt_provider: "gladia",
-  priority: 1,
-  config_overrides: {
-    enable_audio_recording: true,
-    vad_provider: "dual",
-    enable_dual_vad: true,
-    dual_vad_logic: "or",
-  vad_min_silence_duration_ms: 500
-  }
+      phone_number:"+917982693803",
+      test_suite_path: testSuitePath
 }
     )
- 
+     
     // 2️⃣ Store simulation ID for polling
-    const simId = response.data.simulation_id
+    const simId = response.data.session_ids[0]
+    console.log(response.data)
     if (!simId) {
       throw new Error("No simulation ID returned from API")
     }

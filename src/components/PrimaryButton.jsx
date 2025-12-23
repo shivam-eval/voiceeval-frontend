@@ -7,7 +7,8 @@ const PrimaryButton = ({
 }) => {
   return (
     <button
-      type={type}
+
+      type="submit"
       onClick={onClick}
       disabled={disabled || loading}
       className={`w-full px-6 py-4 rounded-xl font-semibold text-base transition-all duration-300 flex items-center justify-center gap-2 ${

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import DashboardOverview from "./DashboardOverview";
 import Sidebar from "./Sidebar";
+import EvaluationDashboard from "../evaluation";
 
 
 const DashboardLayout = ({
@@ -33,11 +34,11 @@ const DashboardLayout = ({
         <div className="flex-1 overflow-y-auto">{children}</div>
 
         {/* Right Sidebar */}
-        {activeView !== "dashboard" && !hideRightPanel && (
+        {/* {activeView !== "dashboard" && !hideRightPanel && (
           <div className="w-80 bg-dark-bg border-l border-gray-800/50 p-6 overflow-y-auto">
             <DashboardOverview />
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

@@ -7,7 +7,9 @@ import ConnectionForm from "./pages/connectAgent/index"
 import ConnectionLoading from "./components/ConnectionLoading";
 import WorkspaceDashboard from "./pages/workspace/index"
 import AuthScreen from "./pages/auth/AuthScreen";
+import EvaluationDashboard from "./pages/evaluation";
 import { extractAgent, flowGenerationMermaid } from "./api";
+import { DUMMY_EVALUATION_DATA } from "./pages/evaluation/const";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true)
@@ -161,104 +163,24 @@ function App() {
     return <AuthScreen onAuthSuccess={handleAuthSuccess} />
   }
 
-  if (showDashboard) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center relative overflow-hidden">
-        {/* Animated background particles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-teal-400 rounded-full opacity-20"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `pulse ${
-                  2 + Math.random() * 2
-                }s ease-in-out infinite`,
-                animationDelay: `${Math.random() * 2}s`,
-              }}
-            />
-          ))}
-        </div>
-        <div className="animate-fade-in">
-          <DashboardLoader />
-        </div>
+if (showLayout) {
+  return (
+    <DashboardLayout
+      activeView="dashboard"
+      onNavigate={handleNavigate}
+      hideRightPanel={false}
+      onLogout={handleLogout}
+    >
+      <div className="p-8">
+        <EvaluationDashboard
+          evaluationData={DUMMY_EVALUATION_DATA}   // mock for now
+          onBack={() => {}}
+        />
       </div>
-    );
-  }
+    </DashboardLayout>
+  );
+}
 
-  // Show layout with side panel after initialization
-  if (showLayout) {
-    return (
-      <DashboardLayout
-        activeView={activeView}
-        onNavigate={handleNavigate}
-        hideRightPanel={showEvaluationDashboard}
-        onLogout={handleLogout}
-      >
-        {/* Dashboard - Default view */}
-        {activeView === "dashboard" &&
-          !showPlatformSelection &&
-          !showConnectionForm &&
-          !showConnectionLoading &&
-          !showWorkspaceDashboard && (
-            <div className="p-8">
-              <Dashboard />
-            </div>
-          )}
-
-        {/* Platform Selection - Connect Agent flow */}
-        {showPlatformSelection && (
-          <div className="p-8">
-            <PlatformSelection onSelectPlatform={handlePlatformSelect} />
-          </div>
-        )}
-
-        {/* Connection Form - Connect Agent flow */}
-        {showConnectionForm && (
-          <div className="p-8">
-            <ConnectionForm
-              platform={selectedPlatform}
-              onConnect={handleConnect}
-              isConnecting={isConnecting}
-              onBack={handleBackToPlatforms}
-            />
-          </div>
-        )}
-
-        {/* Connection Loading - Setup flow with API calls */}
-        {showConnectionLoading && extractedConfig && (
-          <div className="p-8">
-            <ConnectionLoading
-              extractedConfig={extractedConfig}
-              onComplete={handleConnectionComplete}
-            />
-          </div>
-        )}
-
-        {/* Workspace Dashboard - Shown after connection complete */}
-        {showWorkspaceDashboard && extractedConfig && setupResult && (
-          <div className="p-8">
-            <WorkspaceDashboard
-              systemConfig={{
-                agentId: extractedConfig.agent_id,
-                config: extractedConfig.config,
-                systemPrompt: extractedConfig.system_prompt,
-                platform: extractedConfig.platform,
-                tools: extractedConfig.tools,
-                metadata: extractedConfig.metadata,
-                // Use setup result directly to avoid race conditions
-                flowData: setupResult.flowData,
-                mermaid: setupResult.mermaid,
-              }}
-              onEvaluationDashboardChange={setShowEvaluationDashboard}
-            />
-          </div>
-        )}
-      </DashboardLayout>
-    );
-  }
 
   return null;
 }

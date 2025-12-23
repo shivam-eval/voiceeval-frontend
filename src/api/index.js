@@ -106,7 +106,7 @@ export const testGeneration = async (payload) => {
 
 // SIMULATION API (QUEUE PARTS)
 export const runSimulation = async (payload) => {
-  return API.post("/simulation/start", payload);
+  return API.post("/simulation/run", payload);
 };
 
 export const getSimulationStatus = async (simulationId) => {
@@ -138,7 +138,7 @@ export const cancelSimulation = async (simulationId) => {
 };
 
 export const getQueueStats = async () => {
-  return API.get("/simulation/queue/stats");
+  return API.get("/simulation/status");
 };
 
 // EVALUATION API
@@ -173,7 +173,7 @@ export const pollSimulationStatus = async (
   interval = null
 ) => {
   const pollInterval =
-    interval || parseInt(import.meta.env.VITE_POLL_INTERVAL) || 2000;
+    2000;
   return new Promise((resolve, reject) => {
     const poll = async () => {
       try {

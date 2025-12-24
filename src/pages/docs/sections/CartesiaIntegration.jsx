@@ -2,19 +2,18 @@ import { CheckCircle, ExternalLink } from "lucide-react";
 
 const CartesiaIntegrationSection = () => (
   <div className="prose prose-invert max-w-none">
-    <h1 className="text-4xl font-bold mb-4">Cartesia Line Integration</h1>
+    <h1 className="text-4xl font-bold mb-4 text-white">Cartesia Line Integration</h1>
     <p className="text-lg text-gray-400 mb-8">
       Integrate your Cartesia Line voice agents with VoiceEval to run structured
-      simulations and evaluate agent behavior across quality, latency, and
-      conversational metrics.
+      simulations and evaluate agent behavior across key quality dimensions.
     </p>
 
     {/* Overview */}
-    <div className="bg-gradient-to-br from-cyan-900/20 to-blue-900/20 border border-cyan-500/30 rounded-xl p-6 mb-8">
-      <h2 className="text-xl font-semibold mb-3 text-cyan-300">Overview</h2>
+    <div className="bg-dark-panel border border-[#b61249]/30 rounded-xl p-6 mb-8">
+      <h2 className="text-xl font-semibold mb-3 text-[#b61249]">Overview</h2>
       <p className="text-gray-300 mb-4">
         This guide explains how to connect an existing Cartesia Line agent to
-        VoiceEval. Once connected, VoiceEval securely reads your agent’s
+        VoiceEval. Once connected, VoiceEval securely reads your agent's
         configuration and enables automated evaluation across accuracy,
         latency, conversation quality, endpointing, cost, and persona
         alignment.
@@ -23,7 +22,7 @@ const CartesiaIntegrationSection = () => (
         href="https://docs.cartesia.ai"
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-2 text-cyan-400 hover:text-cyan-300 text-sm"
+        className="inline-flex items-center gap-2 text-[#b61249] hover:text-[#d42d5f] text-sm transition-colors"
       >
         View Cartesia Documentation
         <ExternalLink className="w-4 h-4" />
@@ -31,8 +30,8 @@ const CartesiaIntegrationSection = () => (
     </div>
 
     {/* Prerequisites */}
-    <h2 className="text-2xl font-bold mt-12 mb-4">Prerequisites</h2>
-    <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 mb-8">
+    <h2 className="text-2xl font-bold mt-12 mb-4 text-white">Prerequisites</h2>
+    <div className="bg-dark-panel border border-gray-800/50 rounded-lg p-6 mb-8">
       <ul className="space-y-3 text-gray-300">
         <li className="flex items-start gap-3">
           <CheckCircle className="w-5 h-5 text-green-400 mt-0.5 flex-shrink-0" />
@@ -54,10 +53,10 @@ const CartesiaIntegrationSection = () => (
     </div>
 
     {/* Required Information */}
-    <h2 className="text-2xl font-bold mt-12 mb-4">
+    <h2 className="text-2xl font-bold mt-12 mb-4 text-white">
       Information Required by VoiceEval
     </h2>
-    <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 mb-8">
+    <div className="bg-dark-panel border border-gray-800/50 rounded-lg p-6 mb-8">
       <ul className="space-y-3 text-gray-300">
         <li>
           <strong>Agent ID</strong> — Identifies the Cartesia Line agent to be
@@ -71,10 +70,10 @@ const CartesiaIntegrationSection = () => (
     </div>
 
     {/* Where to Find Info */}
-    <h2 className="text-2xl font-bold mt-12 mb-4">
+    <h2 className="text-2xl font-bold mt-12 mb-4 text-white">
       Where to Find This Information
     </h2>
-    <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 mb-8">
+    <div className="bg-dark-panel border border-gray-800/50 rounded-lg p-6 mb-8">
       <p className="text-gray-300 mb-4">
         <strong>Agent ID</strong>
       </p>
@@ -96,16 +95,16 @@ const CartesiaIntegrationSection = () => (
     </div>
 
     {/* Connect in VoiceEval */}
-    <h2 className="text-2xl font-bold mt-12 mb-6">
+    <h2 className="text-2xl font-bold mt-12 mb-6 text-white">
       Connect Your Agent in VoiceEval
     </h2>
     <div className="space-y-6">
-      <div className="bg-gray-950 border border-gray-800 rounded-lg p-6 space-y-4">
+      <div className="bg-dark-input border border-gray-800/50 rounded-lg p-6 space-y-4">
         <p className="text-gray-400 text-sm">
-          1. Open <strong>Connect Agent</strong> in the VoiceEval dashboard
+          1. Open <strong className="text-white">Connect Agent</strong> in the VoiceEval dashboard
         </p>
         <p className="text-gray-400 text-sm">
-          2. Select <strong>Cartesia Line</strong> as the platform
+          2. Select <strong className="text-white">Cartesia Line</strong> as the platform
         </p>
         <p className="text-gray-400 text-sm">
           3. Enter your Cartesia API Key and Agent ID
@@ -119,7 +118,7 @@ const CartesiaIntegrationSection = () => (
             <input
               type="password"
               placeholder="Your Cartesia API key"
-              className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-300"
+              className="w-full px-4 py-2 bg-dark-panel border border-gray-700 rounded-lg text-gray-300"
               disabled
             />
           </div>
@@ -130,11 +129,11 @@ const CartesiaIntegrationSection = () => (
             <input
               type="text"
               placeholder="agent_..."
-              className="w-full px-4 py-2 bg-gray-900 border border-gray-700 rounded-lg text-gray-300"
+              className="w-full px-4 py-2 bg-dark-panel border border-gray-700 rounded-lg text-gray-300"
               disabled
             />
           </div>
-          <button className="w-full px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg font-medium transition-colors">
+          <button className="w-full px-4 py-2 bg-[#b61249] hover:bg-[#c91d5a] text-white rounded-lg font-medium transition-colors">
             Connect Agent
           </button>
         </div>
@@ -142,10 +141,10 @@ const CartesiaIntegrationSection = () => (
     </div>
 
     {/* What VoiceEval Does */}
-    <h2 className="text-2xl font-bold mt-12 mb-4">
+    <h2 className="text-2xl font-bold mt-12 mb-4 text-white">
       What VoiceEval Handles Automatically
     </h2>
-    <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 mb-8">
+    <div className="bg-dark-panel border border-gray-800/50 rounded-lg p-6 mb-8">
       <ul className="space-y-3 text-gray-300">
         <li>System prompt and agent instructions</li>
         <li>Voice, transcription, and model configuration</li>
@@ -155,7 +154,7 @@ const CartesiaIntegrationSection = () => (
     </div>
 
     {/* What You Can Evaluate */}
-    <h2 className="text-2xl font-bold mt-12 mb-6">
+    <h2 className="text-2xl font-bold mt-12 mb-6 text-white">
       What You Can Evaluate with VoiceEval
     </h2>
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
@@ -168,7 +167,7 @@ const CartesiaIntegrationSection = () => (
     </div>
 
     {/* Next Steps */}
-    <h2 className="text-2xl font-bold mt-12 mb-6">Next Steps</h2>
+    <h2 className="text-2xl font-bold mt-12 mb-6 text-white">Next Steps</h2>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <NextStepCard
         title="Generate Test Suites"
@@ -191,17 +190,17 @@ const CartesiaIntegrationSection = () => (
 
 // Helper Components
 const EvaluationFeature = ({ title }) => (
-  <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-    <h4 className="font-semibold text-gray-200">{title}</h4>
+  <div className="bg-dark-panel border border-gray-800/50 rounded-lg p-4">
+    <h4 className="font-semibold text-white">{title}</h4>
   </div>
 );
 
 const NextStepCard = ({ title, description, link }) => (
   <a
     href={link}
-    className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 hover:border-cyan-500/50 transition-colors group"
+    className="bg-dark-panel border border-gray-800/50 rounded-lg p-4 hover:border-[#b61249]/50 transition-colors group"
   >
-    <h4 className="font-semibold mb-2 text-gray-200 group-hover:text-cyan-400 transition-colors">
+    <h4 className="font-semibold mb-2 text-white group-hover:text-[#b61249] transition-colors">
       {title}
     </h4>
     <p className="text-sm text-gray-400">{description}</p>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronRight, Search, Book, Zap, Code, Settings, Phone, Mic, Database, ArrowLeft } from "lucide-react";
+import { Book, Zap, Code, Settings, Phone, Mic, Database, ArrowLeft, Headphones } from "lucide-react";
 import { Link } from "react-router-dom";
 import VAPIIntegrationSection from "./sections/VAPIIntegration";
 import ElevenLabsIntegrationSection from "./sections/ElevenLabsIntegration";
@@ -8,7 +8,6 @@ import QuickStartSection from "./sections/QuickStart";
 
 const DocsPage = () => {
   const [activeSection, setActiveSection] = useState("introduction");
-  const [searchQuery, setSearchQuery] = useState("");
 
   const navigation = [
     {
@@ -16,35 +15,35 @@ const DocsPage = () => {
       items: [
         { id: "introduction", label: "Introduction", icon: Book },
         { id: "quick-start", label: "Quick Start", icon: Zap },
-        { id: "architecture", label: "Architecture", icon: Database },
+        // { id: "architecture", label: "Architecture", icon: Database },
       ],
     },
-    {
-      title: "Key Concepts",
-      items: [
-        { id: "agents", label: "Voice Agents", icon: Mic },
-        { id: "test-suites", label: "Test Suites", icon: Code },
-        { id: "evaluation", label: "Evaluation", icon: Settings },
-      ],
-    },
+    // {
+    //   title: "Key Concepts",
+    //   items: [
+    //     { id: "agents", label: "Voice Agents", icon: Mic },
+    //     { id: "test-suites", label: "Test Suites", icon: Code },
+    //     { id: "evaluation", label: "Evaluation", icon: Settings },
+    //   ],
+    // },
     {
       title: "Platform Integrations",
       items: [
         { id: "vapi", label: "VAPI Integration", icon: Phone },
         { id: "elevenlabs", label: "ElevenLabs Integration", icon: Mic },
-        { id: "cartesia", label: "Cartesia Line Integration", icon: Mic },
+        { id: "cartesia", label: "Cartesia Line Integration", icon: Headphones },
         { id: "livekit", label: "LiveKit Integration", icon: Phone },
       ],
     },
-    {
-      title: "API Reference",
-      items: [
-        { id: "extraction-api", label: "Extraction API", icon: Code },
-        { id: "generation-api", label: "Generation API", icon: Code },
-        { id: "simulation-api", label: "Simulation API", icon: Code },
-        { id: "evaluation-api", label: "Evaluation API", icon: Code },
-      ],
-    },
+    // {
+    //   title: "API Reference",
+    //   items: [
+    //     { id: "extraction-api", label: "Extraction API", icon: Code },
+    //     { id: "generation-api", label: "Generation API", icon: Code },
+    //     { id: "simulation-api", label: "Simulation API", icon: Code },
+    //     { id: "evaluation-api", label: "Evaluation API", icon: Code },
+    //   ],
+    // },
   ];
 
   const renderContent = () => {
@@ -83,38 +82,29 @@ const DocsPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0F] text-gray-100">
+    <div className="min-h-screen bg-dark-bg text-gray-100">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0A0A0F]/95 backdrop-blur-sm border-b border-gray-800/50">
+      <header className="sticky top-0 z-50 bg-dark-bg/95 backdrop-blur-sm border-b border-gray-800/50">
         <div className="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm">Back to Dashboard</span>
             </Link>
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">VE</span>
+            <div className="w-10 h-10 rounded-lg bg-teal-400/20 flex items-center justify-center">
+              <span className="text-2xl font-bold text-teal-400">V</span>
             </div>
-            <h1 className="text-xl font-semibold">VoiceEval Documentation</h1>
+            <h1 className="text-xl font-semibold text-white">
+              Voice<span className="text-teal-400">Eval</span> Documentation
+            </h1>
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
-              <input
-                type="text"
-                placeholder="Search docs..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2 bg-gray-900/50 border border-gray-800 rounded-lg text-sm focus:outline-none focus:border-purple-500 w-64"
-              />
-              <kbd className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-0.5 bg-gray-800 border border-gray-700 rounded text-xs text-gray-400">
-                Ctrl K
-              </kbd>
-            </div>
-            <button className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-sm font-medium transition-colors">
-              Dashboard
-            </button>
+            <Link to="/">
+              <button className="px-4 py-2 bg-[#b61249] hover:bg-[#c91d5a] text-white rounded-lg text-sm font-medium transition-colors">
+                Dashboard
+              </button>
+            </Link>
           </div>
         </div>
       </header>
@@ -137,12 +127,12 @@ const DocsPage = () => {
                           onClick={() => setActiveSection(item.id)}
                           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
                             activeSection === item.id
-                              ? "bg-purple-600/20 text-purple-400 font-medium"
-                              : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/50"
+                              ? "bg-teal-400/20 text-teal-400 font-medium border border-teal-400/50"
+                              : "text-gray-400 hover:text-white hover:bg-dark-input"
                           }`}
                         >
-                          <Icon className="w-4 h-4" />
-                          {item.label}
+                          <Icon className="w-4 h-4 flex-shrink-0" />
+                          <span className="whitespace-nowrap">{item.label}</span>
                         </button>
                       </li>
                     );
@@ -175,79 +165,18 @@ const DocsPage = () => {
 // Introduction Section
 const IntroductionSection = () => (
   <div className="prose prose-invert max-w-none">
-    <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+    <h1 className="text-4xl font-bold mb-4 text-white">
       Introduction
     </h1>
-    <p className="text-lg text-gray-400 mb-8">
-      Testing for AI Voice Agents. Launch in minutes not weeks by ensuring your agents deliver a seamless experience in every conversational scenario.
-    </p>
 
-    <div className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-xl p-6 mb-8">
-      <h2 className="text-xl font-semibold mb-3 text-purple-300">What is VoiceEval?</h2>
+    <div className="bg-dark-panel border border-teal-400/30 rounded-xl p-6 mb-8">
+      <h2 className="text-xl font-semibold mb-3 text-teal-400">What is VoiceEval?</h2>
       <p className="text-gray-300">
-        VoiceEval is an <strong>AI voice agent testing and evaluation platform</strong> that automates the process of testing conversational AI systems across different platforms (VAPI, ElevenLabs, Cartesia, LiveKit).
+        Voice AI agents are notoriously difficult to test at scale. We automate end-to-end testing, evaluation and monitoring for voice AI agents built on platforms like VAPI and Bolna, as well as frameworks such as LiveKit, Pipecat, or fully custom orchestrations.
       </p>
     </div>
 
-    <h2 className="text-2xl font-bold mt-12 mb-4">The Problem We Solve</h2>
-    <p className="text-gray-400 mb-4">Testing voice agents is currently:</p>
-    <ul className="space-y-3 text-gray-400">
-      <li className="flex items-start gap-3">
-        <span className="text-red-400 mt-1">⏰</span>
-        <span><strong>Time-consuming:</strong> Manual testing of conversation flows</span>
-      </li>
-      <li className="flex items-start gap-3">
-        <span className="text-red-400 mt-1">🎯</span>
-        <span><strong>Incomplete:</strong> Hard to cover all edge cases and paths</span>
-      </li>
-      <li className="flex items-start gap-3">
-        <span className="text-red-400 mt-1">📊</span>
-        <span><strong>Unscalable:</strong> Cannot run regression tests on every deploy</span>
-      </li>
-      <li className="flex items-start gap-3">
-        <span className="text-red-400 mt-1">🔄</span>
-        <span><strong>Platform-specific:</strong> Different tools for different platforms</span>
-      </li>
-    </ul>
-
-    <h2 className="text-2xl font-bold mt-12 mb-4">Our Solution</h2>
-    <p className="text-gray-400 mb-6">
-      VoiceEval provides an <strong>end-to-end automated testing pipeline</strong>:
-    </p>
-    
-    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6 mb-8">
-      <div className="flex items-center justify-between text-sm">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 bg-blue-600/20 border border-blue-500 rounded-lg flex items-center justify-center mb-2">
-            <Database className="w-6 h-6 text-blue-400" />
-          </div>
-          <span className="text-gray-300">Extract Config</span>
-        </div>
-        <ChevronRight className="w-5 h-5 text-gray-600" />
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 bg-purple-600/20 border border-purple-500 rounded-lg flex items-center justify-center mb-2">
-            <Code className="w-6 h-6 text-purple-400" />
-          </div>
-          <span className="text-gray-300">Generate Flows</span>
-        </div>
-        <ChevronRight className="w-5 h-5 text-gray-600" />
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 bg-orange-600/20 border border-orange-500 rounded-lg flex items-center justify-center mb-2">
-            <Mic className="w-6 h-6 text-orange-400" />
-          </div>
-          <span className="text-gray-300">Simulate</span>
-        </div>
-        <ChevronRight className="w-5 h-5 text-gray-600" />
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 bg-green-600/20 border border-green-500 rounded-lg flex items-center justify-center mb-2">
-            <Settings className="w-6 h-6 text-green-400" />
-          </div>
-          <span className="text-gray-300">Evaluate</span>
-        </div>
-      </div>
-    </div>
-
-    <h2 className="text-2xl font-bold mt-12 mb-4">Key Features</h2>
+    <h2 className="text-2xl font-bold mt-12 mb-4 text-white">Key Features</h2>
     <div className="grid grid-cols-2 gap-4 mb-8">
       <FeatureCard
         icon={<Mic className="w-5 h-5" />}
@@ -274,10 +203,10 @@ const IntroductionSection = () => (
 );
 
 const FeatureCard = ({ icon, title, description }) => (
-  <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
+  <div className="bg-dark-panel border border-gray-800/50 rounded-lg p-4">
     <div className="flex items-center gap-3 mb-2">
-      <div className="text-purple-400">{icon}</div>
-      <h3 className="font-semibold text-gray-200">{title}</h3>
+      <div className="text-[#b61249]">{icon}</div>
+      <h3 className="font-semibold text-white">{title}</h3>
     </div>
     <p className="text-sm text-gray-400">{description}</p>
   </div>
@@ -285,20 +214,20 @@ const FeatureCard = ({ icon, title, description }) => (
 
 const StepCard = ({ number, title, description, children }) => (
   <div className="relative pl-12">
-    <div className="absolute left-0 top-0 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center font-bold text-sm">
+    <div className="absolute left-0 top-0 w-8 h-8 bg-[#b61249] rounded-full flex items-center justify-center font-bold text-sm text-white">
       {number}
     </div>
-    <h3 className="text-xl font-semibold mb-2">{title}</h3>
+    <h3 className="text-xl font-semibold mb-2 text-white">{title}</h3>
     <p className="text-gray-400 mb-4">{description}</p>
     {children}
   </div>
 );
 
 const CodeBlock = ({ language, children }) => (
-  <div className="bg-gray-950 border border-gray-800 rounded-lg overflow-hidden">
-    <div className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800">
+  <div className="bg-dark-input border border-gray-800/50 rounded-lg overflow-hidden">
+    <div className="flex items-center justify-between px-4 py-2 bg-dark-panel border-b border-gray-800/50">
       <span className="text-xs text-gray-500 font-mono">{language}</span>
-      <button className="text-xs text-gray-400 hover:text-gray-200">Copy</button>
+      <button className="text-xs text-gray-400 hover:text-[#b61249] transition-colors">Copy</button>
     </div>
     <pre className="p-4 overflow-x-auto">
       <code className="text-sm text-gray-300 font-mono">{children}</code>
@@ -309,18 +238,18 @@ const CodeBlock = ({ language, children }) => (
 // Architecture Section
 const ArchitectureSection = () => (
   <div className="prose prose-invert max-w-none">
-    <h1 className="text-4xl font-bold mb-4">Architecture</h1>
+    <h1 className="text-4xl font-bold mb-4 text-white">Architecture</h1>
     <p className="text-lg text-gray-400 mb-8">
       Understanding VoiceEval's 4-engine pipeline architecture.
     </p>
 
-    <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-8 mb-8">
-      <h2 className="text-2xl font-bold mb-6">Pipeline Overview</h2>
+    <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-8 mb-8">
+      <h2 className="text-2xl font-bold mb-6 text-white">Pipeline Overview</h2>
       <div className="space-y-6">
         <EngineCard
           number="1"
           title="Extraction Engine"
-          color="blue"
+          color="teal"
           description="Extract agent configuration, prompts, and workflows from platforms"
           features={[
             "Platform API integration",
@@ -331,7 +260,7 @@ const ArchitectureSection = () => (
         <EngineCard
           number="2"
           title="Generation Engine"
-          color="purple"
+          color="teal"
           description="Generate conversation flows and comprehensive test suites"
           features={[
             "LLM-powered flow generation",
@@ -342,7 +271,7 @@ const ArchitectureSection = () => (
         <EngineCard
           number="3"
           title="Simulation Engine"
-          color="orange"
+          color="teal"
           description="Execute test conversations with real voice interactions"
           features={[
             "Telephony integration (Epicode)",
@@ -353,7 +282,7 @@ const ArchitectureSection = () => (
         <EngineCard
           number="4"
           title="Evaluation Engine"
-          color="green"
+          color="teal"
           description="Analyze results and generate performance metrics"
           features={[
             "Transcript analysis",
@@ -368,20 +297,21 @@ const ArchitectureSection = () => (
 
 const EngineCard = ({ number, title, color, description, features }) => {
   const colorClasses = {
-    blue: "bg-blue-600/20 border-blue-500 text-blue-400",
-    purple: "bg-purple-600/20 border-purple-500 text-purple-400",
-    orange: "bg-orange-600/20 border-orange-500 text-orange-400",
-    green: "bg-green-600/20 border-green-500 text-green-400",
+    teal: "bg-[#b61249]/20 border-[#b61249]/50 text-[#b61249]",
+    blue: "bg-[#b61249]/20 border-[#b61249]/50 text-[#b61249]",
+    purple: "bg-[#b61249]/20 border-[#b61249]/50 text-[#b61249]",
+    orange: "bg-[#b61249]/20 border-[#b61249]/50 text-[#b61249]",
+    green: "bg-[#b61249]/20 border-[#b61249]/50 text-[#b61249]",
   };
 
   return (
-    <div className={`border rounded-lg p-6 ${colorClasses[color]}`}>
+    <div className={`border rounded-lg p-6 ${colorClasses[color] || colorClasses.teal}`}>
       <div className="flex items-start gap-4">
-        <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center font-bold flex-shrink-0">
+        <div className="w-10 h-10 bg-dark-input rounded-lg flex items-center justify-center font-bold flex-shrink-0 text-white">
           {number}
         </div>
         <div className="flex-1">
-          <h3 className="text-xl font-semibold mb-2">{title}</h3>
+          <h3 className="text-xl font-semibold mb-2 text-white">{title}</h3>
           <p className="text-gray-300 mb-4">{description}</p>
           <ul className="space-y-1 text-sm text-gray-400">
             {features.map((feature, idx) => (
@@ -395,8 +325,8 @@ const EngineCard = ({ number, title, color, description, features }) => {
 };
 
 const TechCard = ({ title, items }) => (
-  <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-    <h3 className="font-semibold mb-3 text-gray-200">{title}</h3>
+  <div className="bg-dark-panel border border-gray-800/50 rounded-lg p-4">
+    <h3 className="font-semibold mb-3 text-white">{title}</h3>
     <ul className="space-y-1 text-sm text-gray-400">
       {items.map((item, idx) => (
         <li key={idx}>• {item}</li>
@@ -422,7 +352,7 @@ const CartesiaIntegration = CartesiaIntegrationSection;
 
 const PlaceholderSection = ({ title }) => (
   <div className="prose prose-invert max-w-none">
-    <h1 className="text-4xl font-bold mb-4">{title}</h1>
+    <h1 className="text-4xl font-bold mb-4 text-white">{title}</h1>
     <p className="text-lg text-gray-400">Documentation coming soon...</p>
   </div>
 );
@@ -441,7 +371,7 @@ const OnThisPage = ({ section }) => {
     <ul className="space-y-2 text-sm">
       {items.map((item, idx) => (
         <li key={idx}>
-          <a href={`#${item.toLowerCase().replace(/\s+/g, "-")}`} className="text-gray-400 hover:text-purple-400 transition-colors">
+          <a href={`#${item.toLowerCase().replace(/\s+/g, "-")}`} className="text-gray-400 hover:text-[#b61249] transition-colors">
             {item}
           </a>
         </li>

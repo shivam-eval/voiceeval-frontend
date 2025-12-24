@@ -2,24 +2,11 @@ import { CheckCircle, Zap, Mic, Settings, BarChart3 } from "lucide-react";
 
 const QuickStartSection = () => (
   <div className="prose prose-invert max-w-none">
-    <h1 className="text-4xl font-bold mb-4">Quick Start</h1>
-    <p className="text-lg text-gray-400 mb-8">
+    <h1 className="text-4xl font-bold mb-4 text-white">Quick Start</h1>
+    <p className="text-lg text-gray-400 mb-12">
       Get started with VoiceEval in minutes. This guide walks you through the
       core workflow of connecting, testing, and improving your voice AI agents.
     </p>
-
-    {/* What VoiceEval Does */}
-    <div className="bg-gradient-to-br from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-xl p-6 mb-10">
-      <h2 className="text-xl font-semibold mb-3 text-purple-300">
-        How VoiceEval Works
-      </h2>
-      <p className="text-gray-300">
-        VoiceEval is a testing and evaluation platform for voice AI agents.
-        It connects to your existing agent, understands its configuration,
-        simulates conversations, and evaluates performance across multiple
-        quality dimensions.
-      </p>
-    </div>
 
     {/* Step 1 */}
     <Step
@@ -87,11 +74,11 @@ const QuickStartSection = () => (
     />
 
     {/* Outcome */}
-    <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-6 mt-12">
-      <h2 className="text-xl font-semibold mb-3 text-green-300">
-        You’re Ready
+    <div className="bg-dark-panel border border-[#b61249]/30 rounded-xl p-8 mt-16">
+      <h2 className="text-2xl font-semibold mb-4 text-[#b61249]">
+        You're Ready
       </h2>
-      <p className="text-gray-300">
+      <p className="text-gray-300 text-lg">
         Once these steps are complete, VoiceEval becomes part of your regular
         development workflow—helping you validate changes, prevent regressions,
         and continuously improve your voice AI agents.
@@ -101,26 +88,28 @@ const QuickStartSection = () => (
 );
 
 const Step = ({ number, icon, title, description, points }) => (
-  <div className="relative pl-14 mb-10">
-    <div className="absolute left-0 top-0 w-9 h-9 bg-purple-600 rounded-full flex items-center justify-center font-bold text-sm">
+  <div className="relative pl-14 mb-12">
+    <div className="absolute left-0 top-0 w-10 h-10 bg-teal-400 rounded-full flex items-center justify-center font-bold text-base text-white shadow-lg shadow-teal-400/30">
       {number}
     </div>
 
-    <h3 className="text-2xl font-semibold mb-2 flex items-center gap-3">
-      <span className="text-purple-400">{icon}</span>
-      {title}
-    </h3>
+    <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6 hover:border-[#b61249]/30 transition-colors">
+      <h3 className="text-2xl font-semibold mb-3 flex items-center gap-3 text-white">
+        <span className="text-[#b61249]">{icon}</span>
+        {title}
+      </h3>
 
-    <p className="text-gray-400 mb-4">{description}</p>
+      <p className="text-gray-300 mb-5 text-base">{description}</p>
 
-    <ul className="space-y-2 text-gray-300">
-      {points.map((p, i) => (
-        <li key={i} className="flex items-start gap-3">
-          <CheckCircle className="w-4 h-4 text-green-400 mt-1 flex-shrink-0" />
-          <span>{p}</span>
-        </li>
-      ))}
-    </ul>
+      <ul className="space-y-3 text-gray-300">
+        {points.map((p, i) => (
+          <li key={i} className="flex items-start gap-3">
+            <CheckCircle className="w-5 h-5 text-[#b61249] mt-0.5 flex-shrink-0" />
+            <span className="text-sm">{p}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
   </div>
 );
 

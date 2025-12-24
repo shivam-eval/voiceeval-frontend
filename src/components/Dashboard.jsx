@@ -89,11 +89,6 @@ const Dashboard = () => {
     return 'text-red-400'
   }
 
-  const getBarColor = (score, target) => {
-    if (score >= target) return 'bg-teal-400'
-    if (score >= target - 5) return 'bg-yellow-400'
-    return 'bg-orange-400'
-  }
 
   return (
     <div className="w-full max-w-screen-2xl mx-auto">
@@ -118,7 +113,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="h-1 bg-dark-input rounded-full overflow-hidden">
-              <div className="h-full bg-teal-400" style={{ width: `${kpiData.successRate.value}%` }} />
+              <div className="h-full bg-[#b61249]" style={{ width: `${kpiData.successRate.value}%` }} />
             </div>
           </div>
 
@@ -134,7 +129,7 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="h-1 bg-dark-input rounded-full overflow-hidden">
-              <div className="h-full bg-teal-400" style={{ width: `${kpiData.conversionRate.value}%` }} />
+              <div className="h-full bg-[#b61249]" style={{ width: `${kpiData.conversionRate.value}%` }} />
             </div>
           </div>
 
@@ -224,7 +219,7 @@ const Dashboard = () => {
                   </div>
                   <div className="h-2 bg-dark-input rounded-full overflow-hidden">
                     <div
-                      className={`h-full ${getBarColor(category.score, category.target)} transition-all duration-500`}
+                      className={`h-full ${category.score >= category.target ? 'bg-[#b61249]' : category.score >= category.target - 5 ? 'bg-yellow-400' : 'bg-orange-400'} transition-all duration-500`}
                       style={{ width: `${category.score}%` }}
                     />
                   </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import DashboardLoader from './components/DashboardLoader'
 import DashboardLayout from './components/DashboardLayout'
 import Dashboard from './components/Dashboard'
@@ -6,6 +7,7 @@ import PlatformSelection from './components/PlatformSelection'
 import ConnectionForm from './components/ConnectionForm'
 import ConnectionLoading from './components/ConnectionLoading'
 import WorkspaceDashboard from './components/WorkspaceDashboard'
+import Docs from './pages/docs/index.jsx'
 
 function App() {
   const [showDashboard, setShowDashboard] = useState(true)
@@ -95,80 +97,90 @@ function App() {
     setActiveView('connect-agent')
   }
 
-  // Show loader before layout
-  if (showDashboard) {
-    return (
-      <div className="min-h-screen bg-dark-bg flex items-center justify-center relative overflow-hidden">
-        {/* Animated background particles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-accent-green rounded-full opacity-20"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `pulse-slow ${2 + Math.random() * 2}s ease-in-out infinite`,
-                animationDelay: `${Math.random() * 2}s`,
-              }}
-            />
-          ))}
-        </div>
-        <div className="animate-fade-in">
-          <DashboardLoader />
-        </div>
-      </div>
-    )
-  }
+  return (
+    <Routes>
+      <Route path="/docs" element={<Docs />} />
+      <Route path="/" element={
+        <>
+          {/* Show loader before layout */}
+          {showDashboard && (
+            <div className="min-h-screen bg-dark-bg flex items-center justify-center relative overflow-hidden">
+              {/* Animated background particles */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {[...Array(20)].map((_, i) => (
+                  <div
+                    key={i}
+                    className="absolute w-1 h-1 bg-accent-green rounded-full opacity-20"
+                    style={{
+                      left: `${Math.random() * 100}%`,
+                      top: `${Math.random() * 100}%`,
+                      animation: `pulse-slow ${2 + Math.random() * 2}s ease-in-out infinite`,
+                      animationDelay: `${Math.random() * 2}s`,
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="animate-fade-in">
+                <DashboardLoader />
+              </div>
+            </div>
+          )}
 
-  // Show layout with side panel after initialization
-  if (showLayout) {
-    return (
-      <DashboardLayout activeView={activeView} onNavigate={handleNavigate} hideRightPanel={showEvaluationDashboard}>
-        {/* Dashboard - Default view */}
-        {activeView === 'dashboard' && !showPlatformSelection && !showConnectionForm && !showConnectionLoading && !showWorkspaceDashboard && (
-          <div className="p-8">
-            <Dashboard />
-          </div>
-        )}
+          {/* Show layout with side panel after initialization */}
+          {showLayout && (
+            <DashboardLayout activeView={activeView} onNavigate={handleNavigate} hideRightPanel={showEvaluationDashboard}>
+              {/* Dashboard - Default view */}
+              {activeView === 'dashboard' && !showPlatformSelection && !showConnectionForm && !showConnectionLoading && !showWorkspaceDashboard && (
+                <div className="p-8">
+                  <Dashboard />
+                </div>
+              )}
 
-        {/* Platform Selection - Connect Agent flow */}
-        {showPlatformSelection && (
-          <div className="p-8">
-            <PlatformSelection onSelectPlatform={handlePlatformSelect} />
-          </div>
-        )}
+              {/* Platform Selection - Connect Agent flow */}
+              {showPlatformSelection && (
+                <div className="p-8">
+                  <PlatformSelection onSelectPlatform={handlePlatformSelect} />
+                </div>
+              )}
 
-        {/* Connection Form - Connect Agent flow */}
-        {showConnectionForm && (
-          <div className="p-8">
-            <ConnectionForm
-              platform={selectedPlatform}
-              onConnect={handleConnect}
-              isConnecting={isConnecting}
-              onBack={handleBackToPlatforms}
-            />
-          </div>
-        )}
+              {/* Connection Form - Connect Agent flow */}
+              {showConnectionForm && (
+                <div className="p-8">
+                  <ConnectionForm
+                    platform={selectedPlatform}
+                    onConnect={handleConnect}
+                    isConnecting={isConnecting}
+                    onBack={handleBackToPlatforms}
+                  />
+                </div>
+              )}
 
-        {/* Connection Loading Screen - Connect Agent flow */}
-        {showConnectionLoading && (
-          <div className="p-8">
-            <ConnectionLoading onComplete={handleConnectionComplete} />
-          </div>
-        )}
+              {/* Connection Loading Screen - Connect Agent flow */}
+              {showConnectionLoading && (
+                <div className="p-8">
+                  <ConnectionLoading onComplete={handleConnectionComplete} />
+                </div>
+              )}
 
-        {/* Workspace Dashboard - Shown after connection complete */}
-        {showWorkspaceDashboard && (
-          <div className="p-8">
-            <WorkspaceDashboard onEvaluationDashboardChange={setShowEvaluationDashboard} />
-          </div>
-        )}
-      </DashboardLayout>
-    )
-  }
+              {/* Workspace Dashboard - Shown after connection complete */}
+              {showWorkspaceDashboard && (
+                <div className="p-8">
+                  <WorkspaceDashboard onEvaluationDashboardChange={setShowEvaluationDashboard} />
+                </div>
+              )}
 
-  return null
+              {/* Docs Page */}
+              {activeView === 'docs' && (
+                <div className="p-8">
+                  <Docs />
+                </div>
+              )}
+            </DashboardLayout>
+          )}
+        </>
+      } />
+    </Routes>
+  )
 }
 
 export default App

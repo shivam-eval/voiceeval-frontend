@@ -2,7 +2,7 @@ import { ResponsivePie } from "@nivo/pie";
 import { darkTheme } from "../../const";
 const costData = [
   { id: "LLM", value: 0.14 },
-  // { id: "STT", value: 0.2},
+  { id: "STT", value: 0.2},
   // { id: "TTS", value: 0.1023 },
 ];
 
@@ -22,7 +22,7 @@ const CostDonut = () => (
       data={costData}
       innerRadius={0.65}
       
-      colors={["#5EEAD4"]}
+      colors={["#5EEAD4","#2dd4bf"]}
       enableArcLabels={false}
       enableArcLinkLabels={false}
       theme={darkTheme}

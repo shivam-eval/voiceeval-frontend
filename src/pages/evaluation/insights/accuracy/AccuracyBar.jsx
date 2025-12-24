@@ -45,7 +45,7 @@ const AccuracyBar = () => (
       indexBy="metric"
       margin={{ top: 20, right: 20, bottom: 80, left: 60 }}
         borderRadius={6} 
-      colors={["#5EEAD4"]}
+      colors={["#2dd4bf"]}
       axisBottom={{ tickRotation: -25 }}
       axisLeft={{ tickSize: 0 }}
       enableLabel={false}

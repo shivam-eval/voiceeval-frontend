@@ -16,11 +16,35 @@ import InsightTabs from "./InsightTab";
 import EvaluationTable from "./EvaluationTable";
 import ImprovementsPanel from "./PriorityImprovements";
 import AccuracyView from "./insights/accuracy/Accuracy";
+import LatencyOverview from "./insights/latency";
+import CostOverview from "./insights/cost";
+import AudioOverview from "./insights/audio";
+import EndpointingOverview from "./insights/endpointing";
+import PersonaOverview from "./insights/persona";
+import TaskCompletionOverview from "./insights/task_completion";
+
 
 const CATEGORY = {
   OVERVIEW: "",
   ACCURACY: "accuracy",
+  TASK_COMPLETION: "task_completion",
+  LATENCY: "latency",
+  COST: "cost",
+  AUDIO: "audio",
+  ENDPOINTING: "endpointing",
+  PERSONA: "persona",
 };
+const CATEGORY_TITLES = {
+  [CATEGORY.OVERVIEW]: null, // handled separately
+  [CATEGORY.ACCURACY]: "ACCURACY OVERVIEW",
+  [CATEGORY.LATENCY]: "LATENCY OVERVIEW",
+  [CATEGORY.COST]: "COST OVERVIEW",
+  [CATEGORY.AUDIO]: "AUDIO QUALITY OVERVIEW",
+  [CATEGORY.ENDPOINTING]: "ENDPOINTING OVERVIEW",
+  [CATEGORY.PERSONA]: "PERSONA ALIGNMENT OVERVIEW",
+  [CATEGORY.TASK_COMPLETION]: "TASK COMPLETION OVERVIEW",
+};
+
 
 const EvaluationDashboard = ({ evaluationData, onBack }) => {
   const [activeCategory, setActiveCategory] = useState(CATEGORY.OVERVIEW);
@@ -94,19 +118,44 @@ const [selectedReport, setSelectedReport] = useState(null);
   // SWITCH RENDERER
   // -----------------------------
 const renderActiveSection = () => {
+  // Report view has highest priority
   if (selectedReport) {
     return (
-      <TestReportView/>
+      <TestReportView
+        report={selectedReport}
+        onBack={() => setSelectedReport(null)}
+      />
     );
   }
 
   switch (activeCategory) {
     case CATEGORY.ACCURACY:
       return <AccuracyView data={displayData} />;
+
+    case CATEGORY.LATENCY:
+      return <LatencyOverview data={displayData} />;
+
+    case CATEGORY.COST:
+      return <CostOverview data={displayData} />;
+
+    case CATEGORY.AUDIO:
+      return <AudioOverview data={displayData} />;
+
+    case CATEGORY.ENDPOINTING:
+      return <EndpointingOverview data={displayData} />;
+
+    case CATEGORY.PERSONA:
+      return <PersonaOverview data={displayData} />;
+
+    case CATEGORY.TASK_COMPLETION:
+      // Optional: create later
+      return <TaskCompletionOverview data={displayData}/>;
+
     default:
       return renderOverview();
   }
 };
+
 
 
   // -----------------------------

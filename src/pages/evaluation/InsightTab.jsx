@@ -2,7 +2,7 @@ const CATEGORY_LABELS = {
   accuracy: "Accuracy",
   task_completion: "Task Completion",
   latency: "Latency",
-  audio_quality: "Audio",
+  audio: "Audio",
   conversation_quality: "Conversation",
   endpointing: "Endpointing",
   cost: "Cost",

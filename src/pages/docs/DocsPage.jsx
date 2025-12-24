@@ -3,6 +3,7 @@ import { ChevronRight, Search, Book, Zap, Code, Settings, Phone, Mic, Database }
 import VAPIIntegrationSection from "./sections/VAPIIntegration";
 import ElevenLabsIntegrationSection from "./sections/ElevenLabsIntegration";
 import CartesiaIntegrationSection from "./sections/CartesiaIntegration";
+import QuickStartSection from "./sections/QuickStart";
 
 const DocsPage = () => {
   const [activeSection, setActiveSection] = useState("introduction");
@@ -277,91 +278,6 @@ const FeatureCard = ({ icon, title, description }) => (
   </div>
 );
 
-// Quick Start Section
-const QuickStartSection = () => (
-  <div className="prose prose-invert max-w-none">
-    <h1 className="text-4xl font-bold mb-4">Quick Start</h1>
-    <p className="text-lg text-gray-400 mb-8">
-      Get started with VoiceEval in 5 minutes. Follow these steps to test your first voice agent.
-    </p>
-
-    <div className="space-y-8">
-      <StepCard
-        number="1"
-        title="Connect Your Agent"
-        description="Choose your platform and provide API credentials"
-      >
-        <CodeBlock language="bash">
-{`# Navigate to Connect Agent
-# Select your platform (VAPI, ElevenLabs, Cartesia, LiveKit)
-# Enter your API key and Agent ID`}
-        </CodeBlock>
-      </StepCard>
-
-      <StepCard
-        number="2"
-        title="Extract Configuration"
-        description="VoiceEval automatically extracts your agent's configuration"
-      >
-        <CodeBlock language="json">
-{`{
-  "platform": "vapi",
-  "api_key": "vapi_sk_...",
-  "agent_id": "asst_123"
-}`}
-        </CodeBlock>
-      </StepCard>
-
-      <StepCard
-        number="3"
-        title="Generate Test Suite"
-        description="AI-powered test generation creates comprehensive test scenarios"
-      >
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 text-sm text-gray-400">
-          <p>✓ Conversation flow analysis</p>
-          <p>✓ Edge case generation</p>
-          <p>✓ Multi-path testing</p>
-        </div>
-      </StepCard>
-
-      <StepCard
-        number="4"
-        title="Run Simulation"
-        description="Execute tests with real voice interactions"
-      >
-        <CodeBlock language="bash">
-{`POST /api/v1/simulation/start
-{
-  "test_suite_id": "test_001",
-  "agent_phone": "+1234567890"
-}`}
-        </CodeBlock>
-      </StepCard>
-
-      <StepCard
-        number="5"
-        title="View Results"
-        description="Analyze performance metrics and conversation transcripts"
-      >
-        <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4 text-sm">
-          <div className="flex justify-between mb-2">
-            <span className="text-gray-400">Success Rate:</span>
-            <span className="text-green-400 font-semibold">94%</span>
-          </div>
-          <div className="flex justify-between mb-2">
-            <span className="text-gray-400">Avg Response Time:</span>
-            <span className="text-blue-400 font-semibold">1.2s</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-gray-400">Tests Passed:</span>
-            <span className="text-purple-400 font-semibold">47/50</span>
-          </div>
-        </div>
-      </StepCard>
-    </div>
-  </div>
-);
-
 const StepCard = ({ number, title, description, children }) => (
   <div className="relative pl-12">
     <div className="absolute left-0 top-0 w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center font-bold text-sm">
@@ -441,14 +357,6 @@ const ArchitectureSection = () => (
           ]}
         />
       </div>
-    </div>
-
-    <h2 className="text-2xl font-bold mt-12 mb-4">Technology Stack</h2>
-    <div className="grid grid-cols-2 gap-4">
-      <TechCard title="Backend" items={["FastAPI", "Python 3.13+", "Poetry"]} />
-      <TechCard title="Frontend" items={["React", "Vite", "TailwindCSS"]} />
-      <TechCard title="Audio" items={["ElevenLabs TTS", "Gladia STT", "Silero VAD"]} />
-      <TechCard title="Platforms" items={["VAPI", "ElevenLabs", "Cartesia", "LiveKit"]} />
     </div>
   </div>
 );

@@ -8,6 +8,7 @@ import ConnectionLoading from "./components/ConnectionLoading";
 import WorkspaceDashboard from "./pages/workspace/index"
 import AuthScreen from "./pages/auth/AuthScreen";
 import EvaluationDashboard from "./pages/evaluation";
+import DocsPage from "./pages/docs";
 import { extractAgent, flowGenerationMermaid } from "./api";
 import { DUMMY_EVALUATION_DATA } from "./pages/evaluation/const";
 
@@ -59,6 +60,12 @@ function App() {
 
   const handleNavigate = (viewId) => {
     console.log("Navigating to:", viewId);
+    
+    if (viewId === "documentation") {
+      window.location.pathname = '/docs';
+      return;
+    }
+    
     setActiveView(viewId);
 
     if (viewId === "connect-agent") {
@@ -161,6 +168,10 @@ function App() {
 
   if (!isAuthenticated) {
     return <AuthScreen onAuthSuccess={handleAuthSuccess} />
+  }
+
+  if (window.location.pathname === '/docs') {
+    return <DocsPage />;
   }
 
 if (showLayout) {

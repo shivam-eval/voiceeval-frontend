@@ -22,6 +22,7 @@ import AudioOverview from "./insights/audio";
 import EndpointingOverview from "./insights/endpointing";
 import PersonaOverview from "./insights/persona";
 import TaskCompletionOverview from "./insights/task_completion";
+import ConversationOverview from "./insights/conversation";
 
 
 const CATEGORY = {
@@ -33,6 +34,7 @@ const CATEGORY = {
   AUDIO: "audio",
   ENDPOINTING: "endpointing",
   PERSONA: "persona",
+  CONVERSATION:"conversation"
 };
 const CATEGORY_TITLES = {
   [CATEGORY.OVERVIEW]: null, // handled separately
@@ -43,6 +45,7 @@ const CATEGORY_TITLES = {
   [CATEGORY.ENDPOINTING]: "ENDPOINTING OVERVIEW",
   [CATEGORY.PERSONA]: "PERSONA ALIGNMENT OVERVIEW",
   [CATEGORY.TASK_COMPLETION]: "TASK COMPLETION OVERVIEW",
+  [CATEGORY.CONVERSATION]:"CONVERSATION OVERVIEW"
 };
 
 
@@ -150,6 +153,9 @@ const renderActiveSection = () => {
     case CATEGORY.TASK_COMPLETION:
       // Optional: create later
       return <TaskCompletionOverview data={displayData}/>;
+    
+    case CATEGORY.CONVERSATION:
+      return <ConversationOverview data={displayData}/>
 
     default:
       return renderOverview();

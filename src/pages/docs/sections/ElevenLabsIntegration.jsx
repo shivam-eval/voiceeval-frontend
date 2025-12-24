@@ -93,33 +93,6 @@ const ElevenLabsIntegrationSection = () => (
       </ol>
     </div>
 
-    {/* What VoiceEval Does */}
-    <h2 className="text-2xl font-bold mt-12 mb-4">
-      What VoiceEval Handles Automatically
-    </h2>
-    <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 mb-8">
-      <ul className="space-y-3 text-gray-300">
-        <li>System prompt and agent instructions</li>
-        <li>Agent metadata and configuration</li>
-        <li>Workflow structure and transitions</li>
-        <li>Voice and transcription configuration</li>
-        <li>Evaluation-ready representations for testing and simulation</li>
-      </ul>
-    </div>
-
-    {/* No Changes Required */}
-    <h2 className="text-2xl font-bold mt-12 mb-4">
-      No Changes Required on Your Side
-    </h2>
-    <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-6 mb-8">
-      <ul className="space-y-3 text-green-200">
-        <li>No changes to agent prompts or logic</li>
-        <li>No redeployment of your agent</li>
-        <li>No webhooks or manual data uploads</li>
-        <li>No SDK or code modifications</li>
-      </ul>
-    </div>
-
     {/* Connect in VoiceEval */}
     <h2 className="text-2xl font-bold mt-12 mb-6">
       Connect Your Agent in VoiceEval
@@ -164,6 +137,20 @@ const ElevenLabsIntegrationSection = () => (
           </button>
         </div>
       </div>
+    </div>
+
+    {/* What VoiceEval Does */}
+    <h2 className="text-2xl font-bold mt-12 mb-4">
+      What VoiceEval Handles Automatically
+    </h2>
+    <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 mb-8">
+      <ul className="space-y-3 text-gray-300">
+        <li>System prompt and agent instructions</li>
+        <li>Agent metadata and configuration</li>
+        <li>Workflow structure and transitions</li>
+        <li>Voice and transcription configuration</li>
+        <li>Evaluation-ready representations for testing and simulation</li>
+      </ul>
     </div>
 
     {/* What You Can Evaluate */}

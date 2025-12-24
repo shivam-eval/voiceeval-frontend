@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ChevronRight, Search, Book, Zap, Code, Settings, Phone, Mic, Database } from "lucide-react";
+import { ChevronRight, Search, Book, Zap, Code, Settings, Phone, Mic, Database, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import VAPIIntegrationSection from "./sections/VAPIIntegration";
 import ElevenLabsIntegrationSection from "./sections/ElevenLabsIntegration";
 import CartesiaIntegrationSection from "./sections/CartesiaIntegration";
@@ -87,6 +88,10 @@ const DocsPage = () => {
       <header className="sticky top-0 z-50 bg-[#0A0A0F]/95 backdrop-blur-sm border-b border-gray-800/50">
         <div className="max-w-screen-2xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm">Back to Dashboard</span>
+            </Link>
             <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-blue-500 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">VE</span>
             </div>

@@ -167,14 +167,23 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
     persona: {
       name:
         tc.test_id === "happy_path_full_payment"
-          ? "Rajesh"
-          : "Neha",
+          ? "Rajesh Kumar"
+          : "Neha Sharma",
+      age: tc.test_id === "happy_path_full_payment" ? "35" : "28",
+      city: tc.test_id === "happy_path_full_payment" ? "Mumbai, Maharashtra" : "Bangalore, Karnataka",
+      occupation: tc.test_id === "happy_path_full_payment" ? "Senior Software Engineer" : "Marketing Manager",
+      education: tc.test_id === "happy_path_full_payment" ? "B.Tech in Computer Science" : "MBA in Marketing",
+      annualIncome: tc.test_id === "happy_path_full_payment" ? "₹18,00,000" : "₹12,50,000",
+      creditScore: tc.test_id === "happy_path_full_payment" ? 780 : 720,
+      employmentStatus: "Full-time Employed",
+      loanAmount: "₹8,500",
+      loanPurpose: "Personal Loan",
+      lastLoanTaken: "6 months ago",
       speakingRate: "Moderate (120–130 WPM)",
       interruptionTendency: "Low",
       dialect: "Indian English",
       personality: "Cooperative",
       backgroundEnvironment: "Quiet",
-      vehicle: "N/A",
       currentSituation: "Outstanding loan repayment"
     }
   }))
@@ -187,6 +196,25 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
   setTestCases(normalized)
   setExpandedScripts(expandedInit)
 }, [])
+
+  /* -------------------------------------------------
+     Toggle Script Expansion
+  ------------------------------------------------- */
+  const toggleScript = (id) => {
+    setExpandedScripts(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }))
+  }
+
+  /* -------------------------------------------------
+     Run Simulation Handler
+  ------------------------------------------------- */
+  const runSimulationNow = () => {
+    if (onRunTests) {
+      onRunTests(testCases)
+    }
+  }
 
   /* -------------------------------------------------
      Render

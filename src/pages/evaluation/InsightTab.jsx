@@ -11,6 +11,17 @@ import {
   XCircle,
 } from "lucide-react";
 
+const CATEGORY_LABELS = {
+  accuracy: "Accuracy",
+  task_completion: "Task Completion",
+  latency: "Latency",
+  audio: "Audio",
+  conversation: "Conversation",
+  endpointing: "Endpointing",
+  cost: "Cost",
+  persona: "Persona",
+};
+
 const TABS_CONFIG = [
   { id: "", label: "Overview", icon: LayoutGrid },
   { id: "accuracy", label: "Accuracy", icon: Target },

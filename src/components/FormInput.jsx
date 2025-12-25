@@ -17,6 +17,7 @@ const FormInput = ({
 
       <div className="relative">
         <input
+        
           type={type}
           value={value}
           onChange={onChange}

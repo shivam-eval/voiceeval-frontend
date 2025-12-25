@@ -9,11 +9,16 @@ import {
   SUMMARY_METRICS,
   EVALUATION_TABLE_DATA,
   DUMMY_CATEGORY_SCORES,
+  DEBT_COLLECTION_SIMULATION,
+  DEBT_COLLECTION_EVALUATION,
+  DEBT_COLLECTION_TRANSCRIPTS,
 } from "./const";
 import TestReportView from "./viewreport/ViewReport";
 import SummaryMetric from "./SummaryMetrics";
 import InsightTabs from "./InsightTab";
 import EvaluationTable from "./EvaluationTable";
+import CallResultsTable from "./CallResultsTable";
+import SimulationOverview from "./SimulationOverview";
 import ImprovementsPanel from "./PriorityImprovements";
 import AccuracyView from "./insights/accuracy/Accuracy";
 import LatencyOverview from "./insights/latency";
@@ -49,20 +54,44 @@ const CATEGORY_TITLES = {
 };
 
 
-const EvaluationDashboard = ({ evaluationData, onBack }) => {
+const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
   const [activeCategory, setActiveCategory] = useState(CATEGORY.OVERVIEW);
-const [selectedReport, setSelectedReport] = useState(null);
+  const [selectedReport, setSelectedReport] = useState(null);
+  const [selectedTranscript, setSelectedTranscript] = useState(null);
 
   const isRealData = hasEvaluationData(evaluationData);
   const displayData = isRealData
     ? transformEvaluationData(evaluationData)
     : EVALUATION_DATA;
 
+  // Use debt collection simulation data if not provided
+  const mockSimulationData = simulationData || DEBT_COLLECTION_SIMULATION;
+
+  // Get transcript data from DEBT_COLLECTION_TRANSCRIPTS
+  const getTranscriptData = (transcriptId) => {
+    return DEBT_COLLECTION_TRANSCRIPTS[transcriptId] || null;
+  };
+
+  const handleViewReport = (report) => {
+    setSelectedReport(report);
+    const transcriptData = getTranscriptData(report.transcript_result_id);
+    setSelectedTranscript(transcriptData);
+  };
+
   // -----------------------------
   // OVERVIEW (FULL NORMAL UI)
   // -----------------------------
   const renderOverview = () => (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
+      {/* Simulation Overview */}
+      <SimulationOverview simulationData={mockSimulationData} />
+
+      {/* Call Results Table */}
+      <CallResultsTable 
+        transcriptResults={mockSimulationData.transcript_results}
+        onViewReport={handleViewReport}
+      />
+
       {/* Summary Metrics */}
       <div className="grid grid-cols-4 gap-4">
         {SUMMARY_METRICS.map((metric) => (
@@ -109,99 +138,98 @@ const [selectedReport, setSelectedReport] = useState(null);
           },
         ]}
       />
-
-      <EvaluationTable
-        data={EVALUATION_TABLE_DATA}
-       onViewReport={(row) => setSelectedReport(row)}
-      />
     </div>
   );
 
-  // -----------------------------
-  // SWITCH RENDERER
-  // -----------------------------
-const renderActiveSection = () => {
+  const renderActiveSection = () => {
   // Report view has highest priority
   if (selectedReport) {
     return (
       <TestReportView
         report={selectedReport}
-        onBack={() => setSelectedReport(null)}
+        transcriptData={selectedTranscript}
+        onBack={() => {
+          setSelectedReport(null);
+          setSelectedTranscript(null);
+        }}
       />
     );
   }
 
+  const handleBackToOverview = () => {
+    setActiveCategory(CATEGORY.OVERVIEW);
+  };
+
   switch (activeCategory) {
     case CATEGORY.ACCURACY:
-      return <AccuracyView data={displayData} />;
+      return <AccuracyView data={displayData} onBack={handleBackToOverview} />;
 
     case CATEGORY.LATENCY:
-      return <LatencyOverview data={displayData} />;
+      return <LatencyOverview data={displayData} onBack={handleBackToOverview} />;
 
     case CATEGORY.COST:
-      return <CostOverview data={displayData} />;
+      return <CostOverview data={displayData} onBack={handleBackToOverview} />;
 
     case CATEGORY.AUDIO:
-      return <AudioOverview data={displayData} />;
+      return <AudioOverview data={displayData} onBack={handleBackToOverview} />;
 
     case CATEGORY.ENDPOINTING:
-      return <EndpointingOverview data={displayData} />;
+      return <EndpointingOverview data={displayData} onBack={handleBackToOverview} />;
 
     case CATEGORY.PERSONA:
-      return <PersonaOverview data={displayData} />;
+      return <PersonaOverview data={displayData} onBack={handleBackToOverview} />;
 
     case CATEGORY.TASK_COMPLETION:
-      // Optional: create later
-      return <TaskCompletionOverview data={displayData}/>;
+      return <TaskCompletionOverview data={displayData} onBack={handleBackToOverview} />;
     
     case CATEGORY.CONVERSATION:
-      return <ConversationOverview data={displayData}/>
+      return <ConversationOverview data={displayData} onBack={handleBackToOverview} />
 
     default:
       return renderOverview();
   }
 };
 
-
-
   // -----------------------------
   // JSX
   // -----------------------------
   return (
     <div className="w-full max-w-screen-2xl mx-auto h-full flex flex-col">
-      {/* Header stays always */}
-      <div className="flex-shrink-0 px-8 pt-8 pb-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-  {activeCategory === CATEGORY.ACCURACY
-    ? "ACCURACY OVERVIEW"
-    : isRealData
-      ? "EVALUATION RESULTS"
-      : "VAPI CALL TESTING DASHBOARD"}
-</h1>
+      {/* Header - Hide when showing report view */}
+      {!selectedReport && (
+        <div className="flex-shrink-0 px-8 pt-8 pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-white mb-2">
+                {activeCategory === CATEGORY.ACCURACY
+                  ? "ACCURACY OVERVIEW"
+                  : isRealData
+                    ? "EVALUATION RESULTS"
+                    : "SIMULATION DASHBOARD"}
+              </h1>
 
-            <p className="text-gray-400">
-              {isRealData
-                ? `Overall Score: ${Math.round(
-                    evaluationData.overall_score * 100
-                  )}% | ${
-                    evaluationData.passed ? "PASSED" : "NEEDS IMPROVEMENT"
-                  }`
-                : `Test Suite: Car Dealership Outbound | Date: ${new Date().toLocaleDateString()}`}
-            </p>
+              <p className="text-gray-400">
+                {isRealData
+                  ? `Overall Score: ${Math.round(
+                      evaluationData.overall_score * 100
+                    )}% | ${
+                      evaluationData.passed ? "PASSED" : "NEEDS IMPROVEMENT"
+                    }`
+                  : `Test Suite: Debt Collection Compliance | Date: ${new Date().toLocaleDateString()}`}
+              </p>
+            </div>
+
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium"
+              >
+                Back
+              </button>
+            )}
           </div>
-
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium"
-            >
-              Back
-            </button>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Content — SINGLE RENDER POINT */}
       <div className="flex-1 overflow-y-auto px-8 pb-8">

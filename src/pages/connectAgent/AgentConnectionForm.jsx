@@ -47,6 +47,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
           placeholder={`Enter your ${platform?.toUpperCase()} API key`}
           type="password"
           disabled={isConnecting}
+          type="password"
         />
 
         {platform === "vapi" && (
@@ -60,6 +61,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
             placeholder="Enter your VAPI Assistant ID"
             type="password"
             disabled={isConnecting}
+            type="password"
           />
         )}
 

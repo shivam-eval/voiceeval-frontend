@@ -48,6 +48,7 @@ const DashboardLayout = ({
             <DashboardOverview />
           </div>
         )}
+        )}
       </div>
     </div>
   );

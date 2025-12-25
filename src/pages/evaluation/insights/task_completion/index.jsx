@@ -1,4 +1,4 @@
-import { CheckCircle, XCircle } from "lucide-react";
+import { CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import StatCard from "../../../../components/StatCard";
 import TaskCompletionDistribution from "./TaskCompletion";
 import DetailedValidationSection from "./DetailedValidationSection";
@@ -70,7 +70,7 @@ const transformStatCards = (response) =>
 /* =========================
    Component
 ========================= */
-const TaskCompletionOverview = () => {
+const TaskCompletionOverview = ({ onBack }) => {
   /* -------------------------
      Derived values
   ------------------------- */
@@ -83,6 +83,16 @@ const TaskCompletionOverview = () => {
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Back Button */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Overview
+        </button>
+      )}
 
       {/* ================= HEADER CARD ================= */}
       <div className="bg-[#0b1f26] border border-teal-500/40 rounded-xl p-6 flex items-center justify-between">

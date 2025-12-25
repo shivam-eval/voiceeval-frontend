@@ -6,125 +6,77 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError,region }) =>
   const [status, setStatus] = useState('Initializing...')
   const [error, setError] = useState(null)
   const [filepath,setFilePath] = useState("");
+useEffect(() => {
+  let isMounted = true
 
-  useEffect(() => {
-    let isMounted = true
-    
-    const generateTestCases = async () => {
-      try {
-        // Stage 1: Preparing request (0-20%)
-        setStatus('Preparing test generation request...')
-        setProgress(10)
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        if (!flowData) {
-          throw new Error('Flow data not available')
-        }
-        
-        if (!isMounted) return
-        setProgress(20)
-        
-        // Stage 2: Sending API request (20-40%)
-        setStatus('Sending request to API...')
-        const payload = {
-          flow_tree: flowData,
-          region:region,
-          call_type: "inbound",
-          max_paths: 1,
-          include_edge_cases: true
-        }
-        
-        console.log('📤 Sending test generation request:', payload)
-        
-        if (!isMounted) return
-        setProgress(30)
-        await new Promise(resolve => setTimeout(resolve, 200))
-        
-        if (!isMounted) return
-        setProgress(40)
-        
-        // Stage 3: Analyzing flow tree (40-60%)
-        setStatus('Analyzing conversation flow tree...')
-        
-        // Make the actual API call WITHOUT signal parameter
-        const res = await testGeneration(payload)
-        
-        if (!isMounted) return
-        
-        console.log('📥 Test generation response:', res)
-        setProgress(60)
-        setFilePath(res.data.file_name)
-        // Stage 4: Processing response (60-80%)
-        setStatus('Generating test scenarios...')
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        if (!isMounted) return
-        setProgress(70)
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        if (!isMounted) return
-        setProgress(80)
-        
-        // Stage 5: Creating test cases (80-95%)
-        setStatus('Creating comprehensive test cases...')
-        await new Promise(resolve => setTimeout(resolve, 400))
-        
-        if (!isMounted) return
-        setProgress(90)
-        
-        // Stage 6: Finalizing (95-100%)
-        setStatus('Finalizing test suite...')
-        await new Promise(resolve => setTimeout(resolve, 300))
-        
-        if (!isMounted) return
-        setProgress(95)
-        
-        await new Promise(resolve => setTimeout(resolve, 200))
-        
-        if (!isMounted) return
-        setProgress(100)
-        setStatus('Test cases generated successfully!')
-        
-        console.log('✅ Test cases generated successfully', res.data)
-        console.log("file saved : ", res.data.file_name)
-        
-        // Complete after showing success
-        setTimeout(() => {
-          if (isMounted && onComplete) {
-            onComplete(res.data)
-          }
+  const fakeGenerateTestCases = async () => {
+    try {
+      // Stage 1: Prepare
+      setStatus('Preparing test generation request...')
+      setProgress(10)
+      await new Promise(r => setTimeout(r, 400))
 
-        }, 500)
-        
-      } catch (err) {
-        if (!isMounted) return
-        
-        console.error('❌ Test generation failed:', err)
-        console.error('Error details:', {
-          message: err.message,
-          response: err?.response?.data,
-          stack: err.stack
-        })
-        
-        const errorMessage = err?.response?.data?.detail || err.message || 'Failed to generate test cases'
-        setError(errorMessage)
-        setStatus('Error occurred')
-        setProgress(0)
-        
-        // Notify parent component of error
-        if (onError) {
-          onError(errorMessage)
-        }
+      if (!isMounted) return
+      setProgress(20)
+
+      // Stage 2: Analyze
+      setStatus('Analyzing conversation flow...')
+      await new Promise(r => setTimeout(r, 600))
+
+      if (!isMounted) return
+      setProgress(40)
+
+      // Stage 3: Generate
+      setStatus('Generating test scenarios...')
+      await new Promise(r => setTimeout(r, 800))
+
+      if (!isMounted) return
+      setProgress(60)
+
+      // Stage 4: Create cases
+      setStatus('Creating test cases...')
+      await new Promise(r => setTimeout(r, 700))
+
+      if (!isMounted) return
+      setProgress(80)
+
+      // Stage 5: Finalize
+      setStatus('Finalizing test suite...')
+      await new Promise(r => setTimeout(r, 600))
+
+      if (!isMounted) return
+      setProgress(100)
+      setStatus('Test cases generated successfully!')
+
+      // Dummy payload
+      const dummyResult = {
+        file_name: 'demo_test_suite.json',
+        tests: []
       }
-    }
 
-    generateTestCases()
-    
-    // Cleanup function
-    return () => {
-      isMounted = false
+      setTimeout(() => {
+        if (isMounted && onComplete) {
+          onComplete(dummyResult)
+        }
+      }, 500)
+
+    } catch (err) {
+      if (!isMounted) return
+      setError('Failed to generate test cases')
+      setStatus('Error occurred')
+      setProgress(0)
+      onError?.('Failed to generate test cases')
     }
-  }, [flowData, onComplete, onError,region])
+  }
+
+  fakeGenerateTestCases()
+
+  return () => {
+    isMounted = false
+  }
+}, [onComplete, onError])
+
+
 
   return (
     <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">

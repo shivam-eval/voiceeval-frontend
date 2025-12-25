@@ -1,131 +1,145 @@
 import React, { useState } from "react";
+import { Play, Pause, Download, Copy, User, Bot } from "lucide-react";
 
-const DUMMY_AUDIO_SEGMENTS = [
-  { id: 1, color: "bg-green-400/70", width: "18%" },
-  { id: 2, color: "bg-red-400/70", width: "24%" },
-  { id: 3, color: "bg-green-400/70", width: "32%" },
-  { id: 4, color: "bg-red-400/70", width: "12%" },
-];
-
-const DUMMY_TRANSCRIPT = [
-  {
-    speaker: "Main Agent",
-    text: "Hi there. This is Alex from Tech Solutions Customer Support. How can I help you today?",
-    time: "00:00",
-    role: "agent",
-  },
-  {
-    speaker: "Testing Agent",
-    text: "Hello. I'm calling because I was double-charged for my TaskMaster Pro subscription and I need an immediate refund.",
-    time: "00:07",
-    role: "tester",
-  },
-  {
-    speaker: "Main Agent",
-    text: "I understand how frustrating that can be. I’ll help you sort this out right away. May I confirm your account email address?",
-    time: "00:16",
-    role: "agent",
-  },
-  {
-    speaker: "Testing Agent",
-    text: "Yes, it’s john.doe@email.com.",
-    time: "00:32",
-    role: "tester",
-  },
-];
-
-const CallTranscriptPanel = () => {
+const CallTranscriptPanel = ({ transcriptData }) => {
   const [isPlaying, setIsPlaying] = useState(false);
 
+  const steps = transcriptData?.steps || [];
+  const metadata = transcriptData?.metadata || {};
+
+  const formatTime = (ms) => {
+    if (!ms) return "00:00";
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const formatDuration = (ms) => {
+    if (!ms) return "0:00";
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
+
+  const copyTranscript = () => {
+    const text = steps.map(step => 
+      `[${formatTime(step.speech_start_ms)}] ${step.turn_role === 'agent' ? 'Agent' : 'User'}: ${step.text}`
+    ).join('\n');
+    navigator.clipboard.writeText(text);
+  };
+
+  // Generate waveform segments from steps
+  const generateWaveform = () => {
+    if (steps.length === 0) return [];
+    
+    const totalDuration = metadata.duration_ms || 1;
+    return steps.map((step, index) => ({
+      id: index,
+      color: step.turn_role === 'agent' ? 'bg-purple-400/70' : 'bg-blue-400/70',
+      width: `${(step.duration_ms / totalDuration) * 100}%`
+    }));
+  };
+
+  const waveformSegments = generateWaveform();
+
   return (
-    <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6 space-y-6">
-      {/* Audio Section */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
-            Call Audio
+    <div className="bg-dark-panel border border-gray-800/50 rounded-xl overflow-hidden">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-gray-800/50 bg-dark-panel/50">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            TRANSCRIPT
           </h3>
-
-          <span className="text-xs text-gray-400">0:00 — 37:24</span>
-        </div>
-
-        {/* Fake waveform */}
-        <div className="flex items-center gap-2 h-12 bg-dark-input rounded-lg px-3">
-          {DUMMY_AUDIO_SEGMENTS.map((seg) => (
-            <div
-              key={seg.id}
-              className={`h-full rounded-sm ${seg.color}`}
-              style={{ width: seg.width }}
-            />
-          ))}
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center gap-3 mt-3">
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="px-3 py-1.5 bg-dark-input hover:bg-dark-input/80 border border-gray-700 rounded-md text-sm text-gray-300"
+          <button 
+            onClick={copyTranscript}
+            className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1.5 transition-colors"
           >
-            {isPlaying ? "Pause" : "Play"}
-          </button>
-
-          <button className="px-3 py-1.5 bg-dark-input hover:bg-dark-input/80 border border-gray-700 rounded-md text-sm text-gray-300">
-            Download
-          </button>
-
-          <span className="text-xs text-gray-400 ml-auto">1.25×</span>
-        </div>
-      </div>
-
-      {/* Transcript */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide">
-            Transcript
-          </h3>
-
-          <button className="text-xs text-teal-400 hover:text-teal-300">
+            <Copy className="w-3.5 h-3.5" />
             Copy
           </button>
         </div>
-
-        <div className="space-y-4 max-h-[320px] overflow-y-auto pr-2">
-          {DUMMY_TRANSCRIPT.map((item, index) => (
-            <div
-              key={index}
-              className="flex gap-3 text-sm leading-relaxed"
-            >
-              {/* Time */}
-              <span className="text-xs text-gray-500 w-10 shrink-0">
-                {item.time}
-              </span>
-
-              {/* Content */}
-              <div>
-                <p
-                  className={`font-semibold ${
-                    item.role === "agent"
-                      ? "text-teal-400"
-                      : "text-purple-400"
-                  }`}
-                >
-                  {item.speaker}
-                </p>
-
-                <p className="text-gray-300">
-                  {item.text}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Call end */}
-        <div className="mt-4 text-xs text-gray-500 flex items-center gap-2">
-          <span className="inline-block w-2 h-2 rounded-full bg-gray-500" />
-          Main agent ended call
-        </div>
       </div>
+
+      {/* Content */}
+      <div className="p-6 space-y-6">
+
+        {/* Transcript Messages */}
+        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          {steps.map((step, index) => {
+            const isAgent = step.turn_role === 'agent';
+            const timestamp = formatTime(step.speech_start_ms);
+            
+            return (
+              <div
+                key={step.turn_id || index}
+                className="flex gap-3 group"
+              >
+                {/* Timestamp */}
+                <div className="text-xs text-gray-500 font-mono w-20 shrink-0 pt-1">
+                  {timestamp}
+                </div>
+
+                {/* Avatar */}
+                <div className="shrink-0">
+                  {isAgent ? (
+                    <div className="w-8 h-8 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
+                      <Bot className="w-4 h-4 text-purple-400" />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+                      <User className="w-4 h-4 text-blue-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Message Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-sm font-semibold ${
+                      isAgent ? "text-purple-400" : "text-blue-400"
+                    }`}>
+                      {isAgent ? "Agent" : "User"}
+                    </span>
+                    <span className="text-xs text-gray-600">•</span>
+                    <span className="text-xs text-gray-500">Turn {step.turn_number}</span>
+                  </div>
+                  
+                  <p className="text-gray-200 text-sm leading-relaxed">
+                    {step.text || <span className="text-gray-500 italic">No transcript available</span>}
+                  </p>
+                  
+                  <div className="mt-1.5 text-xs text-gray-500">
+                    {step.duration_ms ? `${(step.duration_ms / 1000).toFixed(1)}s` : ''}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Empty state */}
+        {steps.length === 0 && (
+          <div className="text-center py-12">
+            <Bot className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+            <p className="text-gray-400 text-sm">No transcript available</p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      {steps.length > 0 && (
+        <div className="px-6 py-3 border-t border-gray-800/50 bg-dark-panel/30">
+          <div className="text-xs text-gray-500 flex items-center gap-2">
+            <span className="inline-block w-2 h-2 rounded-full bg-gray-500" />
+            Call ended • {metadata.total_turns || 0} turns • {formatDuration(metadata.duration_ms)}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

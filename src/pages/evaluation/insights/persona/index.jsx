@@ -4,6 +4,7 @@ import {
   Globe,
   Heart,
   ShieldCheck,
+  ArrowLeft,
 } from "lucide-react";
 
 import InsightHeaderCard from "../../../../components/InsightHeaderCard";
@@ -88,12 +89,23 @@ const PERSONA_CARD_CONFIG = {
    Component
 ========================= */
 
-const PersonaOverview = () => {
+const PersonaOverview = ({ onBack }) => {
   const passedCount = response.metrics.filter((m) => m.passed).length;
   const failedCount = response.metrics.length - passedCount;
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Back Button */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Overview
+        </button>
+      )}
+
       {/* Header */}
       <InsightHeaderCard
         icon={User}

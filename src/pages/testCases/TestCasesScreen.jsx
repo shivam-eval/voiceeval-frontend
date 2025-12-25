@@ -1,205 +1,217 @@
-import { useState, useEffect } from 'react'
-import TestCaseCard from './TestCaseCard'
-import RunTestsButton from './RunTestButton'
-import { CALL_FLOW_SCRIPT, DEFAULT_TESTS_CASES,EXPECTED_RESPONSE } from './Script'
+import { useState, useEffect } from "react"
+import TestCaseCard from "./TestCaseCard"
+import RunTestsButton from "./RunTestButton"
+import { CALL_FLOW_SCRIPT } from "./Script"
 
-// Call flow script for all test cases
+/* -------------------------------------------------
+   DEFAULT DEMO TEST CASES
+------------------------------------------------- */
 
-const DEFAULT_TEST_CASES = [
-  // your default cases — keep the array you already had, but add `script: CALL_FLOW_SCRIPT`
-].map((c) => ({ ...c, script: CALL_FLOW_SCRIPT }))
+export const DEFAULT_TEST_CASES = [
+  {
+    transcript_result_id: "tr_hp_full_payment_001",
+    test_id: "happy_path_full_payment",
+    session_id: "sess_hp_001",
+    status: "completed",
+    timing: {
+      start_time_ms: 1766639021000,
+      end_time_ms: 1766639085000,
+      duration_ms: 64000
+    },
+    steps: [
+      {
+        turn_number: 1,
+        kind: "agent_speak",
+        text: "Hello, I’m Riya calling on behalf of ABC Finance. This call is regarding an outstanding payment. May I confirm if I’m speaking with Rajesh?",
+        turn_id: "turn_001",
+        turn_role: "agent",
+        node_id: "start"
+      },
+      {
+        turn_number: 2,
+        kind: "user_speak",
+        text: "Yes, this is Rajesh.",
+        turn_id: "turn_002",
+        turn_role: "user",
+        node_id: "identity_confirmed"
+      },
+      {
+        turn_number: 3,
+        kind: "agent_speak",
+        text: "Thank you for confirming. There is an outstanding amount of ₹8,500 that was due on 10th December.",
+        turn_id: "turn_003",
+        turn_role: "agent",
+        node_id: "identity_confirmed"
+      },
+      {
+        turn_number: 4,
+        kind: "user_speak",
+        text: "Okay, I can make the payment today.",
+        turn_id: "turn_004",
+        turn_role: "user",
+        node_id: "borrower_reaction"
+      },
+      {
+        turn_number: 5,
+        kind: "agent_speak",
+        text: "Thank you. Would you like to pay now through a UPI link, or should I schedule a callback?",
+        turn_id: "turn_005",
+        turn_role: "agent",
+        node_id: "can_pay_today"
+      }
+    ],
+    metadata: {
+      total_turns: 5,
+      agent_turns: 3,
+      user_turns: 2,
+      duration_ms: 64000
+    },
+    error_message: null
+  },
 
-// Helper: build a readable script from the API 'steps' array.
-// The exact step shape may vary; this function attempts to extract common fields.
-function buildScriptFromSteps(steps = [], persona = {}) {
-  if (!Array.isArray(steps) || steps.length === 0) return CALL_FLOW_SCRIPT
+  {
+    transcript_result_id: "tr_hp_schedule_002",
+    test_id: "happy_path_repayment_date",
+    session_id: "sess_hp_002",
+    status: "completed",
+    timing: {
+      start_time_ms: 1766639100000,
+      end_time_ms: 1766639170000,
+      duration_ms: 70000
+    },
+    steps: [
+      {
+        turn_number: 1,
+        kind: "agent_speak",
+        text: "Hello, I’m Riya calling on behalf of ABC Finance. May I confirm if I’m speaking with Neha?",
+        turn_id: "turn_001",
+        turn_role: "agent",
+        node_id: "start"
+      },
+      {
+        turn_number: 2,
+        kind: "user_speak",
+        text: "Yes, speaking.",
+        turn_id: "turn_002",
+        turn_role: "user",
+        node_id: "identity_confirmed"
+      },
+      {
+        turn_number: 3,
+        kind: "agent_speak",
+        text: "There is an outstanding amount of ₹12,000 due on 5th December.",
+        turn_id: "turn_003",
+        turn_role: "agent",
+        node_id: "identity_confirmed"
+      },
+      {
+        turn_number: 4,
+        kind: "user_speak",
+        text: "I need some time. I can pay next Friday.",
+        turn_id: "turn_004",
+        turn_role: "user",
+        node_id: "borrower_reaction"
+      },
+      {
+        turn_number: 5,
+        kind: "agent_speak",
+        text: "No problem. I’ve noted the repayment date and will send a reminder.",
+        turn_id: "turn_005",
+        turn_role: "agent",
+        node_id: "needs_time"
+      }
+    ],
+    metadata: {
+      total_turns: 5,
+      agent_turns: 3,
+      user_turns: 2,
+      duration_ms: 70000
+    },
+    error_message: null
+  }
+]
 
-  const lines = []
-  let visibleStep = 1
+/* -------------------------------------------------
+   TestCasesScreen Component
+------------------------------------------------- */
 
-  steps.forEach((step) => {
-    const t = step.type || step.step_type || ''
-    const isAgent = step.role === 'agent'
+const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
+  const [testCases, setTestCases] = useState([])
+  const [expandedScripts, setExpandedScripts] = useState({})
 
-    const speaker = isAgent
-      ? 'AGENT'
-      : persona?.name || 'USER'
+  /* -------------------------------------------------
+     Initialize Demo Test Cases
+  ------------------------------------------------- */
+  useEffect(() => {
+  const normalized = DEFAULT_TEST_CASES.map((tc, index) => ({
+    ...tc,
 
-    const text =
-      step.utterance ??
-      step.text ??
-      step.user_input ??
-      step.expected_response ??
-      ''
+    // REQUIRED by TestCaseCard
+    id: index + 1,
+    title:
+      tc.test_id === "happy_path_full_payment"
+        ? "Happy Path – Full Payment"
+        : "Happy Path – Scheduled Repayment",
 
-    if (!text || !text.toString().trim()) return
+    icon: "✅",
 
-    if (
-      t.toLowerCase().includes('speak') ||
-      t.toLowerCase().includes('utterance')
-    ) {
-      lines.push(`**[Step ${visibleStep++}]**`)
-      lines.push(`**${speaker}:** "${String(text).trim()}"`)
-      lines.push('')
-    } else if (
-      t.toLowerCase().includes('wait') ||
-      t.toLowerCase().includes('listen') ||
-      t.toLowerCase().includes('user')
-    ) {
-      lines.push(`**[Step ${visibleStep++} - wait for user response]**`)
-      lines.push(`**${speaker}:** "${String(text).trim()}"`)
-      lines.push('')
+    // build readable script from steps
+    script: tc.steps
+      .map(
+        (s) =>
+          `${s.turn_role === "agent" ? "AGENT" : "USER"}: ${s.text}`
+      )
+      .join("\n\n"),
+
+    // REQUIRED persona block
+    persona: {
+      name:
+        tc.test_id === "happy_path_full_payment"
+          ? "Rajesh"
+          : "Neha",
+      speakingRate: "Moderate (120–130 WPM)",
+      interruptionTendency: "Low",
+      dialect: "Indian English",
+      personality: "Cooperative",
+      backgroundEnvironment: "Quiet",
+      vehicle: "N/A",
+      currentSituation: "Outstanding loan repayment"
     }
+  }))
+
+  const expandedInit = {}
+  normalized.forEach(tc => {
+    expandedInit[tc.id] = false
   })
 
-  return lines.length ? lines.join('\n') : CALL_FLOW_SCRIPT
-}
+  setTestCases(normalized)
+  setExpandedScripts(expandedInit)
+}, [])
 
-
-const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
-  const [expandedScripts, setExpandedScripts] = useState({}) // { [id]: boolean }
-  const [testCases, setTestCases] = useState(DEFAULT_TEST_CASES)
-  
-
-
-  const runSimulationNow = () => {
-  if (!testSuitePath) {
-    alert("Test suite path missing. Please regenerate test cases.")
-    return
-  }
-
-  onRunTests(testSuitePath)
-}
-
-
-
-
-  useEffect(() => {
-    if (testSuite?.test_paths && Array.isArray(testSuite.test_paths)) {
-      const transformedCases = testSuite.test_paths.map((path, index) => {
-        const id = index + 1
-        const title = path.name || `Test Case ${id}`
-        const pathType = path.path_type
-        const icon = getIconForPathType(pathType)
-        const steps = path.steps || []
-        const script = buildScriptFromSteps(steps, path)
-        const persona = generatePersonaFromSteps(steps, path)
-
-        return {
-          id,
-          title,
-          icon,
-          pathId: path.path_id,
-          pathType,
-          goal: path.goal,
-          description: path.description,
-          nodeSequence: path.node_sequence,
-          steps,
-          script,
-          persona
-        }
-      })
-
-      // initialize expandedScripts to false for each id
-      const expandedInit = {}
-      transformedCases.forEach((c) => { expandedInit[c.id] = false })
-
-      setTestCases(transformedCases)
-      setExpandedScripts(expandedInit)
-    } else {
-      // no testSuite: ensure defaults have scripts and collapse
-      const defaultsWithScript = DEFAULT_TEST_CASES.map((c, idx) => ({ ...c, id: idx + 1 }))
-      const expandedInit = {}
-      defaultsWithScript.forEach((c) => { expandedInit[c.id] = false })
-      setTestCases(defaultsWithScript)
-      setExpandedScripts(expandedInit)
-    }
-  }, [testSuite])
-
-  const getIconForPathType = (pathType) => {
-    if (!pathType) return '🧪'
-    const icons = {
-      edge_case: '⚠️',
-      happy_path: '✅',
-      error: '❌',
-      boundary: '🔄'
-    }
-    return icons[pathType] || '🧪'
-  }
-
-  const generatePersonaFromSteps = (steps = [], path = {}) => {
-  const p = path?.assigned_personas?.[0]
-
-  // Backend persona exists (primary path)
-  if (p) {
-    return {
-      gender: p.gender ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1) : 'Unknown',
-      name: p.name || 'Persona',
-
-      speakingRate:
-        p.behavior_traits?.verbosity === 'verbose'
-          ? 'Slow (100–110 WPM)'
-          : p.behavior_traits?.verbosity === 'balanced'
-          ? 'Moderate (120–130 WPM)'
-          : 'Fast (150–160 WPM)',
-
-      interruptionTendency:
-        p.behavior_traits?.patience_level === 'high'
-          ? 'Low (waits for pauses)'
-          : p.behavior_traits?.patience_level === 'medium'
-          ? 'Medium (occasional interruptions)'
-          : 'High (frequent interruptions)',
-
-      dialect: `${p.native_language?.toUpperCase() || 'Unknown'} (${p.region || 'Global'})`,
-
-      personality: p.description || 'Polite and cooperative',
-
-      backgroundEnvironment:
-        p.occupation === 'sales_consultant'
-          ? 'Office environment'
-          : 'Quiet environment',
-
-      vehicle: path?.metadata?.vehicle || 'N/A',
-
-      currentSituation: path.goal || 'Test scenario'
-    }
-  }
-
-  // 🟡 Fallback (your existing logic untouched)
-  const firstUser = steps.find(s => s.user_input || s.utterance || s.text)
-
-  return {
-    gender: 'Dynamic',
-    name: 'Test Persona',
-    speakingRate: 'Varies',
-    interruptionTendency: 'Scenario-based',
-    dialect: 'Standard',
-    personality: path.description || 'Test-driven behavior',
-    backgroundEnvironment: 'Simulated',
-    vehicle: path?.metadata?.vehicle || 'N/A',
-    currentSituation: firstUser?.user_input || path.goal || 'Testing agent behavior'
-  }
-}
-
-  const toggleScript = (testCaseId) => {
-    setExpandedScripts(prev => ({ ...prev, [testCaseId]: !prev[testCaseId] }))
-  }
-
+  /* -------------------------------------------------
+     Render
+  ------------------------------------------------- */
   return (
     <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">
       <div className="space-y-6">
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Generated Test Cases</h1>
+            <h1 className="text-4xl font-bold text-white mb-2">
+              Generated Test Cases
+            </h1>
             <p className="text-gray-400">
-              Review the test cases and personas below, then run all tests to evaluate your Voice AI agent.
+              Review the test cases and personas below, then run tests to evaluate your Voice AI agent.
             </p>
           </div>
+
           {onBack && (
             <button
               onClick={onBack}
-              className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium transition-colors"
+              className="px-4 py-2 bg-dark-input hover:bg-dark-input/80
+                         border border-gray-700 text-gray-300
+                         rounded-lg text-sm font-medium transition-colors"
             >
               Back
             </button>
@@ -207,22 +219,22 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
         </div>
 
         {/* Test Cases List */}
-       <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-  {testCases.map((testCase) => (
-    <TestCaseCard
-      key={testCase.id}
-      testCase={testCase}
-      isExpanded={expandedScripts[testCase.id]}
-      onToggle={() => toggleScript(testCase.id)}
-    />
-  ))}
-</div>
+        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+          {testCases.map(testCase => (
+            <TestCaseCard
+              key={testCase.id}
+              testCase={testCase}
+              isExpanded={expandedScripts[testCase.id]}
+              onToggle={() => toggleScript(testCase.id)}
+            />
+          ))}
+        </div>
 
-<RunTestsButton
-  onRun={runSimulationNow}
-  disabled={!testCases.length}
-/>
-
+        {/* Run Tests */}
+        <RunTestsButton
+          onRun={runSimulationNow}
+          disabled={!testCases.length}
+        />
 
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   transformEvaluationData,
   hasEvaluationData,
@@ -47,8 +47,31 @@ const CATEGORY_TITLES = {
 
 
 const EvaluationDashboard = ({ evaluationData, onBack }) => {
-  const [activeCategory, setActiveCategory] = useState(CATEGORY.OVERVIEW);
-const [selectedReport, setSelectedReport] = useState(null);
+  const [activeCategory, setActiveCategory] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("preview") || CATEGORY.OVERVIEW;
+  });
+  const [selectedReport, setSelectedReport] = useState(null);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      setActiveCategory(params.get("preview") || CATEGORY.OVERVIEW);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  const handleCategoryChange = (category) => {
+    setActiveCategory(category);
+    const url = new URL(window.location.href);
+    if (category === CATEGORY.OVERVIEW) {
+      url.searchParams.delete("preview");
+    } else {
+      url.searchParams.set("preview", category);
+    }
+    window.history.pushState({}, "", url);
+  };
 
   const isRealData = hasEvaluationData(evaluationData);
   const displayData = isRealData
@@ -75,7 +98,7 @@ const [selectedReport, setSelectedReport] = useState(null);
       {/* Tabs */}
       <InsightTabs
         active={activeCategory}
-        onChange={setActiveCategory}
+        onChange={handleCategoryChange}
         categoryScores={
           displayData?.category_scores?.length
             ? displayData.category_scores
@@ -168,12 +191,9 @@ const renderActiveSection = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-white mb-2">
-  {activeCategory === CATEGORY.ACCURACY
-    ? "ACCURACY OVERVIEW"
-    : isRealData
-      ? "EVALUATION RESULTS"
-      : "VAPI CALL TESTING DASHBOARD"}
-</h1>
+              {CATEGORY_TITLES[activeCategory] ??
+                (isRealData ? "EVALUATION RESULTS" : "VAPI CALL TESTING DASHBOARD")}
+            </h1>
 
             <p className="text-gray-400">
               {isRealData
@@ -186,14 +206,24 @@ const renderActiveSection = () => {
             </p>
           </div>
 
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium"
-            >
-              Back
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {activeCategory !== CATEGORY.OVERVIEW && (
+              <button
+                onClick={() => handleCategoryChange(CATEGORY.OVERVIEW)}
+                className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium"
+              >
+                Back to Overview
+              </button>
+            )}
+            {onBack && activeCategory === CATEGORY.OVERVIEW && (
+              <button
+                onClick={onBack}
+                className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium"
+              >
+                Back
+              </button>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,0 +1,43 @@
+{
+  "category": "accuracy",
+  "overall_score": 0.4564393939393939,
+  "passed": false,
+  "metrics": [
+    {
+      "metric_name": "semantic_accuracy_rate",
+      "category": "accuracy",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 31087.077140808105,
+      "value": 0.9090909090909091,
+      "threshold": 0.8
+    },
+    {
+      "metric_name": "keyword_match_accuracy",
+      "category": "accuracy",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 57.146549224853516,
+      "value": 0.9166666666666667,
+      "threshold": 0.9
+    },
+    {
+      "metric_name": "semantic_similarity",
+      "category": "accuracy",
+      "status": "failed",
+      "passed": false,
+      "execution_time_ms": 0.02384185791015625,
+      "value": 0.0,
+      "threshold": 0.75
+    },
+    {
+      "metric_name": "intent_classification_accuracy",
+      "category": "accuracy",
+      "status": "failed",
+      "passed": false,
+      "execution_time_ms": 0.015497207641601562,
+      "value": 0.0,
+      "threshold": 0.85
+    }
+  ]
+}

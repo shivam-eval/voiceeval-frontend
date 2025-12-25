@@ -1,31 +1,35 @@
+import { Activity, Clock, AlertTriangle, CheckCircle2, XCircle, Info, TrendingUp, Mic, ShieldAlert, Radio } from 'lucide-react'
 import endpointingData from '../../../../data/endpointing.json'
 import InsightTabs from '../../InsightTab'
-import { DUMMY_CATEGORY_SCORES } from '../../const'
 
 const EndpointingView = () => {
   const COLORS = { accent: '#b61249', bg: '#000000', teal: '#2dd4bf', text: '#9da3af', white: '#ffffff', warn: '#f59e0b' }
   const metrics = Array.isArray(endpointingData?.metrics) ? endpointingData.metrics : []
   const byName = (n) => metrics.find(m => m.metric_name === n)
+  
   const ic = byName('interruption_count')
   const pd = byName('pause_detection')
   const tba = byName('turn_boundary_accuracy')
+  
   const passedCount = metrics.filter(m => !!m.passed).length
   const totalCount = metrics.length || 1
   const passPct = Math.round((passedCount / totalCount) * 100)
-  const categoryPassed = passedCount === totalCount
+  
   const fmtNum = (n) => n?.toLocaleString?.('en-US') ?? String(n ?? '')
-  const totalPauses = pd?.details?.total_pauses ?? 0
-  const longPauses = pd?.details?.long_pauses ?? 0
-  const avgPauseMin = pd?.details?.average_pause_ms ? (pd.details.average_pause_ms / 60000) : 0
-  const maxPauseMin = pd?.details?.max_pause_ms ? (pd.details.max_pause_ms / 60000) : 0
-  const pauseValueLabel = pd?.value ? `${(pd.value / 60000).toFixed(1)}m` : '0m'
-  const pauseThresholdSec = pd?.threshold ? (pd.threshold / 1000) : 0
+  
+  const fmtMs = (ms) => {
+    if (ms === 0) return '0'
+    if (ms < 1000) return `${Math.round(ms)}ms`
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`
+    return `${(ms / 60000).toFixed(1)}m`
+  }
+
   const handleTabChange = (key) => {
     const map = {
       accuracy: 'accuracy',
       task_completion: 'accuracy',
       latency: 'latency',
-      audio_quality: 'latency',
+      audio: 'latency',
       conversation_quality: 'latency',
       endpointing: 'endpointing',
       cost: 'latency',
@@ -36,19 +40,19 @@ const EndpointingView = () => {
     url.searchParams.set('preview', target)
     window.location.href = url.toString()
   }
+
   const donut = () => {
     const r = 34
     const cx = 40
     const cy = 40
     const circ = 2 * Math.PI * r
     const offset = circ * (1 - passPct / 100)
-    const stroke = categoryPassed ? COLORS.teal : COLORS.accent
     return (
       <svg width="100" height="100" viewBox="0 0 80 80">
         <circle cx={cx} cy={cy} r={r} stroke="#0a0f19" strokeWidth="8" fill="none"/>
         <circle
           cx={cx} cy={cy} r={r}
-          stroke={stroke}
+          stroke={endpointingData.passed ? COLORS.teal : COLORS.accent}
           strokeWidth="8"
           fill="none"
           strokeDasharray={circ}
@@ -60,224 +64,274 @@ const EndpointingView = () => {
       </svg>
     )
   }
-  const card = (m, title, valueRender, variant) => {
+
+  const detailedCard = (m, title) => {
     if (!m) return null
     const passed = !!m.passed
-    const threshold = m.threshold
+    const threshold = typeof m.threshold === 'number' ? m.threshold : null
+    const valRaw = m.value
     const exec = typeof m.execution_time_ms === 'number' ? Number(m.execution_time_ms.toFixed(2)) : 0
-    const progressPct = (() => {
-      if (m.metric_name === 'pause_detection') {
-        const valSec = (m.value || 0) / 1000
-        const thrSec = (threshold || 0) / 1000
-        return Math.max(0, Math.min(100, Math.round((valSec / (thrSec || 1)) * 100)))
-      }
-      if (m.metric_name === 'turn_boundary_accuracy') {
-        const valPct = (m.value || 0)
-        const thrPct = (threshold || 0)
-        return Math.max(0, Math.min(100, Math.round((valPct / (thrPct || 1)) * 100)))
-      }
-      return threshold ? Math.max(0, Math.min(100, Math.round(((m.value || 0) / threshold) * 100))) : 100
-    })()
+    
+    let valueLabel = ''
+    let thresholdLabel = 'N/A'
+    let pct = 0
+
+    if (m.metric_name === 'turn_boundary_accuracy') {
+      valueLabel = `${(valRaw * 100).toFixed(1)}%`
+      thresholdLabel = `${(threshold * 100).toFixed(1)}%`
+      pct = Math.max(0, Math.min(100, Math.round((valRaw / (threshold || 1)) * 100)))
+    } else if (m.metric_name === 'pause_detection') {
+      valueLabel = fmtMs(valRaw)
+      thresholdLabel = fmtMs(threshold)
+      pct = Math.max(0, Math.min(100, Math.round((valRaw / (threshold || 1)) * 100)))
+    } else {
+      valueLabel = fmtNum(valRaw)
+      thresholdLabel = fmtNum(threshold)
+      pct = threshold ? Math.max(0, Math.min(100, Math.round((valRaw / threshold) * 100))) : 100
+    }
+
     return (
-      <div className="p-4 rounded-xl border" style={{ backgroundColor: variant === 'alert' ? '#12090d' : '#0b1220', borderColor: variant === 'alert' ? COLORS.accent : '#1f2937' }}>
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="font-semibold" style={{ color: COLORS.white }}>{title}</div>
-            <div className="flex items-center gap-2 text-xs mt-1" style={{ color: COLORS.text }}>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
-              </svg>
-              <span>{exec}ms execution</span>
+      <div className={`p-6 rounded-xl border ${!passed ? 'border-rose-500/30' : 'border-gray-800/50'}`} style={{ backgroundColor: '#0b1220' }}>
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-lg text-white">{title}</span>
+              <Info size={14} className="text-gray-500 cursor-help" />
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
+              <Clock size={12} />
+              <span>{exec}ms</span>
             </div>
           </div>
-          <span
-            className="px-2 py-1 rounded-full text-xs font-semibold border"
-            style={{
-              color: passed ? COLORS.teal : COLORS.accent,
-              borderColor: passed ? COLORS.teal : COLORS.accent,
-              backgroundColor: passed ? 'rgba(45,212,191,0.08)' : 'rgba(182,18,73,0.08)'
-            }}
-          >
+          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+            passed ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-rose-400 border-rose-500/30 bg-rose-500/10'
+          }`}>
+            {passed ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
             {passed ? 'Passed' : 'Failed'}
-          </span>
-        </div>
-        <div className="mt-4">
-          <div className="text-2xl font-bold" style={{ color: m.metric_name === 'pause_detection' && !passed ? COLORS.warn : COLORS.teal }}>{valueRender(m)}</div>
-          <div className="h-2 rounded-full overflow-hidden mt-2" style={{ backgroundColor: COLORS.bg }}>
-            <div className="h-full" style={{ width: `${progressPct}%`, backgroundColor: passed ? COLORS.teal : COLORS.accent }} />
-          </div>
-          <div className="mt-1 text-xs" style={{ color: COLORS.text }}>
-            Threshold: {m.metric_name === 'pause_detection' ? `${(threshold / 1000).toFixed(1)}s` : m.metric_name === 'turn_boundary_accuracy' ? `${(threshold * 100).toFixed(1)}%` : `${threshold}`}
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-2 text-sm" style={{ color: COLORS.text }}>
-          {m.metric_name === 'interruption_count' && m.details && (
-            <>
-              <div>
-                Interruption Count
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.interruption_count)}</div>
-              </div>
-              <div>
-                Total Turns
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.total_turns)}</div>
-              </div>
-            </>
-          )}
-          {m.metric_name === 'pause_detection' && m.details && (
-            <>
-              <div>
-                Total Pauses
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.total_pauses)}</div>
-              </div>
-              <div>
-                Long Pauses
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.long_pauses)}</div>
-              </div>
-              <div>
-                Average Pause Ms
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(Math.round(m.details.average_pause_ms))}</div>
-              </div>
-              <div>
-                Max Pause Ms
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.max_pause_ms)}</div>
-              </div>
-            </>
-          )}
-          {m.metric_name === 'turn_boundary_accuracy' && (
-            <>
-              <div>
-                Threshold
-                <div className="font-semibold" style={{ color: COLORS.white }}>{(threshold * 100).toFixed(1)}%</div>
-              </div>
-            </>
-          )}
+
+        <div className="mt-6">
+          <div className="flex items-baseline justify-between mb-2">
+            <div className={`text-4xl font-bold ${!passed ? 'text-rose-400' : 'text-teal-400'}`}>{valueLabel}</div>
+            <div className="text-right">
+              <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Threshold</div>
+              <div className="text-gray-400 font-medium">{thresholdLabel}</div>
+            </div>
+          </div>
+          <div className="h-2 rounded-full bg-gray-900 overflow-hidden">
+            <div className={`h-full transition-all duration-500 ${!passed ? 'bg-rose-500' : 'bg-teal-400'}`} style={{ width: `${pct}%` }} />
+          </div>
+          <div className="flex justify-between text-[10px] text-gray-500 mt-2 font-medium">
+            <span>0</span>
+            <span>Threshold: {thresholdLabel}</span>
+          </div>
         </div>
+
+        {m.details && (
+          <div className="mt-8 pt-6 border-t border-gray-800/50">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp size={14} className="text-gray-400" />
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Details</span>
+            </div>
+            <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+              {Object.entries(m.details).filter(([k]) => k !== 'interruptions').map(([key, val]) => (
+                <div key={key} className="flex justify-between items-center border-b border-gray-800/30 pb-1">
+                  <span className="text-[11px] text-gray-500 font-medium capitalize whitespace-nowrap overflow-hidden text-ellipsis mr-2">{key.replace(/_/g, ' ')}</span>
+                  <span className="text-xs text-gray-300 font-bold whitespace-nowrap">{typeof val === 'number' ? (key.includes('ms') ? fmtMs(val) : fmtNum(val)) : String(val)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     )
   }
+
   const criticalBanner = () => {
+    if (pd?.passed !== false) return null
+    const avgPause = pd.details?.average_pause_ms || 0
+    const threshold = pd.threshold || 0
+    
     return (
-      <div className="rounded-xl border p-6" style={{ backgroundColor: '#12090d', borderColor: COLORS.accent }}>
+      <div className="rounded-xl border border-rose-500/50 p-6 bg-rose-500/5">
         <div className="flex items-center gap-3 mb-4">
-          <svg className="w-5 h-5" fill="none" stroke={COLORS.accent} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14M12 2a10 10 0 100 20 10 10 0 000-20z" />
-          </svg>
-          <div className="text-lg font-semibold" style={{ color: COLORS.white }}>Critical: Excessive Dead Air Detected</div>
+          <div className="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center">
+            <ShieldAlert className="text-rose-500" size={24} />
+          </div>
+          <div className="text-lg font-bold text-rose-500">Critical: Excessive Dead Air Detected</div>
         </div>
-        <div className="text-sm mb-6" style={{ color: COLORS.text }}>
-          Average pause duration of <span style={{ color: COLORS.warn, fontWeight: 700 }}>{avgPauseMin.toFixed(1)}m</span> significantly exceeds the <span style={{ color: COLORS.white, fontWeight: 600 }}>{pauseThresholdSec.toFixed(1)}s</span> threshold. This will make conversations feel unnatural and frustrating for users.
-        </div>
-        <div className="grid grid-cols-4 gap-4">
-          <div className="rounded-xl p-4 border" style={{ backgroundColor: '#1a0e13', borderColor: COLORS.accent }}>
-            <div className="text-3xl font-bold" style={{ color: COLORS.white }}>{fmtNum(totalPauses)}</div>
-            <div className="text-xs mt-1" style={{ color: COLORS.text }}>Total Pauses</div>
-          </div>
-          <div className="rounded-xl p-4 border" style={{ backgroundColor: '#1a0e13', borderColor: COLORS.accent }}>
-            <div className="text-3xl font-bold" style={{ color: COLORS.white }}>{fmtNum(longPauses)}</div>
-            <div className="text-xs mt-1" style={{ color: COLORS.text }}>Long Pauses</div>
-          </div>
-          <div className="rounded-xl p-4 border" style={{ backgroundColor: '#1a0e13', borderColor: COLORS.accent }}>
-            <div className="text-3xl font-bold" style={{ color: COLORS.white }}>{avgPauseMin.toFixed(1)}m</div>
-            <div className="text-xs mt-1" style={{ color: COLORS.text }}>Avg Duration</div>
-          </div>
-          <div className="rounded-xl p-4 border" style={{ backgroundColor: '#1a0e13', borderColor: COLORS.accent }}>
-            <div className="text-3xl font-bold" style={{ color: COLORS.white }}>{maxPauseMin.toFixed(1)}m</div>
-            <div className="text-xs mt-1" style={{ color: COLORS.text }}>Max Pause</div>
-          </div>
+        <p className="text-sm text-gray-400 mb-6">
+          Average pause duration of <span className="text-rose-400 font-bold">{fmtMs(avgPause)}</span> significantly exceeds the <span className="text-white font-semibold">{fmtMs(threshold)}</span> threshold. This will make conversations feel unnatural and frustrating for users.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Total Pauses', val: fmtNum(pd.details?.total_pauses) },
+            { label: 'Long Pauses', val: fmtNum(pd.details?.long_pauses) },
+            { label: 'Avg Duration', val: fmtMs(pd.details?.average_pause_ms) },
+            { label: 'Max Pause', val: fmtMs(pd.details?.max_pause_ms) },
+          ].map(s => (
+            <div key={s.label} className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-white">{s.val}</div>
+              <div className="text-xs text-gray-500 font-medium mt-1 uppercase tracking-wider">{s.label}</div>
+            </div>
+          ))}
         </div>
       </div>
     )
   }
+
   const silenceAnalysis = () => {
-    const segments = Array.from({ length: 20 }, (_, i) => (i % 2 === 0 ? 'speech' : 'silence'))
+    // Generate a visual timeline pattern
+    const segments = [
+      { type: 'speech', w: '5%' }, { type: 'silence', w: '10%' },
+      { type: 'speech', w: '8%' }, { type: 'silence', w: '12%' },
+      { type: 'speech', w: '6%' }, { type: 'silence', w: '15%' },
+      { type: 'speech', w: '10%' }, { type: 'silence', w: '8%' },
+      { type: 'speech', w: '12%' }, { type: 'silence', w: '14%' },
+    ]
+    
     return (
-      <div className="rounded-xl border p-6 space-y-4" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
-        <div className="flex items-center gap-2">
-          <svg className="w-4 h-4" fill="none" stroke={COLORS.teal} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
-          </svg>
-          <div className="text-sm font-semibold" style={{ color: COLORS.white }}>Silence Analysis</div>
+      <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-8">
+        <div className="flex items-center gap-2 mb-8">
+          <Activity size={20} className="text-teal-400" />
+          <h3 className="text-white text-lg font-semibold">Silence Analysis</h3>
         </div>
-        <div className="text-xs" style={{ color: COLORS.text }}>Conversation Timeline</div>
-        <div className="relative w-full h-10 rounded-lg overflow-hidden" style={{ backgroundColor: '#151a28' }}>
-          <div className="absolute inset-0 flex">
-            {segments.map((t, idx) => (
-              <div
-                key={idx}
-                className="flex-1"
-                style={{ backgroundColor: t === 'speech' ? COLORS.teal : '#7f1d1d' }}
-              />
+        
+        <div className="space-y-8">
+          <div>
+            <div className="flex justify-between items-end mb-2">
+              <span className="text-xs text-gray-500 font-medium uppercase tracking-wider">Conversation Timeline</span>
+              <span className="text-xs text-gray-500 font-medium">{pd?.details?.total_pauses || 0} pauses detected</span>
+            </div>
+            <div className="h-10 w-full bg-gray-900 rounded-lg overflow-hidden flex relative">
+              {segments.map((s, i) => (
+                <div 
+                  key={i} 
+                  className={`h-full transition-all duration-300 ${s.type === 'speech' ? 'bg-teal-500/60' : 'bg-rose-900/60'}`}
+                  style={{ width: s.w }}
+                />
+              ))}
+              <div className="absolute right-2 bottom-1">
+                <span className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">Excessive silence detected</span>
+              </div>
+            </div>
+            <div className="flex gap-4 mt-3">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-sm bg-teal-500/60" />
+                <span className="text-[10px] text-gray-500 font-bold uppercase">Speech</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-sm bg-rose-900/60" />
+                <span className="text-[10px] text-gray-500 font-bold uppercase">Silence</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-gray-800/30">
+            {[
+              { label: 'Total Pauses', val: fmtNum(pd?.details?.total_pauses), icon: Clock },
+              { label: 'Long Pauses (> 5s)', val: fmtNum(pd?.details?.long_pauses), icon: XCircle, color: 'text-rose-500' },
+              { label: 'Average Duration', val: fmtMs(pd?.details?.average_pause_ms), icon: Activity },
+              { label: 'Maximum Pause', val: fmtMs(pd?.details?.max_pause_ms), icon: AlertTriangle, color: 'text-warn' },
+            ].map(s => (
+              <div key={s.label} className="bg-[#0a0f19] border border-gray-800/30 rounded-xl p-6 flex flex-col items-center text-center">
+                <s.icon size={20} className={`${s.color || 'text-gray-500'} mb-3`} />
+                <div className="text-2xl font-bold text-white">{s.val}</div>
+                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1 leading-tight">{s.label}</div>
+              </div>
             ))}
           </div>
-          <div className="absolute right-2 top-1 text-xs" style={{ color: COLORS.text }}>{fmtNum(totalPauses)} pauses detected</div>
-          <div className="absolute right-2 bottom-1 text-xs" style={{ color: COLORS.accent }}>Excessive silence detected</div>
-        </div>
-        <div className="flex items-center gap-6 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.teal }} />
-            <span style={{ color: COLORS.text }}>Speech</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#7f1d1d' }} />
-            <span style={{ color: COLORS.text }}>Silence</span>
-          </div>
         </div>
       </div>
     )
   }
-  const smallAlert = () => (
-    <div className="rounded-xl border p-4" style={{ backgroundColor: '#12090d', borderColor: COLORS.accent }}>
-      <div className="flex items-center gap-2">
-        <svg className="w-4 h-4" fill="none" stroke={COLORS.accent} viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M4.93 4.93l14.14 14.14M12 2a10 10 0 100 20 10 10 0 000-20z" />
-        </svg>
-        <span className="text-sm font-semibold" style={{ color: COLORS.white }}>1 critical metric below threshold</span>
-      </div>
-    </div>
-  )
+
   return (
-    <div className="space-y-6">
-      <InsightTabs active="endpointing" onChange={handleTabChange} categoryScores={DUMMY_CATEGORY_SCORES} />
-      <div className="rounded-xl border p-6" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
+    <div className="space-y-8 pb-12">
+      <InsightTabs 
+        active="endpointing" 
+        onChange={handleTabChange} 
+        categoryScores={[{ category: 'endpointing', score: passPct }]} 
+      />
+      
+      {/* Analysis Overview Header */}
+      <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#0a0f19', border: '1px solid #1f2937' }}>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h2m2 0h2m2 0h2m2 0h2M5 14h2m2 0h2m2 0h2m2 0h2" />
-              </svg>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+              <Radio className="w-6 h-6 text-teal-400" />
             </div>
             <div>
-              <div className="text-xl font-bold" style={{ color: COLORS.white }}>Endpointing</div>
-              <div className="text-sm" style={{ color: COLORS.text }}>Measures turn-taking and pause detection accuracy</div>
+              <div className="text-2xl font-bold text-white">Endpointing Analysis</div>
+              <div className="text-gray-400 mt-1 font-medium">Measures turn-taking and pause detection accuracy</div>
             </div>
-            <span
-              className="px-2 py-1 rounded-full text-xs font-semibold border self-start ml-2"
-              style={{ color: categoryPassed ? COLORS.teal : COLORS.accent, borderColor: categoryPassed ? COLORS.teal : COLORS.accent, backgroundColor: categoryPassed ? 'rgba(45,212,191,0.08)' : 'rgba(182,18,73,0.12)' }}
-            >
-              {categoryPassed ? 'Passed' : 'Failed'}
-            </span>
+            <div className={`px-3 py-1 rounded-full text-xs font-bold border ml-4 mt-1 ${
+              endpointingData.passed ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/5' : 'text-rose-400 border-rose-500/30 bg-rose-500/5'
+            }`}>
+              {endpointingData.passed ? 'Passed' : 'Failed'}
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            {donut()}
+          <div className="flex items-center gap-6">
             <div className="text-right">
-              <div className="text-2xl font-bold" style={{ color: COLORS.white }}>{passedCount}/{totalCount}</div>
-              <div className="text-sm" style={{ color: COLORS.text }}>Metrics Passed</div>
+              <div className="text-3xl font-bold text-white">{passedCount}/{totalCount}</div>
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Metrics Passed</div>
             </div>
+            {donut()}
           </div>
         </div>
       </div>
-      {smallAlert()}
+
       {criticalBanner()}
-      <div className="grid grid-cols-3 gap-4">
-        {card(ic, 'Interruptions', (m) => fmtNum(m.value))}
-        {card(pd, 'Pause Detection', () => pauseValueLabel, 'alert')}
-        {card(tba, 'Turn Boundary', (m) => `${((m.value || 0) * 100).toFixed(1)}%`)}
+
+      {/* Main Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center">
+              <Radio className="text-teal-400" size={20} />
+            </div>
+            <span className="font-bold text-white">Interruptions</span>
+          </div>
+          <div className="text-5xl font-bold text-teal-400 mb-2">{fmtNum(ic?.value)}</div>
+          <div className="text-xs text-gray-500 font-medium">No user interruptions - great!</div>
+        </div>
+
+        <div className={`bg-[#0b1220] border rounded-xl p-6 ${pd?.passed === false ? 'border-rose-500/50' : 'border-gray-800/50'}`}>
+          <div className="flex items-center gap-3 mb-6">
+            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${pd?.passed === false ? 'bg-rose-500/10' : 'bg-teal-500/10'}`}>
+              <Mic className={pd?.passed === false ? 'text-rose-400' : 'text-teal-400'} size={20} />
+            </div>
+            <span className="font-bold text-white">Pause Detection</span>
+          </div>
+          <div className={`text-5xl font-bold mb-2 ${pd?.passed === false ? 'text-rose-400' : 'text-teal-400'}`}>{fmtMs(pd?.value)}</div>
+          <div className="text-xs text-gray-500 font-medium">Average pause duration</div>
+        </div>
+
+        <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-lg bg-teal-500/10 flex items-center justify-center">
+              <TrendingUp className="text-teal-400" size={20} />
+            </div>
+            <span className="font-bold text-white">Turn Boundary</span>
+          </div>
+          <div className="text-5xl font-bold text-teal-400 mb-2">{Math.round((tba?.value || 0) * 100)}%</div>
+          <div className="text-xs text-gray-500 font-medium">Accurate boundary detection</div>
+        </div>
       </div>
+
       {silenceAnalysis()}
-      <div className="grid grid-cols-2 gap-4">
-        {card(ic, 'Interruption Count', (m) => fmtNum(m.value))}
-        {card(pd, 'Pause Detection', () => pauseValueLabel, 'alert')}
-        {card(tba, 'Turn Boundary Accuracy', (m) => `${((m.value || 0) * 100).toFixed(1)}%`)}
+
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Activity size={20} className="text-teal-400" />
+          <h3 className="text-white text-lg font-semibold">Detailed Metrics</h3>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {ic && detailedCard(ic, 'Interruption Count')}
+          {pd && detailedCard(pd, 'Pause Detection')}
+          {tba && detailedCard(tba, 'Turn Boundary Accuracy')}
+        </div>
       </div>
     </div>
   )

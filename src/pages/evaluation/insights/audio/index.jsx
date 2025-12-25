@@ -7,7 +7,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import AudioDetailedMetrics from "./AudioDetailed";
-import AudioQualityRadar from "./AirQualityRadar";
 import VoiceQualityConsistency from "./VoiceQuality";
 
 /* =========================
@@ -73,7 +72,6 @@ const AudioOverview = () => {
           />
         ))}
       </div>
-<AudioQualityRadar/>
 <VoiceQualityConsistency/>
 <AudioDetailedMetrics/>
     </div>

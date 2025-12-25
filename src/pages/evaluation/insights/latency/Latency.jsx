@@ -1,6 +1,6 @@
+import { Activity, TrendingUp, Clock, Info, CheckCircle2 } from 'lucide-react'
 import latencyData from '../../../../data/latency.json'
 import InsightTabs from '../../InsightTab'
-import { DUMMY_CATEGORY_SCORES } from '../../const'
 
 const LatencyView = () => {
   const COLORS = { accent: '#b61249', bg: '#000000', teal: '#2dd4bf', text: '#9da3af', white: '#ffffff' }
@@ -14,12 +14,13 @@ const LatencyView = () => {
   const totalCount = metrics.length || 1
   const passPct = Math.round((passedCount / totalCount) * 100)
   const fmtNum = (n) => n?.toLocaleString?.('en-US') ?? String(n ?? '')
+
   const handleTabChange = (key) => {
     const map = {
       accuracy: 'accuracy',
       task_completion: 'accuracy',
       latency: 'latency',
-      audio_quality: 'latency',
+      audio: 'latency',
       conversation_quality: 'latency',
       endpointing: 'endpointing',
       cost: 'latency',
@@ -30,6 +31,7 @@ const LatencyView = () => {
     url.searchParams.set('preview', target)
     window.location.href = url.toString()
   }
+
   const donut = () => {
     const r = 34
     const cx = 40
@@ -53,7 +55,8 @@ const LatencyView = () => {
       </svg>
     )
   }
-  const card = (m, title, unit = 'ms') => {
+
+  const detailedCard = (m, title, unit = 'ms') => {
     if (!m) return null
     const passed = !!m.passed
     const threshold = typeof m.threshold === 'number' ? m.threshold : null
@@ -61,95 +64,77 @@ const LatencyView = () => {
     const val = Math.round(valRaw)
     const pct = threshold ? Math.max(0, Math.min(100, Math.round((val / threshold) * 100))) : 100
     const exec = typeof m.execution_time_ms === 'number' ? Number(m.execution_time_ms.toFixed(2)) : 0
-    const valueLabel = m.metric_name === 'total_duration' ? `${(valRaw / 1000).toFixed(1)}s` : `${val}${unit}`
+    const valueLabel = m.metric_name === 'total_duration' ? `${(valRaw / 1000).toFixed(2)}s` : 
+                       (val > 1000 ? `${(val/1000).toFixed(2)}s` : `${val}${unit}`)
+    const thresholdLabel = threshold ? (threshold > 1000 ? `${(threshold/1000).toFixed(1)}s` : `${threshold}${unit}`) : 'N/A'
+
     return (
-      <div className="p-4 rounded-xl border" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="font-semibold" style={{ color: COLORS.white }}>{title}</div>
-            <div className="flex items-center gap-2 text-xs mt-1" style={{ color: COLORS.text }}>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
-              </svg>
-              <span>{exec}ms execution</span>
+      <div className="p-6 rounded-xl border" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
+        <div className="flex items-start justify-between mb-2">
+          <div className="flex flex-col">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-lg text-white">{title}</span>
+              <Info size={14} className="text-gray-500 cursor-help" />
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1">
+              <Clock size={12} />
+              <span>{exec}ms</span>
             </div>
           </div>
-          <span
-            className="px-2 py-1 rounded-full text-xs font-semibold border"
-            style={{
-              color: passed ? COLORS.teal : COLORS.accent,
-              borderColor: passed ? COLORS.teal : COLORS.accent,
-              backgroundColor: passed ? 'rgba(45,212,191,0.08)' : 'rgba(182,18,73,0.08)'
-            }}
-          >
+          <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+            passed ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-rose-400 border-rose-500/30 bg-rose-500/10'
+          }`}>
+            <CheckCircle2 size={12} />
             {passed ? 'Passed' : 'Failed'}
-          </span>
-        </div>
-        <div className="mt-4">
-          <div className="text-2xl font-bold" style={{ color: COLORS.teal }}>{valueLabel}</div>
-          <div className="h-2 rounded-full overflow-hidden mt-2" style={{ backgroundColor: COLORS.bg }}>
-            <div className="h-full" style={{ width: `${pct}%`, backgroundColor: COLORS.teal }} />
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-2 text-sm" style={{ color: COLORS.text }}>
-          {threshold !== null && (
-            <div>
-              Threshold
-              <div className="font-semibold" style={{ color: COLORS.white }}>{m.metric_name === 'total_duration' ? `${(threshold / 1000).toFixed(1)}s` : `${threshold}${unit}`}</div>
+
+        <div className="mt-6">
+          <div className="flex items-baseline justify-between mb-2">
+            <div className="text-4xl font-bold text-teal-400">{valueLabel}</div>
+            <div className="text-right">
+              <div className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Threshold</div>
+              <div className="text-gray-400 font-medium">{thresholdLabel}</div>
             </div>
-          )}
-          {m.details?.average_ms !== undefined && (
-            <div>
-              Average Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(Math.round(m.details.average_ms))}</div>
-            </div>
-          )}
-          {m.details?.max_ms !== undefined && (
-            <div>
-              Max Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.max_ms)}</div>
-            </div>
-          )}
-          {m.details?.min_ms !== undefined && (
-            <div>
-              Min Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.min_ms)}</div>
-            </div>
-          )}
-          {m.details?.median_ms !== undefined && (
-            <div>
-              Median Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.median_ms)}</div>
-            </div>
-          )}
-          {m.details?.p95_ms !== undefined && (
-            <div>
-              P95 Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.p95_ms)}</div>
-            </div>
-          )}
-          {m.details?.p99_ms !== undefined && (
-            <div>
-              P99 Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.p99_ms)}</div>
-            </div>
-          )}
-          {m.details?.count !== undefined && (
-            <div>
-              Count
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.count)}</div>
-            </div>
-          )}
-          {m.details?.std_dev !== undefined && (
-            <div>
-              Std Dev
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(Math.round(m.details.std_dev))}</div>
-            </div>
-          )}
+          </div>
+          <div className="h-2 rounded-full bg-gray-900 overflow-hidden">
+            <div className="h-full bg-teal-400 transition-all duration-500" style={{ width: `${pct}%` }} />
+          </div>
+          <div className="flex justify-between text-[10px] text-gray-500 mt-2 font-medium">
+            <span>0</span>
+            <span>Threshold: {thresholdLabel}</span>
+          </div>
         </div>
+
+        {m.details && (
+          <div className="mt-8 pt-6 border-t border-gray-800/50">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp size={14} className="text-gray-400" />
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">Details</span>
+            </div>
+            <div className="grid grid-cols-2 gap-y-4 gap-x-8">
+              {[
+                { label: 'Average Ms', val: m.details.average_ms ? `${fmtNum(Math.round(m.details.average_ms))}` : '-' },
+                { label: 'Max Ms', val: m.details.max_ms ? `${fmtNum(m.details.max_ms)}` : '-' },
+                { label: 'Min Ms', val: m.details.min_ms ? `${fmtNum(m.details.min_ms)}` : '-' },
+                { label: 'Median Ms', val: m.details.median_ms ? `${fmtNum(m.details.median_ms)}` : '-' },
+                { label: 'P95 Ms', val: m.details.p95_ms ? `${fmtNum(m.details.p95_ms)}` : '-' },
+                { label: 'P99 Ms', val: m.details.p99_ms ? `${fmtNum(m.details.p99_ms)}` : '-' },
+                { label: 'Count', val: m.details.count !== undefined ? `${fmtNum(m.details.count)}` : '-' },
+                { label: 'Std Dev', val: m.details.std_dev !== undefined ? `${fmtNum(Math.round(m.details.std_dev))}` : '-' },
+              ].map(d => (
+                <div key={d.label} className="flex justify-between items-center border-b border-gray-800/30 pb-1">
+                  <span className="text-[11px] text-gray-500 font-medium">{d.label}</span>
+                  <span className="text-xs text-gray-300 font-bold">{d.val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     )
   }
+
   const metricBars = () => {
     const labelMap = {
       response_latency: 'Response Latency',
@@ -162,82 +147,120 @@ const LatencyView = () => {
       thrSec: m.threshold ? m.threshold / 1000 : null,
       label: labelMap[m.metric_name] || (m.metric_name || '').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())
     }))
-    const maxSec = Math.max(2, ...list.map(m => m.sec), ...list.map(m => m.thrSec || 0))
-    const toPct = (sec) => Math.max(0, Math.min(100, Math.round((sec / maxSec) * 100)))
-    const twoSecPct = toPct(2)
+    
+    const refThresholdSec = (rl?.threshold || 2000) / 1000
+    const maxValSec = Math.max(refThresholdSec * 1.25, ...list.map(m => m.sec))
+    const toY = (sec) => 100 - (sec / maxValSec) * 100
+    
+    // Generate y-axis ticks (e.g., 5 ticks up to maxValSec)
+    const ticks = []
+    for (let i = 0; i <= 4; i++) {
+      ticks.push((maxValSec / 4) * i)
+    }
+    
     return (
-      <div className="rounded-xl border p-4 relative" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke={COLORS.teal} viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12h3m3 0h3m3 0h3" />
-            </svg>
-            <div className="text-sm font-semibold" style={{ color: COLORS.white }}>Latency Breakdown</div>
-          </div>
-          <div className="text-xs" style={{ color: COLORS.text }}>Human perception threshold: 2s</div>
+      <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-8 relative overflow-hidden">
+        <div className="flex items-center gap-2 mb-8">
+          <Activity size={20} className="text-teal-400" />
+          <h3 className="text-white text-lg font-semibold">Latency Breakdown</h3>
+          <span className="text-gray-500 text-sm ml-2">Human perception threshold: {refThresholdSec}s</span>
         </div>
-        <div className="absolute inset-0 pointer-events-none">
-          {[0,1,2,3,4].map((i) => (
-            <div key={i} className="absolute left-0 right-0" style={{ top: `${(i/4)*100}%`, borderTop: '1px dashed #374151' }} />
-          ))}
-          <div className="absolute left-0 right-0" style={{ top: `${100 - twoSecPct}%`, borderTop: '2px dashed #fbbf24' }} />
-          {[0,0.5,1,1.5,2].map((v) => (
-            <div key={v} className="absolute left-2" style={{ top: `calc(${100 - toPct(v)}% - 8px)` }}>
-              <span className="text-[11px]" style={{ color: COLORS.text }}>{v === 0 ? '0ms' : `${v.toFixed(2)}s`}</span>
+        
+        <div className="relative h-80 mt-12 mb-16 mx-12">
+          {/* Y-Axis Labels & Grid Lines */}
+          {ticks.map(v => (
+            <div key={v} className="absolute w-full border-t border-gray-800/30 flex items-center" style={{ top: `${toY(v)}%` }}>
+              <span className="absolute -left-12 text-xs text-gray-500 font-medium">
+                {v === 0 ? '0ms' : v < 1 ? `${Math.round(v*1000)}ms` : `${v.toFixed(1)}s`}
+              </span>
             </div>
           ))}
-          <div className="absolute right-3" style={{ top: `calc(${100 - twoSecPct}% - 10px)` }}>
-            <span className="text-[11px] font-semibold" style={{ color: '#fbbf24' }}>2s Human Perception</span>
+          
+          {/* Threshold Line */}
+          <div className="absolute w-full border-t border-dashed border-orange-500/50 z-10" style={{ top: `${toY(refThresholdSec)}%` }}>
+            <span className="absolute -right-12 text-[10px] text-orange-400 font-bold whitespace-nowrap">{refThresholdSec}s Ref</span>
           </div>
-        </div>
-        <div className="relative h-64 flex items-end justify-between gap-12 px-10">
-          {list.map((m) => {
-            const pct = toPct(m.sec)
-            return (
-              <div key={m.metric_name} className="relative flex flex-col items-center">
-                <div className="w-28 rounded" style={{ backgroundColor: m.passed ? COLORS.teal : COLORS.accent, height: `${pct}%` }} />
-                <div
-                  className="absolute -bottom-7 left-1/2 -translate-x-1/2 w-40 text-xs text-center font-medium"
-                  style={{ color: COLORS.text, transform: 'rotate(-25deg)' }}
-                >
-                  {m.label}
-                </div>
-              </div>
-            )
-          })}
-          <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
-            {(() => {
-              const xs = [18, 50, 82]
-              const ys = list.map((m, i) => 100 - toPct(m.sec))
-              const d = `M ${xs[0]} ${ys[0]} C ${(xs[0]+xs[1])/2} ${ys[0]} ${(xs[0]+xs[1])/2} ${ys[1]} ${xs[1]} ${ys[1]} C ${(xs[1]+xs[2])/2} ${ys[1]} ${(xs[1]+xs[2])/2} ${ys[2]} ${xs[2]} ${ys[2]}`
+
+          {/* Bars & Connection Line */}
+          <div className="absolute inset-0 flex justify-around items-end px-12 z-20">
+            {list.map((m, i) => {
+              const barHeight = (m.sec / maxValSec) * 100
+              const isExceeded = m.thrSec ? m.sec > m.thrSec : m.sec > refThresholdSec
               return (
-                <>
-                  <path d={d} stroke="#9da3af" strokeDasharray="4 4" fill="none" />
-                  {ys.map((y, i) => (
-                    <circle key={i} cx={xs[i]} cy={y} r="2" fill="#ffffff" />
-                  ))}
-                </>
+                <div key={m.metric_name} className="relative flex flex-col items-center group w-32 h-full justify-end">
+                  <div 
+                    className="w-20 rounded-t-md transition-all duration-300 relative z-10"
+                    style={{ 
+                      height: `${barHeight}%`, 
+                      backgroundColor: isExceeded ? '#b61249' : '#2dd4bf' 
+                    }}
+                  />
+                  <div 
+                    className="absolute text-[11px] text-gray-500 font-bold mt-4 whitespace-nowrap"
+                    style={{ 
+                      bottom: '-45px',
+                      transform: 'rotate(-30deg)',
+                      transformOrigin: 'center'
+                    }}
+                  >
+                    {m.label}
+                  </div>
+                  {/* Dot on top */}
+                  <div 
+                    className="absolute w-2.5 h-2.5 bg-white rounded-full border-2 border-gray-900 shadow-sm"
+                    style={{ bottom: `calc(${barHeight}% - 5px)` }}
+                  />
+                </div>
               )
-            })()}
-          </svg>
+            })}
+            
+            {/* Connecting Curved Line */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
+              <path 
+                d={(() => {
+                  const points = list.map((m, i) => {
+                    const x = (i * 2 + 1) * (100 / (list.length * 2))
+                    const y = toY(m.sec)
+                    return { x, y }
+                  })
+                  if (points.length < 2) return ""
+                  let d = `M ${points[0].x}% ${points[0].y}%`
+                  for (let i = 0; i < points.length - 1; i++) {
+                    const curr = points[i]
+                    const next = points[i+1]
+                    const midX = (curr.x + next.x) / 2
+                    d += ` C ${midX}% ${curr.y}%, ${midX}% ${next.y}%, ${next.x}% ${next.y}%`
+                  }
+                  return d
+                })()}
+                fill="none"
+                stroke="#64748b"
+                strokeWidth="1.5"
+                strokeDasharray="4 4"
+              />
+            </svg>
+          </div>
         </div>
-        <div className="mt-4 flex items-center justify-center gap-8 text-xs">
+        
+        {/* Legend */}
+        <div className="flex justify-center gap-8 mt-12 pt-6 border-t border-gray-800/30">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.teal }} />
-            <span style={{ color: COLORS.text }}>Within threshold</span>
+            <div className="w-3 h-3 rounded-sm bg-teal-400" />
+            <span className="text-xs text-gray-500 font-bold">Within threshold</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: COLORS.accent }} />
-            <span style={{ color: COLORS.text }}>Exceeds threshold</span>
+            <div className="w-3 h-3 rounded-sm bg-red-600" />
+            <span className="text-xs text-gray-500 font-bold">Exceeds threshold</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-8 border-t-2 border-dashed" style={{ borderColor: '#fbbf24' }} />
-            <span style={{ color: COLORS.text }}>2s Human Perception</span>
+            <div className="w-8 border-t border-dashed border-orange-400" />
+            <span className="text-xs text-gray-500 font-bold">{refThresholdSec}s Human Perception</span>
           </div>
         </div>
       </div>
     )
   }
+
   const distributionTiles = () => {
     if (!rl?.details) return null
     const d = rl.details
@@ -253,65 +276,79 @@ const LatencyView = () => {
       { k: 'Std Dev', v: `${Math.round(d.std_dev)}ms` },
     ]
     return (
-      <div className="rounded-xl border p-6" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
-        <div className="flex items-center gap-2 mb-4">
-          <svg className="w-4 h-4" fill="none" stroke={COLORS.teal} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l4-4 4 4 4-4 4 4" />
-          </svg>
-          <div className="text-sm font-semibold" style={{ color: COLORS.white }}>Latency Distribution</div>
+      <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-8">
+        <div className="flex items-center gap-2 mb-8">
+          <TrendingUp size={20} className="text-teal-400" />
+          <h3 className="text-white text-lg font-semibold">Latency Distribution</h3>
         </div>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {tiles.map(t => (
-            <div key={t.k} className="bg-gray-900 rounded-xl p-4 border" style={{ borderColor: '#1f2937' }}>
-              <div className="text-xs" style={{ color: COLORS.text }}>{t.k}</div>
-              <div className="mt-2 text-2xl font-bold" style={{ color: COLORS.teal }}>{t.v}</div>
+            <div key={t.k} className="bg-[#0a0f19] border border-gray-800/30 rounded-lg p-5">
+              <div className="text-gray-500 text-[10px] font-bold uppercase tracking-widest mb-2">{t.k}</div>
+              <div className="text-white text-xl font-bold">{t.v}</div>
             </div>
           ))}
         </div>
       </div>
     )
   }
+
   return (
-    <div className="space-y-6">
-      <InsightTabs active="latency" onChange={handleTabChange} categoryScores={DUMMY_CATEGORY_SCORES} />
-      <div className="rounded-xl border p-6" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
+    <div className="space-y-8 pb-12">
+      <InsightTabs 
+        active="latency" 
+        onChange={handleTabChange} 
+        categoryScores={[
+          { category: 'latency', score: passPct }
+        ]} 
+      />
+      
+      {/* Analysis Overview Header */}
+      <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-8">
         <div className="flex items-center justify-between">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#0a0f19', border: '1px solid #1f2937' }}>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l4 2" />
-              </svg>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center">
+              <Clock className="w-6 h-6 text-teal-400" />
             </div>
             <div>
-              <div className="text-xl font-bold" style={{ color: COLORS.white }}>Latency</div>
-              <div className="text-sm" style={{ color: COLORS.text }}>Measures response times and processing speed</div>
+              <div className="text-2xl font-bold text-white">Latency Analysis</div>
+              <div className="text-gray-400 mt-1 font-medium">Measures response times and processing speed</div>
             </div>
-            <span
-              className="px-2 py-1 rounded-full text-xs font-semibold border self-start ml-2"
-              style={{ color: latencyData.passed ? COLORS.teal : COLORS.accent, borderColor: latencyData.passed ? COLORS.teal : COLORS.accent, backgroundColor: latencyData.passed ? 'rgba(45,212,191,0.08)' : 'rgba(182,18,73,0.08)' }}
-            >
+            <div className={`px-3 py-1 rounded-full text-xs font-bold border ml-4 mt-1 ${
+              latencyData.passed ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/5' : 'text-rose-400 border-rose-500/30 bg-rose-500/5'
+            }`}>
               {latencyData.passed ? 'Passed' : 'Failed'}
-            </span>
-          </div>
-          <div className="flex items-center gap-4">
-            {donut()}
-            <div className="text-right">
-              <div className="text-2xl font-bold" style={{ color: COLORS.white }}>{passedCount}/{totalCount}</div>
-              <div className="text-sm" style={{ color: COLORS.text }}>Metrics Passed</div>
             </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <div className="text-3xl font-bold text-white">{passedCount}/{totalCount}</div>
+              <div className="text-xs font-bold text-gray-500 uppercase tracking-widest mt-1">Metrics Passed</div>
+            </div>
+            {donut()}
           </div>
         </div>
       </div>
+
       {metricBars()}
       {distributionTiles()}
-      <div className="grid grid-cols-2 gap-4">
-        {card(rl, 'Response Latency')}
-        {card(ttft, 'Time To First Token')}
-        {card(ttct, 'Time To Complete Transcript')}
-        {card(total, 'Total Duration', 'ms')}
+
+      <div className="space-y-6">
+        <div className="flex items-center gap-2">
+          <Clock size={20} className="text-teal-400" />
+          <h3 className="text-white text-lg font-semibold">Detailed Metrics</h3>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {rl && detailedCard(rl, 'Response Latency')}
+          {ttft && detailedCard(ttft, 'Time To First Token')}
+          {ttct && detailedCard(ttct, 'Time To Complete Transcript')}
+          {total && detailedCard(total, 'Total Duration')}
+        </div>
       </div>
     </div>
   )
 }
+
+LatencyView
 
 export default LatencyView

@@ -174,7 +174,7 @@ if (showLayout) {
       <div className="p-8">
         <EvaluationDashboard
           evaluationData={DUMMY_EVALUATION_DATA}   // mock for now
-          onBack={() => {}}
+          onBack={() => window.history.back()}
         />
       </div>
     </DashboardLayout>

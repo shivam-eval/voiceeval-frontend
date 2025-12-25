@@ -1,0 +1,117 @@
+{
+  "test_id": "unknown",
+  "timestamp": "2025-12-13T16:10:18.304155",
+  "overall_score": 349712.2642701179,
+  "overall_passed": false,
+  "category_scores": {
+    "accuracy": {
+      "category": "accuracy",
+      "overall_score": 0.4564393939393939,
+      "passed": false,
+      "weight": 1.0,
+      "metrics_count": 4,
+      "passed_metrics": 2,
+      "failed_metrics": 2
+    },
+    "task_completion": {
+      "category": "task_completion",
+      "overall_score": 1.0,
+      "passed": true,
+      "weight": 1.0,
+      "metrics_count": 4,
+      "passed_metrics": 4,
+      "failed_metrics": 0
+    },
+    "latency": {
+      "category": "latency",
+      "overall_score": 16460.68181818182,
+      "passed": true,
+      "weight": 1.0,
+      "metrics_count": 4,
+      "passed_metrics": 4,
+      "failed_metrics": 0
+    },
+    "audio_quality": {
+      "category": "audio_quality",
+      "overall_score": 0.6277777777777778,
+      "passed": true,
+      "weight": 1.0,
+      "metrics_count": 3,
+      "passed_metrics": 3,
+      "failed_metrics": 0
+    },
+    "conversation_quality": {
+      "category": "conversation_quality",
+      "overall_score": 0.75,
+      "passed": true,
+      "weight": 1.0,
+      "metrics_count": 4,
+      "passed_metrics": 4,
+      "failed_metrics": 0
+    },
+    "endpointing": {
+      "category": "endpointing",
+      "overall_score": 1046667.0,
+      "passed": false,
+      "weight": 1.0,
+      "metrics_count": 3,
+      "passed_metrics": 2,
+      "failed_metrics": 1
+    },
+    "cost": {
+      "category": "cost",
+      "overall_score": 0.051149999999999994,
+      "passed": true,
+      "weight": 1.0,
+      "metrics_count": 4,
+      "passed_metrics": 4,
+      "failed_metrics": 0
+    },
+    "persona": {
+      "category": "persona",
+      "overall_score": 1.0,
+      "passed": true,
+      "weight": 1.0,
+      "metrics_count": 4,
+      "passed_metrics": 4,
+      "failed_metrics": 0
+    }
+  },
+  "metrics_summary": {
+    "total_run": 30,
+    "passed": 27,
+    "failed": 3,
+    "skipped": 0
+  },
+  "issues": [
+    {
+      "severity": "critical",
+      "category": "accuracy",
+      "metric_name": "semantic_similarity",
+      "description": "semantic_similarity failed",
+      "recommendation": "Review this metric and adjust configuration."
+    },
+    {
+      "severity": "critical",
+      "category": "accuracy",
+      "metric_name": "intent_classification_accuracy",
+      "description": "intent_classification_accuracy failed",
+      "recommendation": "Review this metric and adjust configuration."
+    },
+    {
+      "severity": "minor",
+      "category": "endpointing",
+      "metric_name": "pause_detection",
+      "description": "pause_detection failed",
+      "recommendation": "Review this metric and adjust configuration."
+    }
+  ],
+  "recommendations": [
+    "Accuracy metrics are below threshold. Review validation criteria and expected responses."
+  ],
+  "total_execution_time_ms": 44919.40903663635,
+  "test_metadata": {
+    "transcript_path": "output/simulation_results/transcript_steps.json",
+    "test_case_path": "output/test_case.json"
+  }
+}

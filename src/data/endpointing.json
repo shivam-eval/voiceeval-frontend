@@ -1,0 +1,45 @@
+{
+  "category": "endpointing",
+  "overall_score": 1046667.0,
+  "passed": false,
+  "metrics": [
+    {
+      "metric_name": "interruption_count",
+      "category": "endpointing",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.015735626220703125,
+      "value": 0,
+      "threshold": 2,
+      "details": {
+        "interruption_count": 0,
+        "total_turns": 21,
+        "interruptions": []
+      }
+    },
+    {
+      "metric_name": "pause_detection",
+      "category": "endpointing",
+      "status": "failed",
+      "passed": false,
+      "execution_time_ms": 0.15044212341308594,
+      "value": 3140000.0,
+      "threshold": 5000,
+      "details": {
+        "total_pauses": 20,
+        "long_pauses": 20,
+        "average_pause_ms": 3140000.0,
+        "max_pause_ms": 5800000
+      }
+    },
+    {
+      "metric_name": "turn_boundary_accuracy",
+      "category": "endpointing",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.02002716064453125,
+      "value": 1.0,
+      "threshold": 0.9
+    }
+  ]
+}

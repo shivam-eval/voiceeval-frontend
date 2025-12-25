@@ -1,0 +1,42 @@
+{
+  "category": "task_completion",
+  "overall_score": 1.0,
+  "passed": true,
+  "metrics": [
+    {
+      "metric_name": "task_completion_rate",
+      "category": "task_completion",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 2353.213310241699,
+      "value": 1.0,
+      "threshold": 0.9
+    },
+    {
+      "metric_name": "sequential_task_accuracy",
+      "category": "task_completion",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.0438690185546875,
+      "value": 1.0,
+      "threshold": 0.85
+    },
+    {
+      "metric_name": "step_validation_pass_rate",
+      "category": "task_completion",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.01049041748046875,
+      "value": 1.0,
+      "threshold": 0.8
+    },
+    {
+      "metric_name": "flow_path_coverage",
+      "category": "task_completion",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.010013580322265625,
+      "value": 1.0
+    }
+  ]
+}

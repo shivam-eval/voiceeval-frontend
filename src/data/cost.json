@@ -1,0 +1,56 @@
+{
+  "category": "cost",
+  "overall_score": 0.051149999999999994,
+  "passed": true,
+  "metrics": [
+    {
+      "metric_name": "llm_token_usage",
+      "category": "cost",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.0171661376953125,
+      "value": 0.0,
+      "details": {
+        "total_cost_usd": 0.0,
+        "total_input_tokens": 0,
+        "total_output_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    {
+      "metric_name": "stt_cost",
+      "category": "cost",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.01811981201171875,
+      "value": 0.0
+    },
+    {
+      "metric_name": "tts_cost",
+      "category": "cost",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.023603439331054688,
+      "value": 0.10229999999999999
+    },
+    {
+      "metric_name": "total_conversation_cost",
+      "category": "cost",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.02765655517578125,
+      "value": 0.10229999999999999,
+      "details": {
+        "total_cost_usd": 0.10229999999999999,
+        "llm_cost_usd": 0.0,
+        "stt_cost_usd": 0.0,
+        "tts_cost_usd": 0.10229999999999999,
+        "cost_breakdown": {
+          "llm_percentage": 0.0,
+          "stt_percentage": 0.0,
+          "tts_percentage": 100.0
+        }
+      }
+    }
+  ]
+}

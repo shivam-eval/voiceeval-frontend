@@ -1,0 +1,41 @@
+{
+  "category": "persona",
+  "overall_score": 1.0,
+  "passed": true,
+  "metrics": [
+    {
+      "metric_name": "persona_consistency",
+      "category": "persona",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.020503997802734375,
+      "value": 1.0,
+      "threshold": 0.8
+    },
+    {
+      "metric_name": "tone_appropriateness",
+      "category": "persona",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.009775161743164062,
+      "value": 1.0,
+      "threshold": 0.75
+    },
+    {
+      "metric_name": "region_appropriate_language",
+      "category": "persona",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.008344650268554688,
+      "value": 1.0
+    },
+    {
+      "metric_name": "behavior_trait_alignment",
+      "category": "persona",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.007867813110351562,
+      "value": 1.0
+    }
+  ]
+}

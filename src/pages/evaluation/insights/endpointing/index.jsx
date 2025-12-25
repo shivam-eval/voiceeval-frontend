@@ -1,7 +1,7 @@
+import EndpointingView from "./Endpointing";
+
 const EndpointingOverview = () => {
-    return (<>
-        
-    </>  );
-}
- 
+  return <EndpointingView />;
+};
+
 export default EndpointingOverview;

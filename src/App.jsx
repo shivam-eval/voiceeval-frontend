@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 
 import DashboardLayout from "./pages/main";
-import Dashboard from "./pages/dasbhboard";
+import Dashboard from "./pages/dashboard";
 import PlatformSelection from "./pages/platformSelection/PlatformSelection";
 import ConnectionForm from "./pages/connectAgent";
 import ConnectionLoading from "./components/ConnectionLoading";

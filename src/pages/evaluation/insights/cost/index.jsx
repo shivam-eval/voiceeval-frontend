@@ -1,7 +1,7 @@
 import InsightHeaderCard from "../../../../components/InsightHeaderCard";
 import StatCard from "../../../../components/StatCard";
 import CostDonut from "./CostDonut";
-import CostBreakdown from "./CostBreakdown";
+import CostBreakdown from "./CostBreakDown";
 import CostDetailedMetrics from "./CostDetailedMetrics";
 
 import { DollarSign, Cpu, Mic, Volume2, ArrowLeft } from "lucide-react";

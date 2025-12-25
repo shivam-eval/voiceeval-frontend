@@ -1,5 +1,5 @@
-import DashboardCards from './Dashboardcards'
-import DashboardTable from './Dashboardtable'
+import DashboardCards from './DashboardCards'
+import DashboardTable from './DashboardTable'
 
 
 const Dashboard = () => {

@@ -1,8 +1,9 @@
 import { DUMMY_CATEGORY_SCORES } from '../../const'
 import InsightTabs from '../../InsightTab'
+import { ArrowLeft } from 'lucide-react'
 const latencyData={
   "category": "latency",
-  "overall_score": 16460.68181818182,
+  "overall_score": 0.92,
   "passed": true,
   "metrics": [
     {
@@ -10,18 +11,17 @@ const latencyData={
       "category": "latency",
       "status": "passed",
       "passed": true,
-      "execution_time_ms": 0.7870197296142578,
-      "value": 1690.909090909091,
+      "value": 1650,
       "threshold": 2000,
       "details": {
-        "average_ms": 1690.909090909091,
+        "average_ms": 1650,
         "max_ms": 1800,
         "min_ms": 1200,
         "median_ms": 1700,
         "p95_ms": 1800,
         "p99_ms": 1800,
         "count": 11,
-        "std_dev": 175.8098145983065
+        "std_dev": 175.8
       }
     },
     {
@@ -29,8 +29,7 @@ const latencyData={
       "category": "latency",
       "status": "passed",
       "passed": true,
-      "execution_time_ms": 0.06008148193359375,
-      "value": 412.72727272727275,
+      "value": 410,
       "threshold": 500
     },
     {
@@ -38,8 +37,7 @@ const latencyData={
       "category": "latency",
       "status": "passed",
       "passed": true,
-      "execution_time_ms": 0.048160552978515625,
-      "value": 939.0909090909091,
+      "value": 910,
       "threshold": 1000
     },
     {
@@ -47,13 +45,12 @@ const latencyData={
       "category": "latency",
       "status": "passed",
       "passed": true,
-      "execution_time_ms": 0.012874603271484375,
-      "value": 62800
+      "value": 68000
     }
   ]
 }
 
-const LatencyOverview = () => {
+const LatencyOverview = ({ onBack }) => {
   const COLORS = { accent: '#b61249', bg: '#000000', teal: '#2dd4bf', text: '#9da3af', white: '#ffffff' }
   const metrics = Array.isArray(latencyData?.metrics) ? latencyData.metrics : []
   const byName = (n) => metrics.find(m => m.metric_name === n)
@@ -324,6 +321,17 @@ const LatencyOverview = () => {
   }
   return (
     <div className="space-y-6">
+      {/* Back Button */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Overview
+        </button>
+      )}
+      
       {/* <InsightTabs active="latency" onChange={handleTabChange} categoryScores={DUMMY_CATEGORY_SCORES} /> */}
       <div className="rounded-xl border p-6" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
         <div className="flex items-center justify-between">

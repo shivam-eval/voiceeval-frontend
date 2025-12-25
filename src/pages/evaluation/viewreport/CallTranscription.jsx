@@ -45,140 +45,81 @@ const CallTranscriptPanel = ({ transcriptData }) => {
   const waveformSegments = generateWaveform();
 
   return (
-    <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6 space-y-6">
-      {/* Audio Section */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide flex items-center gap-2">
-            <Play className="w-4 h-4 text-teal-400" />
-            Call Audio
+    <div className="bg-dark-panel border border-gray-800/50 rounded-xl overflow-hidden">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-gray-800/50 bg-dark-panel/50">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+            </svg>
+            TRANSCRIPT
           </h3>
-
-          <span className="text-xs text-gray-400 font-mono">
-            0:00 — {formatDuration(metadata.duration_ms)}
-          </span>
-        </div>
-
-        {/* Waveform */}
-        <div className="flex items-center gap-1 h-16 bg-dark-input rounded-lg px-3 overflow-hidden">
-          {waveformSegments.length > 0 ? (
-            waveformSegments.map((seg) => (
-              <div
-                key={seg.id}
-                className={`h-full rounded-sm ${seg.color} transition-all hover:opacity-80`}
-                style={{ width: seg.width }}
-                title={`Turn ${seg.id + 1}`}
-              />
-            ))
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">
-              No audio data available
-            </div>
-          )}
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center gap-3 mt-4">
-          <button
-            onClick={() => setIsPlaying(!isPlaying)}
-            className="px-4 py-2 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/20 rounded-lg text-sm text-teal-400 font-medium flex items-center gap-2 transition-all"
-          >
-            {isPlaying ? (
-              <>
-                <Pause className="w-4 h-4" />
-                Pause
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4" />
-                Play
-              </>
-            )}
-          </button>
-
-          <button className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 rounded-lg text-sm text-gray-300 flex items-center gap-2 transition-all">
-            <Download className="w-4 h-4" />
-            Download
-          </button>
-
-          <div className="ml-auto flex items-center gap-3">
-            <span className="text-xs text-gray-500">Speed:</span>
-            <select className="bg-dark-input border border-gray-700 rounded px-2 py-1 text-xs text-gray-300">
-              <option>0.5×</option>
-              <option>0.75×</option>
-              <option selected>1.0×</option>
-              <option>1.25×</option>
-              <option>1.5×</option>
-              <option>2.0×</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Transcript */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wide flex items-center gap-2">
-            <Bot className="w-4 h-4 text-teal-400" />
-            Transcript
-          </h3>
-
           <button 
             onClick={copyTranscript}
             className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1.5 transition-colors"
           >
-            <Copy className="w-3 h-3" />
+            <Copy className="w-3.5 h-3.5" />
             Copy
           </button>
         </div>
+      </div>
 
-        <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-          {steps.map((step, index) => (
-            <div
-              key={step.turn_id || index}
-              className="flex gap-4 text-sm leading-relaxed hover:bg-dark-input/30 p-3 rounded-lg transition-colors"
-            >
-              {/* Time */}
-              <span className="text-xs text-gray-500 font-mono w-12 shrink-0 pt-0.5">
-                {formatTime(step.speech_start_ms)}
-              </span>
+      {/* Content */}
+      <div className="p-6 space-y-6">
 
-              {/* Icon */}
-              <div className="shrink-0 pt-0.5">
-                {step.turn_role === 'agent' ? (
-                  <div className="w-6 h-6 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
-                    <Bot className="w-3.5 h-3.5 text-purple-400" />
+        {/* Transcript Messages */}
+        <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          {steps.map((step, index) => {
+            const isAgent = step.turn_role === 'agent';
+            const timestamp = formatTime(step.speech_start_ms);
+            
+            return (
+              <div
+                key={step.turn_id || index}
+                className="flex gap-3 group"
+              >
+                {/* Timestamp */}
+                <div className="text-xs text-gray-500 font-mono w-20 shrink-0 pt-1">
+                  {timestamp}
+                </div>
+
+                {/* Avatar */}
+                <div className="shrink-0">
+                  {isAgent ? (
+                    <div className="w-8 h-8 rounded-full bg-purple-500/10 border border-purple-500/30 flex items-center justify-center">
+                      <Bot className="w-4 h-4 text-purple-400" />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
+                      <User className="w-4 h-4 text-blue-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Message Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-sm font-semibold ${
+                      isAgent ? "text-purple-400" : "text-blue-400"
+                    }`}>
+                      {isAgent ? "Agent" : "User"}
+                    </span>
+                    <span className="text-xs text-gray-600">•</span>
+                    <span className="text-xs text-gray-500">Turn {step.turn_number}</span>
                   </div>
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center">
-                    <User className="w-3.5 h-3.5 text-blue-400" />
+                  
+                  <p className="text-gray-200 text-sm leading-relaxed">
+                    {step.text || <span className="text-gray-500 italic">No transcript available</span>}
+                  </p>
+                  
+                  <div className="mt-1.5 text-xs text-gray-500">
+                    {step.duration_ms ? `${(step.duration_ms / 1000).toFixed(1)}s` : ''}
                   </div>
-                )}
+                </div>
               </div>
-
-              {/* Content */}
-              <div className="flex-1">
-                <p
-                  className={`font-semibold text-xs mb-1 ${
-                    step.turn_role === "agent"
-                      ? "text-purple-400"
-                      : "text-blue-400"
-                  }`}
-                >
-                  {step.turn_role === "agent" ? "Agent" : "User"} • Turn {step.turn_number}
-                </p>
-
-                <p className="text-gray-300 leading-relaxed">
-                  {step.text || <span className="text-gray-500 italic">No transcript available</span>}
-                </p>
-
-                {/* Duration badge */}
-                <span className="inline-block mt-2 text-xs text-gray-500 font-mono">
-                  {(step.duration_ms / 1000).toFixed(2)}s
-                </span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Empty state */}
@@ -188,15 +129,17 @@ const CallTranscriptPanel = ({ transcriptData }) => {
             <p className="text-gray-400 text-sm">No transcript available</p>
           </div>
         )}
+      </div>
 
-        {/* Call end indicator */}
-        {steps.length > 0 && (
-          <div className="mt-6 pt-4 border-t border-gray-800/50 text-xs text-gray-500 flex items-center gap-2">
+      {/* Footer */}
+      {steps.length > 0 && (
+        <div className="px-6 py-3 border-t border-gray-800/50 bg-dark-panel/30">
+          <div className="text-xs text-gray-500 flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-gray-500" />
             Call ended • {metadata.total_turns || 0} turns • {formatDuration(metadata.duration_ms)}
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

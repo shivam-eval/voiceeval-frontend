@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
 import DashboardLoader from "./components/DashboardLoader";
-import DashboardLayout from "./components/DashboardLayout";
-import Dashboard from "./components/Dashboard";
-import PlatformSelection from "./components/PlatformSelection";
-import ConnectionForm from "./components/ConnectionForm";
+import DashboardLayout from "./pages/main/index";
+import Dashboard from "./pages/main/DashboardOverview"
+import PlatformSelection from "./pages/platformSelection/PlatformSelection";
+import ConnectionForm from "./pages/connectAgent/index";
 import ConnectionLoading from "./components/ConnectionLoading";
-import WorkspaceDashboard from "./components/WorkspaceDashboard";
-import AuthScreen from "./components/AuthScreen";
-import { extractAgent, flowGenerationMermaid } from "./api";
+import WorkspaceDashboard from "./pages/workspace";
+import AuthScreen from "./pages/auth/AuthScreen";
+import { extractAgent } from "./api";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'))
+  const [isAuthenticated, setIsAuthenticated] = useState(true)
   
   const handleAuthSuccess = () => setIsAuthenticated(true)
 
@@ -57,19 +57,28 @@ function App() {
 
   const handleNavigate = (viewId) => {
     console.log("Navigating to:", viewId);
+    
+    // Reset all view states
+    setShowPlatformSelection(false);
+    setShowConnectionForm(false);
+    setShowConnectionLoading(false);
+    setShowWorkspaceDashboard(false);
+    setShowEvaluationDashboard(false);
+    
+    // Update the active view
     setActiveView(viewId);
 
-    if (viewId === "connect-agent") {
-      if (!showWorkspaceDashboard) {
+    // Handle specific view transitions
+    switch(viewId) {
+      case 'connect-agent':
         setShowPlatformSelection(true);
-        setShowConnectionForm(false);
-        setShowConnectionLoading(false);
-      }
-    } else if (viewId === "dashboard") {
-      setShowPlatformSelection(false);
-      setShowConnectionForm(false);
-      setShowConnectionLoading(false);
-      setShowWorkspaceDashboard(false);
+        break;
+      case 'dashboard':
+        // Dashboard is the default view, no additional setup needed
+        break;
+      // Add more cases as needed for other views
+      default:
+        console.log(`No specific setup for view: ${viewId}`);
     }
   };
 

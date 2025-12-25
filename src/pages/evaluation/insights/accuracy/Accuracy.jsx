@@ -15,35 +15,31 @@ import CriticalAlert from "../../../../components/CriticAlert";
 ========================= */
 const response = {
   category: "accuracy",
-  overall_score: 0.4564393939393939,
+  overall_score: 0.74,
   passed: false,
   metrics: [
     {
       metric_name: "semantic_accuracy_rate",
       passed: true,
-      execution_time_ms: 31087.07,
-      value: 0.909,
+      value: 0.92,
       threshold: 0.8,
     },
     {
       metric_name: "keyword_match_accuracy",
       passed: true,
-      execution_time_ms: 57.14,
-      value: 0.917,
-      threshold: 0.9,
+      value: 0.90,
+      threshold: 0.85,
     },
     {
       metric_name: "semantic_similarity",
       passed: false,
-      execution_time_ms: 0.02,
-      value: 0.0,
+      value: 0.68,
       threshold: 0.75,
     },
     {
       metric_name: "intent_classification_accuracy",
       passed: false,
-      execution_time_ms: 0.01,
-      value: 0.0,
+      value: 0.72,
       threshold: 0.85,
     },
   ],
@@ -57,7 +53,7 @@ const transformAccuracyMetrics = (response) =>
     label: humanizeMetricName(m.metric_name),
     value: Math.round(m.value * 100),
     threshold: Math.round(m.threshold * 100),
-    time: `${m.execution_time_ms.toFixed(2)}ms`,
+    time: m.execution_time_ms ? `${m.execution_time_ms.toFixed(2)}ms` : '0ms',
     status: m.passed ? "passed" : "failed",
   }));
 
@@ -86,8 +82,7 @@ export default function AgentDashboard() {
   const isCritical = !response.passed;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white p-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="space-y-6">
 
         {/* =========================
            HEADER METRIC CARD
@@ -143,7 +138,6 @@ export default function AgentDashboard() {
           </div>
         </div>
 
-      </div>
     </div>
   );
 }

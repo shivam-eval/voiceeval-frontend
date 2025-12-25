@@ -11,6 +11,7 @@ export default {
         'dark-panel': '#1a1a1a',
         'dark-input': '#2a2a2a',
         'accent-green': '#00ff88',
+        'accent-pink': '#b61249',
       },
       animation: {
         'glow': 'glow 2s ease-in-out infinite alternate',

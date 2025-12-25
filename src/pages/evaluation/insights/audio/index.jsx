@@ -1,6 +1,6 @@
 import InsightHeaderCard from "../../../../components/InsightHeaderCard";
 import StatCard from "../../../../components/StatCard";
-import { Volume2, Mic, Sliders, Sparkles } from "lucide-react";
+import { Volume2, Mic, Sliders, Sparkles, ArrowLeft } from "lucide-react";
 
 import AudioDetailedMetrics from "./AudioDetailed";
 import AudioQualityRadar from "./AirQualityRadar";
@@ -65,7 +65,7 @@ const transformStatCards = (response) => {
 /* =========================
    Component
 ========================= */
-const AudioOverview = () => {
+const AudioOverview = ({ onBack }) => {
   const score = Math.round(response.overall_score * 100);
 
   const passedCount = response.metrics.filter((m) => m.passed).length;
@@ -75,6 +75,16 @@ const AudioOverview = () => {
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Back Button */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Overview
+        </button>
+      )}
 
       {/* ================= Header ================= */}
       <InsightHeaderCard

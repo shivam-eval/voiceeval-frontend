@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   Target,
   TrendingUp,
+  ArrowLeft,
 } from "lucide-react";
 
 import AccuracyBar from "./AccuracyBar";
@@ -67,7 +68,7 @@ const humanizeMetricName = (name) => {
   return map[name] || name;
 };
 
-export default function AgentDashboard() {
+export default function AgentDashboard({ onBack }) {
   const [activeTab] = useState("accuracy");
 
   /* =========================
@@ -83,6 +84,16 @@ export default function AgentDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Back Button */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Overview
+        </button>
+      )}
 
         {/* =========================
            HEADER METRIC CARD

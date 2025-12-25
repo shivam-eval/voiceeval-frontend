@@ -4,7 +4,7 @@ import CostDonut from "./CostDonut";
 import CostBreakdown from "./CostBreakdown";
 import CostDetailedMetrics from "./CostDetailedMetrics";
 
-import { DollarSign, Cpu, Mic, Volume2 } from "lucide-react";
+import { DollarSign, Cpu, Mic, Volume2, ArrowLeft } from "lucide-react";
 
 /* =========================
    Mock / API Response
@@ -65,7 +65,7 @@ const formatUSD = (value) => `$${value.toFixed(2)}`;
    Component
 ========================= */
 
-const CostOverview = () => {
+const CostOverview = ({ onBack }) => {
   const totalCostMetric = getMetric("total_conversation_cost");
 
 
@@ -83,6 +83,17 @@ const CostOverview = () => {
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Back Button */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Overview
+        </button>
+      )}
+
       {/* Header */}
       <InsightHeaderCard
         icon={DollarSign}

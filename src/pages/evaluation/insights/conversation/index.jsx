@@ -7,69 +7,105 @@ import {
   BookOpen,
   HelpCircle,
 } from "lucide-react";
-import ConversationQualityIndicators from "./ConversationQualityIndicator";
 import ConversationDetailedMetrics from "./ConversationDetailedMetrics";
-import ConversationQualityBreakdown from "./ConversationQualityBreakdown";
 
 /* =========================
-   Dummy Conversation Data
+   Dummy API Response
 ========================= */
-const DUMMY_CONVERSATION_DATA = {
-  header: {
-    score: 60,
-    passed: 4,
-    failed: 0,
-  },
+const response = {
+  category: "conversation_quality",
+  overall_score: 0.75,
+  passed: true,
   metrics: [
     {
-      icon: SpellCheck,
-      title: "Grammar Quality",
-      value: "100",
-      subtitle: "Grammatical correctness",
+      metric_name: "grammar_quality",
+      passed: true,
+      execution_time_ms: 7546.151161193848,
+      value: 1.0,
+      threshold: 0.8,
     },
     {
-      icon: Brain,
-      title: "Context Maintenance",
-      value: "100",
-      subtitle: "Memory and coherence",
+      metric_name: "context_maintenance",
+      passed: true,
+      execution_time_ms: 3906.0778617858887,
+      value: 1.0,
+      threshold: 0.85,
     },
     {
-      icon: BookOpen,
-      title: "Info Extraction",
-      value: "100",
-      subtitle: "Data capture accuracy",
-      highlight: true,
+      metric_name: "information_extraction_accuracy",
+      passed: true,
+      execution_time_ms: 0.017404556274414062,
+      value: 1.0,
+      threshold: 0.9,
     },
     {
-      icon: HelpCircle,
-      title: "Clarification Rate",
-      value: "0",
-      subtitle: "No clarifications needed – efficient!",
+      metric_name: "clarification_request_rate",
+      passed: true,
+      execution_time_ms: 0.0362396240234375,
+      value: 0.0,
     },
   ],
 };
 
 /* =========================
+   Helpers
+========================= */
+const metricMeta = {
+  grammar_quality: {
+    title: "Grammar Quality",
+    icon: SpellCheck,
+    subtitle: "Grammatical correctness",
+  },
+  context_maintenance: {
+    title: "Context Maintenance",
+    icon: Brain,
+    subtitle: "Memory and coherence",
+  },
+  information_extraction_accuracy: {
+    title: "Info Extraction",
+    icon: BookOpen,
+    subtitle: "Data capture accuracy",
+  },
+  clarification_request_rate: {
+    title: "Clarification Rate",
+    icon: HelpCircle,
+    subtitle: "No clarifications needed – efficient!",
+  },
+};
+
+const transformStatCards = (response) =>
+  response.metrics.map((m) => ({
+    ...metricMeta[m.metric_name],
+    value: Math.round(m.value * 100),
+    highlight: !m.passed,
+  }));
+
+/* =========================
    Conversation Overview
 ========================= */
 const ConversationOverview = () => {
+  const score = Math.round(response.overall_score * 100);
+  const passedCount = response.metrics.filter((m) => m.passed).length;
+  const failedCount = response.metrics.length - passedCount;
+
+  const statCards = transformStatCards(response);
+
   return (
     <div className="flex flex-col gap-8">
-
       {/* Header */}
       <InsightHeaderCard
         icon={MessageSquare}
         title="Conversation Quality"
         description="Assesses grammar, context retention, and coherence"
-        score={DUMMY_CONVERSATION_DATA.header.score}
-        passedCount={DUMMY_CONVERSATION_DATA.header.passed}
-        failedCount={DUMMY_CONVERSATION_DATA.header.failed}
+        score={score}
+        passedCount={passedCount}
+        failedCount={failedCount}
         theme="teal"
       />
 
       {/* Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {DUMMY_CONVERSATION_DATA.metrics.map((metric, idx) => (
+        {statCards.map((metric, idx) => (
           <StatCard
             key={idx}
             icon={metric.icon}
@@ -80,10 +116,9 @@ const ConversationOverview = () => {
           />
         ))}
       </div>
-      {/* <ConversationQualityBreakdown/> */}
-      <ConversationQualityIndicators/>
-      <ConversationDetailedMetrics/>
 
+      {/* Detailed Metrics */}
+      <ConversationDetailedMetrics response={response} />
     </div>
   );
 };

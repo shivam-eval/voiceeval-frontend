@@ -112,10 +112,6 @@ const AudioOverview = () => {
       {/* ================= Radar ================= */}
       <AudioQualityRadar response={response} />
 
-      {/* ================= Consistency Bars ================= */}
-      <VoiceQualityConsistency response={response} />
-
-      {/* ================= Detailed Metrics ================= */}
       <AudioDetailedMetrics response={response} />
 
     </div>

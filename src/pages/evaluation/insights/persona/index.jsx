@@ -5,67 +5,122 @@ import {
   Heart,
   ShieldCheck,
 } from "lucide-react";
-import InsightHeaderCard from '../../../../components/InsightHeaderCard';
-import StatCard from '../../../../components/StatCard';
+
+import InsightHeaderCard from "../../../../components/InsightHeaderCard";
+import StatCard from "../../../../components/StatCard";
 import PersonaDetailedMetrics from "./PersonaDetailedMetric";
 import PersonaAlignmentRadar from "./PersonaRadar";
 
 /* =========================
-   Dummy Persona Metrics
+   API / Evaluation Response
 ========================= */
-const PERSONA_STATS = [
-  {
+
+const response = {
+  "category": "persona",
+  "overall_score": 1.0,
+  "passed": true,
+  "metrics": [
+    {
+      "metric_name": "persona_consistency",
+      "category": "persona",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.020503997802734375,
+      "value": 1.0,
+      "threshold": 0.8
+    },
+    {
+      "metric_name": "tone_appropriateness",
+      "category": "persona",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.009775161743164062,
+      "value": 1.0,
+      "threshold": 0.75
+    },
+    {
+      "metric_name": "region_appropriate_language",
+      "category": "persona",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.008344650268554688,
+      "value": 1.0
+    },
+    {
+      "metric_name": "behavior_trait_alignment",
+      "category": "persona",
+      "status": "passed",
+      "passed": true,
+      "execution_time_ms": 0.007867813110351562,
+      "value": 1.0
+    }
+  ]
+}
+
+/* =========================
+   Helpers
+========================= */
+
+const PERSONA_CARD_CONFIG = {
+  persona_consistency: {
     icon: User,
     title: "Consistency",
-    value: "100%",
     subtitle: "Persona maintained throughout",
   },
-  {
+  tone_appropriateness: {
     icon: MessageSquare,
     title: "Tone",
-    value: "100%",
     subtitle: "Appropriate communication style",
   },
-  {
+  region_appropriate_language: {
     icon: Globe,
     title: "Regional Language",
-    value: "100%",
     subtitle: "Culturally appropriate",
   },
-  {
+  behavior_trait_alignment: {
     icon: Heart,
     title: "Behavior",
-    value: "100%",
     subtitle: "Trait alignment",
   },
-];
+};
+
+/* =========================
+   Component
+========================= */
 
 const PersonaOverview = () => {
+  const passedCount = response.metrics.filter((m) => m.passed).length;
+  const failedCount = response.metrics.length - passedCount;
+
   return (
     <div className="flex flex-col gap-8">
-
       {/* Header */}
       <InsightHeaderCard
         icon={User}
         title="Persona"
         description="Evaluates persona consistency and tone appropriateness"
-        score={100}
-        passedCount={4}
-        failedCount={0}
+        score={Math.round(response.overall_score * 100)}
+        passedCount={passedCount}
+        failedCount={failedCount}
         theme="teal"
       />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {PERSONA_STATS.map((item, idx) => (
-          <StatCard
-            key={idx}
-            icon={item.icon}
-            title={item.title}
-            value={item.value}
-            subtitle={item.subtitle}
-          />
-        ))}
+        {response.metrics.map((metric, idx) => {
+          const config = PERSONA_CARD_CONFIG[metric.metric_name];
+          if (!config) return null;
+
+          return (
+            <StatCard
+              key={idx}
+              icon={config.icon}
+              title={config.title}
+              value={Math.round(metric.value * 100)}
+              subtitle={config.subtitle}
+            />
+          );
+        })}
       </div>
 
       {/* Persona Stability Panel */}
@@ -85,8 +140,10 @@ const PersonaOverview = () => {
           </p>
         </div>
       </div>
-      <PersonaAlignmentRadar/>
-<PersonaDetailedMetrics/>
+
+      {/* Radar & Details */}
+      <PersonaAlignmentRadar metrics={response.metrics} />
+      <PersonaDetailedMetrics metrics={response.metrics} />
     </div>
   );
 };

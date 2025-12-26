@@ -243,9 +243,9 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
                   enableDotLabel={true}
                   dotLabel="value"
                   dotLabelYOffset={-12}
-                  colors={{ scheme: 'nivo' }}
+                  colors={['#2dd4bf']}
                   fillOpacity={0.25}
-                  blendMode="multiply"
+                  blendMode="normal"
                   animate={true}
                   theme={{
                     text: { fill: '#9ca3af', fontSize: 11 },

@@ -1,4 +1,4 @@
-const StatCard = ({ icon: Icon, title, value, subtitle }) => {
+const StatCard = ({ icon: Icon, title, value, subtitle, unit = "%" }) => {
   return (
     <div className="bg-[#0b1f26] border border-teal-500/30 rounded-xl p-6 flex flex-col gap-4">
       <div className="flex items-center gap-3 text-teal-400">
@@ -9,7 +9,7 @@ const StatCard = ({ icon: Icon, title, value, subtitle }) => {
       </div>
 
       <div className="text-4xl font-bold text-teal-300">
-        {value}%
+        {value}{unit}
       </div>
 
       <div className="text-gray-400 text-sm">

@@ -165,7 +165,7 @@ const EndpointingView = () => {
         <div className="text-sm mb-6" style={{ color: COLORS.text }}>
           Average pause duration of <span style={{ color: COLORS.warn, fontWeight: 700 }}>{avgPauseMin.toFixed(1)}m</span> significantly exceeds the <span style={{ color: COLORS.white, fontWeight: 600 }}>{pauseThresholdSec.toFixed(1)}s</span> threshold. This will make conversations feel unnatural and frustrating for users.
         </div>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-xl p-4 border" style={{ backgroundColor: '#1a0e13', borderColor: COLORS.accent }}>
             <div className="text-3xl font-bold" style={{ color: COLORS.white }}>{fmtNum(totalPauses)}</div>
             <div className="text-xs mt-1" style={{ color: COLORS.text }}>Total Pauses</div>

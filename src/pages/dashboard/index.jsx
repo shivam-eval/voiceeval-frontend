@@ -9,7 +9,7 @@ const Dashboard = () => {
     { name: 'Natural Flow', score: 77, target: 80 },
     { name: 'Objection Handling', score: 71, target: 75 },
     { name: 'Technical Performance', score: 93, target: 90 },
-    { name: 'Compliance', score: 100, target: 100 },
+    { name: 'Compliance', score: 98, target: 95 },
     { name: 'Customer Satisfaction', score: 86, target: 85 }
   ]
 

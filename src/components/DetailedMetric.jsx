@@ -6,12 +6,15 @@ const DetailedMetric = ({
   threshold,
   time,
   unit = "%",
-  status, // ✅ SOURCE OF TRUTH
+  status,
 }) => {
-  const isPassed = status === "passed"||value<threshold;
+  // Logic: if value is provided as a number, use comparison. 
+  // For accuracy, higher is better. For cost/latency, lower is better.
+  // We'll rely on the 'status' prop if provided, otherwise fallback to comparison.
+  const isPassed = status ? status === "passed" : value >= threshold;
 
-  // purely visual scaling (not logic)
-  const percent = Math.min((value / threshold) * 100, 100);
+  // Progress bar logic: percentage of value relative to threshold or 100
+  const percent = Math.min((value / (threshold || 100)) * 100, 100);
 
   return (
     <div

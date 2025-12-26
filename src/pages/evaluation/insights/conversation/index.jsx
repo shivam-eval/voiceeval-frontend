@@ -9,6 +9,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import ConversationDetailedMetrics from "./ConversationDetailedMetrics";
+import PersonaAlignmentRadar from "../persona/PersonaRadar";
 
 /* =========================
    Dummy API Response
@@ -130,6 +131,9 @@ const ConversationOverview = ({ onBack }) => {
       </div>
 
       {/* Detailed Metrics */}
+      {/* ================= Radar ================= */}
+      <PersonaAlignmentRadar response={response} />
+
       <ConversationDetailedMetrics response={response} />
     </div>
   );

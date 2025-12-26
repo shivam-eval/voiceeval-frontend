@@ -10,7 +10,7 @@ import DetailedValidationSection from "./DetailedValidationSection";
 const response=
 {
   "category": "task_completion",
-  "overall_score": 1.0,
+  "overall_score": 0.94,
   "passed": true,
   "metrics": [
     {
@@ -19,7 +19,7 @@ const response=
       "status": "passed",
       "passed": true,
       "execution_time_ms": 1245.5,
-      "value": 1.0,
+      "value": 0.94,
       "threshold": 0.9
     },
     {
@@ -46,7 +46,7 @@ const response=
       "status": "passed",
       "passed": true,
       "execution_time_ms": 450.3,
-      "value": 1.0
+      "value": 0.92
     }
   ]
 }

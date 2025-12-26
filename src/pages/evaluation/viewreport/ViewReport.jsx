@@ -184,7 +184,7 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
             <p className="text-xs text-gray-400 font-semibold uppercase">Est. Cost</p>
           </div>
           <p className="text-2xl font-bold text-white">
-            $0.12
+            0.12
           </p>
         </div>
       </div>
@@ -278,7 +278,7 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
                         {cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </p>
                       <p className={`text-2xl font-bold ${getScoreColor(cat.score)}`}>
-                        {cat.score}%
+                        {cat.score}{cat.category === "cost" ? "" : "%"}
                       </p>
                     </div>
                     <div className="w-16 h-16">

@@ -227,91 +227,85 @@ const LatencyOverview = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="relative h-80 mt-12 mb-16 px-16">
-          {/* Y-Axis Grid Lines & Labels */}
-          <div className="absolute inset-0 pointer-events-none">
-            {[0, 0.5, 1.0, 1.5, 2.0].map((v) => (
-              <div key={v} className="absolute left-0 right-0" style={{ bottom: `${toPct(v)}%` }}>
-                <div className="border-t border-gray-800/50 w-full" />
-                <span className="absolute -left-12 -translate-y-1/2 text-[11px]" style={{ color: COLORS.text }}>
-                  {v === 0 ? '0ms' : v >= 1 ? `${v.toFixed(2)}s` : `${v * 1000}ms`}
+        <div className="flex-1 flex items-end gap-24 px-16 pb-12 relative">
+          {/* Threshold Line (2s) */}
+          <div 
+            className="absolute left-0 right-0 border-t-2 border-dashed border-orange-500/50 flex items-center justify-end pr-4 pointer-events-none"
+            style={{ bottom: `${(2.0 / 2.2) * 100}%`, zIndex: 10 }}
+          >
+            <span className="bg-orange-500/10 text-orange-500 text-[10px] px-1.5 py-0.5 rounded -mt-6">
+              2s Human Perception
+            </span>
+          </div>
+
+          {/* Axis Labels (0s, 1s, 2s) */}
+          <div className="absolute -left-12 top-0 bottom-12 flex flex-col justify-between text-[11px] text-gray-500 py-1">
+            <span>2.2s</span>
+            <span style={{ marginBottom: `${(1.1 / 2.2) * 100}%` }}>1.1s</span>
+            <span>0s</span>
+          </div>
+
+          {/* Bars */}
+          {list.map((m, idx) => {
+            const pct = toPct(m.sec);
+
+            return (
+              <div key={m.metric_name} className="relative flex flex-col items-center flex-1 h-full justify-end">
+                <div 
+                  className="w-24 rounded-t-lg transition-all duration-500" 
+                  style={{ 
+                    backgroundColor: m.passed ? COLORS.teal : COLORS.accent, 
+                    height: `${pct}%`,
+                    minHeight: '4px',
+                    opacity: 0.9,
+                    zIndex: 30
+                  }} 
+                />
+                <span className="absolute -bottom-10 text-xs text-gray-400 font-medium whitespace-nowrap">
+                  {m.label}
                 </span>
               </div>
-            ))}
-            
-            {/* Threshold Line */}
-            <div className="absolute left-0 right-0 z-10" style={{ bottom: `${twoSecPct}%`, borderTop: '2px dashed #fbbf24' }}>
-              <span className="absolute -right-12 -translate-y-1/2 text-[11px] font-semibold" style={{ color: '#fbbf24' }}>2s Hu</span>
-            </div>
-          </div>
+            );
+          })}
 
-          {/* Bars and Connecting Line */}
-          <div className="relative h-full flex items-end justify-between px-10 z-20">
-            {list.map((m, idx) => {
-              const pct = toPct(m.sec)
+          {/* Straight Dotted Trend Line */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none px-16 pb-12" style={{ zIndex: 40 }}>
+            {(() => {
+              const barOffsets = [16.6, 50, 83.3];
+              const points = list.map((m, i) => ({
+                x: barOffsets[i],
+                y: 100 - toPct(m.sec)
+              }));
+              
+              let d = `M ${points[0].x}% ${points[0].y}%`;
+              for (let i = 1; i < points.length; i++) {
+                d += ` L ${points[i].x}% ${points[i].y}%`;
+              }
+
               return (
-                <div key={m.metric_name} className="relative flex flex-col items-center flex-1 h-full justify-end">
-                  <div 
-                    className="w-24 rounded-t-lg transition-all duration-500" 
-                    style={{ 
-                      backgroundColor: m.passed ? COLORS.teal : COLORS.accent, 
-                      height: `${pct}%`,
-                      minHeight: '4px',
-                      opacity: 0.9,
-                      zIndex: 30
-                    }} 
+                <>
+                  <path 
+                    d={d} 
+                    stroke="white" 
+                    strokeWidth="1.5" 
+                    strokeDasharray="4 4" 
+                    fill="none" 
+                    className="opacity-40"
                   />
-                  <div
-                    className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-40 text-xs text-center font-medium"
-                    style={{ color: COLORS.text, transform: 'rotate(-25deg)' }}
-                  >
-                    {m.label}
-                  </div>
-                </div>
-              )
-            })}
-
-            {/* Connecting Line Overlay */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 40 }}>
-              {(() => {
-                const barOffsets = [16.6, 50, 83.3] // Precise centers for 3 items in flex-1
-                const points = list.map((m, i) => ({
-                  x: barOffsets[i],
-                  y: 100 - toPct(m.sec)
-                }))
-                
-                let d = `M ${points[0].x} ${points[0].y}`
-                for (let i = 1; i < points.length; i++) {
-                  const cp1x = (points[i-1].x + points[i].x) / 2
-                  d += ` C ${cp1x} ${points[i-1].y} ${cp1x} ${points[i].y} ${points[i].x} ${points[i].y}`
-                }
-
-                return (
-                  <g>
-                    <path 
-                      d={d} 
-                      stroke="rgba(255,255,255,0.3)" 
-                      strokeWidth="2" 
-                      strokeDasharray="4 4" 
-                      fill="none" 
-                      vectorEffect="non-scaling-stroke"
+                  {points.map((p, i) => (
+                    <circle 
+                      key={i} 
+                      cx={`${p.x}%`} 
+                      cy={`${p.y}%`} 
+                      r="3" 
+                      fill="white" 
+                      className="opacity-60"
                     />
-                    {points.map((p, i) => (
-                      <circle 
-                        key={i} 
-                        cx={`${p.x}%`} 
-                        cy={`${p.y}%`} 
-                        r="4" 
-                        fill="#ffffff" 
-                        stroke="#0b1220" 
-                        strokeWidth="2" 
-                      />
-                    ))}
-                  </g>
-                )
-              })()}
-            </svg>
-          </div>
+                  ))}
+                </>
+              );
+            })()}
+          </svg>
         </div>
 
         {/* Legend */}
@@ -352,7 +346,7 @@ const LatencyOverview = ({ onBack }) => {
           </svg>
           <div className="text-lg font-bold" style={{ color: COLORS.white }}>Latency Distribution</div>
         </div>
-        <div className="grid grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {tiles.map(t => (
             <div key={t.k} className="bg-gray-800/20 rounded-xl p-5 border transition-all hover:bg-gray-800/30" style={{ borderColor: '#1f2937' }}>
               <div className="text-xs font-medium uppercase tracking-wider" style={{ color: COLORS.text }}>{t.k}</div>

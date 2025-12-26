@@ -153,9 +153,10 @@ const PersonaOverview = ({ onBack }) => {
         </div>
       </div>
 
-      {/* Radar & Details */}
-      <PersonaAlignmentRadar metrics={response.metrics} />
-      <PersonaDetailedMetrics metrics={response.metrics} />
+      {/* ================= Radar ================= */}
+      <PersonaAlignmentRadar response={response} />
+
+      <PersonaDetailedMetrics response={response} />
     </div>
   );
 };

@@ -114,26 +114,30 @@ const CostOverview = ({ onBack }) => {
           value={formatUSD(totalCost)}
           subtitle="Per conversation"
           highlight
+          unit=""
         />
         <StatCard
           icon={Cpu}
           title="LLM Cost"
           value={formatUSD(llmCost)}
-          subtitle={`${breakdown.llm_percentage}% of total`}
+          subtitle={`${breakdown.llm_percentage} of total`}
           muted
+          unit=""
         />
         <StatCard
           icon={Mic}
           title="STT Cost"
           value={formatUSD(sttCost)}
-          subtitle={`${breakdown.stt_percentage}% of total`}
+          subtitle={`${breakdown.stt_percentage} of total`}
           muted
+          unit=""
         />
         <StatCard
           icon={Volume2}
           title="TTS Cost"
           value={formatUSD(ttsCost)}
-          subtitle={`${breakdown.tts_percentage}% of total`}
+          subtitle={`${breakdown.tts_percentage} of total`}
+          unit=""
         />
       </div>
 

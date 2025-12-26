@@ -1,67 +1,164 @@
 import { useState, useEffect } from 'react'
+import { testGeneration } from '../api'
 
-const TestCasesGenerationLoading = ({ onComplete }) => {
+const TestCasesGenerationLoading = ({ flowData, onComplete, onError,region }) => {
   const [progress, setProgress] = useState(0)
+  const [status, setStatus] = useState('Initializing...')
+  const [error, setError] = useState(null)
+  const [filepath,setFilePath] = useState("");
+useEffect(() => {
+  let isMounted = true
 
-  useEffect(() => {
-    // Simulate test case generation progress
-    const progressInterval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(progressInterval)
-          setTimeout(() => {
-            if (onComplete) onComplete()
-          }, 500)
-          return 100
+  const fakeGenerateTestCases = async () => {
+    try {
+      // Stage 1: Prepare
+      setStatus('Preparing test generation request...')
+      setProgress(10)
+      await new Promise(r => setTimeout(r, 400))
+
+      if (!isMounted) return
+      setProgress(20)
+
+      // Stage 2: Analyze
+      setStatus('Analyzing conversation flow...')
+      await new Promise(r => setTimeout(r, 600))
+
+      if (!isMounted) return
+      setProgress(40)
+
+      // Stage 3: Generate
+      setStatus('Generating test scenarios...')
+      await new Promise(r => setTimeout(r, 800))
+
+      if (!isMounted) return
+      setProgress(60)
+
+      // Stage 4: Create cases
+      setStatus('Creating test cases...')
+      await new Promise(r => setTimeout(r, 700))
+
+      if (!isMounted) return
+      setProgress(80)
+
+      // Stage 5: Finalize
+      setStatus('Finalizing test suite...')
+      await new Promise(r => setTimeout(r, 600))
+
+      if (!isMounted) return
+      setProgress(100)
+      setStatus('Test cases generated successfully!')
+
+      // Dummy payload
+      const dummyResult = {
+        file_name: 'demo_test_suite.json',
+        tests: []
+      }
+
+      setTimeout(() => {
+        if (isMounted && onComplete) {
+          onComplete(dummyResult)
         }
-        return prev + 3
-      })
-    }, 100) // ~3.3 seconds total
+      }, 500)
 
-    return () => {
-      clearInterval(progressInterval)
+    } catch (err) {
+      if (!isMounted) return
+      setError('Failed to generate test cases')
+      setStatus('Error occurred')
+      setProgress(0)
+      onError?.('Failed to generate test cases')
     }
-  }, [onComplete])
+  }
+
+  fakeGenerateTestCases()
+
+  return () => {
+    isMounted = false
+  }
+}, [onComplete, onError])
+
+
 
   return (
     <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">
-      <div className="bg-dark-panel rounded-2xl p-12 border border-gray-800/50 shadow-xl">
+      <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800/50 shadow-xl">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-teal-400/20 mb-6">
-            <svg className="w-10 h-10 text-teal-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
+            {error ? (
+              <svg className="w-10 h-10 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            ) : progress === 100 ? (
+              <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-10 h-10 text-teal-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            )}
           </div>
           <h2 className="text-3xl font-bold text-white mb-2">
-            Generating Test Cases
+            {error ? 'Generation Failed' : progress === 100 ? 'Complete!' : 'Generating Test Cases'}
           </h2>
-          <p className="text-gray-400 text-lg">
-            Analyzing your system prompt and creating comprehensive test scenarios...
+          <p className={`text-lg ${error ? 'text-red-400' : 'text-gray-400'}`}>
+            {error || 'Analyzing your system prompt and creating comprehensive test scenarios...'}
           </p>
         </div>
 
         {/* Progress Bar */}
-        <div className="mb-6">
-          <div className="h-3 bg-dark-input rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-300 ease-out relative"
-              style={{ width: `${progress}%` }}
-            >
-              <div className="h-full w-full bg-teal-400 animate-glow" />
+        {!error && (
+          <div className="mb-6">
+            <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all duration-300 ease-out ${
+                  progress === 100 
+                    ? 'bg-gradient-to-r from-green-400 to-emerald-400' 
+                    : 'bg-gradient-to-r from-teal-400 to-cyan-400'
+                }`}
+                style={{ width: `${progress}%` }}
+              >
+                <div className="h-full w-full animate-pulse opacity-50" />
+              </div>
+            </div>
+            <div className="flex justify-between mt-2 text-sm text-gray-400">
+              <span>0%</span>
+              <span className={`font-semibold ${progress === 100 ? 'text-green-400' : 'text-teal-400'}`}>
+                {Math.round(progress)}%
+              </span>
+              <span>100%</span>
             </div>
           </div>
-          <div className="flex justify-between mt-2 text-sm text-gray-400">
-            <span>0%</span>
-            <span className="text-teal-400 font-semibold">{Math.round(progress)}%</span>
-            <span>100%</span>
-          </div>
-        </div>
+        )}
 
         {/* Status Text */}
         <div className="text-center">
-          <p className="text-gray-400 text-sm font-medium">
-            {progress < 100 ? 'Creating test scenarios based on your system prompt...' : 'Test cases generated successfully!'}
+          <p className={`text-sm font-medium ${
+            error ? 'text-red-400' : progress === 100 ? 'text-green-400' : 'text-gray-400'
+          }`}>
+            {status}
           </p>
+          
+          {/* Stage indicators */}
+          {!error && progress < 100 && (
+            <div className="mt-6 flex justify-center gap-2">
+              {[
+                { min: 0, max: 20, label: 'Prepare' },
+                { min: 20, max: 40, label: 'Send' },
+                { min: 40, max: 60, label: 'Analyze' },
+                { min: 60, max: 80, label: 'Generate' },
+                { min: 80, max: 100, label: 'Finalize' }
+              ].map((stage, idx) => (
+                <div key={idx} className="flex flex-col items-center">
+                  <div className={`w-2 h-2 rounded-full transition-colors ${
+                    progress >= stage.max ? 'bg-teal-400' : 
+                    progress >= stage.min ? 'bg-teal-400 animate-pulse' : 
+                    'bg-gray-700'
+                  }`} />
+                  <span className="text-xs text-gray-500 mt-1">{stage.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -69,4 +166,3 @@ const TestCasesGenerationLoading = ({ onComplete }) => {
 }
 
 export default TestCasesGenerationLoading
-

@@ -1,7 +1,4 @@
-import { useState } from 'react'
-
-// Call flow script for all test cases
-const CALL_FLOW_SCRIPT = `### Call Flow
+export const CALL_FLOW_SCRIPT = `### Call Flow
 
 **[Phone Rings]**
 
@@ -99,7 +96,7 @@ const CALL_FLOW_SCRIPT = `### Call Flow
 
 ---`
 
-const EXPECTED_RESPONSE = `The agent should successfully:
+export const EXPECTED_RESPONSE = `The agent should successfully:
 1. Greet the customer warmly and confirm they have time
 2. Verify vehicle details conversationally
 3. Gather key information (mileage, service history, satisfaction, future plans)
@@ -108,7 +105,8 @@ const EXPECTED_RESPONSE = `The agent should successfully:
 6. Schedule an appointment and capture email
 7. End the call on a positive note`
 
-const TEST_CASES = [
+// Default test cases (fallback if no testSuite provided)
+export const DEFAULT_TESTS_CASES = [
   {
     id: 1,
     title: "Happy Customer - Service Package Success",
@@ -261,162 +259,3 @@ const TEST_CASES = [
     }
   }
 ]
-
-const TestCasesScreen = ({ onRunTests, onBack }) => {
-  const [expandedScripts, setExpandedScripts] = useState({})
-
-  const toggleScript = (testCaseId) => {
-    setExpandedScripts(prev => ({
-      ...prev,
-      [testCaseId]: !prev[testCaseId]
-    }))
-  }
-
-  return (
-    <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Generated Test Cases
-            </h1>
-            <p className="text-gray-400">
-              Review the test cases and personas below, then run all tests to evaluate your Voice AI agent.
-            </p>
-          </div>
-          {onBack && (
-            <button
-              onClick={onBack}
-              className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium transition-colors"
-            >
-              Back
-            </button>
-          )}
-        </div>
-
-        {/* Test Cases List */}
-        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-          {TEST_CASES.map((testCase) => (
-            <div
-              key={testCase.id}
-              className="bg-dark-panel rounded-xl p-6 border border-gray-800/50 hover:border-gray-700 transition-colors"
-            >
-              <div className="flex items-start gap-4 mb-4">
-                <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-teal-400/20 flex items-center justify-center text-teal-400 font-semibold">
-                  {testCase.id}
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-lg font-semibold text-white mb-1 flex items-center gap-2">
-                    {testCase.icon && <span>{testCase.icon}</span>}
-                    {testCase.title}
-                  </h4>
-                </div>
-              </div>
-
-              {/* Persona Details */}
-              <div className="ml-14">
-                <div className="mb-3">
-                  <button
-                    onClick={() => toggleScript(testCase.id)}
-                    className="flex items-center gap-2 text-sm font-semibold text-teal-400 hover:text-teal-300 uppercase tracking-wide transition-colors"
-                  >
-                    {expandedScripts[testCase.id] ? (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                        </svg>
-                        Hide Script & Expected Response
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                        View Script & Expected Response
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* Expanded Script Section */}
-                {expandedScripts[testCase.id] && (
-                  <div className="mb-4 p-4 bg-dark-input rounded-lg border border-gray-700 space-y-4 animate-slide-up">
-                    <div>
-                      <h6 className="text-sm font-semibold text-white mb-2">Script Simulation Agent Will Follow:</h6>
-                      <div className="text-sm text-gray-300 whitespace-pre-line leading-relaxed font-mono">
-                        {CALL_FLOW_SCRIPT}
-                      </div>
-                    </div>
-                    <div className="pt-4 border-t border-gray-700">
-                      <h6 className="text-sm font-semibold text-white mb-2">Expected Response:</h6>
-                      <div className="text-sm text-gray-300 whitespace-pre-line leading-relaxed">
-                        {EXPECTED_RESPONSE}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-gray-400">Gender:</span>
-                    <span className="text-white ml-2">{testCase.persona.gender}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Name:</span>
-                    <span className="text-white ml-2">{testCase.persona.name}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Speaking Rate:</span>
-                    <span className="text-white ml-2">{testCase.persona.speakingRate}</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400">Interruption Tendency:</span>
-                    <span className="text-white ml-2">{testCase.persona.interruptionTendency}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400">Dialect:</span>
-                    <span className="text-white ml-2">{testCase.persona.dialect}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400">Personality:</span>
-                    <span className="text-white ml-2">{testCase.persona.personality}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400">Background Environment:</span>
-                    <span className="text-white ml-2">{testCase.persona.backgroundEnvironment}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400">Vehicle:</span>
-                    <span className="text-white ml-2">{testCase.persona.vehicle}</span>
-                  </div>
-                  <div className="col-span-2">
-                    <span className="text-gray-400">Current Situation:</span>
-                    <span className="text-white ml-2">{testCase.persona.currentSituation}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Run Tests Button */}
-        <div className="pt-4 border-t border-gray-800">
-          <button
-            onClick={onRunTests}
-            className="w-full px-6 py-4 bg-teal-400 hover:bg-teal-500 text-white rounded-xl font-semibold text-base transition-all duration-300 shadow-lg shadow-teal-400/50 hover:scale-105 flex items-center justify-center gap-3"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Run Tests
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export default TestCasesScreen
-

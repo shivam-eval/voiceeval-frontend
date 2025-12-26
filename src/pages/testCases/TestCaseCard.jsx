@@ -24,7 +24,10 @@ const TestCaseCard = ({ testCase, isExpanded, onToggle }) => {
       education: 'Not specified',
       annualIncome: 'Not specified',
       creditScore: 'N/A',
-      employmentStatus: 'Not specified'
+      employmentStatus: 'Not specified',
+      angry: false,
+      interruption: false,
+      language: 'Not specified'
     };
   }
 
@@ -77,6 +80,7 @@ const TestCaseCard = ({ testCase, isExpanded, onToggle }) => {
         <PersonaRow icon={MapPin} label="Location" value={persona.city} />
         <PersonaRow icon={GraduationCap} label="Education" value={persona.education} />
         <PersonaRow icon={IndianRupee} label="Income" value={persona.annualIncome} />
+        <PersonaRow icon={MessageSquare} label="Language" value={persona.language} />
       </div>
 
       {/* Expanded View */}
@@ -118,6 +122,23 @@ const TestCaseCard = ({ testCase, isExpanded, onToggle }) => {
                 label="Credit Score" 
                 value={persona.creditScore} 
                 className={persona.creditScore > 750 ? 'text-green-400' : 'text-amber-400'}
+              />
+              <PersonaRow 
+                icon={Info} 
+                label="Mood" 
+                value={persona.angry ? 'Angry' : 'Calm'} 
+                className={persona.angry ? 'text-red-400' : 'text-green-400'}
+              />
+              <PersonaRow 
+                icon={Phone} 
+                label="Interruption" 
+                value={persona.interruption ? 'Yes' : 'No'} 
+                className={persona.interruption ? 'text-amber-400' : 'text-gray-400'}
+              />
+              <PersonaRow 
+                icon={User} 
+                label="Personality" 
+                value={persona.personality} 
               />
             </div>
 

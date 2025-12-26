@@ -12,40 +12,40 @@ import { DollarSign, Cpu, Mic, Volume2, ArrowLeft } from "lucide-react";
 
 const response = {
   category: "cost",
-  overall_score: 0.051149999999999994,
+  overall_score: 0.97,
   passed: true,
   metrics: [
     {
       metric_name: "llm_token_usage",
-      value: 0.0,
+      value: 0.045,
       passed: true,
       details: {
-        total_cost_usd: 0.0,
+        total_cost_usd: 0.045,
       },
     },
     {
       metric_name: "stt_cost",
-      value: 0.0,
+      value: 0.012,
       passed: true,
     },
     {
       metric_name: "tts_cost",
-      value: 0.10229999999999999,
+      value: 0.038,
       passed: true,
     },
     {
       metric_name: "total_conversation_cost",
-      value: 0.10229999999999999,
+      value: 0.095,
       passed: true,
       details: {
-        total_cost_usd: 0.10229999999999999,
-        llm_cost_usd: 0.0,
-        stt_cost_usd: 0.0,
-        tts_cost_usd: 0.10229999999999999,
+        total_cost_usd: 0.095,
+        llm_cost_usd: 0.045,
+        stt_cost_usd: 0.012,
+        tts_cost_usd: 0.038,
         cost_breakdown: {
-          llm_percentage: 0,
-          stt_percentage: 0,
-          tts_percentage: 100,
+          llm_percentage: 47,
+          stt_percentage: 13,
+          tts_percentage: 40,
         },
       },
     },
@@ -59,7 +59,7 @@ const response = {
 const getMetric = (name) =>
   response.metrics.find((m) => m.metric_name === name);
 
-const formatUSD = (value) => `$${value.toFixed(2)}`;
+const formatUSD = (value) => `${value.toFixed(3)}`;
 
 /* =========================
    Component
@@ -99,10 +99,11 @@ const CostOverview = ({ onBack }) => {
         icon={DollarSign}
         title="Cost"
         description="Tracks LLM, STT, and TTS costs"
-        score={Math.round(response.overall_score * 100)}
+        score={totalCost}
         passedCount={response.metrics.filter((m) => m.passed).length}
         failedCount={response.metrics.filter((m) => !m.passed).length}
         theme="teal"
+        unit=""
       />
 
       {/* Stat Cards */}

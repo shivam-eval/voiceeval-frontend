@@ -15,7 +15,7 @@ const humanizeMetricName = (name) => {
   return map[name] || name;
 };
 
-const formatUSD = (value) => `$${Number(value).toFixed(4)}`;
+const formatUSD = (value) => `${Number(value).toFixed(4)}`;
 
 /* =========================
    Component

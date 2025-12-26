@@ -15,35 +15,35 @@ import ConversationDetailedMetrics from "./ConversationDetailedMetrics";
 ========================= */
 const response = {
   category: "conversation_quality",
-  overall_score: 0.75,
+  overall_score: 0.88,
   passed: true,
   metrics: [
     {
       metric_name: "grammar_quality",
       passed: true,
       execution_time_ms: 7546.151161193848,
-      value: 1.0,
+      value: 0.92,
       threshold: 0.8,
     },
     {
       metric_name: "context_maintenance",
       passed: true,
       execution_time_ms: 3906.0778617858887,
-      value: 1.0,
+      value: 0.85,
       threshold: 0.85,
     },
     {
       metric_name: "information_extraction_accuracy",
       passed: true,
       execution_time_ms: 0.017404556274414062,
-      value: 1.0,
+      value: 0.94,
       threshold: 0.9,
     },
     {
       metric_name: "clarification_request_rate",
       passed: true,
       execution_time_ms: 0.0362396240234375,
-      value: 0.0,
+      value: 0.08,
     },
   ],
 };

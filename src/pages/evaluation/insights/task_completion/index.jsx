@@ -18,7 +18,7 @@ const response=
       "category": "task_completion",
       "status": "passed",
       "passed": true,
-      "execution_time_ms": 2353.213310241699,
+      "execution_time_ms": 1245.5,
       "value": 1.0,
       "threshold": 0.9
     },
@@ -27,8 +27,8 @@ const response=
       "category": "task_completion",
       "status": "passed",
       "passed": true,
-      "execution_time_ms": 0.0438690185546875,
-      "value": 1.0,
+      "execution_time_ms": 850.2,
+      "value": 0.95,
       "threshold": 0.85
     },
     {
@@ -36,8 +36,8 @@ const response=
       "category": "task_completion",
       "status": "passed",
       "passed": true,
-      "execution_time_ms": 0.01049041748046875,
-      "value": 1.0,
+      "execution_time_ms": 620.8,
+      "value": 0.98,
       "threshold": 0.8
     },
     {
@@ -45,7 +45,7 @@ const response=
       "category": "task_completion",
       "status": "passed",
       "passed": true,
-      "execution_time_ms": 0.010013580322265625,
+      "execution_time_ms": 450.3,
       "value": 1.0
     }
   ]

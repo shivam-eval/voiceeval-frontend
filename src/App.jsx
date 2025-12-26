@@ -113,7 +113,7 @@ function App() {
           <DashboardLayout
             activeView={activeView}
             onNavigate={handleNavigate}
-            hideRightPanel={activeView === "evaluation"}
+            hideRightPanel={activeView === "evaluation" || showWorkspaceDashboard}
             onLogout={handleLogout}
           >
             {/* ✅ FIRST SCREEN */}

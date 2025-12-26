@@ -1,9 +1,9 @@
 import { ResponsivePie } from "@nivo/pie";
 import { darkTheme } from "../../const";
 const costData = [
-  { id: "LLM", value: 0.14 },
-  { id: "STT", value: 0.2},
-  // { id: "TTS", value: 0.1023 },
+  { id: "LLM", value: 0.045 },
+  { id: "STT", value: 0.012 },
+  { id: "TTS", value: 0.038 },
 ];
 
 const CostDonut = () => (

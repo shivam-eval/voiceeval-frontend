@@ -402,7 +402,9 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanAmount: "₹8,500",
         loanPurpose: "Personal Loan",
         lastLoanTaken: "6 months ago",
-        personality: "Cooperative"
+        personality: "Cooperative",
+        angry: false,
+        interruption: false
       },
       "happy_path_repayment_date": {
         name: "Neha Sharma",
@@ -416,7 +418,9 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanAmount: "₹12,000",
         loanPurpose: "Personal Loan",
         lastLoanTaken: "8 months ago",
-        personality: "Cooperative"
+        personality: "Cooperative",
+        angry: false,
+        interruption: true
       },
       "edge_case_identity_refusal_detailed": {
         name: "Amit Patel",
@@ -430,7 +434,9 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanAmount: "₹10,000",
         loanPurpose: "Business Loan",
         lastLoanTaken: "1 year ago",
-        personality: "Cautious"
+        personality: "Cautious",
+        angry: false,
+        interruption: false
       },
       "edge_case_unknown_information": {
         name: "Priya Reddy",
@@ -444,7 +450,9 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanAmount: "₹15,000",
         loanPurpose: "Personal Loan",
         lastLoanTaken: "6 months ago",
-        personality: "Confused"
+        personality: "Confused",
+        angry: false,
+        interruption: true
       },
       "failure_path_angry_escalation": {
         name: "Vikram Singh",
@@ -458,7 +466,9 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanAmount: "₹20,000",
         loanPurpose: "Personal Loan",
         lastLoanTaken: "3 months ago",
-        personality: "Frustrated"
+        personality: "Frustrated",
+        angry: true,
+        interruption: true
       },
       "failure_path_refusal_payment": {
         name: "Kavita Desai",
@@ -472,7 +482,9 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanAmount: "₹7,000",
         loanPurpose: "Personal Loan",
         lastLoanTaken: "4 months ago",
-        personality: "Distressed"
+        personality: "Distressed",
+        angry: true,
+        interruption: true
       }
     };
 

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:8000/api/v1";
+const API_BASE_URL = "http://localhost:8001/api/v1";
 
 const API = axios.create({
   baseURL: API_BASE_URL,
@@ -108,6 +108,10 @@ export const testGeneration = async (payload) => {
 export const runSimulation = async (payload) => {
   return API.post("/simulation/run", payload);
 };
+
+export const getSimulation = async ()=>{
+  return API.get('/simulation/status')
+}
 
 export const getSimulationStatus = async (simulationId) => {
   return API.get(`/simulation/status/${simulationId}`);

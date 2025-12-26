@@ -1,117 +1,164 @@
 import { useState, useEffect } from "react";
 import DashboardLoader from "./components/DashboardLoader";
-import DashboardLayout from "./pages/main/index";
-import Dashboard from "./pages/main/DashboardOverview"
+import DashboardLayout from "./pages/main/index"
+import Dashboard from "./pages/dasbhboard/index"
 import PlatformSelection from "./pages/platformSelection/PlatformSelection";
-import ConnectionForm from "./pages/connectAgent/index";
+import ConnectionForm from "./pages/connectAgent/index"
 import ConnectionLoading from "./components/ConnectionLoading";
-import WorkspaceDashboard from "./pages/workspace";
-import WorkspaceDashboard from "./pages/workspace";
+import WorkspaceDashboard from "./pages/workspace/index"
 import AuthScreen from "./pages/auth/AuthScreen";
-import { extractAgent } from "./api";
+import { extractAgent, flowGenerationMermaid } from "./api";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(true)
+  
+  const handleAuthSuccess = () => setIsAuthenticated(true)
 
-  // 🔑 Default view → Evaluation
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('userEmail')
+    setIsAuthenticated(false)
+    setShowLayout(false)
+    setShowDashboard(true)
+  }
+  const [showDashboard, setShowDashboard] = useState(true);
+  const [showLayout, setShowLayout] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
-
   const [showPlatformSelection, setShowPlatformSelection] = useState(false);
   const [showConnectionForm, setShowConnectionForm] = useState(false);
   const [showConnectionLoading, setShowConnectionLoading] = useState(false);
   const [showWorkspaceDashboard, setShowWorkspaceDashboard] = useState(false);
-
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
-
+  const [showEvaluationDashboard, setShowEvaluationDashboard] = useState(false);
   const [extractedConfig, setExtractedConfig] = useState(null);
   const [setupResult, setSetupResult] = useState(null);
 
-  const handleAuthSuccess = () => setIsAuthenticated(true);
+  console.log("App state:", {
+    showConnectionLoading,
+    showWorkspaceDashboard,
+    hasExtractedConfig: !!extractedConfig,
+    hasSetupResult: !!setupResult,
+  });
 
-  const handleLogout = () => {
-    localStorage.clear();
-    setIsAuthenticated(false);
-  };
+  useEffect(() => {
+    // Wrap the existing timer in this if-condition
+    if (isAuthenticated) {
+      const timer = setTimeout(() => {
+        setShowDashboard(false)
+        setTimeout(() => {
+          setShowLayout(true)
+        }, 300)
+      }, 2000)
 
-  /* ---------------- Navigation ---------------- */
+      return () => clearTimeout(timer)
+    }
+  }, [isAuthenticated]);
 
   const handleNavigate = (viewId) => {
     console.log("Navigating to:", viewId);
-    
-    // Reset all view states
-    setShowPlatformSelection(false);
-    setShowConnectionForm(false);
-    setShowConnectionLoading(false);
-    setShowWorkspaceDashboard(false);
-    setShowEvaluationDashboard(false);
-    
-    // Update the active view
     setActiveView(viewId);
 
-    // Handle specific view transitions
-    switch(viewId) {
-      case 'connect-agent':
+    if (viewId === "connect-agent") {
+      if (!showWorkspaceDashboard) {
         setShowPlatformSelection(true);
-        break;
-      case 'dashboard':
-        // Dashboard is the default view, no additional setup needed
-        break;
-      // Add more cases as needed for other views
-      default:
-        console.log(`No specific setup for view: ${viewId}`);
+        setShowConnectionForm(false);
+        setShowConnectionLoading(false);
+      }
+    } else if (viewId === "dashboard") {
+      setShowPlatformSelection(false);
+      setShowConnectionForm(false);
+      setShowConnectionLoading(false);
+      setShowWorkspaceDashboard(false);
     }
   };
 
-  /* ---------------- Connect Agent Flow ---------------- */
-
   const handlePlatformSelect = (platformId) => {
+    console.log("Platform selected:", platformId);
     setSelectedPlatform(platformId);
     setShowPlatformSelection(false);
+    setActiveView("connect-agent");
     setTimeout(() => setShowConnectionForm(true), 300);
   };
 
-const handleConnect = ({ apiKey, assistantId }) => {
-  console.log("🧪 Dummy connect (NO API)");
-  console.log("User entered:", { apiKey, assistantId });
-
-  setIsConnecting(true);
-
-  // 1️⃣ Load hardcoded config immediately
-  setExtractedConfig(extractedConfigJson);
-
-  // 2️⃣ Move to loading screen
-  setShowConnectionForm(false);
-  setShowConnectionLoading(true);
-
-  // 3️⃣ Fake backend work (UX only)
-  setTimeout(() => {
-    // We already have everything hardcoded
-    setSetupResult({
-      flowData: null,      // not needed if using PNG
-      mermaid: null,       // not needed
-    });
-
-    // 4️⃣ Transition to workspace
-    setShowConnectionLoading(false);
-    setShowWorkspaceDashboard(true);
-    setIsConnecting(false);
-
-    console.log("✅ Dummy flow completed");
-  }, 2000); // ⏱ adjust timing as needed
-};
-
-
-  const handleConnectionComplete = (result) => {
-    setSetupResult(result);
-    setShowConnectionLoading(false);
-    setShowWorkspaceDashboard(true);
+  const handleBackToPlatforms = () => {
+    console.log("Back to platforms");
+    setShowConnectionForm(false);
+    setActiveView("connect-agent");
+    setTimeout(() => {
+      setShowPlatformSelection(true);
+      setSelectedPlatform(null);
+    }, 300);
   };
 
-  /* ---------------- Auth Gate ---------------- */
+  const handleConnect = async ({ apiKey, assistantId }) => {
+    console.log("🔄 Starting connection...");
+    setIsConnecting(true);
+    setActiveView("connect-agent");
+
+    try {
+      const payload = {
+        platform: selectedPlatform,
+        api_key: apiKey,
+        agent_id: assistantId,
+      };
+
+      console.log("📤 Sending extract request:", payload);
+
+      const res = await extractAgent(payload);
+
+      console.log("📥 Extraction result:", res.data);
+
+      // Save extracted config
+      setExtractedConfig(res.data);
+      console.log("✅ Config extracted successfully");
+
+      // UI transitions
+      setIsConnecting(false);
+      setShowConnectionForm(false);
+
+      setTimeout(() => {
+        console.log("➡️ Showing connection loading screen");
+        setShowConnectionLoading(true);
+      }, 300);
+    } catch (err) {
+      console.error("❌ Connection failed:", err);
+      console.error("Error details:", {
+        message: err.message,
+        response: err?.response?.data,
+        stack: err.stack,
+      });
+
+      alert(
+        "Failed to connect: " + (err.response?.data?.detail || err.message)
+      );
+      setIsConnecting(false);
+    }
+  };
+
+  const handleConnectionComplete = (result) => {
+    console.log("🎉 Connection complete with result:", result);
+
+    // Store the setup result (flowData + mermaid)
+    setSetupResult(result);
+
+    // Also merge into extractedConfig for persistence
+    setExtractedConfig((prev) => ({
+      ...prev,
+      flowData: result?.flowData,
+      mermaid: result?.mermaid,
+    }));
+
+    console.log("➡️ Transitioning to workspace dashboard");
+
+    // Hide loader, show workspace
+    setShowConnectionLoading(false);
+    setShowWorkspaceDashboard(true);
+    setActiveView("connect-agent");
+  };
 
   if (!isAuthenticated) {
-    return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
+    return <AuthScreen onAuthSuccess={handleAuthSuccess} />
   }
 
   if (showDashboard) {

@@ -1,164 +1,182 @@
-import { useEffect, useState } from 'react'
-import { getSimulationStatus } from '../api'
-import transcript from '../data/transcript_steps.json'
+import { useEffect, useState } from "react";
 
+/**
+ * Props:
+ *  - simulationId (string)  → returned from POST /api/v1/simulation/run
+ *  - onComplete (optional)  → called after evaluation finishes
+ *  - onError (optional)
+ */
 const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
-  // backend state
-  const [status, setStatus] = useState('queued')
-  const [queuePosition, setQueuePosition] = useState(null)
-  const [totalTests, setTotalTests] = useState(0)
-  const [backendDone, setBackendDone] = useState(0)
+  // execution state
+  const [totalActive, setTotalActive] = useState(0);
+  const [totalCompleted, setTotalCompleted] = useState(0);
+  const [executionFinished, setExecutionFinished] = useState(false);
 
   // UI animation state
-  const [currentTest, setCurrentTest] = useState(0)
-  const [displayProgress, setDisplayProgress] = useState(0)
-  const [completed, setCompleted] = useState(false)
+  const [currentStep, setCurrentStep] = useState(0);
+  const [progress, setProgress] = useState(0);
 
-  /* -------------------------------
-     🔁 Poll backend status
-  -------------------------------- */
+  /* -------------------------------------------------
+     1️⃣ Poll execution status (NO ID — Swagger correct)
+  -------------------------------------------------- */
   useEffect(() => {
-    if (!simulationId) return
-
-    const poll = async () => {
+    const pollStatus = async () => {
       try {
-        const { data } = await getSimulationStatus(simulationId)
+        const res = await fetch(
+          "http://localhost:8001/api/v1/simulation/status",
+          {
+            method: "GET",
+            headers: { accept: "application/json" },
+          }
+        );
 
-        setStatus(data.status)
-        setQueuePosition(data.queue_position ?? null)
+        const data = await res.json();
+        console.log("Simulation status:", data);
 
-        const passed = data.passed_tests || 0
-        const failed = data.failed_tests || 0
-        const total = data.total_tests || 0
-        const done = passed + failed
+        const active = data.total_active ?? 0;
+        const completed = data.total_completed ?? 0;
 
-        setTotalTests(total)
-        setBackendDone(done)
+        setTotalActive(active);
+        setTotalCompleted(completed);
 
-        if (data.status === 'completed') {
-          setCompleted(true)
-          setBackendDone(total)
-        }
-
-        if (data.status === 'failed' || data.status === 'cancelled') {
-          throw new Error(data.error_message || 'Simulation failed')
+        // terminal condition (Swagger-defined)
+        if (active === 0 && completed > 0) {
+          setExecutionFinished(true);
         }
       } catch (err) {
-        onError?.(err)
+        console.error("Status polling failed:", err);
+        onError?.(err);
       }
-    }
+    };
 
-    poll()
-    const interval = setInterval(poll, 2000)
-    return () => clearInterval(interval)
-  }, [simulationId, onError])
+    pollStatus();
+    const interval = setInterval(pollStatus, 3000);
+    return () => clearInterval(interval);
+  }, [onError]);
 
-  /* -------------------------------
-     🎞 Sequential grid ticking
-  -------------------------------- */
+  /* -------------------------------------------------
+     2️⃣ Animate steps (1 simulation = 1 call)
+  -------------------------------------------------- */
   useEffect(() => {
-    if (currentTest < backendDone) {
-      const timer = setTimeout(() => {
-        setCurrentTest(prev => prev + 1)
-      }, 600) // ⏱ per-test animation speed
-
-      return () => clearTimeout(timer)
+    if (currentStep < totalCompleted) {
+      const t = setTimeout(() => {
+        setCurrentStep((v) => v + 1);
+      }, 600);
+      return () => clearTimeout(t);
     }
-  }, [currentTest, backendDone])
+  }, [currentStep, totalCompleted]);
 
-  /* -------------------------------
-     📊 Smooth progress bar
-  -------------------------------- */
+  /* -------------------------------------------------
+     3️⃣ Smooth progress bar
+  -------------------------------------------------- */
   useEffect(() => {
-    if (!totalTests) return
+    const total = totalActive + totalCompleted;
+    if (!total) return;
 
-    const target = Math.round((currentTest / totalTests) * 100)
-
-    if (displayProgress < target) {
-      const timer = setTimeout(() => {
-        setDisplayProgress(prev => prev + 1)
-      }, 30)
-
-      return () => clearTimeout(timer)
+    const target = Math.round((currentStep / total) * 100);
+    if (progress < target) {
+      const t = setTimeout(() => {
+        setProgress((p) => p + 1);
+      }, 30);
+      return () => clearTimeout(t);
     }
-  }, [currentTest, totalTests, displayProgress])
+  }, [currentStep, totalActive, totalCompleted, progress]);
 
-  /* -------------------------------
-     ✅ Finish → Evaluation
-  -------------------------------- */
+  /* -------------------------------------------------
+     4️⃣ Run batch evaluation (Swagger exact)
+  -------------------------------------------------- */
   useEffect(() => {
-    if (completed && currentTest >= totalTests && totalTests > 0) {
-      const timer = setTimeout(() => {
-        onComplete?.({ transcript })
-      }, 500)
+    if (!executionFinished) return;
 
-      return () => clearTimeout(timer)
-    }
-  }, [completed, currentTest, totalTests, onComplete])
+    const runEvaluation = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:8001/api/v1/evaluate/batch",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              accept: "application/json",
+            },
+            body: JSON.stringify({
+              simulation_id: simulationId,
+            }),
+          }
+        );
 
-  /* -------------------------------
-     🖥 UI (UNCHANGED)
-  -------------------------------- */
+        const evaluationResult = await res.json();
+
+        // ✅ USER REQUEST: console evaluation result
+        console.log("✅ Evaluation Result:", evaluationResult);
+
+        onComplete?.(evaluationResult);
+      } catch (err) {
+        console.error("Evaluation failed:", err);
+        onError?.(err);
+      }
+    };
+
+    runEvaluation();
+  }, [executionFinished, simulationId, onComplete, onError]);
+
+  /* -------------------------------------------------
+     UI
+  -------------------------------------------------- */
+  const total = totalActive + totalCompleted;
+
   return (
     <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">
       <div className="bg-dark-panel rounded-2xl p-12 border border-gray-800/50 shadow-xl">
-
-        {/* Header */}
         <div className="text-center mb-6">
           <h2 className="text-3xl font-bold text-white mb-2">
             Running Test Cases
           </h2>
           <p className="text-gray-400">
-            {status === 'queued' && queuePosition !== null
-              ? `Queue position: ${queuePosition}`
-              : totalTests > 0
-              ? `Validating ${currentTest} of ${totalTests} test cases`
-              : 'Initializing…'}
+            {total > 0
+              ? `Executing ${currentStep} of ${total} calls`
+              : "Initializing…"}
           </p>
         </div>
 
-        {/* Progress Bar */}
-        <div className="mb-4">
+        {/* Progress bar */}
+        <div className="mb-6">
           <div className="h-3 bg-dark-input rounded-full overflow-hidden">
             <div
               className="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-300"
-              style={{ width: `${displayProgress}%` }}
+              style={{ width: `${progress}%` }}
             />
           </div>
           <div className="flex justify-between mt-2 text-sm text-gray-400">
             <span>0%</span>
-            <span className="text-teal-400 font-semibold">
-              {displayProgress}%
-            </span>
+            <span className="text-teal-400 font-semibold">{progress}%</span>
             <span>100%</span>
           </div>
         </div>
 
-        {/* Grid */}
-        {totalTests > 0 && (
+        {/* Grid (max 10 visual steps) */}
+        {total > 0 && (
           <div className="grid grid-cols-5 gap-3 mb-8">
-            {Array.from(
-              { length: Math.min(totalTests, 10) },
-              (_, i) => i + 1
-            ).map(i => {
-              const isDone = i <= currentTest
-              const isActive = i === currentTest + 1
+            {Array.from({ length: Math.min(total, 10) }, (_, i) => i + 1).map(
+              (i) => {
+                const done = i <= currentStep;
+                const active = i === currentStep + 1;
 
-              return (
-                <div
-                  key={i}
-                  className={`h-16 rounded-lg border-2 flex items-center justify-center text-lg font-semibold ${
-                    isDone
-                      ? 'bg-teal-400/20 border-teal-400 text-teal-300'
-                      : isActive
-                      ? 'bg-teal-400/10 border-teal-400 animate-pulse text-teal-400'
-                      : 'bg-dark-input border-gray-700 text-gray-400'
-                  }`}
-                >
-                  {isDone ? '✓' : i}
-                </div>
-              )
-            })}
+                return (
+                  <div
+                    key={i}
+                    className={`h-16 rounded-lg border-2 flex items-center justify-center text-lg font-semibold ${
+                      done
+                        ? "bg-teal-400/20 border-teal-400 text-teal-300"
+                        : active
+                        ? "bg-teal-400/10 border-teal-400 animate-pulse text-teal-400"
+                        : "bg-dark-input border-gray-700 text-gray-400"
+                    }`}
+                  >
+                    {done ? "✓" : i}
+                  </div>
+                );
+              }
+            )}
           </div>
         )}
 
@@ -167,7 +185,7 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default TestExecutionLoading
+export default TestExecutionLoading;

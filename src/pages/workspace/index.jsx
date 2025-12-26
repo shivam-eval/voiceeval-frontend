@@ -6,7 +6,7 @@ import TestCasesScreen from "../../pages/testCases/TestCasesScreen"
 import TestExecutionLoading from "../../components/TestExecutionLoading"
 import EvaluationDashboard from "../../pages/evaluation/index"
 import QueueStatsWidget from "./QueueStatsWidget"
-// import { runSimulation,evaluateTranscript } from "../../api"
+import { runSimulation,evaluateTranscript } from "../../api"
 import transcript from '../../data/transcript_steps.json'
 import RegionDropDown from "./RegionDropDown"
 
@@ -87,91 +87,101 @@ const WorkspaceDashboard = ({
 
   // Generate Test Suite
   const handleGenerateTestCases = () => {
-    // if (!flowData) {
-    //   alert("Flow data not available.")
-    //   return
-    // }
+    if (!flowData) {
+      alert("Flow data not available.")
+      return
+    }
     setShowTestCasesGeneration(true)
   }
 
-  const handleTestGenerationComplete = () => {
-  const dummyTestSuite = {
-    file_name: "demo_test_suite.json",
-    tests: []
+  const handleTestGenerationComplete = (generatedData) => {
+     setTestSuite(generatedData)
+  setTestSuitePath(generatedData.file_name) 
+    setShowTestCasesGeneration(false)
+    setShowTestCasesScreen(true)
   }
-
-  setTestSuite(dummyTestSuite)
-  setTestSuitePath(dummyTestSuite.file_name)
-  setShowTestCasesGeneration(false)
-  setShowTestCasesScreen(true)
-}
-
 
   const handleTestGenerationError = (error) => {
     alert("Failed to generate test cases: " + error)
     setShowTestCasesGeneration(false)
   }
 
-//  const handleRunTests = async (testSuitePath) => {
-//   try {
-//     // 1️⃣ Hit API to start simulation first
-//     const response = await runSimulation({
-//       phone_number:"+917982693803",
-//       test_suite_path: testSuitePath
-// }
-//     )
-     
-//     // 2️⃣ Store simulation ID for polling
-//     const simId = response.data.session_ids[0]
-//     console.log(response.data)
-//     if (!simId) {
-//       throw new Error("No simulation ID returned from API")
-//     }
-//     setSimulationId(simId)
-    
-//     // 3️⃣ Show loading screen after we have the ID
-//     setShowTestCasesScreen(false)
-//     setShowTestLoading(true)
-    
-//     // Note: TestExecutionLoading will handle polling and completion
+const handleRunTests = async (testSuitePath) => {
+  console.log(testSuitePath)
+  try {
+    if (!testSuitePath) {
+      throw new Error("Test suite path is missing");
+    }
 
-//   } catch (err) {
-//     console.error("Simulation failed:", err)
-//     alert(err?.response?.data?.detail || "Failed to start simulation")
+    // 1️⃣ Build payload EXACTLY as backend expects
+    const payload = {
+      test_suite_path: testSuitePath,
+      phone_number: "+917982693803", // ✅ Swagger-compliant
+    };
 
-//     // rollback UI if needed
-//     setShowTestLoading(false)
-//     setShowTestCasesScreen(true)
-//   }
-// }
+    // 2️⃣ Call API
+    const response = await runSimulation(payload);
 
-const handleRunTests = () => {
-  setShowTestCasesScreen(false)
-  setShowTestLoading(true)
+    // 3️⃣ Extract simulation_id safely
+    const simId =
+      response?.data?.simulation_id ||
+      response?.data?.data?.simulation_id;
 
-  // fake execution time
-  setTimeout(() => {
-    handleTestComplete()
-  }, 2500)
-}
+    if (!simId) {
+      console.error("Unexpected response:", response.data);
+      throw new Error("simulation_id not returned by backend");
+    }
 
+    // 4️⃣ Update state
+    setSimulationId(simId);
+    setShowTestCasesScreen(false);
+    setShowTestLoading(true);
 
-const handleTestComplete = () => {
-  const dummyEvaluationResults = {
-    summary: {
-      successRate: 82,
-      avgLatencyMs: 1200,
-      totalTests: 12
-    },
-    steps: transcript.steps
+  } catch (err) {
+    console.error("Simulation failed:", err);
+
+    alert(
+      err?.response?.data?.detail ||
+      err?.message ||
+      "Failed to start simulation"
+    );
+
+    // rollback UI
+    setShowTestLoading(false);
+    setShowTestCasesScreen(true);
   }
+};
 
-  setEvaluationResults(dummyEvaluationResults)
-  setShowTestLoading(false)
-  setShowEvaluationDashboard(true)
-  onEvaluationDashboardChange?.(true)
+
+ const handleTestComplete = async () => {
+  try {
+    // 🔥 SEND DUMMY TRANSCRIPT TO BACKEND FOR REAL EVALUATION
+    const evalResponse = await evaluateTranscript({
+      transcript_steps: transcript
+    })
+
+    setEvaluationResults({
+  ...evalResponse.data,
+  steps: transcript.steps   // 👈 inject dummy transcript steps
+})
+
+
+    setShowTestLoading(false)
+    setShowEvaluationDashboard(true)
+    onEvaluationDashboardChange?.(true)
+
+  } catch (err) {
+    console.error("Evaluation failed:", err)
+    alert(
+      err?.response?.data?.detail ||
+      err.message ||
+      "Evaluation failed"
+    )
+
+    setShowTestLoading(false)
+    setShowTestCasesScreen(true)
+  }
 }
-
 
 
 
@@ -311,7 +321,7 @@ const handleTestComplete = () => {
               </p>
               <button
                 onClick={handleToggleCanonicalFlow}
-                disabled={false}
+                disabled={!mermaidDiagram}
                 className="px-4 py-2 bg-teal-400/10 border border-teal-400/50
                            text-teal-400 rounded-lg text-sm font-medium
                            hover:bg-teal-400/20 transition-all
@@ -325,15 +335,14 @@ const handleTestComplete = () => {
             <div
               ref={canonicalFlowRef}
               className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                showCanonicalFlow
+                showCanonicalFlow && mermaidDiagram
                   ? "max-h-[1200px] opacity-100 mb-6"
                   : "max-h-0 opacity-0"
               }`}
             >
-             {showCanonicalFlow && (
-  <CanonicalFlowDiagram />
-)}
-
+              {mermaidDiagram && (
+                <CanonicalFlowDiagram mermaidCode={mermaidDiagram} />
+              )}
             </div>
 
             {/* Region Selection */}
@@ -343,19 +352,19 @@ const handleTestComplete = () => {
          />
 
             {/* Queue Stats */}
-            {/* <QueueStatsWidget /> */}
+            <QueueStatsWidget />
           </div>
 
           {/* Generate Test Cases */}
           <div className="pt-4 border-t border-gray-800">
             <button
               onClick={handleGenerateTestCases}
-              disabled={false}
+              disabled={!flowData}
               className="w-full px-6 py-4 bg-teal-400 hover:bg-teal-500
                          text-white rounded-xl font-semibold transition-colors
                          disabled:opacity-50"
             >
-              {flowData ? "Generate Test Cases" : "Generate Test Cases"}
+              {flowData ? "Generate Test Cases" : "Loading Flow Data..."}
             </button>
             {flowError && (
               <p className="text-red-400 text-sm mt-2 text-center">

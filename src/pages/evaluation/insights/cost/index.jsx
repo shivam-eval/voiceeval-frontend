@@ -59,7 +59,7 @@ const response = {
 const getMetric = (name) =>
   response.metrics.find((m) => m.metric_name === name);
 
-const formatUSD = (value) => `${value.toFixed(3)}`;
+const formatUSD = (value) => `$${value.toFixed(3)}`;
 
 /* =========================
    Component
@@ -99,7 +99,7 @@ const CostOverview = ({ onBack }) => {
         icon={DollarSign}
         title="Cost"
         description="Tracks LLM, STT, and TTS costs"
-        score={totalCost}
+        score={`$${totalCost.toFixed(3)}`}
         passedCount={response.metrics.filter((m) => m.passed).length}
         failedCount={response.metrics.filter((m) => !m.passed).length}
         theme="teal"

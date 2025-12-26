@@ -13,8 +13,9 @@ const InsightHeaderCard = ({
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   // If unit is empty, we treat score as a percentage for the ring but show raw value
-  const displayScore = unit === "%" ? score : score.toFixed(3);
-  const ringScore = unit === "%" ? score : score * 100;
+  const displayScore = typeof score === "number" ? (unit === "%" ? score : score.toFixed(3)) : score;
+  const numericScore = typeof score === "number" ? score : parseFloat(score.replace(/[^0-9.]/g, ""));
+  const ringScore = unit === "%" ? numericScore : numericScore * 100;
   const offset = circumference * (1 - ringScore / 100);
 
   const themeMap = {

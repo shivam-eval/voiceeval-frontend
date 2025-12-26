@@ -43,7 +43,7 @@ const InsightTabs = ({  onChange, categoryScores = [] }) => {
       ${statusColor}
     `}
   >
-    {score}{key === "cost" ? "" : "%"}
+    {score}%
   </div>
 
   {/* Hover overlay */}

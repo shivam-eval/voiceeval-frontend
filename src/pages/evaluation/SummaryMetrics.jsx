@@ -1,6 +1,5 @@
 const SummaryMetric = ({ mainText, sideText, successRate }) => {
   const isDuration = mainText.toLowerCase().includes("duration");
-  const isCost = mainText.toLowerCase().includes("cost");
 
   return (
     <div className="bg-dark-panel rounded-xl p-6 border border-gray-800/50">
@@ -9,7 +8,7 @@ const SummaryMetric = ({ mainText, sideText, successRate }) => {
         <div className="w-3 h-3 rounded-full bg-teal-400"></div>
         <span className="text-3xl font-bold text-white">
           {successRate}
-          {!isDuration && !isCost && typeof successRate === "number" ? "%" : ""}
+          {!isDuration && typeof successRate === "number" ? "%" : ""}
         </span>
       </div>
             <div className="flex items-center gap-1 text-green-400 text-sm">

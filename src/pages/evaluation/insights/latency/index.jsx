@@ -3,7 +3,7 @@ import InsightTabs from '../../InsightTab'
 import { ArrowLeft } from 'lucide-react'
 const latencyData={
   "category": "latency",
-  "overall_score": 0.92,
+  "overall_score": 0.88,
   "passed": true,
   "metrics": [
     {
@@ -29,7 +29,7 @@ const latencyData={
       "category": "latency",
       "status": "passed",
       "passed": true,
-      "value": 500,
+      "value": 480,
       "threshold": 500
     },
     {
@@ -37,7 +37,7 @@ const latencyData={
       "category": "latency",
       "status": "passed",
       "passed": true,
-      "value": 1000,
+      "value": 920,
       "threshold": 1000
     },
     {
@@ -60,7 +60,7 @@ const LatencyOverview = ({ onBack }) => {
   const total = byName('total_duration')
   const passedCount = metrics.filter(m => !!m.passed).length
   const totalCount = metrics.length || 1
-  const passPct = Math.round((passedCount / totalCount) * 100)
+  const passPct = Math.round((latencyData.overall_score || 0.92) * 100)
   const fmtNum = (n) => n?.toLocaleString?.('en-US') ?? String(n ?? '')
   const handleTabChange = (key) => {
     const map = {
@@ -227,7 +227,7 @@ const LatencyOverview = ({ onBack }) => {
           </div>
         </div>
 
-        <div className="flex-1 flex items-end gap-24 px-16 pb-12 relative">
+        <div className="flex items-end gap-24 px-16 pb-12 relative h-64">
           {/* Threshold Line (2s) */}
           <div 
             className="absolute left-0 right-0 border-t-2 border-dashed border-orange-500/50 flex items-center justify-end pr-4 pointer-events-none"
@@ -238,10 +238,10 @@ const LatencyOverview = ({ onBack }) => {
             </span>
           </div>
 
-          {/* Axis Labels (0s, 1s, 2s) */}
-          <div className="absolute -left-12 top-0 bottom-12 flex flex-col justify-between text-[11px] text-gray-500 py-1">
+          {/* Axis Labels (0s, 1.1s, 2.2s) */}
+          <div className="absolute left-4 top-0 bottom-12 flex flex-col justify-between text-[11px] text-gray-500 py-1 z-50">
             <span>2.2s</span>
-            <span style={{ marginBottom: `${(1.1 / 2.2) * 100}%` }}>1.1s</span>
+            <span>1.1s</span>
             <span>0s</span>
           </div>
 
@@ -252,13 +252,16 @@ const LatencyOverview = ({ onBack }) => {
             return (
               <div key={m.metric_name} className="relative flex flex-col items-center flex-1 h-full justify-end">
                 <div 
-                  className="w-24 rounded-t-lg transition-all duration-500" 
+                  className="w-20 rounded-t-lg transition-all duration-500 shadow-lg shadow-teal-500/10" 
                   style={{ 
-                    backgroundColor: m.passed ? COLORS.teal : COLORS.accent, 
+                    background: m.passed 
+                      ? `linear-gradient(to top, ${COLORS.teal}44, ${COLORS.teal})` 
+                      : `linear-gradient(to top, ${COLORS.accent}44, ${COLORS.accent})`,
                     height: `${pct}%`,
-                    minHeight: '4px',
+                    minHeight: '8px',
                     opacity: 0.9,
-                    zIndex: 30
+                    zIndex: 30,
+                    border: `1px solid ${m.passed ? COLORS.teal : COLORS.accent}44`
                   }} 
                 />
                 <span className="absolute -bottom-10 text-xs text-gray-400 font-medium whitespace-nowrap">
@@ -269,43 +272,48 @@ const LatencyOverview = ({ onBack }) => {
           })}
 
           {/* Straight Dotted Trend Line */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none px-16 pb-12" style={{ zIndex: 40 }}>
-            {(() => {
-              const barOffsets = [16.6, 50, 83.3];
-              const points = list.map((m, i) => ({
-                x: barOffsets[i],
-                y: 100 - toPct(m.sec)
-              }));
-              
-              let d = `M ${points[0].x}% ${points[0].y}%`;
-              for (let i = 1; i < points.length; i++) {
-                d += ` L ${points[i].x}% ${points[i].y}%`;
-              }
+          <div className="absolute inset-0 px-16 pb-12 pointer-events-none" style={{ zIndex: 40 }}>
+            <svg className="w-full h-full">
+              {(() => {
+                const count = list.length;
+                const points = list.map((m, i) => {
+                  const xPct = ((i + 0.5) / count) * 100;
+                  return {
+                    x: xPct,
+                    y: 100 - toPct(m.sec)
+                  };
+                });
+                
+                let d = `M ${points[0].x}% ${points[0].y}%`;
+                for (let i = 1; i < points.length; i++) {
+                  d += ` L ${points[i].x}% ${points[i].y}%`;
+                }
 
-              return (
-                <>
-                  <path 
-                    d={d} 
-                    stroke="white" 
-                    strokeWidth="1.5" 
-                    strokeDasharray="4 4" 
-                    fill="none" 
-                    className="opacity-40"
-                  />
-                  {points.map((p, i) => (
-                    <circle 
-                      key={i} 
-                      cx={`${p.x}%`} 
-                      cy={`${p.y}%`} 
-                      r="3" 
-                      fill="white" 
-                      className="opacity-60"
+                return (
+                  <g>
+                    <path 
+                      d={d} 
+                      stroke="white" 
+                      strokeWidth="1.5" 
+                      strokeDasharray="4 4" 
+                      fill="none" 
+                      className="opacity-40"
                     />
-                  ))}
-                </>
-              );
-            })()}
-          </svg>
+                    {points.map((p, i) => (
+                      <circle 
+                        key={i} 
+                        cx={`${p.x}%`} 
+                        cy={`${p.y}%`} 
+                        r="4" 
+                        fill="white"
+                        className="opacity-60"
+                      />
+                    ))}
+                  </g>
+                );
+              })()}
+            </svg>
+          </div>
         </div>
 
         {/* Legend */}

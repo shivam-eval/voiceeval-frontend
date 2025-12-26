@@ -74,6 +74,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
         <PrimaryButton
           loading={isConnecting}
           disabled={!isFormValid}
+          text="Connect Agent"
         />
       </form>
 

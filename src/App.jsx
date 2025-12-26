@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { useWorkflow } from "./context/WorkflowContext";
 
 import DashboardLayout from "./pages/main";
 import Dashboard from "./pages/dashboard";
@@ -7,178 +8,122 @@ import PlatformSelection from "./pages/platformSelection/PlatformSelection";
 import ConnectionForm from "./pages/connectAgent";
 import ConnectionLoading from "./components/ConnectionLoading";
 import WorkspaceDashboard from "./pages/workspace";
+import TestCasesPage from "./pages/testCases/TestCasesPage";
+import SimulationPage from "./pages/simulations/SimulationPage";
+import EvaluationPage from "./pages/evaluation/EvaluationPage";
 import AuthScreen from "./pages/auth/AuthScreen";
-import EvaluationDashboard from "./pages/evaluation";
 import Docs from "./pages/docs/index.jsx";
 import extractedConfigJson from "./data/extracted_config.json";
 
 function App() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { workflow, setAgent, setTestSuite, setSimulation, resetWorkflow } = useWorkflow();
   const [isAuthenticated, setIsAuthenticated] = useState(true);
-
-  // 🔑 Default view → Evaluation
-  const [activeView, setActiveView] = useState("dashboard");
-
-  const [showPlatformSelection, setShowPlatformSelection] = useState(false);
-  const [showConnectionForm, setShowConnectionForm] = useState(false);
-  const [showConnectionLoading, setShowConnectionLoading] = useState(false);
-  const [showWorkspaceDashboard, setShowWorkspaceDashboard] = useState(false);
 
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  const [extractedConfig, setExtractedConfig] = useState(null);
-  const [setupResult, setSetupResult] = useState(null);
-
+  /* ---------------- Auth Flow ---------------- */
   const handleAuthSuccess = () => setIsAuthenticated(true);
-
   const handleLogout = () => {
-    localStorage.clear();
+    resetWorkflow();
     setIsAuthenticated(false);
   };
 
-  /* ---------------- Navigation ---------------- */
-
-  const handleNavigate = (viewId) => {
-    setActiveView(viewId);
-
-    // reset connect flow
-    setShowPlatformSelection(false);
-    setShowConnectionForm(false);
-    setShowConnectionLoading(false);
-    setShowWorkspaceDashboard(false);
-
-    if (viewId === "connect-agent") {
-      setShowPlatformSelection(true);
-    }
-  };
-
-  /* ---------------- Connect Agent Flow ---------------- */
-
+  /* ---------------- Navigation Handlers ---------------- */
   const handlePlatformSelect = (platformId) => {
     setSelectedPlatform(platformId);
-    setShowPlatformSelection(false);
-    setTimeout(() => setShowConnectionForm(true), 300);
+    navigate("/connect-agent/form");
   };
 
-  const handleConnect = ({ apiKey, assistantId }) => {
-    console.log("🧪 Dummy connect (NO API)");
-    console.log("User entered:", { apiKey, assistantId });
-
+  const handleConnect = (credentials) => {
     setIsConnecting(true);
-
-    // 1️⃣ Load hardcoded config immediately
-    setExtractedConfig(extractedConfigJson);
-
-    // 2️⃣ Move to loading screen
-    setShowConnectionForm(false);
-    setShowConnectionLoading(true);
-
-    // 3️⃣ Fake backend work (UX only)
+    // Simulation of connection process
     setTimeout(() => {
-      // We already have everything hardcoded
-      setSetupResult({
-        flowData: null, // not needed if using PNG
-        mermaid: null, // not needed
-      });
-
-      // 4️⃣ Transition to workspace
-      setShowConnectionLoading(false);
-      setShowWorkspaceDashboard(true);
+      const agentData = {
+        platform: selectedPlatform,
+        agentId: credentials.agentId,
+        config: extractedConfigJson.config,
+        systemPrompt: extractedConfigJson.system_prompt,
+        tools: extractedConfigJson.tools,
+        metadata: extractedConfigJson.metadata,
+      };
+      setAgent(agentData);
       setIsConnecting(false);
-
-      console.log("✅ Dummy flow completed");
-    }, 2000); // ⏱ adjust timing as needed
+      navigate("/test-cases");
+    }, 2000);
   };
-
-  const handleConnectionComplete = (result) => {
-    setSetupResult(result);
-    setShowConnectionLoading(false);
-    setShowWorkspaceDashboard(true);
-  };
-
-  /* ---------------- Auth Gate ---------------- */
 
   if (!isAuthenticated) {
     return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
   }
 
-  /* ---------------- Main Layout ---------------- */
+  const activeView = location.pathname.split("/")[1] || "dashboard";
 
   return (
     <Routes>
       <Route path="/docs" element={<Docs />} />
       <Route
-        path="/"
+        path="/*"
         element={
           <DashboardLayout
             activeView={activeView}
-            onNavigate={handleNavigate}
-            hideRightPanel={activeView === "evaluation"}
+            onNavigate={(viewId) => navigate(`/${viewId}`)}
+            hideRightPanel={activeView === "evaluations"}
             onLogout={handleLogout}
           >
-            {/* ✅ FIRST SCREEN */}
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<div className="p-8"><Dashboard /></div>} />
+              
+              {/* Connect Agent Flow */}
+              <Route path="/connect-agent" element={
+                <div className="p-8">
+                  <PlatformSelection onSelectPlatform={handlePlatformSelect} />
+                </div>
+              } />
+              <Route path="/connect-agent/form" element={
+                <div className="p-8">
+                  <ConnectionForm
+                    platform={selectedPlatform}
+                    onConnect={handleConnect}
+                    isConnecting={isConnecting}
+                  />
+                </div>
+              } />
+              <Route path="/connect-agent/loading" element={
+                <div className="p-8">
+                  <ConnectionLoading
+                    extractedConfig={extractedConfigJson}
+                    onComplete={() => {}}
+                  />
+                </div>
+              } />
 
-            {activeView === "dashboard" && (
-              <div className="p-8">
-                <Dashboard />
-              </div>
-            )}
+              {/* Testing Flow */}
+              <Route path="/test-cases" element={
+                workflow.agent.connected ? (
+                  <TestCasesPage />
+                ) : <Navigate to="/connect-agent" replace />
+              } />
 
-            {showPlatformSelection && (
-              <div className="p-8">
-                <PlatformSelection onSelectPlatform={handlePlatformSelect} />
-              </div>
-            )}
+              {/* Simulation Flow */}
+              <Route path="/simulations" element={
+                workflow.testSuite.generated ? (
+                  <SimulationPage />
+                ) : <Navigate to="/test-cases" replace />
+              } />
 
-            {showConnectionForm && (
-              <div className="p-8">
-                <ConnectionForm
-                  platform={selectedPlatform}
-                  onConnect={handleConnect}
-                  isConnecting={isConnecting}
-                />
-              </div>
-            )}
+              {/* Evaluation Flow */}
+              <Route path="/evaluations" element={
+                workflow.simulation.run ? (
+                  <EvaluationPage />
+                ) : <Navigate to="/simulations" replace />
+              } />
 
-            {showConnectionLoading && extractedConfig && (
-              <div className="p-8">
-                <ConnectionLoading
-                  extractedConfig={extractedConfig}
-                  onComplete={handleConnectionComplete}
-                />
-              </div>
-            )}
-
-            {showWorkspaceDashboard && extractedConfig && setupResult && (
-              <div className="p-8">
-                <WorkspaceDashboard
-                  systemConfig={{
-                    agentId: extractedConfig.agent_id,
-                    config: extractedConfig.config,
-                    systemPrompt: extractedConfig.system_prompt,
-                    platform: extractedConfig.platform,
-                    tools: extractedConfig.tools,
-                    metadata: extractedConfig.metadata,
-                    flowData: setupResult.flowData,
-                    mermaid: setupResult.mermaid,
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Evaluation View */}
-            {activeView === "evaluation" && (
-              <div className="p-8">
-                <EvaluationDashboard />
-              </div>
-            )}
-            
-            {/* Fallback for other views */}
-            {activeView === "docs" && (
-              <div className="p-8">
-                <Docs />
-              </div>
-            )}
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            </Routes>
           </DashboardLayout>
         }
       />

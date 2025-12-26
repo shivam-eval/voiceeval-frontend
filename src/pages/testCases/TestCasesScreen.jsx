@@ -379,7 +379,7 @@ export const DEFAULT_TEST_CASES = [
    TestCasesScreen Component
 ------------------------------------------------- */
 
-const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
+const TestCasesScreen = ({ onRunTests, onBack, testSuitePath, showRunButton = true }) => {
   const [testCases, setTestCases] = useState([])
   const [expandedScripts, setExpandedScripts] = useState({})
 
@@ -547,17 +547,17 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
      Render
   ------------------------------------------------- */
   return (
-    <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">
-      <div className="space-y-6">
+    <div className="w-full">
+      <div className="space-y-6 p-8">
 
-        {/* Header */}
+        {/* Header - Simplified */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">
-              Generated Test Cases
-            </h1>
-            <p className="text-gray-400">
-              Review the test cases and personas below, then run tests to evaluate your Voice AI agent.
+            <h2 className="text-2xl font-bold text-white mb-1">
+              Test Cases
+            </h2>
+            <p className="text-gray-400 text-sm">
+              Review generated scenarios for your agent.
             </p>
           </div>
 
@@ -586,10 +586,12 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         </div>
 
         {/* Run Tests */}
-        <RunTestsButton
-          onRun={runSimulationNow}
-          disabled={!testCases.length}
-        />
+        {showRunButton && (
+          <RunTestsButton
+            onRun={() => onRunTests(testSuitePath)}
+            disabled={testCases.length === 0}
+          />
+        )}
 
       </div>
     </div>

@@ -9,19 +9,26 @@ import QueueStatsWidget from "./QueueStatsWidget"
 // import { runSimulation,evaluateTranscript } from "../../api"
 import transcript from '../../data/transcript_steps.json'
 import RegionDropDown from "./RegionDropDown"
+import PrimaryButton from "../../components/PrimaryButton"
 
 
 const WorkspaceDashboard = ({
   onEvaluationDashboardChange,
-  systemConfig: {
+  onTestGenerationComplete,
+  onSimulationComplete,
+  initialStep = "testing",
+  testSuite: externalTestSuite,
+  systemConfig,
+  hideHeader = false
+}) => {
+  const {
     agentId,
     config,
     systemPrompt,
     tools,
     flowData: preloadedFlowData,
     mermaid: preloadedMermaid
-  }
-}) => {
+  } = systemConfig || {};
 
   // Refs for scrolling
   const systemPromptRef = useRef(null)
@@ -32,8 +39,32 @@ const WorkspaceDashboard = ({
   const [showCanonicalFlow, setShowCanonicalFlow] = useState(false)
   const [showTestCasesGeneration, setShowTestCasesGeneration] = useState(false)
   const [showTestCasesScreen, setShowTestCasesScreen] = useState(false)
+  const [showRunButton, setShowRunButton] = useState(false)
   const [showTestLoading, setShowTestLoading] = useState(false)
   const [showEvaluationDashboard, setShowEvaluationDashboard] = useState(false)
+
+  // Sync state with props
+  useEffect(() => {
+    if (externalTestSuite) {
+      setTestSuite(externalTestSuite)
+    }
+
+    if (initialStep === "testing") {
+      if (externalTestSuite) {
+        setShowTestCasesScreen(true)
+        setShowTestCasesGeneration(false)
+      } else {
+        setShowTestCasesGeneration(false) // Don't show generation immediately, wait for button click
+        setShowTestCasesScreen(false)
+      }
+      setShowRunButton(false)
+    } else if (initialStep === "simulation") {
+      setShowTestCasesScreen(true)
+      setShowRunButton(true)
+      setShowTestCasesGeneration(false)
+    }
+  }, [initialStep, externalTestSuite])
+
   const [testSuitePath, setTestSuitePath] = useState(null)
   const [simulationId, setSimulationId] = useState(null)
   const [evaluationResults, setEvaluationResults] = useState(null)
@@ -43,7 +74,7 @@ const WorkspaceDashboard = ({
 
   // Data states
   const [flowData, setFlowData] = useState(preloadedFlowData || null)
-  const [testSuite, setTestSuite] = useState(null)
+  const [testSuite, setTestSuite] = useState(externalTestSuite || null)
   const [flowError, setFlowError] = useState(null)
   const [mermaidDiagram, setMermaidDiagram] = useState(preloadedMermaid || null)
 
@@ -87,24 +118,26 @@ const WorkspaceDashboard = ({
 
   // Generate Test Suite
   const handleGenerateTestCases = () => {
-    // if (!flowData) {
-    //   alert("Flow data not available.")
-    //   return
-    // }
     setShowTestCasesGeneration(true)
   }
 
   const handleTestGenerationComplete = () => {
-  const dummyTestSuite = {
-    file_name: "demo_test_suite.json",
-    tests: []
+    const dummyTestSuite = {
+      file_name: "demo_test_suite.json",
+      tests: [
+        { id: 1, name: "Greeting Test", status: "pending" },
+        { id: 2, name: "Product Inquiry", status: "pending" }
+      ]
+    }
+    setTestSuite(dummyTestSuite)
+    setShowTestCasesGeneration(false)
+    setShowTestCasesScreen(true)
+    
+    // Notify App.jsx to persist
+    if (onTestGenerationComplete) {
+      onTestGenerationComplete(dummyTestSuite)
+    }
   }
-
-  setTestSuite(dummyTestSuite)
-  setTestSuitePath(dummyTestSuite.file_name)
-  setShowTestCasesGeneration(false)
-  setShowTestCasesScreen(true)
-}
 
 
   const handleTestGenerationError = (error) => {
@@ -145,32 +178,32 @@ const WorkspaceDashboard = ({
 //   }
 // }
 
-const handleRunTests = () => {
-  setShowTestCasesScreen(false)
-  setShowTestLoading(true)
-
-  // fake execution time
-  setTimeout(() => {
-    handleTestComplete()
-  }, 2500)
-}
-
-
-const handleTestComplete = () => {
-  const dummyEvaluationResults = {
-    summary: {
-      successRate: 82,
-      avgLatencyMs: 1200,
-      totalTests: 12
-    },
-    steps: transcript.steps
+  const handleRunTests = () => {
+    setSimulationId("dummy-sim-123")
+    setShowTestCasesScreen(false)
+    setShowTestLoading(true)
   }
 
-  setEvaluationResults(dummyEvaluationResults)
-  setShowTestLoading(false)
-  setShowEvaluationDashboard(true)
-  onEvaluationDashboardChange?.(true)
-}
+  const handleTestComplete = ({ transcript } = {}) => {
+    const dummyEvaluationResults = {
+      summary: {
+        successRate: 82,
+        avgLatencyMs: 1200,
+        totalTests: 12
+      },
+      steps: transcript?.steps || []
+    }
+
+    setEvaluationResults(dummyEvaluationResults)
+    setShowTestLoading(false)
+
+    if (onSimulationComplete) {
+      onSimulationComplete(dummyEvaluationResults)
+    } else {
+      setShowEvaluationDashboard(true)
+      onEvaluationDashboardChange?.(true)
+    }
+  }
 
 
 
@@ -212,7 +245,8 @@ const handleTestComplete = () => {
         testSuite={testSuite}
         testSuitePath={testSuitePath}
         onRunTests={handleRunTests}
-        onBack={handleBackToWorkspace}
+        onBack={hideHeader ? null : handleBackToWorkspace}
+        showRunButton={showRunButton}
       />
     )
   }
@@ -238,38 +272,41 @@ const handleTestComplete = () => {
 
   // Main UI
   return (
-    <div className="w-full max-w-screen-2xl mx-auto">
+    <div className="w-full">
       <div className="space-y-8">
+        {!hideHeader && (
+          <>
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
+                  Voice<span className="text-teal-400">Eval</span>
+                </h1>
+              </div>
+            </div>
 
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
-              Voice<span className="text-teal-400">Eval</span>
-            </h1>
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-5xl font-bold text-white mb-4 leading-tight">
-            Evaluate Your Voice AI Agents
-          </h2>
-          <p className="text-gray-300 text-lg leading-relaxed max-w-2xl">
-            Run automated call simulations, analyze performance metrics, and optimize your Voice AI agents with real-time insights.
-          </p>
-        </div>
+            <div>
+              <h2 className="text-5xl font-bold text-white mb-4 leading-tight">
+                Evaluate Your Voice AI Agents
+              </h2>
+              <p className="text-gray-300 text-lg leading-relaxed max-w-2xl">
+                Run automated call simulations, analyze performance metrics, and optimize your Voice AI agents with real-time insights.
+              </p>
+            </div>
+          </>
+        )}
 
         {/* Workspace Panel */}
-        <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800/50 shadow-xl">
-
-          <div className="mb-6">
-            <h3 className="text-2xl font-semibold text-white mb-2">
-              Workspace Setup Complete
-            </h3>
-            <p className="text-gray-400 text-base">
-              Your Voice Agent is ready for evaluation
-            </p>
-          </div>
+        <div className={`${hideHeader ? "" : "bg-gray-900 rounded-2xl p-8 border border-gray-800/50 shadow-xl"}`}>
+          {!hideHeader && (
+            <div className="mb-6">
+              <h3 className="text-2xl font-semibold text-white mb-2">
+                Workspace Setup Complete
+              </h3>
+              <p className="text-gray-400 text-base">
+                Your Voice Agent is ready for evaluation
+              </p>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 gap-4 mb-6">
 
@@ -346,17 +383,14 @@ const handleTestComplete = () => {
             {/* <QueueStatsWidget /> */}
           </div>
 
-          {/* Generate Test Cases */}
+          {/* Generate Test Suite */}
           <div className="pt-4 border-t border-gray-800">
-            <button
+            <PrimaryButton
               onClick={handleGenerateTestCases}
               disabled={false}
-              className="w-full px-6 py-4 bg-teal-400 hover:bg-teal-500
-                         text-white rounded-xl font-semibold transition-colors
-                         disabled:opacity-50"
-            >
-              {flowData ? "Generate Test Cases" : "Generate Test Cases"}
-            </button>
+              className="w-full"
+              text={flowData ? "Generate Test Cases" : "Generate Test Cases"}
+            />
             {flowError && (
               <p className="text-red-400 text-sm mt-2 text-center">
                 {flowError}

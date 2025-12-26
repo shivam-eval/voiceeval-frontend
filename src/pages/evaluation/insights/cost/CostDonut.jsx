@@ -1,9 +1,15 @@
 import { ResponsivePie } from "@nivo/pie";
 import { darkTheme } from "../../const";
 const costData = [
+<<<<<<< Updated upstream
   { id: "LLM", value: 0.14 },
   { id: "STT", value: 0.2},
   // { id: "TTS", value: 0.1023 },
+=======
+  { id: "LLM", value: 0.45 },
+  { id: "STT", value: 0.21 },
+  { id: "TTS", value: 0.36 },
+>>>>>>> Stashed changes
 ];
 
 const CostDonut = () => (

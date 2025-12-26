@@ -17,24 +17,40 @@ const response = {
   metrics: [
     {
       metric_name: "llm_token_usage",
+<<<<<<< Updated upstream
       value: 0.0,
       passed: true,
       details: {
         total_cost_usd: 0.0,
+=======
+      value: 0.45,
+      passed: true,
+      details: {
+        total_cost: 0.45,
+>>>>>>> Stashed changes
       },
     },
     {
       metric_name: "stt_cost",
+<<<<<<< Updated upstream
       value: 0.0,
+=======
+      value: 0.21,
+>>>>>>> Stashed changes
       passed: true,
     },
     {
       metric_name: "tts_cost",
+<<<<<<< Updated upstream
       value: 0.10229999999999999,
+=======
+      value: 0.36,
+>>>>>>> Stashed changes
       passed: true,
     },
     {
       metric_name: "total_conversation_cost",
+<<<<<<< Updated upstream
       value: 0.10229999999999999,
       passed: true,
       details: {
@@ -46,6 +62,19 @@ const response = {
           llm_percentage: 0,
           stt_percentage: 0,
           tts_percentage: 100,
+=======
+      value: 1.02,
+      passed: true,
+      details: {
+        total_cost: 1.02,
+        llm_cost: 0.45,
+        stt_cost: 0.21,
+        tts_cost: 0.36,
+        cost_breakdown: {
+          llm_percentage: 44,
+          stt_percentage: 21,
+          tts_percentage: 35,
+>>>>>>> Stashed changes
         },
       },
     },
@@ -59,7 +88,11 @@ const response = {
 const getMetric = (name) =>
   response.metrics.find((m) => m.metric_name === name);
 
+<<<<<<< Updated upstream
 const formatUSD = (value) => `$${value.toFixed(2)}`;
+=======
+const formatValue = (value) => `${value.toFixed(2)}`;
+>>>>>>> Stashed changes
 
 /* =========================
    Component

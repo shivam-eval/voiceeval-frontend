@@ -184,7 +184,7 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
             <p className="text-xs text-gray-400 font-semibold uppercase">Est. Cost</p>
           </div>
           <p className="text-2xl font-bold text-white">
-            $0.12
+            1.02
           </p>
         </div>
       </div>

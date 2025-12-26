@@ -3,17 +3,10 @@ import { TrendingUp } from "lucide-react";
 import { darkTheme } from "../../const";
 
 const data = [
-<<<<<<< Updated upstream
   { metric: "LLM", cost: 0.15 },
   { metric: "STT", cost: 0.25 },
   { metric: "TTS", cost: 0.1 },
   { metric: "Total Conversation", cost: 0.4 },
-=======
-  { metric: "LLM", cost: 0.45 },
-  { metric: "STT", cost: 0.21 },
-  { metric: "TTS", cost: 0.36 },
-  { metric: "Total", cost: 1.02 },
->>>>>>> Stashed changes
 ];
 
 const CostBreakdown = () => {
@@ -42,13 +35,8 @@ const CostBreakdown = () => {
           maxValue={1.2}
 
           axisBottom={{
-<<<<<<< Updated upstream
             tickValues: [0, 0.03, 0.06, 0.09, 0.12],
             format: (v) => `$${v.toFixed(2)}`,
-=======
-            tickValues: [0, 0.3, 0.6, 0.9, 1.2],
-            format: (v) => `${v.toFixed(2)}`,
->>>>>>> Stashed changes
             tickPadding: 8,
           }}
 

@@ -293,21 +293,21 @@ function App() {
                         const evaluationResult = fullResponse.simulation_evaluation?.evaluations?.[0] || fullResponse.evaluations?.[0];
                         
                         // Build simulation data for overview
-                        const simulationData = {
-                          simulation_id: fullResponse.simulation_id,
-                          test_suite_id: workflow.testSuite.testSuiteId,
-                          total_sessions: fullResponse.simulation_evaluation?.total_sessions_evaluated || 1,
-                          overall_score: fullResponse.simulation_evaluation?.average_overall_score || 0,
-                          transcript_results: fullResponse.evaluations?.map(eval => ({
-                            evaluation_id: eval.evaluation_id,
-                            session_id: eval.session_id,
-                            path_id: eval.path_id,
-                            overall_score: eval.overall_score,
-                            passed: eval.passed,
-                            transcript_result_id: eval.session_id, // Using session_id as transcript ID
-                          })) || [],
-                        };
-                        
+                        // Build simulation data for overview
+const simulationData = {
+  simulation_id: fullResponse.simulation_id,
+  test_suite_id: workflow.testSuite.testSuiteId,
+  total_sessions: fullResponse.simulation_evaluation?.total_sessions_evaluated || 1,
+  overall_score: fullResponse.simulation_evaluation?.average_overall_score || 0,
+  transcript_results: fullResponse.evaluations?.map(evaluation => ({
+    evaluation_id: evaluation.evaluation_id,
+    session_id: evaluation.session_id,
+    path_id: evaluation.path_id,
+    overall_score: evaluation.overall_score,
+    passed: evaluation.passed,
+    transcript_result_id: evaluation.session_id, // Using session_id as transcript ID
+  })) || [],
+};
                         setSimulationResult({
                           ...workflow.simulationResult,
                           completed: true,

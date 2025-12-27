@@ -5,7 +5,7 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
   const [progress, setProgress] = useState(0)
   const [status, setStatus] = useState('Initializing...')
   const [error, setError] = useState(null)
-
+ 
   useEffect(() => {
     let isMounted = true
     
@@ -87,7 +87,7 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
         setStatus('Test cases generated successfully!')
         
         console.log('✅ Test cases generated successfully')
-        console.log('✅ File saved:', res.data.file_name)
+        console.log('✅ File saved:', res.data.test_suite_id)
         console.log('✅ Test suite structure:', res.data.test_suite ? 'Present' : 'Missing')
         
         // Verify we have the necessary data
@@ -101,7 +101,12 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
         // Complete after showing success
         setTimeout(() => {
           if (isMounted && onComplete) {
-            onComplete(res.data)
+          onComplete({
+  testSuite: res.data,
+  testSuiteId: res.data.test_suite_id
+})
+
+
           }
         }, 500)
         

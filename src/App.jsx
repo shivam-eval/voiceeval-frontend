@@ -20,6 +20,7 @@ import TestExecutionLoading from "./components/TestExecutionLoading";
 
 import { extractAgent } from "./api";
 import { useWorkflow } from "./context/WorkflowContext";
+import EvaluationDashboard from "./pages/evaluation";
 
 function App() {
   const navigate = useNavigate();
@@ -89,16 +90,13 @@ function App() {
     console.log('🌍 Region:', workflow.region);
     
     try {
-      // Prepare the payload according to API spec
       const payload = {
-        test_suite_path: testSuitePath,
         test_suite_id: workflow.testSuite.testSuiteId,
-        phone_number: "+917982693803", // Add if available
+        phone_number: "+917982693803",
       };
 
       console.log('📤 Sending simulation request:', payload);
 
-      // Call the API to start simulation
       const response = await fetch('http://localhost:8001/api/v1/simulation/run', {
         method: 'POST',
         headers: {
@@ -116,13 +114,11 @@ function App() {
       const data = await response.json();
       console.log('✅ Simulation started:', data);
 
-      // Store simulation ID in context
       setSimulationResult({
         simulationId: data.simulation_id,
         started: true,
       });
 
-      // Navigate to execution loading screen
       navigate("/testcase/running");
       
     } catch (error) {
@@ -219,6 +215,22 @@ function App() {
                 }
               />
 
+              {/* EVALUATION DASHBOARD */}
+              <Route
+                path="/evaluation"
+                element={
+                  workflow.simulationResult?.completed ? (
+                    <EvaluationDashboard
+                      evaluationData={workflow.simulationResult.evaluationResult}
+                      simulationData={workflow.simulationResult.simulationData}
+                      onBack={() => navigate("/testcase/results")}
+                    />
+                  ) : (
+                    <Navigate to="/dashboard" />
+                  )
+                }
+              />
+
               {/* TEST CASE GENERATION */}
               <Route
                 path="/testcase/generating"
@@ -229,15 +241,11 @@ function App() {
                       region={workflow.region}
                       onComplete={(data) => {
                         console.log('✅ Generation complete:', data);
-                        console.log('📄 File name:', data.file_name);
-                        console.log('🆔 Test suite ID:', data.test_suite_id);
                         
-                        // Store BOTH test_suite_id and file_name
                         setTestSuite({
                           generated: true,
-                          config: data.test_suite || data,
-                          testSuiteId: data.test_suite_id,  // Store the ID
-                          testSuitePath: data.file_name,     // Store the path
+                          config: data.testSuite,
+                          testSuiteId: data.testSuiteId,
                         });
                         
                         navigate("/testcase");
@@ -261,7 +269,6 @@ function App() {
                   workflow.testSuite?.generated ? (
                     <TestCasesScreen
                       testSuite={workflow.testSuite.config}
-                      testSuitePath={workflow.testSuite.testSuitePath}
                       testSuiteId={workflow.testSuite.testSuiteId}
                       onRunTests={handleRunTests}
                       onBack={() => navigate("/workspace")}
@@ -279,17 +286,36 @@ function App() {
                   workflow.simulationResult?.started ? (
                     <TestExecutionLoading
                       simulationId={workflow.simulationResult.simulationId}
-                      onComplete={(evaluationResult) => {
-                        console.log('✅ Execution complete, evaluation result:', evaluationResult);
+                      onComplete={(fullResponse) => {
+                        console.log('✅ Execution complete, full response:', fullResponse);
                         
-                        // Store evaluation result in context
+                        // Extract the evaluation data properly
+                        const evaluationResult = fullResponse.simulation_evaluation?.evaluations?.[0] || fullResponse.evaluations?.[0];
+                        
+                        // Build simulation data for overview
+                        const simulationData = {
+                          simulation_id: fullResponse.simulation_id,
+                          test_suite_id: workflow.testSuite.testSuiteId,
+                          total_sessions: fullResponse.simulation_evaluation?.total_sessions_evaluated || 1,
+                          overall_score: fullResponse.simulation_evaluation?.average_overall_score || 0,
+                          transcript_results: fullResponse.evaluations?.map(eval => ({
+                            evaluation_id: eval.evaluation_id,
+                            session_id: eval.session_id,
+                            path_id: eval.path_id,
+                            overall_score: eval.overall_score,
+                            passed: eval.passed,
+                            transcript_result_id: eval.session_id, // Using session_id as transcript ID
+                          })) || [],
+                        };
+                        
                         setSimulationResult({
                           ...workflow.simulationResult,
                           completed: true,
-                          evaluationResult,
+                          evaluationResult: evaluationResult,
+                          simulationData: simulationData,
+                          fullResponse: fullResponse, // Keep full response for reference
                         });
                         
-                        // Navigate to results screen
                         navigate("/testcase/results");
                       }}
                       onError={(error) => {
@@ -313,28 +339,59 @@ function App() {
                       <div className="w-full max-w-screen-2xl mx-auto">
                         <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800/50">
                           <div className="text-center mb-8">
-                            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-400/20 mb-6">
-                              <svg className="w-10 h-10 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${
+                              workflow.simulationResult.evaluationResult?.passed 
+                                ? 'bg-green-400/20' 
+                                : 'bg-red-400/20'
+                            }`}>
+                              <svg 
+                                className={`w-10 h-10 ${
+                                  workflow.simulationResult.evaluationResult?.passed 
+                                    ? 'text-green-400' 
+                                    : 'text-red-400'
+                                }`} 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                {workflow.simulationResult.evaluationResult?.passed ? (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                ) : (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                )}
                               </svg>
                             </div>
                             <h1 className="text-4xl font-bold text-white mb-4">
-                              Test Results
+                              {workflow.simulationResult.evaluationResult?.passed ? 'Tests Passed' : 'Tests Failed'}
                             </h1>
                             <p className="text-gray-400 mb-2">
-                              Simulation ID: {workflow.simulationResult.simulationId}
+                              Overall Score: {Math.round((workflow.simulationResult.evaluationResult?.overall_score || 0) * 100)}%
                             </p>
                             <p className="text-gray-500 text-sm">
-                              Test Suite: {workflow.testSuite.testSuiteId}
+                              Simulation ID: {workflow.simulationResult.simulationId}
                             </p>
                           </div>
 
-                          {/* Results Display */}
-                          <div className="bg-gray-800 rounded-xl p-6 mb-6">
-                            <h3 className="text-xl font-semibold text-white mb-4">Evaluation Results</h3>
-                            <pre className="text-gray-300 text-sm overflow-auto max-h-96 bg-gray-900 p-4 rounded">
-                              {JSON.stringify(workflow.simulationResult.evaluationResult, null, 2)}
-                            </pre>
+                          {/* Quick Stats */}
+                          <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="bg-gray-800 rounded-lg p-4">
+                              <div className="text-gray-400 text-sm mb-1">Sessions Evaluated</div>
+                              <div className="text-2xl font-bold text-white">
+                                {workflow.simulationResult.simulationData?.total_sessions || 1}
+                              </div>
+                            </div>
+                            <div className="bg-gray-800 rounded-lg p-4">
+                              <div className="text-gray-400 text-sm mb-1">Issues Found</div>
+                              <div className="text-2xl font-bold text-white">
+                                {workflow.simulationResult.evaluationResult?.issues_found || 0}
+                              </div>
+                            </div>
+                            <div className="bg-gray-800 rounded-lg p-4">
+                              <div className="text-gray-400 text-sm mb-1">Execution Time</div>
+                              <div className="text-2xl font-bold text-white">
+                                {Math.round((workflow.simulationResult.evaluationResult?.execution_time_ms || 0) / 1000)}s
+                              </div>
+                            </div>
                           </div>
 
                           {/* Actions */}
@@ -346,10 +403,10 @@ function App() {
                               Back to Test Cases
                             </button>
                             <button
-                              onClick={() => navigate("/workspace")}
+                              onClick={() => navigate("/evaluation")}
                               className="flex-1 px-6 py-3 bg-teal-400 hover:bg-teal-500 text-white rounded-lg font-semibold transition-colors"
                             >
-                              Back to Workspace
+                              View Detailed Evaluation
                             </button>
                           </div>
                         </div>

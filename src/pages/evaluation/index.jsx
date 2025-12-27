@@ -29,7 +29,6 @@ import PersonaOverview from "./insights/persona";
 import TaskCompletionOverview from "./insights/task_completion";
 import ConversationOverview from "./insights/conversation";
 
-
 const CATEGORY = {
   OVERVIEW: "",
   ACCURACY: "accuracy",
@@ -39,10 +38,11 @@ const CATEGORY = {
   AUDIO: "audio",
   ENDPOINTING: "endpointing",
   PERSONA: "persona",
-  CONVERSATION:"conversation"
+  CONVERSATION: "conversation"
 };
+
 const CATEGORY_TITLES = {
-  [CATEGORY.OVERVIEW]: null, // handled separately
+  [CATEGORY.OVERVIEW]: null,
   [CATEGORY.ACCURACY]: "ACCURACY OVERVIEW",
   [CATEGORY.LATENCY]: "LATENCY OVERVIEW",
   [CATEGORY.COST]: "COST OVERVIEW",
@@ -50,24 +50,77 @@ const CATEGORY_TITLES = {
   [CATEGORY.ENDPOINTING]: "ENDPOINTING OVERVIEW",
   [CATEGORY.PERSONA]: "PERSONA ALIGNMENT OVERVIEW",
   [CATEGORY.TASK_COMPLETION]: "TASK COMPLETION OVERVIEW",
-  [CATEGORY.CONVERSATION]:"CONVERSATION OVERVIEW"
+  [CATEGORY.CONVERSATION]: "CONVERSATION OVERVIEW"
 };
-
 
 const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
   const [activeCategory, setActiveCategory] = useState(CATEGORY.OVERVIEW);
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedTranscript, setSelectedTranscript] = useState(null);
 
+  // Check if we have real evaluation data
   const isRealData = hasEvaluationData(evaluationData);
+  
+  // Transform the evaluation data
   const displayData = isRealData
     ? transformEvaluationData(evaluationData)
     : EVALUATION_DATA;
 
-  // Use debt collection simulation data if not provided
+  // Use provided simulation data or fallback to mock
   const mockSimulationData = simulationData || DEBT_COLLECTION_SIMULATION;
 
-  // Get transcript data from DEBT_COLLECTION_TRANSCRIPTS
+  // Calculate summary metrics from real data
+  const summaryMetrics = isRealData && evaluationData ? [
+    {
+      id: "overall_score",
+      mainText: `${Math.round(evaluationData.overall_score * 100)}%`,
+      successRate: evaluationData.overall_score,
+      sideText: "Overall Score"
+    },
+    {
+      id: "accuracy",
+      mainText: `${Math.round((evaluationData.category_scores?.find(c => c.category === "accuracy")?.score || 0) * 100)}%`,
+      successRate: evaluationData.category_scores?.find(c => c.category === "accuracy")?.score || 0,
+      sideText: "Accuracy"
+    },
+    {
+      id: "task_completion",
+      mainText: `${Math.round((evaluationData.category_scores?.find(c => c.category === "task_completion")?.score || 0) * 100)}%`,
+      successRate: evaluationData.category_scores?.find(c => c.category === "task_completion")?.score || 0,
+      sideText: "Task Completion"
+    },
+    {
+      id: "latency",
+      mainText: `${Math.round((evaluationData.category_scores?.find(c => c.category === "latency")?.score || 0) * 100)}%`,
+      successRate: evaluationData.category_scores?.find(c => c.category === "latency")?.score || 0,
+      sideText: "Latency"
+    }
+  ] : SUMMARY_METRICS;
+
+  // Generate improvements from real data
+  const improvements = isRealData && evaluationData?.recommendations ? 
+    evaluationData.recommendations.map((rec, idx) => ({
+      priority: idx === 0 ? "high" : idx === 1 ? "medium" : "low",
+      message: rec,
+      metric: "System"
+    })) : [
+      {
+        priority: "high",
+        message: "Semantic accuracy is below threshold. Review expected responses and validation criteria.",
+        metric: "Accuracy",
+      },
+      {
+        priority: "medium",
+        message: "Pause detection flagged unusually long silences. Consider tuning endpointing thresholds.",
+        metric: "Endpointing",
+      },
+      {
+        priority: "low",
+        message: "Conversation tone consistency can be improved for better persona alignment.",
+        metric: "Persona",
+      },
+    ];
+
   const getTranscriptData = (transcriptId) => {
     return DEBT_COLLECTION_TRANSCRIPTS[transcriptId] || null;
   };
@@ -78,9 +131,6 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
     setSelectedTranscript(transcriptData);
   };
 
-  // -----------------------------
-  // OVERVIEW (FULL NORMAL UI)
-  // -----------------------------
   const renderOverview = () => (
     <div className="flex flex-col gap-6">
       {/* Simulation Overview */}
@@ -94,7 +144,7 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
 
       {/* Summary Metrics */}
       <div className="grid grid-cols-4 gap-4">
-        {SUMMARY_METRICS.map((metric) => (
+        {summaryMetrics.map((metric) => (
           <SummaryMetric
             key={metric.id}
             mainText={metric.mainText}
@@ -116,83 +166,50 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
       />
 
       {/* Overview Panels */}
-      <ImprovementsPanel
-        improvements={[
-          {
-            priority: "high",
-            message:
-              "Semantic accuracy is below threshold. Review expected responses and validation criteria.",
-            metric: "Accuracy",
-          },
-          {
-            priority: "medium",
-            message:
-              "Pause detection flagged unusually long silences. Consider tuning endpointing thresholds.",
-            metric: "Endpointing",
-          },
-          {
-            priority: "low",
-            message:
-              "Conversation tone consistency can be improved for better persona alignment.",
-            metric: "Persona",
-          },
-        ]}
-      />
+      <ImprovementsPanel improvements={improvements} />
     </div>
   );
 
   const renderActiveSection = () => {
-  // Report view has highest priority
-  if (selectedReport) {
-    return (
-      <TestReportView
-        report={selectedReport}
-        transcriptData={selectedTranscript}
-        onBack={() => {
-          setSelectedReport(null);
-          setSelectedTranscript(null);
-        }}
-      />
-    );
-  }
+    if (selectedReport) {
+      return (
+        <TestReportView
+          report={selectedReport}
+          transcriptData={selectedTranscript}
+          onBack={() => {
+            setSelectedReport(null);
+            setSelectedTranscript(null);
+          }}
+        />
+      );
+    }
 
-  const handleBackToOverview = () => {
-    setActiveCategory(CATEGORY.OVERVIEW);
+    const handleBackToOverview = () => {
+      setActiveCategory(CATEGORY.OVERVIEW);
+    };
+
+    switch (activeCategory) {
+      case CATEGORY.ACCURACY:
+        return <AccuracyView data={displayData} onBack={handleBackToOverview} />;
+      case CATEGORY.LATENCY:
+        return <LatencyOverview data={displayData} onBack={handleBackToOverview} />;
+      case CATEGORY.COST:
+        return <CostOverview data={displayData} onBack={handleBackToOverview} />;
+      case CATEGORY.AUDIO:
+        return <AudioOverview data={displayData} onBack={handleBackToOverview} />;
+      case CATEGORY.ENDPOINTING:
+        return <EndpointingOverview data={displayData} onBack={handleBackToOverview} />;
+      case CATEGORY.PERSONA:
+        return <PersonaOverview data={displayData} onBack={handleBackToOverview} />;
+      case CATEGORY.TASK_COMPLETION:
+        return <TaskCompletionOverview data={displayData} onBack={handleBackToOverview} />;
+      case CATEGORY.CONVERSATION:
+        return <ConversationOverview data={displayData} onBack={handleBackToOverview} />;
+      default:
+        return renderOverview();
+    }
   };
 
-  switch (activeCategory) {
-    case CATEGORY.ACCURACY:
-      return <AccuracyView data={displayData} onBack={handleBackToOverview} />;
-
-    case CATEGORY.LATENCY:
-      return <LatencyOverview data={displayData} onBack={handleBackToOverview} />;
-
-    case CATEGORY.COST:
-      return <CostOverview data={displayData} onBack={handleBackToOverview} />;
-
-    case CATEGORY.AUDIO:
-      return <AudioOverview data={displayData} onBack={handleBackToOverview} />;
-
-    case CATEGORY.ENDPOINTING:
-      return <EndpointingOverview data={displayData} onBack={handleBackToOverview} />;
-
-    case CATEGORY.PERSONA:
-      return <PersonaOverview data={displayData} onBack={handleBackToOverview} />;
-
-    case CATEGORY.TASK_COMPLETION:
-      return <TaskCompletionOverview data={displayData} onBack={handleBackToOverview} />;
-    
-    case CATEGORY.CONVERSATION:
-      return <ConversationOverview data={displayData} onBack={handleBackToOverview} />
-
-    default:
-      return renderOverview();
-  }
-};
-
-  // -----------------------------
-  // JSX
-  // -----------------------------
   return (
     <div className="w-full max-w-screen-2xl mx-auto h-full flex flex-col">
       {/* Header - Hide when showing report view */}
@@ -201,21 +218,15 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold text-white mb-2">
-                {activeCategory === CATEGORY.ACCURACY
-                  ? "ACCURACY OVERVIEW"
-                  : isRealData
-                    ? "EVALUATION RESULTS"
-                    : "SIMULATION DASHBOARD"}
+                {CATEGORY_TITLES[activeCategory] || (isRealData ? "EVALUATION RESULTS" : "SIMULATION DASHBOARD")}
               </h1>
 
               <p className="text-gray-400">
                 {isRealData
-                  ? `Overall Score: ${Math.round(
-                      evaluationData.overall_score * 100
-                    )}% | ${
+                  ? `Overall Score: ${Math.round(evaluationData.overall_score * 100)}% | ${
                       evaluationData.passed ? "PASSED" : "NEEDS IMPROVEMENT"
                     }`
-                  : `Test Suite: Debt Collection Compliance | Date: ${new Date().toLocaleDateString()}`}
+                  : `Test Suite: ${mockSimulationData.test_suite_id || "Unknown"} | Sessions: ${mockSimulationData.total_sessions || 1}`}
               </p>
             </div>
 
@@ -224,14 +235,14 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
                 onClick={onBack}
                 className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium"
               >
-                Back
+                Back to Results
               </button>
             )}
           </div>
         </div>
       )}
 
-      {/* Content — SINGLE RENDER POINT */}
+      {/* Content */}
       <div className="flex-1 overflow-y-auto px-8 pb-8">
         {renderActiveSection()}
       </div>

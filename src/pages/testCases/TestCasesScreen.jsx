@@ -51,29 +51,26 @@ const TestCasesScreen = ({
   onRunTests, 
   onBack, 
   testSuite, 
-  testSuitePath,
+  // testSuitePath,
   testSuiteId 
 }) => {
   const [expandedScripts, setExpandedScripts] = useState({})
   const [testCases, setTestCases] = useState(DEFAULT_TEST_CASES)
 
   const runSimulationNow = () => {
-    // Validate we have both path and ID
-    if (!testSuitePath) {
-      alert("Test suite path missing. Please regenerate test cases.")
-      return
-    }
-    
-    if (!testSuiteId) {
-      console.warn("⚠️ Test suite ID missing - simulation may fail")
-    }
-
-    console.log('🚀 Starting simulation with:')
-    console.log('  📁 Path:', testSuitePath)
-    console.log('  🆔 ID:', testSuiteId)
-
-    onRunTests(testSuitePath)
+  if (!testSuiteId) {
+    alert("Test suite ID missing. Please regenerate test cases.")
+    return
   }
+
+  console.log('🚀 Starting simulation with:')
+  console.log('  🆔 Test Suite ID:', testSuiteId)
+
+  onRunTests({
+    test_suite_id: testSuiteId
+  })
+}
+
 
   useEffect(() => {
     if (testSuite?.test_paths && Array.isArray(testSuite.test_paths)) {

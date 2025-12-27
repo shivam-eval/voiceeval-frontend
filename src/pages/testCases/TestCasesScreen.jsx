@@ -1,16 +1,10 @@
 import { useState, useEffect } from 'react'
 import TestCaseCard from './TestCaseCard'
 import RunTestsButton from './RunTestButton'
-import { CALL_FLOW_SCRIPT, DEFAULT_TESTS_CASES,EXPECTED_RESPONSE } from './Script'
+import { CALL_FLOW_SCRIPT, DEFAULT_TESTS_CASES } from './Script'
 
-// Call flow script for all test cases
+const DEFAULT_TEST_CASES = [].map((c) => ({ ...c, script: CALL_FLOW_SCRIPT }))
 
-const DEFAULT_TEST_CASES = [
-  // your default cases — keep the array you already had, but add `script: CALL_FLOW_SCRIPT`
-].map((c) => ({ ...c, script: CALL_FLOW_SCRIPT }))
-
-// Helper: build a readable script from the API 'steps' array.
-// The exact step shape may vary; this function attempts to extract common fields.
 function buildScriptFromSteps(steps = [], persona = {}) {
   if (!Array.isArray(steps) || steps.length === 0) return CALL_FLOW_SCRIPT
 
@@ -21,9 +15,7 @@ function buildScriptFromSteps(steps = [], persona = {}) {
     const t = step.type || step.step_type || ''
     const isAgent = step.role === 'agent'
 
-    const speaker = isAgent
-      ? 'AGENT'
-      : persona?.name || 'USER'
+    const speaker = isAgent ? 'AGENT' : persona?.name || 'USER'
 
     const text =
       step.utterance ??
@@ -55,24 +47,33 @@ function buildScriptFromSteps(steps = [], persona = {}) {
   return lines.length ? lines.join('\n') : CALL_FLOW_SCRIPT
 }
 
-
-const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
-  const [expandedScripts, setExpandedScripts] = useState({}) // { [id]: boolean }
+const TestCasesScreen = ({ 
+  onRunTests, 
+  onBack, 
+  testSuite, 
+  testSuitePath,
+  testSuiteId 
+}) => {
+  const [expandedScripts, setExpandedScripts] = useState({})
   const [testCases, setTestCases] = useState(DEFAULT_TEST_CASES)
-  
-
 
   const runSimulationNow = () => {
-  if (!testSuitePath) {
-    alert("Test suite path missing. Please regenerate test cases.")
-    return
+    // Validate we have both path and ID
+    if (!testSuitePath) {
+      alert("Test suite path missing. Please regenerate test cases.")
+      return
+    }
+    
+    if (!testSuiteId) {
+      console.warn("⚠️ Test suite ID missing - simulation may fail")
+    }
+
+    console.log('🚀 Starting simulation with:')
+    console.log('  📁 Path:', testSuitePath)
+    console.log('  🆔 ID:', testSuiteId)
+
+    onRunTests(testSuitePath)
   }
-
-  onRunTests(testSuitePath)
-}
-
-
-
 
   useEffect(() => {
     if (testSuite?.test_paths && Array.isArray(testSuite.test_paths)) {
@@ -100,14 +101,12 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
         }
       })
 
-      // initialize expandedScripts to false for each id
       const expandedInit = {}
       transformedCases.forEach((c) => { expandedInit[c.id] = false })
 
       setTestCases(transformedCases)
       setExpandedScripts(expandedInit)
     } else {
-      // no testSuite: ensure defaults have scripts and collapse
       const defaultsWithScript = DEFAULT_TEST_CASES.map((c, idx) => ({ ...c, id: idx + 1 }))
       const expandedInit = {}
       defaultsWithScript.forEach((c) => { expandedInit[c.id] = false })
@@ -128,58 +127,56 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
   }
 
   const generatePersonaFromSteps = (steps = [], path = {}) => {
-  const p = path?.assigned_personas?.[0]
+    const p = path?.assigned_personas?.[0]
 
-  // Backend persona exists (primary path)
-  if (p) {
+    if (p) {
+      return {
+        gender: p.gender ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1) : 'Unknown',
+        name: p.name || 'Persona',
+
+        speakingRate:
+          p.behavior_traits?.verbosity === 'verbose'
+            ? 'Slow (100–110 WPM)'
+            : p.behavior_traits?.verbosity === 'balanced'
+            ? 'Moderate (120–130 WPM)'
+            : 'Fast (150–160 WPM)',
+
+        interruptionTendency:
+          p.behavior_traits?.patience_level === 'high'
+            ? 'Low (waits for pauses)'
+            : p.behavior_traits?.patience_level === 'medium'
+            ? 'Medium (occasional interruptions)'
+            : 'High (frequent interruptions)',
+
+        dialect: `${p.native_language?.toUpperCase() || 'Unknown'} (${p.region || 'Global'})`,
+
+        personality: p.description || 'Polite and cooperative',
+
+        backgroundEnvironment:
+          p.occupation === 'sales_consultant'
+            ? 'Office environment'
+            : 'Quiet environment',
+
+        vehicle: path?.metadata?.vehicle || 'N/A',
+
+        currentSituation: path.goal || 'Test scenario'
+      }
+    }
+
+    const firstUser = steps.find(s => s.user_input || s.utterance || s.text)
+
     return {
-      gender: p.gender ? p.gender.charAt(0).toUpperCase() + p.gender.slice(1) : 'Unknown',
-      name: p.name || 'Persona',
-
-      speakingRate:
-        p.behavior_traits?.verbosity === 'verbose'
-          ? 'Slow (100–110 WPM)'
-          : p.behavior_traits?.verbosity === 'balanced'
-          ? 'Moderate (120–130 WPM)'
-          : 'Fast (150–160 WPM)',
-
-      interruptionTendency:
-        p.behavior_traits?.patience_level === 'high'
-          ? 'Low (waits for pauses)'
-          : p.behavior_traits?.patience_level === 'medium'
-          ? 'Medium (occasional interruptions)'
-          : 'High (frequent interruptions)',
-
-      dialect: `${p.native_language?.toUpperCase() || 'Unknown'} (${p.region || 'Global'})`,
-
-      personality: p.description || 'Polite and cooperative',
-
-      backgroundEnvironment:
-        p.occupation === 'sales_consultant'
-          ? 'Office environment'
-          : 'Quiet environment',
-
+      gender: 'Dynamic',
+      name: 'Test Persona',
+      speakingRate: 'Varies',
+      interruptionTendency: 'Scenario-based',
+      dialect: 'Standard',
+      personality: path.description || 'Test-driven behavior',
+      backgroundEnvironment: 'Simulated',
       vehicle: path?.metadata?.vehicle || 'N/A',
-
-      currentSituation: path.goal || 'Test scenario'
+      currentSituation: firstUser?.user_input || path.goal || 'Testing agent behavior'
     }
   }
-
-  // 🟡 Fallback (your existing logic untouched)
-  const firstUser = steps.find(s => s.user_input || s.utterance || s.text)
-
-  return {
-    gender: 'Dynamic',
-    name: 'Test Persona',
-    speakingRate: 'Varies',
-    interruptionTendency: 'Scenario-based',
-    dialect: 'Standard',
-    personality: path.description || 'Test-driven behavior',
-    backgroundEnvironment: 'Simulated',
-    vehicle: path?.metadata?.vehicle || 'N/A',
-    currentSituation: firstUser?.user_input || path.goal || 'Testing agent behavior'
-  }
-}
 
   const toggleScript = (testCaseId) => {
     setExpandedScripts(prev => ({ ...prev, [testCaseId]: !prev[testCaseId] }))
@@ -195,6 +192,11 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
             <p className="text-gray-400">
               Review the test cases and personas below, then run all tests to evaluate your Voice AI agent.
             </p>
+            {testSuiteId && (
+              <p className="text-gray-500 text-sm mt-2">
+                Test Suite ID: <span className="font-mono text-teal-400">{testSuiteId}</span>
+              </p>
+            )}
           </div>
           {onBack && (
             <button
@@ -207,23 +209,21 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuite , testSuitePath}) => {
         </div>
 
         {/* Test Cases List */}
-       <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-  {testCases.map((testCase) => (
-    <TestCaseCard
-      key={testCase.id}
-      testCase={testCase}
-      isExpanded={expandedScripts[testCase.id]}
-      onToggle={() => toggleScript(testCase.id)}
-    />
-  ))}
-</div>
+        <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+          {testCases.map((testCase) => (
+            <TestCaseCard
+              key={testCase.id}
+              testCase={testCase}
+              isExpanded={expandedScripts[testCase.id]}
+              onToggle={() => toggleScript(testCase.id)}
+            />
+          ))}
+        </div>
 
-<RunTestsButton
-  onRun={runSimulationNow}
-  disabled={!testCases.length}
-/>
-
-
+        <RunTestsButton
+          onRun={runSimulationNow}
+          disabled={!testCases.length}
+        />
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import DashboardOverview from "./DashboardOverview";
 import Sidebar from "./Sidebar";
 
@@ -9,13 +10,24 @@ const DashboardLayout = ({
   hideRightPanel,
   onLogout,
 }) => {
+  const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [localActiveView, setLocalActiveView] = useState(activeView);
 
-  // Update local state when prop changes
+  // Extract active view from current path
   useEffect(() => {
-    setLocalActiveView(activeView);
-  }, [activeView]);
+    const path = location.pathname;
+    let viewId = "dashboard";
+    
+    if (path === "/dashboard") viewId = "dashboard";
+    else if (path.startsWith("/connect-agent")) viewId = "connect-agent";
+    else if (path === "/test-cases") viewId = "test-cases";
+    else if (path === "/simulations") viewId = "simulations";
+    else if (path === "/evaluations") viewId = "evaluations";
+    else if (path === "/workspace") viewId = "workspace";
+    
+    setLocalActiveView(viewId);
+  }, [location.pathname, activeView]);
 
   const handleNavigation = (viewId) => {
     setLocalActiveView(viewId);

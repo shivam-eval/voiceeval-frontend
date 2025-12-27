@@ -106,7 +106,8 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
             console.log('✅ Calling onComplete with data')
             onComplete({ 
               flowData, 
-              mermaid 
+              mermaid,
+              systemPrompt: extractedConfig?.system_prompt
             })
           }
         }, 800)

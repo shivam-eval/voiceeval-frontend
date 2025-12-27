@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import { testGeneration } from '../api'
 
-const TestCasesGenerationLoading = ({ flowData, onComplete, onError,region }) => {
+const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) => {
   const [progress, setProgress] = useState(0)
   const [status, setStatus] = useState('Initializing...')
   const [error, setError] = useState(null)
-  const [filepath,setFilePath] = useState("");
 
   useEffect(() => {
     let isMounted = true
@@ -28,7 +27,7 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError,region }) =>
         setStatus('Sending request to API...')
         const payload = {
           flow_tree: flowData,
-          region:region,
+          region: region,
           call_type: "inbound",
           max_paths: 1,
           include_edge_cases: true
@@ -46,14 +45,16 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError,region }) =>
         // Stage 3: Analyzing flow tree (40-60%)
         setStatus('Analyzing conversation flow tree...')
         
-        // Make the actual API call WITHOUT signal parameter
+        // Make the actual API call
         const res = await testGeneration(payload)
         
         if (!isMounted) return
         
         console.log('📥 Test generation response:', res)
+        console.log('📥 Response data structure:', JSON.stringify(res.data, null, 2))
+        
         setProgress(60)
-        setFilePath(res.data.file_name)
+        
         // Stage 4: Processing response (60-80%)
         setStatus('Generating test scenarios...')
         await new Promise(resolve => setTimeout(resolve, 300))
@@ -85,15 +86,23 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError,region }) =>
         setProgress(100)
         setStatus('Test cases generated successfully!')
         
-        console.log('✅ Test cases generated successfully', res.data)
-        console.log("file saved : ", res.data.file_name)
+        console.log('✅ Test cases generated successfully')
+        console.log('✅ File saved:', res.data.file_name)
+        console.log('✅ Test suite structure:', res.data.test_suite ? 'Present' : 'Missing')
+        
+        // Verify we have the necessary data
+        if (!res.data.file_name) {
+          console.warn('⚠️ Warning: No file_name in response')
+        }
+        if (!res.data.test_suite) {
+          console.warn('⚠️ Warning: No test_suite in response')
+        }
         
         // Complete after showing success
         setTimeout(() => {
           if (isMounted && onComplete) {
             onComplete(res.data)
           }
-
         }, 500)
         
       } catch (err) {
@@ -124,7 +133,7 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError,region }) =>
     return () => {
       isMounted = false
     }
-  }, [flowData, onComplete, onError,region])
+  }, [flowData, onComplete, onError, region])
 
   return (
     <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">

@@ -17,43 +17,55 @@ import TurnByTurnAnalysis from './TurnByTurnAnalysis';
 import { ResponsiveRadar } from '@nivo/radar';
 import { ResponsiveLine } from '@nivo/line';
 
-const TestReportView = ({ report, transcriptData, onBack }) => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [evaluationData, setEvaluationData] = useState(null);
+const TestReportView = ({ report, evaluation, transcriptData, simulationData, onBack }) => {
 
-  // Mock evaluation data (in production, fetch from API)
-  useEffect(() => {
-    // Simulate fetching evaluation data
-    setEvaluationData({
-      overall_score: 87,
-      passed: true,
-      category_scores: [
-        { category: 'accuracy', score: 82 },
-        { category: 'task_completion', score: 91 },
-        { category: 'latency', score: 88 },
-        { category: 'audio_quality', score: 85 },
-        { category: 'conversation_quality', score: 89 },
-        { category: 'endpointing', score: 78 },
-        { category: 'cost', score: 95 },
-        { category: 'persona', score: 92 }
-      ],
-      failure_propagation: {
-        critical_failure_turns: ['turn_003'],
-        total_tainted_steps: 2,
-        propagation_depth: 2,
-        cascading_failures: {
-          'turn_003': ['turn_004', 'turn_005']
-        },
-        step_health: {
-          'turn_001': { turn_id: 'turn_001', is_healthy: true, is_tainted: false, failed_metrics: [] },
-          'turn_002': { turn_id: 'turn_002', is_healthy: true, is_tainted: false, failed_metrics: [] },
-          'turn_003': { turn_id: 'turn_003', is_healthy: false, is_tainted: false, failed_metrics: ['semantic_accuracy'] },
-          'turn_004': { turn_id: 'turn_004', is_healthy: false, is_tainted: true, tainted_by_turn_id: 'turn_003', failed_metrics: [] },
-          'turn_005': { turn_id: 'turn_005', is_healthy: false, is_tainted: true, tainted_by_turn_id: 'turn_003', failed_metrics: [] }
+  console.log('Report:', report);
+  console.log('Full Evaluation:', evaluation);
+  console.log('Transcript:', transcriptData);
+  console.log('Simulation:', simulationData);
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Process evaluation data from the actual evaluation object
+  const evaluationData = evaluation ? {
+    overall_score: Math.round(evaluation.overall_score * 100),
+    passed: evaluation.passed,
+    issues_found: evaluation.issues_found,
+    execution_time_ms: evaluation.execution_time_ms,
+    recommendations: evaluation.recommendations || [],
+    
+    // Extract category scores from metric_results
+    category_scores: evaluation.metric_results?.reduce((acc, metric) => {
+      if (metric.category && metric.score !== null && metric.score !== undefined) {
+        const existingCategory = acc.find(c => c.category === metric.category);
+        if (existingCategory) {
+          // Average if multiple metrics in same category
+          existingCategory.scores.push(metric.score);
+          existingCategory.score = Math.round(
+            existingCategory.scores.reduce((sum, s) => sum + s, 0) / existingCategory.scores.length * 100
+          );
+        } else {
+          acc.push({
+            category: metric.category,
+            score: Math.round(metric.score * 100),
+            scores: [metric.score]
+          });
         }
       }
-    });
-  }, [report]);
+      return acc;
+    }, []) || [],
+    
+    // Extract metric results for detailed view
+    metrics: evaluation.metric_results || [],
+    
+    // Process failure propagation if available
+    failure_propagation: evaluation.failure_propagation || {
+      critical_failure_turns: [],
+      total_tainted_steps: 0,
+      propagation_depth: 0,
+      cascading_failures: {},
+      step_health: {}
+    }
+  } : null;
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
@@ -62,14 +74,27 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
     { id: 'propagation', label: 'Failure Analysis', icon: TrendingUp }
   ];
 
-  // Prepare radar chart data
+  // Prepare radar chart data from actual category scores
   const radarData = evaluationData?.category_scores.map(cat => ({
     category: cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
     score: cat.score
   })) || [];
 
-  // Mock latency timeline data
-  const latencyData = [
+  // Extract latency data from metrics
+  const latencyMetrics = evaluationData?.metrics.filter(m => 
+    m.category === 'latency' || m.name.includes('latency') || m.name.includes('duration')
+  ) || [];
+
+  // Mock latency timeline data (would need turn-by-turn data in production)
+  const latencyData = latencyMetrics.length > 0 ? [
+    {
+      id: 'Response Time',
+      data: latencyMetrics.slice(0, 5).map((metric, idx) => ({
+        x: `Turn ${idx + 1}`,
+        y: metric.details?.duration_ms ? metric.details.duration_ms / 1000 : 1.5
+      }))
+    }
+  ] : [
     {
       id: 'Response Time',
       data: [
@@ -96,13 +121,18 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
     return 'bg-red-500/10 border-red-500/20';
   };
 
+  // Calculate summary statistics from metrics
+  const audioMetrics = evaluationData?.metrics.filter(m => m.category === 'audio_quality') || [];
+  const conversationMetrics = evaluationData?.metrics.filter(m => m.category === 'conversation_quality') || [];
+  const taskMetrics = evaluationData?.metrics.filter(m => m.category === 'task_completion') || [];
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-white mb-2">
-            Test Report
+            Test Report: {report?.test_id || evaluation?.test_case_name || 'Unknown Test'}
           </h2>
           <div className="flex items-center gap-4 text-sm">
             <span className="text-gray-400">
@@ -114,7 +144,7 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
             </span>
             <span className="text-gray-600">•</span>
             <span className="text-gray-400">
-              Transcript: <span className="font-mono text-gray-300">{report?.transcript_result_id?.substring(0, 12) || 'N/A'}...</span>
+              Evaluation ID: <span className="font-mono text-gray-300">{evaluation?.evaluation_id?.substring(0, 12) || 'N/A'}...</span>
             </span>
           </div>
         </div>
@@ -147,47 +177,65 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
         <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="w-4 h-4 text-purple-400" />
-            <p className="text-xs text-gray-400 font-semibold uppercase">Duration</p>
+            <p className="text-xs text-gray-400 font-semibold uppercase">Execution Time</p>
           </div>
           <p className="text-2xl font-bold text-white">
-            {transcriptData?.metadata?.duration_ms 
-              ? `${(transcriptData.metadata.duration_ms / 1000).toFixed(1)}s`
+            {evaluationData?.execution_time_ms 
+              ? `${(evaluationData.execution_time_ms / 1000).toFixed(1)}s`
               : 'N/A'}
           </p>
         </div>
 
         <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
-            <MessageSquare className="w-4 h-4 text-blue-400" />
-            <p className="text-xs text-gray-400 font-semibold uppercase">Total Turns</p>
+            <XCircle className="w-4 h-4 text-red-400" />
+            <p className="text-xs text-gray-400 font-semibold uppercase">Issues Found</p>
           </div>
           <p className="text-2xl font-bold text-white">
-            {transcriptData?.metadata?.total_turns || 0}
+            {evaluationData?.issues_found || 0}
           </p>
         </div>
 
         <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
-            <Zap className="w-4 h-4 text-yellow-400" />
-            <p className="text-xs text-gray-400 font-semibold uppercase">Avg Latency</p>
+            <BarChart3 className="w-4 h-4 text-blue-400" />
+            <p className="text-xs text-gray-400 font-semibold uppercase">Total Metrics</p>
           </div>
           <p className="text-2xl font-bold text-white">
-            {transcriptData?.metadata?.avg_response_latency_ms 
-              ? `${(transcriptData.metadata.avg_response_latency_ms / 1000).toFixed(2)}s`
-              : 'N/A'}
+            {evaluationData?.metrics.length || 0}
           </p>
         </div>
 
         <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-green-400" />
-            <p className="text-xs text-gray-400 font-semibold uppercase">Est. Cost</p>
+            <Activity className="w-4 h-4 text-teal-400" />
+            <p className="text-xs text-gray-400 font-semibold uppercase">Status</p>
           </div>
-          <p className="text-2xl font-bold text-white">
-            $0.12
+          <p className={`text-lg font-bold ${evaluationData?.passed ? 'text-green-400' : 'text-red-400'}`}>
+            {evaluationData?.passed ? 'PASSED' : 'FAILED'}
           </p>
         </div>
       </div>
+
+      {/* Recommendations Panel */}
+      {evaluationData?.recommendations && evaluationData.recommendations.length > 0 && (
+        <div className="bg-dark-panel border border-yellow-500/20 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-yellow-400" />
+            Recommendations
+          </h3>
+          <div className="space-y-3">
+            {evaluationData.recommendations.map((rec, idx) => (
+              <div key={idx} className="flex items-start gap-3 p-3 bg-yellow-500/5 rounded-lg border border-yellow-500/10">
+                <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-yellow-400 text-xs font-bold">{idx + 1}</span>
+                </div>
+                <p className="text-sm text-gray-300">{rec}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex items-center gap-2 border-b border-gray-800/50">
@@ -218,95 +266,99 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
         {activeTab === 'overview' && (
           <>
             {/* Category Scores Radar */}
-            <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-6">
-                Category Performance
-              </h3>
-              <div style={{ height: '400px' }}>
-                <ResponsiveRadar
-                  data={radarData}
-                  keys={['score']}
-                  indexBy="category"
-                  maxValue={100}
-                  margin={{ top: 40, right: 80, bottom: 40, left: 80 }}
-                  curve="linearClosed"
-                  borderWidth={2}
-                  borderColor={{ from: 'color' }}
-                  gridLevels={5}
-                  gridShape="circular"
-                  gridLabelOffset={16}
-                  enableDots={true}
-                  dotSize={8}
-                  dotColor={{ theme: 'background' }}
-                  dotBorderWidth={2}
-                  dotBorderColor={{ from: 'color' }}
-                  enableDotLabel={true}
-                  dotLabel="value"
-                  dotLabelYOffset={-12}
-                  colors={{ scheme: 'nivo' }}
-                  fillOpacity={0.25}
-                  blendMode="multiply"
-                  animate={true}
-                  theme={{
-                    text: { fill: '#9ca3af', fontSize: 11 },
-                    grid: { line: { stroke: '#374151', strokeWidth: 1 } },
-                    tooltip: {
-                      container: {
-                        background: '#1f2937',
-                        color: '#fff',
-                        fontSize: 12,
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
-                        padding: '8px 12px'
+            {radarData.length > 0 && (
+              <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-6">
+                  Category Performance
+                </h3>
+                <div style={{ height: '400px' }}>
+                  <ResponsiveRadar
+                    data={radarData}
+                    keys={['score']}
+                    indexBy="category"
+                    maxValue={100}
+                    margin={{ top: 40, right: 80, bottom: 40, left: 80 }}
+                    curve="linearClosed"
+                    borderWidth={2}
+                    borderColor={{ from: 'color' }}
+                    gridLevels={5}
+                    gridShape="circular"
+                    gridLabelOffset={16}
+                    enableDots={true}
+                    dotSize={8}
+                    dotColor={{ theme: 'background' }}
+                    dotBorderWidth={2}
+                    dotBorderColor={{ from: 'color' }}
+                    enableDotLabel={true}
+                    dotLabel="value"
+                    dotLabelYOffset={-12}
+                    colors={{ scheme: 'nivo' }}
+                    fillOpacity={0.25}
+                    blendMode="multiply"
+                    animate={true}
+                    theme={{
+                      text: { fill: '#9ca3af', fontSize: 11 },
+                      grid: { line: { stroke: '#374151', strokeWidth: 1 } },
+                      tooltip: {
+                        container: {
+                          background: '#1f2937',
+                          color: '#fff',
+                          fontSize: 12,
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+                          padding: '8px 12px'
+                        }
                       }
-                    }
-                  }}
-                />
+                    }}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {evaluationData?.category_scores.map(cat => (
-                <div 
-                  key={cat.category}
-                  className="bg-dark-panel border border-gray-800/50 rounded-xl p-4 hover:border-gray-700/50 transition-all"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-400 mb-1">
-                        {cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                      </p>
-                      <p className={`text-2xl font-bold ${getScoreColor(cat.score)}`}>
-                        {cat.score}%
-                      </p>
-                    </div>
-                    <div className="w-16 h-16">
-                      <svg viewBox="0 0 36 36" className="transform -rotate-90">
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="16"
-                          fill="none"
-                          stroke="#374151"
-                          strokeWidth="3"
-                        />
-                        <circle
-                          cx="18"
-                          cy="18"
-                          r="16"
-                          fill="none"
-                          stroke={cat.score >= 90 ? '#22c55e' : cat.score >= 75 ? '#eab308' : '#ef4444'}
-                          strokeWidth="3"
-                          strokeDasharray={`${cat.score * 1.005}, 100.5`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
+            {evaluationData?.category_scores.length > 0 && (
+              <div className="grid grid-cols-2 gap-4">
+                {evaluationData.category_scores.map(cat => (
+                  <div 
+                    key={cat.category}
+                    className="bg-dark-panel border border-gray-800/50 rounded-xl p-4 hover:border-gray-700/50 transition-all"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-400 mb-1">
+                          {cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </p>
+                        <p className={`text-2xl font-bold ${getScoreColor(cat.score)}`}>
+                          {cat.score}%
+                        </p>
+                      </div>
+                      <div className="w-16 h-16">
+                        <svg viewBox="0 0 36 36" className="transform -rotate-90">
+                          <circle
+                            cx="18"
+                            cy="18"
+                            r="16"
+                            fill="none"
+                            stroke="#374151"
+                            strokeWidth="3"
+                          />
+                          <circle
+                            cx="18"
+                            cy="18"
+                            r="16"
+                            fill="none"
+                            stroke={cat.score >= 90 ? '#22c55e' : cat.score >= 75 ? '#eab308' : '#ef4444'}
+                            strokeWidth="3"
+                            strokeDasharray={`${cat.score * 1.005}, 100.5`}
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </>
         )}
 
@@ -322,6 +374,65 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
 
         {activeTab === 'metrics' && (
           <>
+            {/* All Metrics Table */}
+            <div className="bg-dark-panel border border-gray-800/50 rounded-xl overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-800/50">
+                <h3 className="text-lg font-semibold text-white">Detailed Metrics</h3>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-gray-800/50 bg-dark-panel/30">
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Metric</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Category</th>
+                      <th className="text-center px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Score</th>
+                      <th className="text-center px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Status</th>
+                      <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Details</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {evaluationData?.metrics.map((metric, idx) => (
+                      <tr key={idx} className="border-b border-gray-800/30 hover:bg-[#1e2433]">
+                        <td className="px-6 py-4 text-sm text-white font-medium">
+                          {metric.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {metric.category?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {metric.score !== null && metric.score !== undefined ? (
+                            <span className={`font-bold ${getScoreColor(Math.round(metric.score * 100))}`}>
+                              {Math.round(metric.score * 100)}%
+                            </span>
+                          ) : (
+                            <span className="text-gray-500">N/A</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          {metric.status === 'passed' ? (
+                            <CheckCircle className="w-4 h-4 text-green-400 mx-auto" />
+                          ) : metric.status === 'failed' ? (
+                            <XCircle className="w-4 h-4 text-red-400 mx-auto" />
+                          ) : (
+                            <span className="text-gray-500 text-xs">N/A</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-400">
+                          {metric.details ? (
+                            <pre className="text-xs overflow-x-auto">
+                              {JSON.stringify(metric.details, null, 2).substring(0, 100)}...
+                            </pre>
+                          ) : (
+                            'No details'
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             {/* Latency Timeline */}
             <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-6">
@@ -376,51 +487,6 @@ const TestReportView = ({ report, transcriptData, onBack }) => {
                     }
                   }}
                 />
-              </div>
-            </div>
-
-            {/* Detailed Metrics */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
-                <p className="text-sm text-gray-400 mb-3">Audio Quality</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Word Error Rate</span>
-                    <span className="text-green-400 font-semibold">2.3%</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Clarity Score</span>
-                    <span className="text-green-400 font-semibold">94%</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
-                <p className="text-sm text-gray-400 mb-3">Conversation Flow</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Context Maintained</span>
-                    <span className="text-green-400 font-semibold">89%</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Interruptions</span>
-                    <span className="text-yellow-400 font-semibold">2</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
-                <p className="text-sm text-gray-400 mb-3">Task Completion</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Goals Achieved</span>
-                    <span className="text-green-400 font-semibold">4/5</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">Success Rate</span>
-                    <span className="text-green-400 font-semibold">80%</span>
-                  </div>
-                </div>
               </div>
             </div>
           </>

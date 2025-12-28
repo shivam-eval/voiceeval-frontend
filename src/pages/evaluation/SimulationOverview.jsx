@@ -24,6 +24,7 @@ const SimulationOverview = ({ simulationData }) => {
     ? (timing.duration_ms / execution_summary.total_test_cases / 1000).toFixed(1)
     : 0;
 
+    
   return (
     <div className="space-y-6">
       {/* Header */}

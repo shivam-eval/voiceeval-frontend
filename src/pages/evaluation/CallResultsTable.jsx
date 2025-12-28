@@ -1,7 +1,7 @@
 import React from 'react';
 import { Eye, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
 
-const CallResultsTable = ({ transcriptResults = [], onViewReport }) => {
+const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData = [], simulationId = '' }) => {
   const getStatusIcon = (status) => {
     switch (status?.toLowerCase()) {
       case 'completed':
@@ -50,9 +50,6 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport }) => {
     );
   };
 
-  // Mock scores for demo (in real app, fetch from evaluation results)
-  const mockScores = [94, 87, 79, 91, 82, 88, 76, 93];
-
   return (
     <div className="bg-dark-panel rounded-xl border border-gray-800/50 overflow-hidden">
       {/* Header */}
@@ -93,7 +90,8 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport }) => {
           </thead>
           <tbody>
             {transcriptResults.map((result, index) => {
-              const mockScore = mockScores[index % mockScores.length];
+              // Use actual score from result data
+              const actualScore = result.overall_score || 0;
               
               return (
                 <tr 
@@ -125,17 +123,17 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport }) => {
                   {/* Score */}
                   <td className="px-6 py-4 text-center">
                     <div className="flex flex-col items-center">
-                      <span className={`font-bold text-lg ${getScoreColor(mockScore)}`}>
-                        {mockScore}%
+                      <span className={`font-bold text-lg ${getScoreColor(actualScore)}`}>
+                        {actualScore}%
                       </span>
                       <div className="w-16 h-1.5 bg-gray-800 rounded-full mt-1 overflow-hidden">
                         <div 
                           className={`h-full rounded-full ${
-                            mockScore >= 90 ? 'bg-green-400' :
-                            mockScore >= 75 ? 'bg-yellow-400' :
-                            mockScore >= 60 ? 'bg-orange-400' : 'bg-red-400'
+                            actualScore >= 90 ? 'bg-green-400' :
+                            actualScore >= 75 ? 'bg-yellow-400' :
+                            actualScore >= 60 ? 'bg-orange-400' : 'bg-red-400'
                           }`}
-                          style={{ width: `${mockScore}%` }}
+                          style={{ width: `${actualScore}%` }}
                         />
                       </div>
                     </div>

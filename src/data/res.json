@@ -1,0 +1,1560 @@
+{
+  "simulation_id": "sim_1e52ce09820c47479420c3cf8cd89035",
+  "simulation_evaluation": {
+    "simulation_id": "sim_1e52ce09820c47479420c3cf8cd89035",
+    "total_sessions_evaluated": 1,
+    "average_overall_score": 0.3783006087239583,
+    "average_category_scores": [
+      {
+        "category": "accuracy",
+        "average_score": 0,
+        "average_weight": 0.25
+      },
+      {
+        "category": "task_completion",
+        "average_score": 0.2,
+        "average_weight": 0.25
+      },
+      {
+        "category": "latency",
+        "average_score": 0.49978183593750003,
+        "average_weight": 0.15
+      },
+      {
+        "category": "audio_quality",
+        "average_score": 0.8333333333333334,
+        "average_weight": 0.1
+      },
+      {
+        "category": "conversation_quality",
+        "average_score": 0.4666666666666666,
+        "average_weight": 0.15
+      },
+      {
+        "category": "endpointing",
+        "average_score": 0.8134967387952303,
+        "average_weight": 0
+      },
+      {
+        "category": "cost",
+        "average_score": 0.008703673110058594,
+        "average_weight": 0
+      },
+      {
+        "category": "persona",
+        "average_score": 1,
+        "average_weight": 0.1
+      }
+    ],
+    "average_metric_results": [
+      {
+        "name": "semantic_accuracy",
+        "category": "accuracy",
+        "average_score": 0
+      },
+      {
+        "name": "keyword_match_accuracy",
+        "category": "accuracy",
+        "average_score": 0
+      },
+      {
+        "name": "semantic_similarity",
+        "category": "accuracy",
+        "average_score": 0
+      },
+      {
+        "name": "intent_classification_accuracy",
+        "category": "accuracy",
+        "average_score": 0
+      },
+      {
+        "name": "task_completion_rate",
+        "category": "task_completion",
+        "average_score": 0.4
+      },
+      {
+        "name": "sequential_task_accuracy",
+        "category": "task_completion",
+        "average_score": 0
+      },
+      {
+        "name": "flow_path_coverage",
+        "category": "task_completion",
+        "average_score": 0
+      },
+      {
+        "name": "response_latency",
+        "category": "latency",
+        "average_score": 0.99912734375
+      },
+      {
+        "name": "time_to_first_token",
+        "category": "latency",
+        "average_score": 0
+      },
+      {
+        "name": "time_to_complete_transcript",
+        "category": "latency",
+        "average_score": 0
+      },
+      {
+        "name": "total_duration",
+        "category": "latency",
+        "average_score": 1
+      },
+      {
+        "name": "word_error_rate",
+        "category": "audio_quality",
+        "average_score": 0
+      },
+      {
+        "name": "audio_technical_quality",
+        "category": "audio_quality",
+        "average_score": 0
+      },
+      {
+        "name": "tts_naturalness",
+        "category": "audio_quality",
+        "average_score": 0
+      },
+      {
+        "name": "grammar_quality",
+        "category": "conversation_quality",
+        "average_score": 0
+      },
+      {
+        "name": "context_maintenance",
+        "category": "conversation_quality",
+        "average_score": 0
+      },
+      {
+        "name": "clarification_request_rate",
+        "category": "conversation_quality",
+        "average_score": 0
+      },
+      {
+        "name": "interruption_count",
+        "category": "endpointing",
+        "average_score": 1
+      },
+      {
+        "name": "pause_detection",
+        "category": "endpointing",
+        "average_score": 0.6269934775904605
+      },
+      {
+        "name": "turn_boundary_accuracy",
+        "category": "endpointing",
+        "average_score": 0
+      },
+      {
+        "name": "stt_cost",
+        "category": "cost",
+        "average_score": 0
+      },
+      {
+        "name": "tts_cost",
+        "category": "cost",
+        "average_score": 0
+      },
+      {
+        "name": "total_conversation_cost",
+        "category": "cost",
+        "average_score": 0
+      },
+      {
+        "name": "persona_consistency",
+        "category": "persona",
+        "average_score": 0
+      },
+      {
+        "name": "tone_appropriateness",
+        "category": "persona",
+        "average_score": 0
+      },
+      {
+        "name": "region_appropriate_language",
+        "category": "persona",
+        "average_score": 0
+      },
+      {
+        "name": "behavior_trait_alignment",
+        "category": "persona",
+        "average_score": 0
+      }
+    ],
+    "evaluation_ids": [
+      "eval_ef01b8c0dad2"
+    ]
+  },
+  "evaluations": [
+    {
+      "evaluation_id": "eval_ef01b8c0dad2",
+      "session_id": "sess_d03407fc",
+      "path_id": "edge_case_inbound_real_estate_qualification",
+      "overall_score": 0.3783006087239583,
+      "passed": false,
+      "category_scores": [
+        {
+          "category": "accuracy",
+          "score": 0,
+          "weight": 0.25,
+          "metrics": [
+            {
+              "name": "semantic_accuracy",
+              "category": "accuracy",
+              "score": 0,
+              "status": "failed",
+              "details": {
+                "evaluated_steps": 10,
+                "passed_steps": 0,
+                "step_results": [
+                  {
+                    "turn_id": "turn_002",
+                    "turn_number": 2,
+                    "passed": false,
+                    "expected_response": "Hi Mr. Aditya, this is Priya calling from Greentech Realtors, Bengaluru. You had recently shown inte",
+                    "expected_keywords": [
+                      "interest",
+                      "property",
+                      "99Acres"
+                    ],
+                    "reasoning": "The agent's response does not include the expected greeting, introduction, or mention of interest in a property on 99Acres. It only acknowledges a missed call."
+                  },
+                  {
+                    "turn_id": "turn_004",
+                    "turn_number": 4,
+                    "passed": false,
+                    "expected_response": "Certainly, I can help with that. We noticed you were exploring options on Sarjapur Road. Would you l",
+                    "expected_keywords": [
+                      "Sarjapur Road",
+                      "options"
+                    ],
+                    "reasoning": "The agent's response does not mention Sarjapur Road or options, and it does not address the user's exploration of properties in that area."
+                  },
+                  {
+                    "turn_id": "turn_006",
+                    "turn_number": 6,
+                    "passed": false,
+                    "expected_response": "Understood. And what type of home are you considering — an apartment, a villa, or something else? An",
+                    "expected_keywords": [
+                      "home type",
+                      "bedrooms"
+                    ],
+                    "reasoning": "The response does not address the expected keywords 'home type' and 'bedrooms', and instead focuses on location preference."
+                  },
+                  {
+                    "turn_id": "turn_008",
+                    "turn_number": 8,
+                    "passed": false,
+                    "expected_response": "Perfect. When are you planning to move in, Mr. Aditya?",
+                    "expected_keywords": [
+                      "move in",
+                      "timeline"
+                    ],
+                    "reasoning": "The agent's response does not address the question about the timeline for moving in and lacks the expected keywords 'move in' and 'timeline'."
+                  },
+                  {
+                    "turn_id": "turn_010",
+                    "turn_number": 10,
+                    "passed": false,
+                    "expected_response": "That's understandable. May I also check what budget range you have in mind? That helps me recommend ",
+                    "expected_keywords": [
+                      "budget range",
+                      "options"
+                    ],
+                    "reasoning": "The agent's response does not address the user's budget range or offer to recommend options, which are key components of the expected response."
+                  },
+                  {
+                    "turn_id": "turn_012",
+                    "turn_number": 12,
+                    "passed": false,
+                    "expected_response": "Apart from this, is there anything else that’s important for you in a home? For example — clubhouse,",
+                    "expected_keywords": [
+                      "additional requirements"
+                    ],
+                    "reasoning": "The agent's response does not address the user's needs for additional requirements and fails to include the expected keywords."
+                  },
+                  {
+                    "turn_id": "turn_014",
+                    "turn_number": 14,
+                    "passed": false,
+                    "expected_response": "Based on your preferences, Mr. Aditya, I’d suggest Greenwood Residency in Domasandra or Lakeview Enc",
+                    "expected_keywords": [
+                      "Greenwood Residency",
+                      "Lakeview Enclave"
+                    ],
+                    "reasoning": "The response does not include the expected suggestions of 'Greenwood Residency' or 'Lakeview Enclave' and does not address the user's preferences."
+                  },
+                  {
+                    "turn_id": "turn_016",
+                    "turn_number": 16,
+                    "passed": false,
+                    "expected_response": "You’ll get a much better idea when you see the property in person. Would you like me to schedule a v",
+                    "expected_keywords": [
+                      "schedule a visit"
+                    ],
+                    "reasoning": "The response does not include the expected phrase 'schedule a visit' and does not address the request to schedule a visit to the property."
+                  },
+                  {
+                    "turn_id": "turn_018",
+                    "turn_number": 18,
+                    "passed": false,
+                    "expected_response": "How about Saturday morning?",
+                    "expected_keywords": [
+                      "schedule",
+                      "Saturday morning"
+                    ],
+                    "reasoning": "The response does not address the scheduling inquiry and lacks the expected keywords 'schedule' and 'Saturday morning'."
+                  },
+                  {
+                    "turn_id": "turn_020",
+                    "turn_number": 20,
+                    "passed": false,
+                    "expected_response": "Perfect, I’ll book the slot for Sunday 11 AM and share all the details on WhatsApp — including prope",
+                    "expected_keywords": [
+                      "confirm",
+                      "WhatsApp details"
+                    ],
+                    "reasoning": "The response does not confirm the booking for Sunday at 11 AM and lacks mention of WhatsApp details, property info, location, and the on-site agent's contact."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "keyword_match_accuracy",
+              "category": "accuracy",
+              "score": 0,
+              "status": "failed",
+              "details": {
+                "evaluated_steps": 10,
+                "average_step_score": 0,
+                "step_results": [
+                  {
+                    "agent_turn_index": 0,
+                    "turn_id": "turn_002",
+                    "turn_number": 2,
+                    "node_id": "greeting_and_introduction",
+                    "score": 0,
+                    "passed": false,
+                    "matches": {
+                      "interest": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 43
+                      },
+                      "property": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 38
+                      },
+                      "99Acres": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 40
+                      }
+                    }
+                  },
+                  {
+                    "agent_turn_index": 1,
+                    "turn_id": "turn_004",
+                    "turn_number": 4,
+                    "node_id": "configuration_preference",
+                    "score": 0,
+                    "passed": false,
+                    "matches": {
+                      "Sarjapur Road": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 38
+                      },
+                      "options": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 55
+                      }
+                    }
+                  },
+                  {
+                    "agent_turn_index": 2,
+                    "turn_id": "turn_006",
+                    "turn_number": 6,
+                    "node_id": "budget_range",
+                    "score": 0,
+                    "passed": false,
+                    "matches": {
+                      "home type": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 44
+                      },
+                      "bedrooms": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 50
+                      }
+                    }
+                  },
+                  {
+                    "agent_turn_index": 3,
+                    "turn_id": "turn_008",
+                    "turn_number": 8,
+                    "node_id": "property_recommendation",
+                    "score": 0,
+                    "passed": false,
+                    "matches": {
+                      "move in": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 57
+                      },
+                      "timeline": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 50
+                      }
+                    }
+                  },
+                  {
+                    "agent_turn_index": 4,
+                    "turn_id": "turn_010",
+                    "turn_number": 10,
+                    "node_id": "schedule_visit",
+                    "score": 0,
+                    "passed": false,
+                    "matches": {
+                      "budget range": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 50
+                      },
+                      "options": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 62
+                      }
+                    }
+                  },
+                  {
+                    "agent_turn_index": 5,
+                    "turn_id": "turn_012",
+                    "turn_number": 12,
+                    "node_id": null,
+                    "score": 0,
+                    "passed": false,
+                    "matches": {
+                      "additional requirements": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 30
+                      }
+                    }
+                  },
+                  {
+                    "agent_turn_index": 6,
+                    "turn_id": "turn_014",
+                    "turn_number": 14,
+                    "node_id": null,
+                    "score": 0,
+                    "passed": false,
+                    "matches": {
+                      "Greenwood Residency": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 42
+                      },
+                      "Lakeview Enclave": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 42
+                      }
+                    }
+                  },
+                  {
+                    "agent_turn_index": 7,
+                    "turn_id": "turn_016",
+                    "turn_number": 16,
+                    "node_id": null,
+                    "score": 0,
+                    "passed": false,
+                    "matches": {
+                      "schedule a visit": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 44
+                      }
+                    }
+                  },
+                  {
+                    "agent_turn_index": 8,
+                    "turn_id": "turn_018",
+                    "turn_number": 18,
+                    "node_id": null,
+                    "score": 0,
+                    "passed": false,
+                    "matches": {
+                      "schedule": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 53
+                      },
+                      "Saturday morning": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 42
+                      }
+                    }
+                  },
+                  {
+                    "agent_turn_index": 9,
+                    "turn_id": "turn_020",
+                    "turn_number": 20,
+                    "node_id": null,
+                    "score": 0,
+                    "passed": false,
+                    "matches": {
+                      "confirm": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 43
+                      },
+                      "WhatsApp details": {
+                        "matched": false,
+                        "method": "none",
+                        "score": 33
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "semantic_similarity",
+              "category": "accuracy",
+              "score": null,
+              "status": "skipped",
+              "details": {}
+            },
+            {
+              "name": "intent_classification_accuracy",
+              "category": "accuracy",
+              "score": null,
+              "status": "skipped",
+              "details": {}
+            }
+          ]
+        },
+        {
+          "category": "task_completion",
+          "score": 0.2,
+          "weight": 0.25,
+          "metrics": [
+            {
+              "name": "task_completion_rate",
+              "category": "task_completion",
+              "score": 0.4,
+              "status": "failed",
+              "details": {
+                "goal": "Validate the agent's ability to handle unclear responses and interruptions during an inbound qualification call",
+                "conversation_turns": 20
+              }
+            },
+            {
+              "name": "sequential_task_accuracy",
+              "category": "task_completion",
+              "score": null,
+              "status": "failed",
+              "details": {
+                "correct_matches": 0,
+                "total_checks": 10,
+                "mismatches": [
+                  {
+                    "position": 0,
+                    "expected_node": "start",
+                    "actual_node": "greeting_and_introduction",
+                    "turn_id": "turn_002",
+                    "text_excerpt": "Yes, this is Aditya. I saw a missed call from this number."
+                  },
+                  {
+                    "position": 1,
+                    "expected_node": "greeting_and_introduction",
+                    "actual_node": "configuration_preference",
+                    "turn_id": "turn_004",
+                    "text_excerpt": "Um, I think I might have looked at a few places. Can you remind me which property this is about?"
+                  },
+                  {
+                    "position": 2,
+                    "expected_node": "qualification_questions",
+                    "actual_node": "budget_range",
+                    "turn_id": "turn_006",
+                    "text_excerpt": "Oh, I’m not sure. Maybe something closer to my office would be better?"
+                  },
+                  {
+                    "position": 3,
+                    "expected_node": "configuration_preference",
+                    "actual_node": "property_recommendation",
+                    "turn_id": "turn_008",
+                    "text_excerpt": "I think a 2BHK apartment might work best for me."
+                  },
+                  {
+                    "position": 4,
+                    "expected_node": "possession_timeline",
+                    "actual_node": "schedule_visit",
+                    "turn_id": "turn_010",
+                    "text_excerpt": "Hmm, not sure. Maybe sometime soon, but I need to check a few things."
+                  },
+                  {
+                    "position": 5,
+                    "expected_node": "budget_range",
+                    "actual_node": null,
+                    "turn_id": "turn_012",
+                    "text_excerpt": "Let's keep it under 10,000 per square foot."
+                  },
+                  {
+                    "position": 6,
+                    "expected_node": "additional_requirements",
+                    "actual_node": null,
+                    "turn_id": "turn_014",
+                    "text_excerpt": "Good connectivity would be great, but I can be flexible."
+                  },
+                  {
+                    "position": 7,
+                    "expected_node": "property_recommendation",
+                    "actual_node": null,
+                    "turn_id": "turn_016",
+                    "text_excerpt": "Greenwood Residency sounds interesting. Can you tell me more about it?"
+                  },
+                  {
+                    "position": 8,
+                    "expected_node": "site_visit_scheduling",
+                    "actual_node": null,
+                    "turn_id": "turn_018",
+                    "text_excerpt": "Yes, I think visiting would be helpful."
+                  },
+                  {
+                    "position": 9,
+                    "expected_node": "schedule_visit",
+                    "actual_node": null,
+                    "turn_id": "turn_020",
+                    "text_excerpt": "Saturday morning works for me."
+                  }
+                ]
+              }
+            },
+            {
+              "name": "flow_path_coverage",
+              "category": "task_completion",
+              "score": null,
+              "status": "skipped",
+              "details": {}
+            }
+          ]
+        },
+        {
+          "category": "latency",
+          "score": 0.49978183593750003,
+          "weight": 0.15,
+          "metrics": [
+            {
+              "name": "response_latency",
+              "category": "latency",
+              "score": 0.99912734375,
+              "status": "passed",
+              "details": {
+                "average_ms": 1.7453125,
+                "max_ms": 4.001953125,
+                "min_ms": 0.858154296875,
+                "median_ms": 1.18212890625,
+                "p95_ms": 4.001953125,
+                "p99_ms": 4.001953125,
+                "count": 10,
+                "std_dev": 0.9896999477809117
+              }
+            },
+            {
+              "name": "time_to_first_token",
+              "category": "latency",
+              "score": 0,
+              "status": "failed",
+              "details": {
+                "average_ms": 6857.764208984375,
+                "count": 10
+              }
+            },
+            {
+              "name": "time_to_complete_transcript",
+              "category": "latency",
+              "score": 0,
+              "status": "failed",
+              "details": {
+                "average_ms": 3662.664208984375,
+                "count": 10
+              }
+            },
+            {
+              "name": "total_duration",
+              "category": "latency",
+              "score": 1,
+              "status": "passed",
+              "details": {
+                "duration_seconds": 108.049,
+                "duration_ms": 108049
+              }
+            }
+          ]
+        },
+        {
+          "category": "audio_quality",
+          "score": 0.8333333333333334,
+          "weight": 0.1,
+          "metrics": [
+            {
+              "name": "word_error_rate",
+              "category": "audio_quality",
+              "score": null,
+              "status": "skipped",
+              "details": {}
+            },
+            {
+              "name": "audio_technical_quality",
+              "category": "audio_quality",
+              "score": null,
+              "status": "skipped",
+              "details": {}
+            },
+            {
+              "name": "tts_naturalness",
+              "category": "audio_quality",
+              "score": null,
+              "status": "passed",
+              "details": {
+                "sampled_turns": 3,
+                "average_naturalness_score": 0.8333333333333334
+              }
+            }
+          ]
+        },
+        {
+          "category": "conversation_quality",
+          "score": 0.4666666666666666,
+          "weight": 0.15,
+          "metrics": [
+            {
+              "name": "grammar_quality",
+              "category": "conversation_quality",
+              "score": null,
+              "status": "passed",
+              "details": {
+                "evaluated_samples": 5,
+                "average_score": 1
+              }
+            },
+            {
+              "name": "context_maintenance",
+              "category": "conversation_quality",
+              "score": null,
+              "status": "failed",
+              "details": {
+                "conversation_length": 20
+              }
+            },
+            {
+              "name": "clarification_request_rate",
+              "category": "conversation_quality",
+              "score": null,
+              "status": "passed",
+              "details": {
+                "clarification_turns": 0,
+                "total_agent_turns": 10
+              }
+            }
+          ]
+        },
+        {
+          "category": "endpointing",
+          "score": 0.8134967387952303,
+          "weight": 0,
+          "metrics": [
+            {
+              "name": "interruption_count",
+              "category": "endpointing",
+              "score": 1,
+              "status": "passed",
+              "details": {
+                "interruption_count": 0,
+                "total_speech_turns": 20,
+                "interruption_rate": 0,
+                "by_type": {
+                  "user_barge_in": 0,
+                  "agent_barge_in": 0,
+                  "duplex_overlap": 0
+                },
+                "interruptions": []
+              }
+            },
+            {
+              "name": "pause_detection",
+              "category": "endpointing",
+              "score": 0.6269934775904605,
+              "status": "failed",
+              "details": {
+                "total_pauses": 19,
+                "average_pause_ms": 1865.0326120476973,
+                "max_pause_ms": 10163.285888671875,
+                "long_pauses": 3,
+                "by_severity": {
+                  "natural": 10,
+                  "conversational_pause": 3,
+                  "awkward_silence": 2,
+                  "system_failure": 4
+                }
+              }
+            },
+            {
+              "name": "turn_boundary_accuracy",
+              "category": "endpointing",
+              "score": null,
+              "status": "skipped",
+              "details": {}
+            }
+          ]
+        },
+        {
+          "category": "cost",
+          "score": 0.008703673110058594,
+          "weight": 0,
+          "metrics": [
+            {
+              "name": "stt_cost",
+              "category": "cost",
+              "score": null,
+              "status": "passed",
+              "details": {
+                "provider": "deepgram",
+                "audio_seconds": 60.955504394531246,
+                "rate_per_second": 0.0000717,
+                "stt_cost_usd": 0.00437050966508789
+              }
+            },
+            {
+              "name": "tts_cost",
+              "category": "cost",
+              "score": null,
+              "status": "passed",
+              "details": {
+                "provider": "openai",
+                "character_count": 579,
+                "rate_per_character": 0.000015,
+                "tts_cost_usd": 0.008685
+              }
+            },
+            {
+              "name": "total_conversation_cost",
+              "category": "cost",
+              "score": null,
+              "status": "passed",
+              "details": {
+                "total_cost_usd": 0.013055509665087891,
+                "stt_cost_usd": 0.00437050966508789,
+                "tts_cost_usd": 0.008685,
+                "stt_percentage": 33.476361913125416,
+                "tts_percentage": 66.52363808687458
+              }
+            }
+          ]
+        },
+        {
+          "category": "persona",
+          "score": 1,
+          "weight": 0.1,
+          "metrics": [
+            {
+              "name": "persona_consistency",
+              "category": "persona",
+              "score": null,
+              "status": "passed",
+              "details": {}
+            },
+            {
+              "name": "tone_appropriateness",
+              "category": "persona",
+              "score": null,
+              "status": "passed",
+              "details": {}
+            },
+            {
+              "name": "region_appropriate_language",
+              "category": "persona",
+              "score": null,
+              "status": "passed",
+              "details": {}
+            },
+            {
+              "name": "behavior_trait_alignment",
+              "category": "persona",
+              "score": null,
+              "status": "passed",
+              "details": {}
+            }
+          ]
+        }
+      ],
+      "metric_results": [
+        {
+          "name": "semantic_accuracy",
+          "category": "accuracy",
+          "score": 0,
+          "status": "failed",
+          "details": {
+            "evaluated_steps": 10,
+            "passed_steps": 0,
+            "step_results": [
+              {
+                "turn_id": "turn_002",
+                "turn_number": 2,
+                "passed": false,
+                "expected_response": "Hi Mr. Aditya, this is Priya calling from Greentech Realtors, Bengaluru. You had recently shown inte",
+                "expected_keywords": [
+                  "interest",
+                  "property",
+                  "99Acres"
+                ],
+                "reasoning": "The agent's response does not include the expected greeting, introduction, or mention of interest in a property on 99Acres. It only acknowledges a missed call."
+              },
+              {
+                "turn_id": "turn_004",
+                "turn_number": 4,
+                "passed": false,
+                "expected_response": "Certainly, I can help with that. We noticed you were exploring options on Sarjapur Road. Would you l",
+                "expected_keywords": [
+                  "Sarjapur Road",
+                  "options"
+                ],
+                "reasoning": "The agent's response does not mention Sarjapur Road or options, and it does not address the user's exploration of properties in that area."
+              },
+              {
+                "turn_id": "turn_006",
+                "turn_number": 6,
+                "passed": false,
+                "expected_response": "Understood. And what type of home are you considering — an apartment, a villa, or something else? An",
+                "expected_keywords": [
+                  "home type",
+                  "bedrooms"
+                ],
+                "reasoning": "The response does not address the expected keywords 'home type' and 'bedrooms', and instead focuses on location preference."
+              },
+              {
+                "turn_id": "turn_008",
+                "turn_number": 8,
+                "passed": false,
+                "expected_response": "Perfect. When are you planning to move in, Mr. Aditya?",
+                "expected_keywords": [
+                  "move in",
+                  "timeline"
+                ],
+                "reasoning": "The agent's response does not address the question about the timeline for moving in and lacks the expected keywords 'move in' and 'timeline'."
+              },
+              {
+                "turn_id": "turn_010",
+                "turn_number": 10,
+                "passed": false,
+                "expected_response": "That's understandable. May I also check what budget range you have in mind? That helps me recommend ",
+                "expected_keywords": [
+                  "budget range",
+                  "options"
+                ],
+                "reasoning": "The agent's response does not address the user's budget range or offer to recommend options, which are key components of the expected response."
+              },
+              {
+                "turn_id": "turn_012",
+                "turn_number": 12,
+                "passed": false,
+                "expected_response": "Apart from this, is there anything else that’s important for you in a home? For example — clubhouse,",
+                "expected_keywords": [
+                  "additional requirements"
+                ],
+                "reasoning": "The agent's response does not address the user's needs for additional requirements and fails to include the expected keywords."
+              },
+              {
+                "turn_id": "turn_014",
+                "turn_number": 14,
+                "passed": false,
+                "expected_response": "Based on your preferences, Mr. Aditya, I’d suggest Greenwood Residency in Domasandra or Lakeview Enc",
+                "expected_keywords": [
+                  "Greenwood Residency",
+                  "Lakeview Enclave"
+                ],
+                "reasoning": "The response does not include the expected suggestions of 'Greenwood Residency' or 'Lakeview Enclave' and does not address the user's preferences."
+              },
+              {
+                "turn_id": "turn_016",
+                "turn_number": 16,
+                "passed": false,
+                "expected_response": "You’ll get a much better idea when you see the property in person. Would you like me to schedule a v",
+                "expected_keywords": [
+                  "schedule a visit"
+                ],
+                "reasoning": "The response does not include the expected phrase 'schedule a visit' and does not address the request to schedule a visit to the property."
+              },
+              {
+                "turn_id": "turn_018",
+                "turn_number": 18,
+                "passed": false,
+                "expected_response": "How about Saturday morning?",
+                "expected_keywords": [
+                  "schedule",
+                  "Saturday morning"
+                ],
+                "reasoning": "The response does not address the scheduling inquiry and lacks the expected keywords 'schedule' and 'Saturday morning'."
+              },
+              {
+                "turn_id": "turn_020",
+                "turn_number": 20,
+                "passed": false,
+                "expected_response": "Perfect, I’ll book the slot for Sunday 11 AM and share all the details on WhatsApp — including prope",
+                "expected_keywords": [
+                  "confirm",
+                  "WhatsApp details"
+                ],
+                "reasoning": "The response does not confirm the booking for Sunday at 11 AM and lacks mention of WhatsApp details, property info, location, and the on-site agent's contact."
+              }
+            ]
+          }
+        },
+        {
+          "name": "keyword_match_accuracy",
+          "category": "accuracy",
+          "score": 0,
+          "status": "failed",
+          "details": {
+            "evaluated_steps": 10,
+            "average_step_score": 0,
+            "step_results": [
+              {
+                "agent_turn_index": 0,
+                "turn_id": "turn_002",
+                "turn_number": 2,
+                "node_id": "greeting_and_introduction",
+                "score": 0,
+                "passed": false,
+                "matches": {
+                  "interest": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 43
+                  },
+                  "property": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 38
+                  },
+                  "99Acres": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 40
+                  }
+                }
+              },
+              {
+                "agent_turn_index": 1,
+                "turn_id": "turn_004",
+                "turn_number": 4,
+                "node_id": "configuration_preference",
+                "score": 0,
+                "passed": false,
+                "matches": {
+                  "Sarjapur Road": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 38
+                  },
+                  "options": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 55
+                  }
+                }
+              },
+              {
+                "agent_turn_index": 2,
+                "turn_id": "turn_006",
+                "turn_number": 6,
+                "node_id": "budget_range",
+                "score": 0,
+                "passed": false,
+                "matches": {
+                  "home type": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 44
+                  },
+                  "bedrooms": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 50
+                  }
+                }
+              },
+              {
+                "agent_turn_index": 3,
+                "turn_id": "turn_008",
+                "turn_number": 8,
+                "node_id": "property_recommendation",
+                "score": 0,
+                "passed": false,
+                "matches": {
+                  "move in": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 57
+                  },
+                  "timeline": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 50
+                  }
+                }
+              },
+              {
+                "agent_turn_index": 4,
+                "turn_id": "turn_010",
+                "turn_number": 10,
+                "node_id": "schedule_visit",
+                "score": 0,
+                "passed": false,
+                "matches": {
+                  "budget range": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 50
+                  },
+                  "options": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 62
+                  }
+                }
+              },
+              {
+                "agent_turn_index": 5,
+                "turn_id": "turn_012",
+                "turn_number": 12,
+                "node_id": null,
+                "score": 0,
+                "passed": false,
+                "matches": {
+                  "additional requirements": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 30
+                  }
+                }
+              },
+              {
+                "agent_turn_index": 6,
+                "turn_id": "turn_014",
+                "turn_number": 14,
+                "node_id": null,
+                "score": 0,
+                "passed": false,
+                "matches": {
+                  "Greenwood Residency": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 42
+                  },
+                  "Lakeview Enclave": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 42
+                  }
+                }
+              },
+              {
+                "agent_turn_index": 7,
+                "turn_id": "turn_016",
+                "turn_number": 16,
+                "node_id": null,
+                "score": 0,
+                "passed": false,
+                "matches": {
+                  "schedule a visit": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 44
+                  }
+                }
+              },
+              {
+                "agent_turn_index": 8,
+                "turn_id": "turn_018",
+                "turn_number": 18,
+                "node_id": null,
+                "score": 0,
+                "passed": false,
+                "matches": {
+                  "schedule": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 53
+                  },
+                  "Saturday morning": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 42
+                  }
+                }
+              },
+              {
+                "agent_turn_index": 9,
+                "turn_id": "turn_020",
+                "turn_number": 20,
+                "node_id": null,
+                "score": 0,
+                "passed": false,
+                "matches": {
+                  "confirm": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 43
+                  },
+                  "WhatsApp details": {
+                    "matched": false,
+                    "method": "none",
+                    "score": 33
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "name": "semantic_similarity",
+          "category": "accuracy",
+          "score": null,
+          "status": "skipped",
+          "details": {}
+        },
+        {
+          "name": "intent_classification_accuracy",
+          "category": "accuracy",
+          "score": null,
+          "status": "skipped",
+          "details": {}
+        },
+        {
+          "name": "task_completion_rate",
+          "category": "task_completion",
+          "score": 0.4,
+          "status": "failed",
+          "details": {
+            "goal": "Validate the agent's ability to handle unclear responses and interruptions during an inbound qualification call",
+            "conversation_turns": 20
+          }
+        },
+        {
+          "name": "sequential_task_accuracy",
+          "category": "task_completion",
+          "score": null,
+          "status": "failed",
+          "details": {
+            "correct_matches": 0,
+            "total_checks": 10,
+            "mismatches": [
+              {
+                "position": 0,
+                "expected_node": "start",
+                "actual_node": "greeting_and_introduction",
+                "turn_id": "turn_002",
+                "text_excerpt": "Yes, this is Aditya. I saw a missed call from this number."
+              },
+              {
+                "position": 1,
+                "expected_node": "greeting_and_introduction",
+                "actual_node": "configuration_preference",
+                "turn_id": "turn_004",
+                "text_excerpt": "Um, I think I might have looked at a few places. Can you remind me which property this is about?"
+              },
+              {
+                "position": 2,
+                "expected_node": "qualification_questions",
+                "actual_node": "budget_range",
+                "turn_id": "turn_006",
+                "text_excerpt": "Oh, I’m not sure. Maybe something closer to my office would be better?"
+              },
+              {
+                "position": 3,
+                "expected_node": "configuration_preference",
+                "actual_node": "property_recommendation",
+                "turn_id": "turn_008",
+                "text_excerpt": "I think a 2BHK apartment might work best for me."
+              },
+              {
+                "position": 4,
+                "expected_node": "possession_timeline",
+                "actual_node": "schedule_visit",
+                "turn_id": "turn_010",
+                "text_excerpt": "Hmm, not sure. Maybe sometime soon, but I need to check a few things."
+              },
+              {
+                "position": 5,
+                "expected_node": "budget_range",
+                "actual_node": null,
+                "turn_id": "turn_012",
+                "text_excerpt": "Let's keep it under 10,000 per square foot."
+              },
+              {
+                "position": 6,
+                "expected_node": "additional_requirements",
+                "actual_node": null,
+                "turn_id": "turn_014",
+                "text_excerpt": "Good connectivity would be great, but I can be flexible."
+              },
+              {
+                "position": 7,
+                "expected_node": "property_recommendation",
+                "actual_node": null,
+                "turn_id": "turn_016",
+                "text_excerpt": "Greenwood Residency sounds interesting. Can you tell me more about it?"
+              },
+              {
+                "position": 8,
+                "expected_node": "site_visit_scheduling",
+                "actual_node": null,
+                "turn_id": "turn_018",
+                "text_excerpt": "Yes, I think visiting would be helpful."
+              },
+              {
+                "position": 9,
+                "expected_node": "schedule_visit",
+                "actual_node": null,
+                "turn_id": "turn_020",
+                "text_excerpt": "Saturday morning works for me."
+              }
+            ]
+          }
+        },
+        {
+          "name": "flow_path_coverage",
+          "category": "task_completion",
+          "score": null,
+          "status": "skipped",
+          "details": {}
+        },
+        {
+          "name": "response_latency",
+          "category": "latency",
+          "score": 0.99912734375,
+          "status": "passed",
+          "details": {
+            "average_ms": 1.7453125,
+            "max_ms": 4.001953125,
+            "min_ms": 0.858154296875,
+            "median_ms": 1.18212890625,
+            "p95_ms": 4.001953125,
+            "p99_ms": 4.001953125,
+            "count": 10,
+            "std_dev": 0.9896999477809117
+          }
+        },
+        {
+          "name": "time_to_first_token",
+          "category": "latency",
+          "score": 0,
+          "status": "failed",
+          "details": {
+            "average_ms": 6857.764208984375,
+            "count": 10
+          }
+        },
+        {
+          "name": "time_to_complete_transcript",
+          "category": "latency",
+          "score": 0,
+          "status": "failed",
+          "details": {
+            "average_ms": 3662.664208984375,
+            "count": 10
+          }
+        },
+        {
+          "name": "total_duration",
+          "category": "latency",
+          "score": 1,
+          "status": "passed",
+          "details": {
+            "duration_seconds": 108.049,
+            "duration_ms": 108049
+          }
+        },
+        {
+          "name": "word_error_rate",
+          "category": "audio_quality",
+          "score": null,
+          "status": "skipped",
+          "details": {}
+        },
+        {
+          "name": "audio_technical_quality",
+          "category": "audio_quality",
+          "score": null,
+          "status": "skipped",
+          "details": {}
+        },
+        {
+          "name": "tts_naturalness",
+          "category": "audio_quality",
+          "score": null,
+          "status": "passed",
+          "details": {
+            "sampled_turns": 3,
+            "average_naturalness_score": 0.8333333333333334
+          }
+        },
+        {
+          "name": "grammar_quality",
+          "category": "conversation_quality",
+          "score": null,
+          "status": "passed",
+          "details": {
+            "evaluated_samples": 5,
+            "average_score": 1
+          }
+        },
+        {
+          "name": "context_maintenance",
+          "category": "conversation_quality",
+          "score": null,
+          "status": "failed",
+          "details": {
+            "conversation_length": 20
+          }
+        },
+        {
+          "name": "clarification_request_rate",
+          "category": "conversation_quality",
+          "score": null,
+          "status": "passed",
+          "details": {
+            "clarification_turns": 0,
+            "total_agent_turns": 10
+          }
+        },
+        {
+          "name": "interruption_count",
+          "category": "endpointing",
+          "score": 1,
+          "status": "passed",
+          "details": {
+            "interruption_count": 0,
+            "total_speech_turns": 20,
+            "interruption_rate": 0,
+            "by_type": {
+              "user_barge_in": 0,
+              "agent_barge_in": 0,
+              "duplex_overlap": 0
+            },
+            "interruptions": []
+          }
+        },
+        {
+          "name": "pause_detection",
+          "category": "endpointing",
+          "score": 0.6269934775904605,
+          "status": "failed",
+          "details": {
+            "total_pauses": 19,
+            "average_pause_ms": 1865.0326120476973,
+            "max_pause_ms": 10163.285888671875,
+            "long_pauses": 3,
+            "by_severity": {
+              "natural": 10,
+              "conversational_pause": 3,
+              "awkward_silence": 2,
+              "system_failure": 4
+            }
+          }
+        },
+        {
+          "name": "turn_boundary_accuracy",
+          "category": "endpointing",
+          "score": null,
+          "status": "skipped",
+          "details": {}
+        },
+        {
+          "name": "stt_cost",
+          "category": "cost",
+          "score": null,
+          "status": "passed",
+          "details": {
+            "provider": "deepgram",
+            "audio_seconds": 60.955504394531246,
+            "rate_per_second": 0.0000717,
+            "stt_cost_usd": 0.00437050966508789
+          }
+        },
+        {
+          "name": "tts_cost",
+          "category": "cost",
+          "score": null,
+          "status": "passed",
+          "details": {
+            "provider": "openai",
+            "character_count": 579,
+            "rate_per_character": 0.000015,
+            "tts_cost_usd": 0.008685
+          }
+        },
+        {
+          "name": "total_conversation_cost",
+          "category": "cost",
+          "score": null,
+          "status": "passed",
+          "details": {
+            "total_cost_usd": 0.013055509665087891,
+            "stt_cost_usd": 0.00437050966508789,
+            "tts_cost_usd": 0.008685,
+            "stt_percentage": 33.476361913125416,
+            "tts_percentage": 66.52363808687458
+          }
+        },
+        {
+          "name": "persona_consistency",
+          "category": "persona",
+          "score": null,
+          "status": "passed",
+          "details": {}
+        },
+        {
+          "name": "tone_appropriateness",
+          "category": "persona",
+          "score": null,
+          "status": "passed",
+          "details": {}
+        },
+        {
+          "name": "region_appropriate_language",
+          "category": "persona",
+          "score": null,
+          "status": "passed",
+          "details": {}
+        },
+        {
+          "name": "behavior_trait_alignment",
+          "category": "persona",
+          "score": null,
+          "status": "passed",
+          "details": {}
+        }
+      ],
+      "issues_found": 8,
+      "recommendations": [
+        "Overall score is low. Consider comprehensive review of agent configuration and prompts.",
+        "Accuracy metrics are below threshold. Review validation criteria and expected responses.",
+        "Latency is high. Consider optimizing models or infrastructure."
+      ],
+      "execution_time_ms": 29046.59104347229
+    }
+  ]
+}

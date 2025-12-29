@@ -11,46 +11,9 @@ import {
 import ConversationDetailedMetrics from "./ConversationDetailedMetrics";
 
 /* =========================
-   Dummy API Response
+   METADATA
 ========================= */
-const response = {
-  category: "conversation_quality",
-  overall_score: 0.75,
-  passed: true,
-  metrics: [
-    {
-      metric_name: "grammar_quality",
-      passed: true,
-      execution_time_ms: 7546.151161193848,
-      value: 1.0,
-      threshold: 0.8,
-    },
-    {
-      metric_name: "context_maintenance",
-      passed: true,
-      execution_time_ms: 3906.0778617858887,
-      value: 1.0,
-      threshold: 0.85,
-    },
-    {
-      metric_name: "information_extraction_accuracy",
-      passed: true,
-      execution_time_ms: 0.017404556274414062,
-      value: 1.0,
-      threshold: 0.9,
-    },
-    {
-      metric_name: "clarification_request_rate",
-      passed: true,
-      execution_time_ms: 0.0362396240234375,
-      value: 0.0,
-    },
-  ],
-};
 
-/* =========================
-   Helpers
-========================= */
 const metricMeta = {
   grammar_quality: {
     title: "Grammar Quality",
@@ -70,26 +33,58 @@ const metricMeta = {
   clarification_request_rate: {
     title: "Clarification Rate",
     icon: HelpCircle,
-    subtitle: "No clarifications needed – efficient!",
+    subtitle: "Clarifications during conversation",
   },
 };
 
-const transformStatCards = (response) =>
-  response.metrics.map((m) => ({
-    ...metricMeta[m.metric_name],
-    value: Math.round(m.value * 100),
-    highlight: !m.passed,
+/* =========================
+   HELPERS
+========================= */
+
+const normalizeScore = (score) => {
+  if (typeof score !== "number") return 0;
+  return score <= 1 ? Math.round(score * 100) : Math.round(score);
+};
+
+const transformStatCards = (response) => {
+  if (!response || !Array.isArray(response.metrics)) return [];
+
+  return response.metrics.map((m) => ({
+    ...metricMeta[m.name],
+    value: normalizeScore(m.score),
+    highlight: m.status === "failed",
   }));
+};
 
 /* =========================
-   Conversation Overview
+   COMPONENT
 ========================= */
-const ConversationOverview = ({ onBack }) => {
-  const score = Math.round(response.overall_score * 100);
-  const passedCount = response.metrics.filter((m) => m.passed).length;
-  const failedCount = response.metrics.length - passedCount;
+
+const ConversationOverview = ({ response, onBack }) => {
+  if (!response || !Array.isArray(response.metrics)) return null;
+
+  /* -------------------------
+     DERIVED VALUES
+  ------------------------- */
+
+  const score =
+    typeof response.score === "number"
+      ? Math.round(response.score * 100)
+      : 0;
+
+  const passedCount = response.metrics.filter(
+    (m) => m.status === "passed"
+  ).length;
+
+  const failedCount = response.metrics.filter(
+    (m) => m.status === "failed"
+  ).length;
 
   const statCards = transformStatCards(response);
+
+  /* =========================
+     RENDER
+  ========================= */
 
   return (
     <div className="flex flex-col gap-8">

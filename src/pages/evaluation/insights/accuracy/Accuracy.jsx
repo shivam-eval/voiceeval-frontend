@@ -1,66 +1,18 @@
 import { useState } from "react";
-import {
-  Target,
-  TrendingUp,
-  ArrowLeft,
-} from "lucide-react";
+import { Target, TrendingUp, ArrowLeft } from "lucide-react";
 
 import AccuracyBar from "./AccuracyBar";
-import VoiceAccuracySteps from "./VoiceAccuracySteps";
 import MetricCard from "./MetricCard";
 import DetailedMetric from "../../../../components/DetailedMetric";
 import CriticalAlert from "../../../../components/CriticAlert";
 
 /* =========================
-   MOCK API RESPONSE
+   HELPERS
 ========================= */
-const response = {
-  category: "accuracy",
-  overall_score: 0.74,
-  passed: false,
-  metrics: [
-    {
-      metric_name: "semantic_accuracy_rate",
-      passed: true,
-      value: 0.92,
-      threshold: 0.8,
-    },
-    {
-      metric_name: "keyword_match_accuracy",
-      passed: true,
-      value: 0.90,
-      threshold: 0.85,
-    },
-    {
-      metric_name: "semantic_similarity",
-      passed: false,
-      value: 0.68,
-      threshold: 0.75,
-    },
-    {
-      metric_name: "intent_classification_accuracy",
-      passed: false,
-      value: 0.72,
-      threshold: 0.85,
-    },
-  ],
-};
-
-/* =========================
-   TRANSFORMER
-========================= */
-const transformAccuracyMetrics = (response) =>
-  response.metrics.map((m) => ({
-    label: humanizeMetricName(m.metric_name),
-    value: Math.round(m.value * 100),
-    threshold: Math.round(m.threshold * 100),
-    time: m.execution_time_ms ? `${m.execution_time_ms.toFixed(2)}ms` : '0ms',
-    status: m.passed ? "passed" : "failed",
-  }));
 
 const humanizeMetricName = (name) => {
   const map = {
-    semantic_accuracy_rate: "Semantic Accuracy Rate",
+    semantic_accuracy: "Semantic Accuracy",
     keyword_match_accuracy: "Keyword Match Accuracy",
     semantic_similarity: "Semantic Similarity",
     intent_classification_accuracy: "Intent Classification Accuracy",
@@ -68,19 +20,57 @@ const humanizeMetricName = (name) => {
   return map[name] || name;
 };
 
-export default function AgentDashboard({ onBack }) {
+/* =========================
+   TRANSFORMER
+========================= */
+
+const transformAccuracyMetrics = (response) => {
+  if (!response || !Array.isArray(response.metrics)) return [];
+
+  return response.metrics.map((m) => ({
+    label: humanizeMetricName(m.name),
+    value: typeof m.score === "number" ? Math.round(m.score) : 0, // score already 0–100
+    threshold: 100,
+    time: "—",
+    status: m.status, // passed | failed | skipped
+  }));
+};
+
+/* =========================
+   COMPONENT
+========================= */
+
+export default function AccuracyView({ response, onBack }) {
+  if (!response || !Array.isArray(response.metrics)) return null;
+
   const [activeTab] = useState("accuracy");
 
-  /* =========================
-     DERIVED DATA
-  ========================= */
+  const metrics = response.metrics;
   const detailedMetrics = transformAccuracyMetrics(response);
 
-  const passedCount = response.metrics.filter((m) => m.passed).length;
-  const failedCount = response.metrics.length - passedCount;
+  /* -------------------------
+     DERIVED VALUES
+  ------------------------- */
 
-  const score = Math.round(response.overall_score * 100);
-  const isCritical = !response.passed;
+  const passedCount = metrics.filter((m) => m.status === "passed").length;
+  const failedCount = metrics.filter((m) => m.status === "failed").length;
+
+  const numericScores = metrics
+    .map((m) => m.score)
+    .filter((s) => typeof s === "number");
+
+  const score =
+    numericScores.length > 0
+      ? Math.round(
+          numericScores.reduce((a, b) => a + b, 0) / numericScores.length
+        )
+      : 0;
+
+  const isCritical = failedCount > 0;
+
+  /* =========================
+     RENDER
+  ========================= */
 
   return (
     <div className="space-y-6">
@@ -95,60 +85,56 @@ export default function AgentDashboard({ onBack }) {
         </button>
       )}
 
-        {/* =========================
-           HEADER METRIC CARD
-        ========================= */}
-        <MetricCard
-          icon={Target}
-          title="Accuracy"
-          value={score}
-          passed={passedCount}
-          failed={failedCount}
-          status={isCritical ? "critical" : "success"}
+      {/* Header Card */}
+      <MetricCard
+        icon={Target}
+        title="Accuracy"
+        value={score}
+        passed={passedCount}
+        failed={failedCount}
+        status={isCritical ? "critical" : "success"}
+      />
+
+      {/* Critical Alert */}
+      {isCritical && (
+        <CriticalAlert
+          title="Accuracy Below Threshold"
+          description="One or more accuracy metrics failed. Review expected responses and intent handling."
+          metrics={metrics
+            .filter((m) => m.status === "failed")
+            .map((m) => ({
+              icon: TrendingUp,
+              label: humanizeMetricName(m.name),
+              value:
+                typeof m.score === "number"
+                  ? `${Math.round(m.score)}%`
+                  : "N/A",
+            }))}
         />
+      )}
 
-        {/* =========================
-           CRITICAL ALERT (ONLY IF FAILED)
-        ========================= */}
-        {isCritical && (
-          <CriticalAlert
-            title="Critical: Zero Intent Understanding"
-            description="The agent is matching keywords without semantic comprehension."
-            metrics={[
-              { icon: TrendingUp, label: "Semantic Similarity", value: "0%" },
-              { icon: Target, label: "Intent Classification", value: "0%" },
-            ]}
-          />
-        )}
+      {/* Visualization */}
+      <div className="mt-6 grid grid-cols-1 gap-6">
+        <AccuracyBar response={response} />
+      </div>
 
-        {/* =========================
-           VISUAL SECTIONS
-        ========================= */}
-        <div className="mt-6 grid grid-cols-1 gap-6">
-          <AccuracyBar  response={response}/>
-          {/* <VoiceAccuracySteps /> */}
-        </div>
-
-        {/* =========================
-           DETAILED METRICS
-        ========================= */}
-        <div className="pt-10">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center">
-              <div className="w-4 h-4 border-2 border-teal-400 rounded-full flex items-center justify-center">
-                <div className="w-2 h-2 bg-teal-400 rounded-full" />
-              </div>
+      {/* Detailed Metrics */}
+      <div className="pt-10">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-teal-400 rounded-full flex items-center justify-center">
+              <div className="w-2 h-2 bg-teal-400 rounded-full" />
             </div>
-            <h2 className="text-xl font-semibold">Detailed Metrics</h2>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {detailedMetrics.map((metric, idx) => (
-              <DetailedMetric key={idx} {...metric} />
-            ))}
-          </div>
+          <h2 className="text-xl font-semibold">Detailed Metrics</h2>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {detailedMetrics.map((metric, idx) => (
+            <DetailedMetric key={idx} {...metric} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

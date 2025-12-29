@@ -1,8 +1,9 @@
 import { GitBranch } from "lucide-react";
 
 /* =========================
-   Helpers
+   HELPERS
 ========================= */
+
 const humanizeMetricName = (name) => {
   const map = {
     task_completion_rate: "Task Completion Rate",
@@ -13,18 +14,28 @@ const humanizeMetricName = (name) => {
   return map[name] || name;
 };
 
+const normalizeScore = (score) => {
+  if (typeof score !== "number") return 0;
+  return score <= 1 ? Math.round(score * 100) : Math.round(score);
+};
+
+/* =========================
+   TRANSFORMER
+========================= */
+
 const transformMetrics = (response) => {
-  if (!response?.metrics) return [];
+  if (!response || !Array.isArray(response.metrics)) return [];
 
   return response.metrics.map((m) => ({
-    label: humanizeMetricName(m.metric_name),
-    value: Math.round(m.value * 100),
+    label: humanizeMetricName(m.name),
+    value: normalizeScore(m.score),
   }));
 };
 
 /* =========================
-   Colors
+   COLORS
 ========================= */
+
 const colors = [
   "#4EEAD7",
   "#2DD4BF",
@@ -33,8 +44,9 @@ const colors = [
 ];
 
 /* =========================
-   Donut Chart
+   DONUT CHART
 ========================= */
+
 const DonutChart = ({ metrics }) => {
   const radius = 90;
   const stroke = 28;
@@ -64,8 +76,9 @@ const DonutChart = ({ metrics }) => {
 };
 
 /* =========================
-   Progress Bar
+   PROGRESS BAR
 ========================= */
+
 const ProgressBar = ({ label, value }) => (
   <div className="flex flex-col gap-2">
     <div className="flex justify-between items-center">
@@ -82,8 +95,9 @@ const ProgressBar = ({ label, value }) => (
 );
 
 /* =========================
-   Component
+   COMPONENT
 ========================= */
+
 const TaskCompletionDistribution = ({ response }) => {
   const metrics = transformMetrics(response);
 
@@ -91,7 +105,6 @@ const TaskCompletionDistribution = ({ response }) => {
 
   return (
     <div className="bg-[#071a23] border border-teal-500/20 rounded-xl p-8 w-full">
-
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <GitBranch className="text-teal-400" size={20} />
@@ -101,17 +114,21 @@ const TaskCompletionDistribution = ({ response }) => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-
         {/* Left: Donut + Legend */}
         <div className="flex flex-col items-center">
           <DonutChart metrics={metrics} />
 
           <div className="grid grid-cols-2 gap-x-6 gap-y-3 mt-6 text-sm">
             {metrics.map((m, i) => (
-              <div key={i} className="flex items-center gap-2 text-gray-400">
+              <div
+                key={i}
+                className="flex items-center gap-2 text-gray-400"
+              >
                 <span
                   className="w-3 h-3 rounded-sm"
-                  style={{ backgroundColor: colors[i % colors.length] }}
+                  style={{
+                    backgroundColor: colors[i % colors.length],
+                  }}
                 />
                 {m.label}
               </div>
@@ -130,7 +147,6 @@ const TaskCompletionDistribution = ({ response }) => {
             />
           ))}
         </div>
-
       </div>
     </div>
   );

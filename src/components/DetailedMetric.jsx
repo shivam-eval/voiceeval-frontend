@@ -8,7 +8,7 @@ const DetailedMetric = ({
   unit = "%",
   status, // ✅ SOURCE OF TRUTH
 }) => {
-  const isPassed = status === "passed"||value<threshold;
+  const isPassed = status === "passed";
 
   // purely visual scaling (not logic)
   const percent = Math.min((value / threshold) * 100, 100);

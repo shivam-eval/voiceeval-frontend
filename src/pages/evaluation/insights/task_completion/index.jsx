@@ -4,52 +4,9 @@ import TaskCompletionDistribution from "./TaskCompletion";
 import DetailedValidationSection from "./DetailedValidationSection";
 
 /* =========================
-   Helpers
+   HELPERS
 ========================= */
 
-const response=
-{
-  "category": "task_completion",
-  "overall_score": 1.0,
-  "passed": true,
-  "metrics": [
-    {
-      "metric_name": "task_completion_rate",
-      "category": "task_completion",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 2353.213310241699,
-      "value": 1.0,
-      "threshold": 0.9
-    },
-    {
-      "metric_name": "sequential_task_accuracy",
-      "category": "task_completion",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 0.0438690185546875,
-      "value": 1.0,
-      "threshold": 0.85
-    },
-    {
-      "metric_name": "step_validation_pass_rate",
-      "category": "task_completion",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 0.01049041748046875,
-      "value": 1.0,
-      "threshold": 0.8
-    },
-    {
-      "metric_name": "flow_path_coverage",
-      "category": "task_completion",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 0.010013580322265625,
-      "value": 1.0
-    }
-  ]
-}
 const humanizeMetricName = (name) => {
   const map = {
     task_completion_rate: "Task Completion",
@@ -60,26 +17,57 @@ const humanizeMetricName = (name) => {
   return map[name] || name;
 };
 
-const transformStatCards = (response) =>
-  response.metrics.map((m) => ({
-    title: humanizeMetricName(m.metric_name),
-    value: Math.round(m.value * 100),
-    passed: m.passed,
+/* =========================
+   TRANSFORMERS
+========================= */
+
+const normalizeMetricScore = (score) => {
+  if (typeof score !== "number") return 0;
+  return score <= 1 ? Math.round(score * 100) : Math.round(score);
+};
+
+const transformStatCards = (response) => {
+  if (!response || !Array.isArray(response.metrics)) return [];
+
+  return response.metrics.map((m) => ({
+    title: humanizeMetricName(m.name),
+    value: normalizeMetricScore(m.score),
+    passed: m.status === "passed",
   }));
+};
 
 /* =========================
-   Component
+   COMPONENT
 ========================= */
-const TaskCompletionOverview = ({ onBack }) => {
-  /* -------------------------
-     Derived values
-  ------------------------- */
-  const score = Math.round(response.overall_score * 100);
 
-  const passedCount = response.metrics.filter((m) => m.passed).length;
-  const failedCount = response.metrics.length - passedCount;
+const TaskCompletionOverview = ({ response, onBack }) => {
+  if (!response || !Array.isArray(response.metrics)) return null;
+
+  const metrics = response.metrics;
+
+  /* -------------------------
+     DERIVED VALUES
+  ------------------------- */
+
+  // Category score is authoritative
+  const score =
+    typeof response.score === "number"
+      ? Math.round(response.score * 100)
+      : 0;
+
+  const passedCount = metrics.filter(
+    (m) => m.status === "passed"
+  ).length;
+
+  const failedCount = metrics.filter(
+    (m) => m.status === "failed"
+  ).length;
 
   const statCards = transformStatCards(response);
+
+  /* =========================
+     RENDER
+  ========================= */
 
   return (
     <div className="flex flex-col gap-6">
@@ -96,7 +84,6 @@ const TaskCompletionOverview = ({ onBack }) => {
 
       {/* ================= HEADER CARD ================= */}
       <div className="bg-[#0b1f26] border border-teal-500/40 rounded-xl p-6 flex items-center justify-between">
-
         {/* Left */}
         <div className="flex items-start gap-4">
           <div className="p-4 rounded-xl bg-teal-500/20 text-teal-400">
@@ -114,7 +101,6 @@ const TaskCompletionOverview = ({ onBack }) => {
 
         {/* Right */}
         <div className="flex items-center gap-6">
-
           {/* Ring */}
           <div className="relative w-24 h-24">
             <svg className="w-24 h-24 -rotate-90">
@@ -162,7 +148,6 @@ const TaskCompletionOverview = ({ onBack }) => {
               <span className="text-gray-400">Failed</span>
             </div>
           </div>
-
         </div>
       </div>
 
@@ -184,7 +169,6 @@ const TaskCompletionOverview = ({ onBack }) => {
 
       {/* ================= DETAILED VALIDATION ================= */}
       <DetailedValidationSection response={response} />
-
     </div>
   );
 };

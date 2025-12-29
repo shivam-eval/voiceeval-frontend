@@ -1,13 +1,8 @@
 import { DollarSign } from "lucide-react";
 import DetailedMetric from "../../../../components/DetailedMetric";
 
-/* =========================
-   Helpers
-========================= */
-
 const humanizeMetricName = (name) => {
   const map = {
-    llm_token_usage: "LLM Token Usage",
     stt_cost: "Speech-to-Text Cost",
     tts_cost: "Text-to-Speech Cost",
     total_conversation_cost: "Total Conversation Cost",
@@ -15,13 +10,22 @@ const humanizeMetricName = (name) => {
   return map[name] || name;
 };
 
-const formatUSD = (value) => `$${Number(value).toFixed(4)}`;
+const formatUSD = (v) => `$${(v ?? 0).toFixed(4)}`;
 
-/* =========================
-   Component
-========================= */
+const extractPrimaryCost = (metric) => {
+  if (!metric?.details) return null;
+
+  if (metric.name === "stt_cost") return metric.details.stt_cost_usd;
+  if (metric.name === "tts_cost") return metric.details.tts_cost_usd;
+  if (metric.name === "total_conversation_cost")
+    return metric.details.total_cost_usd;
+
+  return null;
+};
 
 const CostDetailedMetrics = ({ metrics = [] }) => {
+  if (!metrics.length) return null;
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -32,43 +36,41 @@ const CostDetailedMetrics = ({ metrics = [] }) => {
         </h3>
       </div>
 
-      {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {metrics.map((metric, idx) => {
-          const details = metric.details
-            ? Object.entries(metric.details).map(([key, value]) => ({
-                label: key.replace(/_/g, " "),
-                value:
-                  typeof value === "number" ? formatUSD(value) : value,
-              }))
-            : null;
+          const primaryValue = extractPrimaryCost(metric);
+          const details = metric.details ?? {};
 
           return (
             <DetailedMetric
               key={idx}
-              label={humanizeMetricName(metric.metric_name)}
-              value={metric.value}
-              threshold={metric.threshold}
-              time={metric.execution_time_ms}
-              status={metric.passed ? "passed" : "failed"}
+              label={humanizeMetricName(metric.name)}
+              status={metric.status}
+              value={primaryValue !== null ? formatUSD(primaryValue) : "—"}
+              unit=""                 // 🔑 prevents "%"
+              threshold={null}        // 🔑 removes threshold
+              showProgress={false}    // 🔑 removes bar (if supported)
             >
-              {/* Primary Value */}
-              <div className="text-teal-400 text-3xl font-bold">
-                {formatUSD(metric.value)}
-              </div>
-
-              {/* Optional Details */}
-              {details && (
+              {/* Extra breakdown */}
+              {Object.entries(details)
+                .filter(([k]) => k.endsWith("_usd") && k !== "total_cost_usd")
+                .length > 0 && (
                 <div className="mt-4 grid grid-cols-2 gap-y-2 text-sm text-gray-400">
-                  {details.map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex justify-between col-span-2 lg:col-span-1"
-                    >
-                      <span className="capitalize">{item.label}</span>
-                      <span className="text-white">{item.value}</span>
-                    </div>
-                  ))}
+                  {Object.entries(details)
+                    .filter(([k]) => k.endsWith("_usd"))
+                    .map(([key, value]) => (
+                      <div
+                        key={key}
+                        className="flex justify-between col-span-2"
+                      >
+                        <span className="capitalize">
+                          {key.replace(/_/g, " ")}
+                        </span>
+                        <span className="text-white">
+                          {formatUSD(value)}
+                        </span>
+                      </div>
+                    ))}
                 </div>
               )}
             </DetailedMetric>

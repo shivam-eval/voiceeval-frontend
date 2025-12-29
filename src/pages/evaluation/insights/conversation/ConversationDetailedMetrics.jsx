@@ -1,38 +1,53 @@
 import { MessageSquare } from "lucide-react";
 import DetailedMetric from "../../../../components/DetailedMetric";
 
-const DUMMY_CONVERSATION_METRICS = [
-  {
-    label: "Grammar Quality",
-    value: 100,
-    threshold: 80,
-    time: "7546.15ms",
-    unit: "%",
-  },
-  {
-    label: "Context Maintenance",
-    value: 100,
-    threshold: 85,
-    time: "3906.08ms",
-    unit: "%",
-  },
-  {
-    label: "Information Extraction Accuracy",
-    value: 100,
-    threshold: 90,
-    time: "0.02ms",
-    unit: "%",
-  },
-  {
-    label: "Clarification Request Rate",
-    value: 0,
-    threshold: 0,
-    time: "0.04ms",
-    unit: "%",
-  },
-];
+/* =========================
+   HELPERS
+========================= */
 
-const ConversationDetailedMetrics = () => {
+const humanizeMetricName = (name) => {
+  const map = {
+    grammar_quality: "Grammar Quality",
+    context_maintenance: "Context Maintenance",
+    clarification_request_rate: "Clarification Request Rate",
+    information_extraction_accuracy: "Information Extraction Accuracy",
+  };
+  return map[name] || name;
+};
+
+const normalizeScore = (score) => {
+  if (typeof score !== "number") return "N/A";
+  return score <= 1 ? `${Math.round(score * 100)}%` : `${Math.round(score)}%`;
+};
+
+/* =========================
+   TRANSFORMER
+========================= */
+
+const transformMetrics = (response) => {
+  if (!response || !Array.isArray(response.metrics)) return [];
+
+  return response.metrics.map((m) => ({
+    label: humanizeMetricName(m.name),
+    value: normalizeScore(m.score),
+    threshold: null,
+    time: "—",
+    unit: null,
+    status: m.status,
+  }));
+};
+
+/* =========================
+   COMPONENT
+========================= */
+
+const ConversationDetailedMetrics = ({ response }) => {
+  if (!response || !Array.isArray(response.metrics)) return null;
+
+  const metrics = transformMetrics(response);
+
+  if (!metrics.length) return null;
+
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -45,7 +60,7 @@ const ConversationDetailedMetrics = () => {
 
       {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {DUMMY_CONVERSATION_METRICS.map((metric, idx) => (
+        {metrics.map((metric, idx) => (
           <DetailedMetric
             key={idx}
             label={metric.label}
@@ -53,6 +68,7 @@ const ConversationDetailedMetrics = () => {
             threshold={metric.threshold}
             time={metric.time}
             unit={metric.unit}
+            status={metric.status}
           />
         ))}
       </div>

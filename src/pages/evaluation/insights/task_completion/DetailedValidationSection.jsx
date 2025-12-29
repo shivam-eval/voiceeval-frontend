@@ -2,8 +2,9 @@ import DetailedMetric from "../../../../components/DetailedMetric";
 import { ShieldCheck } from "lucide-react";
 
 /* =========================
-   Helpers
+   HELPERS
 ========================= */
+
 const humanizeMetricName = (name) => {
   const map = {
     task_completion_rate: "Task Completion Rate",
@@ -14,31 +15,46 @@ const humanizeMetricName = (name) => {
   return map[name] || name;
 };
 
+/* =========================
+   TRANSFORMER (SAFE)
+========================= */
+
 const transformDetailedMetrics = (response) => {
-  if (!response?.metrics) return [];
+  if (!response || !Array.isArray(response.metrics)) return [];
 
   return response.metrics.map((m) => ({
-    label: humanizeMetricName(m.metric_name),
-    value: Math.round(m.value * 100),
-    threshold: m.threshold
-      ? Math.round(m.threshold * 100)
-      : 80, // fallback for flow_path_coverage
-    time: `${m.execution_time_ms.toFixed(2)}ms`,
-    status: m.passed ? "passed" : "failed",
+    label: humanizeMetricName(m.name),
+
+    // metric score → percentage (safe for null / 0–1 / 0–100)
+    value:
+      typeof m.score === "number"
+        ? Math.round(m.score <= 1 ? m.score * 100 : m.score)
+        : "N/A",
+
+    // task_completion metrics do not guarantee thresholds
+    threshold: null,
+
+    // execution time not available in this contract
+    time: "—",
+
+    // passed | failed | skipped
+    status: m.status,
   }));
 };
 
 /* =========================
-   Component
+   COMPONENT
 ========================= */
+
 const DetailedValidationSection = ({ response }) => {
+  if (!response || !Array.isArray(response.metrics)) return null;
+
   const detailedMetrics = transformDetailedMetrics(response);
 
   if (!detailedMetrics.length) return null;
 
   return (
     <div className="flex flex-col gap-6">
-
       {/* Header */}
       <div className="flex items-center gap-3">
         <ShieldCheck className="text-teal-400" size={20} />
@@ -47,7 +63,7 @@ const DetailedValidationSection = ({ response }) => {
         </h3>
       </div>
 
-      {/* Grid */}
+      {/* Metrics Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {detailedMetrics.map((metric, idx) => (
           <DetailedMetric

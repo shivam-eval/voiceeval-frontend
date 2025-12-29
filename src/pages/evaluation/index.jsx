@@ -58,6 +58,8 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
   const [activeCategory, setActiveCategory] = useState(CATEGORY.OVERVIEW);
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedTranscript, setSelectedTranscript] = useState(null);
+  const [selectedEvaluation, setSelectedEvaluation] = useState(null);
+
 
   // Use res.json data
   const useResData = resData.simulation_evaluation;
@@ -197,34 +199,22 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
     return DEBT_COLLECTION_TRANSCRIPTS[transcriptId] || null;
   };
 
-  const handleViewReport = (report) => {
-    // Find the full evaluation data for this test case
-    // Handle both full and partial IDs
-    const fullEvaluation = resData.evaluations?.find(
-      evaluation => {
-        // Try exact match first
-        if (evaluation.evaluation_id === report.transcript_result_id) return true;
-        // Try partial match (in case ID is truncated)
-        if (evaluation.evaluation_id.startsWith(report.transcript_result_id)) return true;
-        if (report.transcript_result_id.startsWith(evaluation.evaluation_id)) return true;
-        return false;
-      }
-    );
-    
-    console.log('Report clicked:', report);
-    console.log('Looking for evaluation_id:', report.transcript_result_id);
-    console.log('Found evaluation:', fullEvaluation);
-    console.log('Available evaluation IDs:', resData.evaluations?.map(e => e.evaluation_id));
-    
-    setSelectedReport({
-      ...report,
-      fullEvaluation: fullEvaluation
-    });
-    
-    // Get transcript data if available
-    const transcriptData = getTranscriptData(report.transcript_result_id);
-    setSelectedTranscript(transcriptData);
-  };
+ const handleViewReport = (report) => {
+  const evaluation = resData.evaluations?.find(
+    (e) => e.session_id === report.session_id
+  );
+
+  if (!evaluation) {
+    console.error("No evaluation found for session:", report.session_id);
+    return;
+  }
+
+  setSelectedReport(report);
+  setSelectedEvaluation(evaluation);
+
+  const transcriptData = getTranscriptData(report.transcript_result_id);
+  setSelectedTranscript(transcriptData);
+};
 
   const renderOverview = () => (
     <div className="flex flex-col gap-6">
@@ -279,18 +269,20 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
         simulation: simulationDataFromRes
       });
       
-      return (
-        <TestReportView
-          report={selectedReport}
-          evaluation={evaluationToPass}
-          transcriptData={selectedTranscript}
-          simulationData={simulationDataFromRes}
-          onBack={() => {
-            setSelectedReport(null);
-            setSelectedTranscript(null);
-          }}
-        />
-      );
+     return (
+  <TestReportView
+    report={selectedReport}
+    evaluation={selectedEvaluation}   // ✅ session-specific
+    transcriptData={selectedTranscript}
+    simulationData={simulationDataFromRes}
+    onBack={() => {
+      setSelectedReport(null);
+      setSelectedTranscript(null);
+      setSelectedEvaluation(null);
+    }}
+  />
+);
+
     }
 
     const handleBackToOverview = () => {
@@ -298,25 +290,26 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
     };
 
     switch (activeCategory) {
-      case CATEGORY.ACCURACY:
-        return <AccuracyView data={firstEvaluation} onBack={handleBackToOverview} />;
-      case CATEGORY.LATENCY:
-        return <LatencyOverview data={firstEvaluation} onBack={handleBackToOverview} />;
-      case CATEGORY.COST:
-        return <CostOverview data={firstEvaluation} onBack={handleBackToOverview} />;
-      case CATEGORY.AUDIO:
-        return <AudioOverview data={firstEvaluation} onBack={handleBackToOverview} />;
-      case CATEGORY.ENDPOINTING:
-        return <EndpointingOverview data={firstEvaluation} onBack={handleBackToOverview} />;
-      case CATEGORY.PERSONA:
-        return <PersonaOverview data={firstEvaluation} onBack={handleBackToOverview} />;
-      case CATEGORY.TASK_COMPLETION:
-        return <TaskCompletionOverview data={firstEvaluation} onBack={handleBackToOverview} />;
-      case CATEGORY.CONVERSATION:
-        return <ConversationOverview data={firstEvaluation} onBack={handleBackToOverview} />;
-      default:
-        return renderOverview();
-    }
+  case CATEGORY.ACCURACY:
+    return <AccuracyView data={selectedEvaluation} onBack={handleBackToOverview} />;
+  case CATEGORY.LATENCY:
+    return <LatencyOverview data={selectedEvaluation} onBack={handleBackToOverview} />;
+  case CATEGORY.COST:
+    return <CostOverview data={selectedEvaluation} onBack={handleBackToOverview} />;
+  case CATEGORY.AUDIO:
+    return <AudioOverview data={selectedEvaluation} onBack={handleBackToOverview} />;
+  case CATEGORY.ENDPOINTING:
+    return <EndpointingOverview data={selectedEvaluation} onBack={handleBackToOverview} />;
+  case CATEGORY.PERSONA:
+    return <PersonaOverview data={selectedEvaluation} onBack={handleBackToOverview} />;
+  case CATEGORY.TASK_COMPLETION:
+    return <TaskCompletionOverview data={selectedEvaluation} onBack={handleBackToOverview} />;
+  case CATEGORY.CONVERSATION:
+    return <ConversationOverview data={selectedEvaluation} onBack={handleBackToOverview} />;
+  default:
+    return renderOverview();
+}
+
   };
 
   return (

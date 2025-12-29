@@ -28,10 +28,6 @@ import ConversationOverview from '../insights/conversation';
 
 const TestReportView = ({ report, evaluation, transcriptData, simulationData, onBack }) => {
 
-  console.log('Report:', report);
-  console.log('Full Evaluation:', evaluation);
-  console.log('Transcript:', transcriptData);
-  console.log('Simulation:', simulationData);
   const [activeTab, setActiveTab] = useState('overview');
   const [activeCategory, setActiveCategory] = useState('');
 
@@ -131,10 +127,6 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
     return 'bg-red-500/10 border-red-500/20';
   };
 
-  // Calculate summary statistics from metrics
-  const audioMetrics = evaluationData?.metrics.filter(m => m.category === 'audio_quality') || [];
-  const conversationMetrics = evaluationData?.metrics.filter(m => m.category === 'conversation_quality') || [];
-  const taskMetrics = evaluationData?.metrics.filter(m => m.category === 'task_completion') || [];
 
   const handleCategoryChange = (category) => {
     setActiveCategory(category);
@@ -148,67 +140,66 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
     setActiveCategory('');
   };
 
-const buildAudioResponse = (evaluation) => {
-  if (!evaluation?.metric_results) return null;
+  // Render category-specific view
+  const accuracyCategory = evaluation?.category_scores?.find(
+  (c) => c.category === "accuracy"
+);
+const categoryMap = React.useMemo(() => {
+  if (!evaluation?.metric_results) return {};
 
-  const audioMetrics = evaluation.metric_results.filter(
-    (m) => m.category === "audio_quality"
-  );
+  return evaluation.metric_results.reduce((acc, metric) => {
+    if (!metric.category) return acc;
 
-  if (!audioMetrics.length) return null;
-
-  const avgScore =
-    audioMetrics.reduce((sum, m) => sum + (m.score ?? 0), 0) /
-    audioMetrics.length;
-
-  return {
-    category: "audio_quality",
-    score: avgScore, // 0–1
-    metrics: audioMetrics.map((m) => {
-      const value = m.value ?? m.score * 100;
-
-      return {
-        metric_name: m.name,
-        passed: value >= 100,
-        status: value >= 100 ? "passed" : "failed",
-        value: value / 100,        // normalized
-        threshold: 1,
-
-        // ✅ ADD THESE (prevents toFixed crash)
-        execution_time_ms: m.execution_time_ms ?? 0,
-        details: m.details ?? {},
+    if (!acc[metric.category]) {
+      acc[metric.category] = {
+        category: metric.category,
+        score: evaluation.category_scores?.find(
+          (c) => c.category === metric.category
+        )?.score ?? 0,
+        weight: 0,
+        metrics: []
       };
-    }),
-  };
+    }
+
+    acc[metric.category].metrics.push(metric);
+    return acc;
+  }, {});
+}, [evaluation]);
+
+
+
+
+ const renderCategoryView = () => {
+  switch (activeCategory) {
+    case 'accuracy':
+      return <AccuracyView response={categoryMap.accuracy} onBack={handleBackToOverview} />;
+
+    case 'latency':
+      return <LatencyOverview response={categoryMap.latency} onBack={handleBackToOverview} />;
+
+    case 'cost':
+      return <CostOverview response={categoryMap.cost} onBack={handleBackToOverview} />;
+
+    case 'audio_quality':
+      return <AudioOverview response={categoryMap.audio_quality} onBack={handleBackToOverview} />;
+
+    case 'endpointing':
+      return <EndpointingOverview response={categoryMap.endpointing} onBack={handleBackToOverview} />;
+
+    case 'persona':
+      return <PersonaOverview response={categoryMap.persona} onBack={handleBackToOverview} />;
+
+    case 'task_completion':
+      return <TaskCompletionOverview response={categoryMap.task_completion} onBack={handleBackToOverview} />;
+
+    case 'conversation_quality':
+      return <ConversationOverview response={categoryMap.conversation_quality} onBack={handleBackToOverview} />;
+
+    default:
+      return null;
+  }
 };
 
-
-const audioResponse = buildAudioResponse(evaluation);
-
-
-  // Render category-specific view
-  const renderCategoryView = () => {
-    switch (activeCategory) {
-      case 'accuracy':
-        return <AccuracyView data={evaluation} onBack={handleBackToOverview} />;
-      case 'latency':
-        return <LatencyOverview data={evaluation} onBack={handleBackToOverview} />;
-      case 'cost':
-        return <CostOverview data={evaluation} onBack={handleBackToOverview} />;
-      case 'audio_quality':
-        return <AudioOverview response={audioResponse} onBack={handleBackToOverview} />;
-      case 'endpointing':
-        return <EndpointingOverview data={evaluation} onBack={handleBackToOverview} />;
-      case 'persona':
-        return <PersonaOverview data={evaluation} onBack={handleBackToOverview} />;
-      case 'task_completion':
-        return <TaskCompletionOverview data={evaluation} onBack={handleBackToOverview} />;
-      case 'conversation_quality':
-        return <ConversationOverview data={evaluation} onBack={handleBackToOverview} />;
-      default:
-        return null;
-    }
-  };
 
   return (
     <div className="flex flex-col gap-6">

@@ -324,7 +324,7 @@
             {
               "name": "keyword_match_accuracy",
               "category": "accuracy",
-              "score": 0,
+              "score": 40,
               "status": "failed",
               "details": {
                 "evaluated_steps": 10,
@@ -752,7 +752,7 @@
             {
               "name": "context_maintenance",
               "category": "conversation_quality",
-              "score": null,
+              "score": 0.5,
               "status": "failed",
               "details": {
                 "conversation_length": 20
@@ -761,7 +761,7 @@
             {
               "name": "clarification_request_rate",
               "category": "conversation_quality",
-              "score": null,
+              "score": 0.8,
               "status": "passed",
               "details": {
                 "clarification_turns": 0,

@@ -9,7 +9,7 @@ const StatCard = ({ icon: Icon, title, value, subtitle }) => {
       </div>
 
       <div className="text-4xl font-bold text-teal-300">
-        {value}%
+        {value}
       </div>
 
       <div className="text-gray-400 text-sm">

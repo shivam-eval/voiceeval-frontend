@@ -18,7 +18,7 @@ import PersonaAlignmentRadar from "./PersonaRadar";
 
 const response = {
   "category": "persona",
-  "overall_score": 1.0,
+  "overall_score": 0.89,
   "passed": true,
   "metrics": [
     {
@@ -27,7 +27,7 @@ const response = {
       "status": "passed",
       "passed": true,
       "execution_time_ms": 0.020503997802734375,
-      "value": 1.0,
+      "value": 0.91,
       "threshold": 0.8
     },
     {
@@ -36,7 +36,7 @@ const response = {
       "status": "passed",
       "passed": true,
       "execution_time_ms": 0.009775161743164062,
-      "value": 1.0,
+      "value": 0.84,
       "threshold": 0.75
     },
     {
@@ -45,7 +45,7 @@ const response = {
       "status": "passed",
       "passed": true,
       "execution_time_ms": 0.008344650268554688,
-      "value": 1.0
+      "value": 0.88
     },
     {
       "metric_name": "behavior_trait_alignment",
@@ -53,7 +53,7 @@ const response = {
       "status": "passed",
       "passed": true,
       "execution_time_ms": 0.007867813110351562,
-      "value": 1.0
+      "value": 0.93
     }
   ]
 }
@@ -153,9 +153,10 @@ const PersonaOverview = ({ onBack }) => {
         </div>
       </div>
 
-      {/* Radar & Details */}
-      <PersonaAlignmentRadar metrics={response.metrics} />
-      <PersonaDetailedMetrics metrics={response.metrics} />
+      {/* ================= Radar ================= */}
+      <PersonaAlignmentRadar response={response} />
+
+      <PersonaDetailedMetrics response={response} />
     </div>
   );
 };

@@ -15,7 +15,42 @@ const humanizeMetricName = (name) => {
   return map[name] || name;
 };
 
-const formatUSD = (value) => `$${Number(value).toFixed(4)}`;
+const formatUSD = (value) => `${Number(value).toFixed(4)}`;
+
+const DUMMY_COST_METRICS = [
+  {
+    label: "LLM Token Usage",
+    value: 0.045,
+    threshold: 0.05,
+    time: "7546.15ms",
+    unit: "",
+    status: "passed",
+  },
+  {
+    label: "Speech-to-Text Cost",
+    value: 0.012,
+    threshold: 0.02,
+    time: "2134.12ms",
+    unit: "",
+    status: "passed",
+  },
+  {
+    label: "Text-to-Speech Cost",
+    value: 0.038,
+    threshold: 0.04,
+    time: "4123.45ms",
+    unit: "",
+    status: "passed",
+  },
+  {
+    label: "Total Conversation Cost",
+    value: 0.095,
+    threshold: 0.1,
+    time: "7546.15ms",
+    unit: "",
+    status: "passed",
+  },
+];
 
 /* =========================
    Component
@@ -34,44 +69,17 @@ const CostDetailedMetrics = ({ metrics = [] }) => {
 
       {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {metrics.map((metric, idx) => {
-          const details = metric.details
-            ? Object.entries(metric.details).map(([key, value]) => ({
-                label: key.replace(/_/g, " "),
-                value:
-                  typeof value === "number" ? formatUSD(value) : value,
-              }))
-            : null;
-
+        {(metrics.length > 0 ? metrics : DUMMY_COST_METRICS).map((metric, idx) => {
           return (
             <DetailedMetric
               key={idx}
-              label={humanizeMetricName(metric.metric_name)}
+              label={metric.label || humanizeMetricName(metric.metric_name)}
               value={metric.value}
               threshold={metric.threshold}
-              time={metric.execution_time_ms}
-              status={metric.passed ? "passed" : "failed"}
-            >
-              {/* Primary Value */}
-              <div className="text-teal-400 text-3xl font-bold">
-                {formatUSD(metric.value)}
-              </div>
-
-              {/* Optional Details */}
-              {details && (
-                <div className="mt-4 grid grid-cols-2 gap-y-2 text-sm text-gray-400">
-                  {details.map((item, i) => (
-                    <div
-                      key={i}
-                      className="flex justify-between col-span-2 lg:col-span-1"
-                    >
-                      <span className="capitalize">{item.label}</span>
-                      <span className="text-white">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </DetailedMetric>
+              time={metric.time || metric.execution_time_ms}
+              status={metric.status || (metric.passed ? "passed" : "failed")}
+              unit={metric.unit !== undefined ? metric.unit : ""}
+            />
           );
         })}
       </div>

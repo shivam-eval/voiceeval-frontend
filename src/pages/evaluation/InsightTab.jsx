@@ -11,7 +11,7 @@ const CATEGORY_LABELS = {
 
 const InsightTabs = ({  onChange, categoryScores = [] }) => {
   return (
-    <div className="w-full grid grid-cols-8 gap-3">
+    <div className="w-full grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
       {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
         const score = categoryScores.find(c => c.category === key)?.score ?? 0;
 

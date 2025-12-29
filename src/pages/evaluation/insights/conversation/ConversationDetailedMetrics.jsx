@@ -4,31 +4,31 @@ import DetailedMetric from "../../../../components/DetailedMetric";
 const DUMMY_CONVERSATION_METRICS = [
   {
     label: "Grammar Quality",
-    value: 100,
+    value: 92,
     threshold: 80,
     time: "7546.15ms",
-    unit: "%",
+    unit: "",
   },
   {
     label: "Context Maintenance",
-    value: 100,
+    value: 85,
     threshold: 85,
     time: "3906.08ms",
-    unit: "%",
+    unit: "",
   },
   {
     label: "Information Extraction Accuracy",
-    value: 100,
+    value: 94,
     threshold: 90,
     time: "0.02ms",
-    unit: "%",
+    unit: "",
   },
   {
     label: "Clarification Request Rate",
-    value: 0,
-    threshold: 0,
+    value: 8,
+    threshold: 15,
     time: "0.04ms",
-    unit: "%",
+    unit: "",
   },
 ];
 

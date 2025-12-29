@@ -97,7 +97,80 @@ const WorkspaceDashboard = ({
   const handleTestGenerationComplete = () => {
   const dummyTestSuite = {
     file_name: "demo_test_suite.json",
-    tests: []
+    tests: [
+      {
+        id: 1,
+        name: "Greeting Test",
+        status: "pending",
+        persona: {
+          name: "Rajesh Kumar",
+          age: 35,
+          city: "Mumbai",
+          occupation: "Software Engineer",
+          education: "Bachelor's in Computer Science",
+          annualIncome: "₹12,00,000",
+          creditScore: 780,
+          employmentStatus: "Full-time",
+          angry: true,
+          interruption: true,
+          language: "Hindi-English mix"
+        }
+      },
+      {
+        id: 2,
+        name: "Product Inquiry",
+        status: "pending",
+        persona: {
+          name: "Priya Sharma",
+          age: 28,
+          city: "Delhi",
+          occupation: "Teacher",
+          education: "Master's in Education",
+          annualIncome: "₹8,00,000",
+          creditScore: 720,
+          employmentStatus: "Full-time",
+          angry: true,
+          interruption: true,
+          language: "English"
+        }
+      },
+      {
+        id: 3,
+        name: "Complaint Handling",
+        status: "pending",
+        persona: {
+          name: "Amit Singh",
+          age: 42,
+          city: "Bangalore",
+          occupation: "Business Owner",
+          education: "Bachelor's in Commerce",
+          annualIncome: "₹15,00,000",
+          creditScore: 650,
+          employmentStatus: "Self-employed",
+          angry: true,
+          interruption: false,
+          language: "Hindi"
+        }
+      },
+      {
+        id: 4,
+        name: "Payment Query",
+        status: "pending",
+        persona: {
+          name: "Sunita Patel",
+          age: 31,
+          city: "Ahmedabad",
+          occupation: "Accountant",
+          education: "Chartered Accountant",
+          annualIncome: "₹10,00,000",
+          creditScore: 800,
+          employmentStatus: "Full-time",
+          angry: true,
+          interruption: true,
+          language: "Gujarati-English mix"
+        }
+      }
+    ]
   }
 
   setTestSuite(dummyTestSuite)
@@ -295,7 +368,7 @@ const handleTestComplete = () => {
             <div
               ref={systemPromptRef}
               className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                showSystemPrompt ? "max-h-[1000px] opacity-100 mb-6" : "max-h-0 opacity-0"
+                showSystemPrompt ? "max-h-[2000px] opacity-100 mb-6" : "max-h-0 opacity-0"
               }`}
             >
               <SystemPromptViewer prompt={systemPrompt} />
@@ -324,23 +397,20 @@ const handleTestComplete = () => {
             {/* Canonical Flow BELOW its box */}
             <div
               ref={canonicalFlowRef}
-              className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              className={`overflow-y-auto transition-all duration-300 ease-in-out ${
                 showCanonicalFlow
                   ? "max-h-[1200px] opacity-100 mb-6"
                   : "max-h-0 opacity-0"
               }`}
             >
-             {showCanonicalFlow && (
-  <CanonicalFlowDiagram />
-)}
-
+             {showCanonicalFlow && <CanonicalFlowDiagram />}
             </div>
 
             {/* Region Selection */}
-         <RegionDropDown
-          selectedRegion={selectedRegion}
-          setSelectedRegion={setSelectedRegion}
-         />
+            <RegionDropDown
+              selectedRegion={selectedRegion}
+              setSelectedRegion={setSelectedRegion}
+            />
 
             {/* Queue Stats */}
             {/* <QueueStatsWidget /> */}

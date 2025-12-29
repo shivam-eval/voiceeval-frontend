@@ -79,19 +79,19 @@ const EndpointingView = () => {
       return threshold ? Math.max(0, Math.min(100, Math.round(((m.value || 0) / threshold) * 100))) : 100
     })()
     return (
-      <div className="p-4 rounded-xl border" style={{ backgroundColor: variant === 'alert' ? '#12090d' : '#0b1220', borderColor: variant === 'alert' ? COLORS.accent : '#1f2937' }}>
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="font-semibold" style={{ color: COLORS.white }}>{title}</div>
+      <div className="p-4 rounded-xl border flex flex-col h-full" style={{ backgroundColor: variant === 'alert' ? '#12090d' : '#0b1220', borderColor: variant === 'alert' ? COLORS.accent : '#1f2937' }}>
+        <div className="flex items-start justify-between mb-4">
+          <div className="min-w-0 flex-1">
+            <div className="font-semibold truncate" style={{ color: COLORS.white }}>{title}</div>
             <div className="flex items-center gap-2 text-xs mt-1" style={{ color: COLORS.text }}>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
               </svg>
-              <span>{exec}ms execution</span>
+              <span className="truncate">{exec}ms execution</span>
             </div>
           </div>
           <span
-            className="px-2 py-1 rounded-full text-xs font-semibold border"
+            className="px-2 py-1 rounded-full text-[10px] font-semibold border flex-shrink-0 ml-2"
             style={{
               color: passed ? COLORS.teal : COLORS.accent,
               borderColor: passed ? COLORS.teal : COLORS.accent,
@@ -101,55 +101,53 @@ const EndpointingView = () => {
             {passed ? 'Passed' : 'Failed'}
           </span>
         </div>
-        <div className="mt-4">
-          <div className="text-2xl font-bold" style={{ color: m.metric_name === 'pause_detection' && !passed ? COLORS.warn : COLORS.teal }}>{valueRender(m)}</div>
+        <div className="mt-auto">
+          <div className="text-2xl font-bold truncate" style={{ color: m.metric_name === 'pause_detection' && !passed ? COLORS.warn : COLORS.teal }}>{valueRender(m)}</div>
           <div className="h-2 rounded-full overflow-hidden mt-2" style={{ backgroundColor: COLORS.bg }}>
             <div className="h-full" style={{ width: `${progressPct}%`, backgroundColor: passed ? COLORS.teal : COLORS.accent }} />
           </div>
-          <div className="mt-1 text-xs" style={{ color: COLORS.text }}>
+          <div className="mt-1 text-xs truncate" style={{ color: COLORS.text }}>
             Threshold: {m.metric_name === 'pause_detection' ? `${(threshold / 1000).toFixed(1)}s` : m.metric_name === 'turn_boundary_accuracy' ? `${(threshold * 100).toFixed(1)}%` : `${threshold}`}
           </div>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-2 text-sm" style={{ color: COLORS.text }}>
+        <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm border-t border-gray-800/50 pt-4" style={{ color: COLORS.text }}>
           {m.metric_name === 'interruption_count' && m.details && (
             <>
-              <div>
-                Interruption Count
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.interruption_count)}</div>
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wider mb-0.5">Interruptions</div>
+                <div className="font-semibold truncate" style={{ color: COLORS.white }}>{fmtNum(m.details.interruption_count)}</div>
               </div>
-              <div>
-                Total Turns
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.total_turns)}</div>
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wider mb-0.5">Total Turns</div>
+                <div className="font-semibold truncate" style={{ color: COLORS.white }}>{fmtNum(m.details.total_turns)}</div>
               </div>
             </>
           )}
           {m.metric_name === 'pause_detection' && m.details && (
             <>
-              <div>
-                Total Pauses
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.total_pauses)}</div>
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wider mb-0.5">Total Pauses</div>
+                <div className="font-semibold truncate" style={{ color: COLORS.white }}>{fmtNum(m.details.total_pauses)}</div>
               </div>
-              <div>
-                Long Pauses
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.long_pauses)}</div>
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wider mb-0.5">Long Pauses</div>
+                <div className="font-semibold truncate" style={{ color: COLORS.white }}>{fmtNum(m.details.long_pauses)}</div>
               </div>
-              <div>
-                Average Pause Ms
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(Math.round(m.details.average_pause_ms))}</div>
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wider mb-0.5">Avg Pause</div>
+                <div className="font-semibold truncate" style={{ color: COLORS.white }}>{fmtNum(Math.round(m.details.average_pause_ms))}ms</div>
               </div>
-              <div>
-                Max Pause Ms
-                <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.max_pause_ms)}</div>
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-wider mb-0.5">Max Pause</div>
+                <div className="font-semibold truncate" style={{ color: COLORS.white }}>{fmtNum(m.details.max_pause_ms)}ms</div>
               </div>
             </>
           )}
           {m.metric_name === 'turn_boundary_accuracy' && (
-            <>
-              <div>
-                Threshold
-                <div className="font-semibold" style={{ color: COLORS.white }}>{(threshold * 100).toFixed(1)}%</div>
-              </div>
-            </>
+            <div className="col-span-2 min-w-0">
+              <div className="text-[10px] uppercase tracking-wider mb-0.5">Threshold</div>
+              <div className="font-semibold truncate" style={{ color: COLORS.white }}>{(threshold * 100).toFixed(1)}%</div>
+            </div>
           )}
         </div>
       </div>
@@ -167,7 +165,7 @@ const EndpointingView = () => {
         <div className="text-sm mb-6" style={{ color: COLORS.text }}>
           Average pause duration of <span style={{ color: COLORS.warn, fontWeight: 700 }}>{avgPauseMin.toFixed(1)}m</span> significantly exceeds the <span style={{ color: COLORS.white, fontWeight: 600 }}>{pauseThresholdSec.toFixed(1)}s</span> threshold. This will make conversations feel unnatural and frustrating for users.
         </div>
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="rounded-xl p-4 border" style={{ backgroundColor: '#1a0e13', borderColor: COLORS.accent }}>
             <div className="text-3xl font-bold" style={{ color: COLORS.white }}>{fmtNum(totalPauses)}</div>
             <div className="text-xs mt-1" style={{ color: COLORS.text }}>Total Pauses</div>
@@ -268,16 +266,15 @@ const EndpointingView = () => {
       </div>
       {smallAlert()}
       {criticalBanner()}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {card(ic, 'Interruptions', (m) => fmtNum(m.value))}
         {card(pd, 'Pause Detection', () => pauseValueLabel, 'alert')}
         {card(tba, 'Turn Boundary', (m) => `${((m.value || 0) * 100).toFixed(1)}%`)}
       </div>
       {silenceAnalysis()}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {card(ic, 'Interruption Count', (m) => fmtNum(m.value))}
         {card(pd, 'Pause Detection', () => pauseValueLabel, 'alert')}
-        {card(tba, 'Turn Boundary Accuracy', (m) => `${((m.value || 0) * 100).toFixed(1)}%`)}
       </div>
     </div>
   )

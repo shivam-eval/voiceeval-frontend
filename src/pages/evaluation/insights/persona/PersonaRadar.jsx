@@ -12,10 +12,14 @@ const radarData = [
   { metric: "Behavior Trait", score: 100 },
 ];
 
-const PersonaAlignmentRadar = () => {
+const PersonaAlignmentRadar = ({ response }) => {
+  const radarData = response?.metrics?.map(m => ({
+    metric: m.metric_name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    score: Math.round(m.value * 100)
+  })) || [];
+
   return (
     <div className="bg-[#0b1f26] border border-teal-500/20 rounded-xl p-6">
-
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <Sparkles className="text-teal-400" size={18} />
@@ -32,29 +36,24 @@ const PersonaAlignmentRadar = () => {
           indexBy="metric"
           maxValue={100}
           margin={{ top: 50, right: 80, bottom: 50, left: 80 }}
-
           curve="linearClosed"
           borderWidth={2}
           borderColor="#2dd4bf"
           colors={["#2dd4bf"]}
           fillOpacity={0.25}
-
           enableDots
           dotSize={6}
           dotColor="#ffffff"
           dotBorderWidth={2}
           dotBorderColor="#2dd4bf"
-
           gridLevels={4}
           gridShape="linear"
           gridLabelOffset={18}
-
           radialAxisStart={{
             tickSize: 0,
             tickValues: [0, 25, 50, 75, 100],
             tickFormat: (v) => `${v}%`,
           }}
-
           theme={{
             ...darkTheme,
             grid: {
@@ -70,7 +69,6 @@ const PersonaAlignmentRadar = () => {
               },
             },
           }}
-
           sliceTooltip={() => null}
         />
       </div>

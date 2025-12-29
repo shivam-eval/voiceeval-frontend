@@ -4,14 +4,19 @@ const InsightHeaderCard = ({
   icon: Icon,
   title,
   description,
-  score,          // percentage (0–100)
+  score,          // percentage (0–100) or decimal
   passedCount,
   failedCount,
   theme = "teal", // "teal" | "red" | "yellow"
+  unit = "%",
 }) => {
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - score / 100);
+  // If unit is empty, we treat score as a percentage for the ring but show raw value
+  const displayScore = typeof score === "number" ? (unit === "%" ? score : score.toFixed(3)) : score;
+  const numericScore = typeof score === "number" ? score : parseFloat(score.replace(/[^0-9.]/g, ""));
+  const ringScore = unit === "%" ? numericScore : numericScore * 100;
+  const offset = circumference * (1 - ringScore / 100);
 
   const themeMap = {
     teal: {
@@ -87,7 +92,7 @@ const InsightHeaderCard = ({
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
             <span className={`text-2xl font-bold ${colors.text}`}>
-              {score}%
+              {displayScore}{unit}
             </span>
           </div>
         </div>

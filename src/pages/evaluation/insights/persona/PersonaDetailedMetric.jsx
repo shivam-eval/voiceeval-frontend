@@ -7,28 +7,28 @@ import DetailedMetric from "../../../../components/DetailedMetric"
 const PERSONA_METRICS = [
   {
     label: "Persona Consistency",
-    value: 100,
+    value: 91,
     threshold: 80,
     time: "0.02ms",
     status: "passed",
   },
   {
     label: "Tone Appropriateness",
-    value: 100,
+    value: 84,
     threshold: 75,
     time: "0.01ms",
     status: "passed",
   },
   {
     label: "Region Appropriate Language",
-    value: 100,
+    value: 88,
     threshold: 80,
     time: "0.01ms",
     status: "passed",
   },
   {
     label: "Behavior Trait Alignment",
-    value: 100,
+    value: 93,
     threshold: 80,
     time: "0.01ms",
     status: "passed",

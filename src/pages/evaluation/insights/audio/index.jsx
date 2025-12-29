@@ -12,7 +12,7 @@ import VoiceQualityConsistency from "./VoiceQuality";
 
 const response={
   "category": "audio_quality",
-  "overall_score": 0.6277777777777778,
+  "overall_score": 0.88,
   "passed": true,
   "metrics": [
     {
@@ -21,7 +21,7 @@ const response={
       "status": "passed",
       "passed": true,
       "execution_time_ms": 5.354881286621094,
-      "value": 0.0,
+      "value": 0.05,
       "threshold": 0.1
     },
     {
@@ -30,7 +30,7 @@ const response={
       "status": "passed",
       "passed": true,
       "execution_time_ms": 0.011444091796875,
-      "value": 1.0
+      "value": 0.92
     },
     {
       "metric_name": "tts_naturalness",
@@ -38,7 +38,7 @@ const response={
       "status": "passed",
       "passed": true,
       "execution_time_ms": 7256.755113601685,
-      "value": 0.8833333333333333,
+      "value": 0.88,
       "threshold": 0.7
     }
   ]

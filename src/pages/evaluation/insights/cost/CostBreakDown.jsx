@@ -36,7 +36,7 @@ const CostBreakdown = () => {
 
           axisBottom={{
             tickValues: [0, 0.03, 0.06, 0.09, 0.12],
-            format: (v) => `$${v.toFixed(2)}`,
+            format: (v) => `${v.toFixed(3)}`,
             tickPadding: 8,
           }}
 

@@ -15,14 +15,14 @@ export const EVALUATION_DATA = {
     { id: 6, title: "Failure Path - Payment Refusal", score: 72, duration: "1:10", outcome: "Refusal Noted", status: "success" }
   ],
   categoryScores: [
-    { name: "Accuracy", score: 74 },
-    { name: "Task Completion", score: 100 },
-    { name: "Latency", score: 92 },
-    { name: "Audio Quality", score: 88 },
-    { name: "Conversation Quality", score: 83 },
-    { name: "Endpointing", score: 61 },
-    { name: "Cost", score: 97 },
-    { name: "Persona", score: 100 }
+    { category: "accuracy", score: 74 },
+    { category: "task_completion", score: 94 },
+    { category: "latency", score: 92 },
+    { category: "audio", score: 88 },
+    { category: "conversation", score: 83 },
+    { category: "endpointing", score: 61 },
+    { category: "cost", score: 97 },
+    { category: "persona", score: 91 }
   ],
   improvements: [
     {
@@ -130,13 +130,13 @@ export const DEBT_COLLECTION_EVALUATION = {
   overall_passed: true,
   category_scores: [
     { category: "accuracy", score: 0.74, passed: false, weight: 1.0, metrics_count: 4, passed_metrics: 2, failed_metrics: 2 },
-    { category: "task_completion", score: 1.0, passed: true, weight: 1.0, metrics_count: 4, passed_metrics: 4, failed_metrics: 0 },
+    { category: "task_completion", score: 0.94, passed: true, weight: 1.0, metrics_count: 4, passed_metrics: 4, failed_metrics: 0 },
     { category: "latency", score: 0.92, passed: true, weight: 1.0, metrics_count: 4, passed_metrics: 4, failed_metrics: 0 },
-    { category: "audio_quality", score: 0.88, passed: true, weight: 1.0, metrics_count: 3, passed_metrics: 3, failed_metrics: 0 },
-    { category: "conversation_quality", score: 0.83, passed: true, weight: 1.0, metrics_count: 4, passed_metrics: 4, failed_metrics: 0 },
+    { category: "audio", score: 0.88, passed: true, weight: 1.0, metrics_count: 3, passed_metrics: 3, failed_metrics: 0 },
+    { category: "conversation", score: 0.83, passed: true, weight: 1.0, metrics_count: 4, passed_metrics: 4, failed_metrics: 0 },
     { category: "endpointing", score: 0.61, passed: false, weight: 1.0, metrics_count: 3, passed_metrics: 2, failed_metrics: 1 },
     { category: "cost", score: 0.97, passed: true, weight: 1.0, metrics_count: 4, passed_metrics: 4, failed_metrics: 0 },
-    { category: "persona", score: 1.0, passed: true, weight: 1.0, metrics_count: 4, passed_metrics: 4, failed_metrics: 0 }
+    { category: "persona", score: 0.91, passed: true, weight: 1.0, metrics_count: 4, passed_metrics: 4, failed_metrics: 0 }
   ],
   metrics_summary: {
     total_run: 30,
@@ -899,8 +899,8 @@ export const DUMMY_CATEGORY_SCORES = [
   { category: "accuracy", score: 74 },
   { category: "task_completion", score: 100 },
   { category: "latency", score: 92 },
-  { category: "audio_quality", score: 88 },
-  { category: "conversation_quality", score: 83 },
+  { category: "audio", score: 88 },
+  { category: "conversation", score: 83 },
   { category: "endpointing", score: 61 },
   { category: "cost", score: 97 },
   { category: "persona", score: 100 },

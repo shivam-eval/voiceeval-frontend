@@ -1,66 +1,19 @@
 import { DUMMY_CATEGORY_SCORES } from '../../const'
 import InsightTabs from '../../InsightTab'
 import { ArrowLeft } from 'lucide-react'
-const latencyData={
-  "category": "latency",
-  "overall_score": 0.92,
-  "passed": true,
-  "metrics": [
-    {
-      "metric_name": "response_latency",
-      "category": "latency",
-      "status": "passed",
-      "passed": true,
-      "value": 1650,
-      "threshold": 2000,
-      "details": {
-        "average_ms": 1650,
-        "max_ms": 1800,
-        "min_ms": 1200,
-        "median_ms": 1700,
-        "p95_ms": 1800,
-        "p99_ms": 1800,
-        "count": 11,
-        "std_dev": 175.8
-      }
-    },
-    {
-      "metric_name": "time_to_first_token",
-      "category": "latency",
-      "status": "passed",
-      "passed": true,
-      "value": 410,
-      "threshold": 500
-    },
-    {
-      "metric_name": "time_to_complete_transcript",
-      "category": "latency",
-      "status": "passed",
-      "passed": true,
-      "value": 910,
-      "threshold": 1000
-    },
-    {
-      "metric_name": "total_duration",
-      "category": "latency",
-      "status": "passed",
-      "passed": true,
-      "value": 68000
-    }
-  ]
-}
 
-const LatencyOverview = ({ onBack }) => {
+const LatencyOverview = ({ response, onBack }) => {
   const COLORS = { accent: '#b61249', bg: '#000000', teal: '#2dd4bf', text: '#9da3af', white: '#ffffff' }
-  const metrics = Array.isArray(latencyData?.metrics) ? latencyData.metrics : []
-  const byName = (n) => metrics.find(m => m.metric_name === n)
+  const metrics = Array.isArray(response?.metrics) ? response.metrics : []
+  const byName = (n) => metrics.find(m => (m.metric_name === n || m.name === n))
   const rl = byName('response_latency')
   const ttft = byName('time_to_first_token')
   const ttct = byName('time_to_complete_transcript')
   const total = byName('total_duration')
-  const passedCount = metrics.filter(m => !!m.passed).length
+  const passedCount = metrics.filter(m => m.status === "passed" || m.passed === true).length
   const totalCount = metrics.length || 1
   const passPct = Math.round((passedCount / totalCount) * 100)
+  const isPassed = response?.passed ?? (passedCount === totalCount)
   const fmtNum = (n) => n?.toLocaleString?.('en-US') ?? String(n ?? '')
   const handleTabChange = (key) => {
     const map = {
@@ -89,7 +42,7 @@ const LatencyOverview = ({ onBack }) => {
         <circle cx={cx} cy={cy} r={r} stroke="#0a0f19" strokeWidth="8" fill="none"/>
         <circle
           cx={cx} cy={cy} r={r}
-          stroke={latencyData.passed ? COLORS.teal : COLORS.accent}
+          stroke={isPassed ? COLORS.teal : COLORS.accent}
           strokeWidth="8"
           fill="none"
           strokeDasharray={circ}
@@ -103,13 +56,14 @@ const LatencyOverview = ({ onBack }) => {
   }
   const card = (m, title, unit = 'ms') => {
     if (!m) return null
-    const passed = !!m.passed
+    const passed = m.status === "passed" || m.passed === true
     const threshold = typeof m.threshold === 'number' ? m.threshold : null
-    const valRaw = m.value
+    const valRaw = m.value ?? m.details?.average_ms ?? 0
     const val = Math.round(valRaw)
-    const pct = threshold ? Math.max(0, Math.min(100, Math.round((val / threshold) * 100))) : 100
+    const pct = threshold ? Math.max(0, Math.min(100, Math.round((val / threshold) * 100))) : (m.score ? Math.round(m.score * 100) : 100)
     const exec = typeof m.execution_time_ms === 'number' ? Number(m.execution_time_ms.toFixed(2)) : 0
-    const valueLabel = m.metric_name === 'total_duration' ? `${(valRaw / 1000).toFixed(1)}s` : `${val}${unit}`
+    const metricName = m.metric_name || m.name
+    const valueLabel = metricName === 'total_duration' ? `${(valRaw / 1000).toFixed(1)}s` : `${val}${unit}`
     return (
       <div className="p-4 rounded-xl border" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
         <div className="flex items-start justify-between">
@@ -204,12 +158,19 @@ const LatencyOverview = ({ onBack }) => {
       time_to_first_token: 'First Token',
       time_to_complete_transcript: 'Complete Transcript'
     }
-    const list = [rl, ttft, ttct].filter(Boolean).map(m => ({
-      ...m,
-      sec: (m.value || 0) / 1000,
-      thrSec: m.threshold ? m.threshold / 1000 : null,
-      label: labelMap[m.metric_name] || (m.metric_name || '').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())
-    }))
+    const list = [rl, ttft, ttct].filter(Boolean).map(m => {
+      const metricName = m.metric_name || m.name
+      const value = m.value ?? m.details?.average_ms ?? 0
+      const passed = m.status === "passed" || m.passed === true
+      return {
+        ...m,
+        passed,
+        sec: (value || 0) / 1000,
+        thrSec: m.threshold ? m.threshold / 1000 : null,
+        label: labelMap[metricName] || (metricName || '').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),
+        metric_name: metricName
+      }
+    })
     const maxSec = Math.max(2, ...list.map(m => m.sec), ...list.map(m => m.thrSec || 0))
     const toPct = (sec) => Math.max(0, Math.min(100, Math.round((sec / maxSec) * 100)))
     const twoSecPct = toPct(2)
@@ -347,9 +308,9 @@ const LatencyOverview = ({ onBack }) => {
             </div>
             <span
               className="px-2 py-1 rounded-full text-xs font-semibold border self-start ml-2"
-              style={{ color: latencyData.passed ? COLORS.teal : COLORS.accent, borderColor: latencyData.passed ? COLORS.teal : COLORS.accent, backgroundColor: latencyData.passed ? 'rgba(45,212,191,0.08)' : 'rgba(182,18,73,0.08)' }}
+              style={{ color: isPassed ? COLORS.teal : COLORS.accent, borderColor: isPassed ? COLORS.teal : COLORS.accent, backgroundColor: isPassed ? 'rgba(45,212,191,0.08)' : 'rgba(182,18,73,0.08)' }}
             >
-              {latencyData.passed ? 'Passed' : 'Failed'}
+              {isPassed ? 'Passed' : 'Failed'}
             </span>
           </div>
           <div className="flex items-center gap-4">

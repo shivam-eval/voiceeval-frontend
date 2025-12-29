@@ -215,7 +215,8 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
         ...fullEvaluation.transcript_steps,
         metadata: {
           ...(fullEvaluation.transcript_steps.metadata || {}),
-          ...(fullEvaluation.metadata || {})
+          ...(fullEvaluation.metadata || {}),
+          audio_files: fullEvaluation.audio_files || fullEvaluation.metadata?.audio_files || []
         }
       };
     }

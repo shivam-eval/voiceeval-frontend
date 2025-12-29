@@ -10,39 +10,6 @@ import VoiceQualityConsistency from "./VoiceQuality";
    Helpers
 ========================= */
 
-const response={
-  "category": "audio_quality",
-  "overall_score": 0.6277777777777778,
-  "passed": true,
-  "metrics": [
-    {
-      "metric_name": "word_error_rate",
-      "category": "audio_quality",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 5.354881286621094,
-      "value": 0.0,
-      "threshold": 0.1
-    },
-    {
-      "metric_name": "audio_technical_quality",
-      "category": "audio_quality",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 0.011444091796875,
-      "value": 1.0
-    },
-    {
-      "metric_name": "tts_naturalness",
-      "category": "audio_quality",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 7256.755113601685,
-      "value": 0.8833333333333333,
-      "threshold": 0.7
-    }
-  ]
-}
 const humanizeMetricName = (name) => {
   const map = {
     word_error_rate: "Word Error Rate",
@@ -65,8 +32,9 @@ const transformStatCards = (response) => {
 /* =========================
    Component
 ========================= */
-const AudioOverview = ({ onBack }) => {
-  const score = Math.round(response.overall_score * 100);
+const AudioOverview = ({ response={response},onBack }) => {
+   console.log(response);
+  const score = Math.round(response.score * 100);
 
   const passedCount = response.metrics.filter((m) => m.passed).length;
   const failedCount = response.metrics.length - passedCount;

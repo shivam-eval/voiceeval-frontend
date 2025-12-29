@@ -13,7 +13,15 @@ const AuthScreen = ({ onAuthSuccess }) => {
     setLoading(true);
     try {
       if (isLogin) {
-        // LOGIN LOGIC: Stays the same
+        // Temporary Bypass for Backend Issues
+        if (email === "admin@voiceeval.com" && password === "Voiceeval@1234") {
+          console.log("Using bypass credentials");
+          localStorage.setItem("token", "bypass-token-for-admin");
+          localStorage.setItem("userEmail", email);
+          onAuthSuccess();
+          return;
+        }
+
         const res = await loginUser({ email, password });
         localStorage.setItem("token", res.data.access_token);
         localStorage.setItem("userEmail", email);

@@ -13,7 +13,9 @@ import Docs from "./pages/docs/index.jsx";
 import extractedConfigJson from "./data/extracted_config.json";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return !!localStorage.getItem("token");
+  });
 
   // 🔑 Default view → Evaluation
   const [activeView, setActiveView] = useState("dashboard");
@@ -96,90 +98,88 @@ function App() {
     setShowWorkspaceDashboard(true);
   };
 
-  /* ---------------- Auth Gate ---------------- */
-
-  if (!isAuthenticated) {
-    return <AuthScreen onAuthSuccess={handleAuthSuccess} />;
-  }
-
   /* ---------------- Main Layout ---------------- */
 
   return (
     <Routes>
       <Route path="/docs" element={<Docs />} />
       <Route
-        path="/"
+        path="*"
         element={
-          <DashboardLayout
-            activeView={activeView}
-            onNavigate={handleNavigate}
-            hideRightPanel={activeView === "evaluation" || showWorkspaceDashboard}
-            onLogout={handleLogout}
-          >
-            {/* ✅ FIRST SCREEN */}
+          !isAuthenticated ? (
+            <AuthScreen onAuthSuccess={handleAuthSuccess} />
+          ) : (
+            <DashboardLayout
+              activeView={activeView}
+              onNavigate={handleNavigate}
+              hideRightPanel={activeView === "evaluation" || showWorkspaceDashboard}
+              onLogout={handleLogout}
+            >
+              {/* ✅ FIRST SCREEN */}
 
-            {activeView === "dashboard" && (
-              <div className="p-8">
-                <Dashboard />
-              </div>
-            )}
+              {activeView === "dashboard" && (
+                <div className="p-8">
+                  <Dashboard />
+                </div>
+              )}
 
-            {showPlatformSelection && (
-              <div className="p-8">
-                <PlatformSelection onSelectPlatform={handlePlatformSelect} />
-              </div>
-            )}
+              {showPlatformSelection && (
+                <div className="p-8">
+                  <PlatformSelection onSelectPlatform={handlePlatformSelect} />
+                </div>
+              )}
 
-            {showConnectionForm && (
-              <div className="p-8">
-                <ConnectionForm
-                  platform={selectedPlatform}
-                  onConnect={handleConnect}
-                  isConnecting={isConnecting}
-                />
-              </div>
-            )}
+              {showConnectionForm && (
+                <div className="p-8">
+                  <ConnectionForm
+                    platform={selectedPlatform}
+                    onConnect={handleConnect}
+                    isConnecting={isConnecting}
+                  />
+                </div>
+              )}
 
-            {showConnectionLoading && extractedConfig && (
-              <div className="p-8">
-                <ConnectionLoading
-                  extractedConfig={extractedConfig}
-                  onComplete={handleConnectionComplete}
-                />
-              </div>
-            )}
+              {showConnectionLoading && extractedConfig && (
+                <div className="p-8">
+                  <ConnectionLoading
+                    extractedConfig={extractedConfig}
+                    onComplete={handleConnectionComplete}
+                  />
+                </div>
+              )}
 
-            {showWorkspaceDashboard && extractedConfig && setupResult && (
-              <div className="p-8">
-                <WorkspaceDashboard
-                  systemConfig={{
-                    agentId: extractedConfig.agent_id,
-                    config: extractedConfig.config,
-                    systemPrompt: extractedConfig.system_prompt,
-                    platform: extractedConfig.platform,
-                    tools: extractedConfig.tools,
-                    metadata: extractedConfig.metadata,
-                    flowData: setupResult.flowData,
-                    mermaid: setupResult.mermaid,
-                  }}
-                />
-              </div>
-            )}
+              {showWorkspaceDashboard && extractedConfig && setupResult && (
+                <div className="p-8">
+                  <WorkspaceDashboard
+                    systemConfig={{
+                      agentId: extractedConfig.agent_id,
+                      config: extractedConfig.config,
+                      systemPrompt: extractedConfig.system_prompt,
+                      platform: extractedConfig.platform,
+                      tools: extractedConfig.tools,
+                      metadata: extractedConfig.metadata,
+                      flowData: setupResult.flowData,
+                      mermaid: setupResult.mermaid,
+                    }}
+                  />
+                </div>
+              )}
 
-            {/* Evaluation View */}
-            {activeView === "evaluation" && (
-              <div className="p-8">
-                <EvaluationDashboard />
-              </div>
-            )}
-            
-            {/* Fallback for other views */}
-            {activeView === "docs" && (
-              <div className="p-8">
-                <Docs />
-              </div>
-            )}
-          </DashboardLayout>
+              {/* Evaluation View */}
+              {activeView === "evaluation" && (
+                <div className="p-8">
+                  <EvaluationDashboard />
+                </div>
+              )}
+
+              {/* Fallback for other views */}
+              {activeView === "docs" && (
+                <div className="p-8">
+                  <Docs />
+                </div>
+              )}
+            </DashboardLayout>
+          )
         }
       />
     </Routes>

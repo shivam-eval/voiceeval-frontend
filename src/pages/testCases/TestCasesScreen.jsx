@@ -403,6 +403,7 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanPurpose: "Personal Loan",
         lastLoanTaken: "6 months ago",
         personality: "Cooperative",
+        language: "English",
         angry: false,
         interruption: false
       },
@@ -419,6 +420,7 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanPurpose: "Personal Loan",
         lastLoanTaken: "8 months ago",
         personality: "Cooperative",
+        language: "English",
         angry: false,
         interruption: true
       },
@@ -435,6 +437,7 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanPurpose: "Business Loan",
         lastLoanTaken: "1 year ago",
         personality: "Cautious",
+        language: "Hindi",
         angry: false,
         interruption: false
       },
@@ -451,6 +454,7 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanPurpose: "Personal Loan",
         lastLoanTaken: "6 months ago",
         personality: "Confused",
+        language: "English",
         angry: false,
         interruption: true
       },
@@ -467,6 +471,7 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanPurpose: "Personal Loan",
         lastLoanTaken: "3 months ago",
         personality: "Frustrated",
+        language: "Hindi",
         angry: true,
         interruption: true
       },
@@ -483,6 +488,7 @@ const TestCasesScreen = ({ onRunTests, onBack, testSuitePath }) => {
         loanPurpose: "Personal Loan",
         lastLoanTaken: "4 months ago",
         personality: "Distressed",
+        language: "English",
         angry: true,
         interruption: true
       }

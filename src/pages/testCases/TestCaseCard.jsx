@@ -27,7 +27,7 @@ const TestCaseCard = ({ testCase, isExpanded, onToggle }) => {
       employmentStatus: 'Not specified',
       angry: false,
       interruption: false,
-      language: 'Not specified'
+      language: 'English'
     };
   }
 

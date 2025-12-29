@@ -113,7 +113,7 @@ const WorkspaceDashboard = ({
           employmentStatus: "Full-time",
           angry: true,
           interruption: true,
-          language: "Hindi-English mix"
+          language: "Hindi"
         }
       },
       {
@@ -167,7 +167,7 @@ const WorkspaceDashboard = ({
           employmentStatus: "Full-time",
           angry: true,
           interruption: true,
-          language: "Gujarati-English mix"
+          language: "English"
         }
       }
     ]

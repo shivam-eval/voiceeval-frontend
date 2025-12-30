@@ -208,6 +208,34 @@ const EvaluationDashboard = ({onBack }) => {
   }
 
   const getTranscriptData = (transcriptId) => {
+    // 1. Check if the evaluationData prop (real simulation response) has the transcript
+    if (evaluationData?.transcript_steps) {
+      return {
+        ...evaluationData.transcript_steps,
+        metadata: {
+          ...(evaluationData.transcript_steps.metadata || {}),
+          ...(evaluationData.metadata || {}) // Merge root metadata (contains audio_files)
+        }
+      };
+    }
+
+    // 2. Check in resData evaluations for the specific transcriptId
+    const fullEvaluation = resData.evaluations?.find(
+      e => e.evaluation_id === transcriptId || e.session_id === transcriptId
+    );
+    
+    if (fullEvaluation?.transcript_steps) {
+      return {
+        ...fullEvaluation.transcript_steps,
+        metadata: {
+          ...(fullEvaluation.transcript_steps.metadata || {}),
+          ...(fullEvaluation.metadata || {}),
+          audio_files: fullEvaluation.audio_files || fullEvaluation.metadata?.audio_files || []
+        }
+      };
+    }
+
+    // 3. Fallback to mock transcripts
     return DEBT_COLLECTION_TRANSCRIPTS[transcriptId] || null;
   };
 

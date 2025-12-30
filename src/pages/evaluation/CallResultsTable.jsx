@@ -90,21 +90,28 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
           </thead>
           <tbody>
             {transcriptResults.map((result, index) => {
-              // Use actual score from result data
-              const actualScore = result.overall_score || 0;
+              // Extract metadata and IDs from the new simulation response format if needed
+              const metadata = result.metadata || {};
+              const testId = metadata.test_id || result.test_id || 'Unknown Test';
+              const transcriptResultId = metadata.transcript_result_id || result.transcript_result_id || 'N/A';
+              const sessionId = result.session_id || metadata.session_id || 'N/A';
+              const status = result.status || 'Unknown';
+              
+              // Use actual score from result data (handle different possible structures)
+              const actualScore = result.overall_score || result.metrics?.overall_score || 0;
               
               return (
                 <tr 
-                  key={result.transcript_result_id || index}
+                  key={transcriptResultId || index}
                   className="border-b border-gray-800/30 hover:bg-[#1e2433] transition-colors group"
                 >
                   {/* Test Case Name */}
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      {getStatusIcon(result.status)}
+                      {getStatusIcon(status)}
                       <div>
                         <p className="text-white font-medium text-sm">
-                          {result.test_id?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Unknown Test'}
+                          {testId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </p>
                         <p className="text-gray-500 text-xs mt-0.5">
                           Test Case #{index + 1}
@@ -116,7 +123,7 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
                   {/* Session ID */}
                   <td className="px-6 py-4">
                     <span className="text-gray-400 font-mono text-xs">
-                      {result.session_id || 'N/A'}
+                      {sessionId}
                     </span>
                   </td>
 
@@ -141,13 +148,13 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
 
                   {/* Status */}
                   <td className="px-6 py-4 text-center">
-                    {getStatusBadge(result.status)}
+                    {getStatusBadge(status)}
                   </td>
 
                   {/* Transcript ID */}
                   <td className="px-6 py-4">
                     <span className="text-gray-500 font-mono text-xs">
-                      {result.transcript_result_id?.substring(0, 20) || 'N/A'}...
+                      {transcriptResultId !== 'N/A' ? `${transcriptResultId.substring(0, 20)}...` : 'N/A'}
                     </span>
                   </td>
 

@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react";
+import { useWorkflow } from "../context/WorkFlowContext";
 
-/**
- * Props:
- *  - simulationId (string)  → returned from POST /api/v1/simulation/run
- *  - onComplete (optional)  → called after evaluation finishes
- *  - onError (optional)
- */
 const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
   // execution state
   const [totalActive, setTotalActive] = useState(0);
   const [totalCompleted, setTotalCompleted] = useState(0);
   const [executionFinished, setExecutionFinished] = useState(false);
 
+  // stability guard
+  const [stableCompletedCount, setStableCompletedCount] = useState(0);
+
   // UI animation state
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
 
+  const { setEvaluationResult } = useWorkflow();
+
   /* -------------------------------------------------
-     1️⃣ Poll execution status (NO ID — Swagger correct)
+     1️⃣ Poll simulation status
   -------------------------------------------------- */
   useEffect(() => {
     const pollStatus = async () => {
@@ -39,8 +39,13 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
         setTotalActive(active);
         setTotalCompleted(completed);
 
-        // terminal condition (Swagger-defined)
-        if (active === 0 && completed > 0) {
+        // ✅ Stable terminal condition
+       if (Array.isArray(data.completed) && data.completed.length > 0) {
+  setExecutionFinished(true);
+}
+
+        // require 2 consecutive stable polls
+        if (stableCompletedCount >= 1) {
           setExecutionFinished(true);
         }
       } catch (err) {
@@ -52,10 +57,10 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
     pollStatus();
     const interval = setInterval(pollStatus, 3000);
     return () => clearInterval(interval);
-  }, [onError]);
+  }, [stableCompletedCount, onError]);
 
   /* -------------------------------------------------
-     2️⃣ Animate steps (1 simulation = 1 call)
+     2️⃣ Animate steps
   -------------------------------------------------- */
   useEffect(() => {
     if (currentStep < totalCompleted) {
@@ -83,7 +88,7 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
   }, [currentStep, totalActive, totalCompleted, progress]);
 
   /* -------------------------------------------------
-     4️⃣ Run batch evaluation (Swagger exact)
+     4️⃣ Run batch evaluation (ONLY after execution finishes)
   -------------------------------------------------- */
   useEffect(() => {
     if (!executionFinished) return;
@@ -105,10 +110,9 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
         );
 
         const evaluationResult = await res.json();
-
-        // ✅ USER REQUEST: console evaluation result
         console.log("✅ Evaluation Result:", evaluationResult);
 
+        setEvaluationResult(evaluationResult);
         onComplete?.(evaluationResult);
       } catch (err) {
         console.error("Evaluation failed:", err);
@@ -120,7 +124,7 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
   }, [executionFinished, simulationId, onComplete, onError]);
 
   /* -------------------------------------------------
-     UI
+     UI (unchanged)
   -------------------------------------------------- */
   const total = totalActive + totalCompleted;
 
@@ -138,7 +142,6 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
           </p>
         </div>
 
-        {/* Progress bar */}
         <div className="mb-6">
           <div className="h-3 bg-dark-input rounded-full overflow-hidden">
             <div
@@ -151,37 +154,6 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
             <span className="text-teal-400 font-semibold">{progress}%</span>
             <span>100%</span>
           </div>
-        </div>
-
-        {/* Grid (max 10 visual steps) */}
-        {total > 0 && (
-          <div className="grid grid-cols-5 gap-3 mb-8">
-            {Array.from({ length: Math.min(total, 10) }, (_, i) => i + 1).map(
-              (i) => {
-                const done = i <= currentStep;
-                const active = i === currentStep + 1;
-
-                return (
-                  <div
-                    key={i}
-                    className={`h-16 rounded-lg border-2 flex items-center justify-center text-lg font-semibold ${
-                      done
-                        ? "bg-teal-400/20 border-teal-400 text-teal-300"
-                        : active
-                        ? "bg-teal-400/10 border-teal-400 animate-pulse text-teal-400"
-                        : "bg-dark-input border-gray-700 text-gray-400"
-                    }`}
-                  >
-                    {done ? "✓" : i}
-                  </div>
-                );
-              }
-            )}
-          </div>
-        )}
-
-        <div className="text-center text-gray-400 text-sm">
-          Analyzing call performance…
         </div>
       </div>
     </div>

@@ -1,44 +1,32 @@
 import { User } from "lucide-react";
-import DetailedMetric from "../../../../components/DetailedMetric"
+import DetailedMetric from "../../../../components/DetailedMetric";
 
 /* =========================
-   Dummy Persona Metrics
+   Helpers
 ========================= */
-const PERSONA_METRICS = [
-  {
-    label: "Persona Consistency",
-    value: 100,
-    threshold: 80,
-    time: "0.02ms",
-    status: "passed",
-  },
-  {
-    label: "Tone Appropriateness",
-    value: 100,
-    threshold: 75,
-    time: "0.01ms",
-    status: "passed",
-  },
-  {
-    label: "Region Appropriate Language",
-    value: 100,
-    threshold: 80,
-    time: "0.01ms",
-    status: "passed",
-  },
-  {
-    label: "Behavior Trait Alignment",
-    value: 100,
-    threshold: 80,
-    time: "0.01ms",
-    status: "passed",
-  },
-];
 
-const PersonaDetailedMetrics = () => {
+const humanizeMetricName = (name) => {
+  const map = {
+    persona_consistency: "Persona Consistency",
+    tone_appropriateness: "Tone Appropriateness",
+    region_appropriate_language: "Region Appropriate Language",
+    behavior_trait_alignment: "Behavior Trait Alignment",
+  };
+  return map[name] || name.replace(/_/g, " ");
+};
+
+const toPercent = (v) =>
+  typeof v === "number" ? Math.round(v * 100) : 0;
+
+/* =========================
+   Component
+========================= */
+
+const PersonaDetailedMetrics = ({ metrics = [] }) => {
+  if (!metrics.length) return null;
+
   return (
     <div className="flex flex-col gap-6">
-
       {/* Header */}
       <div className="flex items-center gap-3">
         <User className="text-teal-400" size={20} />
@@ -49,13 +37,21 @@ const PersonaDetailedMetrics = () => {
 
       {/* Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {PERSONA_METRICS.map((metric, idx) => (
+        {metrics.map((metric, idx) => (
           <DetailedMetric
             key={idx}
-            label={metric.label}
-            value={metric.value}
-            threshold={metric.threshold}
-            time={metric.time}
+            label={humanizeMetricName(metric.name)}
+            value={toPercent(metric.value)}
+            threshold={
+              typeof metric.threshold === "number"
+                ? toPercent(metric.threshold)
+                : undefined
+            }
+            time={
+              typeof metric.execution_time_ms === "number"
+                ? `${metric.execution_time_ms.toFixed(2)} ms`
+                : undefined
+            }
             status={metric.status}
           />
         ))}

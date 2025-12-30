@@ -3,19 +3,36 @@ import { Sparkles } from "lucide-react";
 import { darkTheme } from "../../const";
 
 /* =========================
-   Radar Data
+   Helpers
 ========================= */
-const radarData = [
-  { metric: "Persona Consistency", score: 100 },
-  { metric: "Tone Appropriateness", score: 100 },
-  { metric: "Region Appropriate", score: 100 },
-  { metric: "Behavior Trait", score: 100 },
-];
 
-const PersonaAlignmentRadar = () => {
+const humanizeMetricName = (name) => {
+  const map = {
+    persona_consistency: "Persona Consistency",
+    tone_appropriateness: "Tone Appropriateness",
+    region_appropriate_language: "Region Appropriate Language",
+    behavior_trait_alignment: "Behavior Trait Alignment",
+  };
+  return map[name] || name.replace(/_/g, " ");
+};
+
+const toPercent = (v) =>
+  typeof v === "number" ? Math.round(v * 100) : 0;
+
+/* =========================
+   Component
+========================= */
+
+const PersonaAlignmentRadar = ({ metrics = [] }) => {
+  if (!metrics.length) return null;
+
+  const radarData = metrics.map((m) => ({
+    metric: humanizeMetricName(m.name),
+    score: toPercent(m.value),
+  }));
+
   return (
     <div className="bg-[#0b1f26] border border-teal-500/20 rounded-xl p-6">
-
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <Sparkles className="text-teal-400" size={18} />

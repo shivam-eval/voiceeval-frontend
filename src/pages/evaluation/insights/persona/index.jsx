@@ -13,52 +13,6 @@ import PersonaDetailedMetrics from "./PersonaDetailedMetric";
 import PersonaAlignmentRadar from "./PersonaRadar";
 
 /* =========================
-   API / Evaluation Response
-========================= */
-
-const response = {
-  "category": "persona",
-  "overall_score": 1.0,
-  "passed": true,
-  "metrics": [
-    {
-      "metric_name": "persona_consistency",
-      "category": "persona",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 0.020503997802734375,
-      "value": 1.0,
-      "threshold": 0.8
-    },
-    {
-      "metric_name": "tone_appropriateness",
-      "category": "persona",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 0.009775161743164062,
-      "value": 1.0,
-      "threshold": 0.75
-    },
-    {
-      "metric_name": "region_appropriate_language",
-      "category": "persona",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 0.008344650268554688,
-      "value": 1.0
-    },
-    {
-      "metric_name": "behavior_trait_alignment",
-      "category": "persona",
-      "status": "passed",
-      "passed": true,
-      "execution_time_ms": 0.007867813110351562,
-      "value": 1.0
-    }
-  ]
-}
-
-/* =========================
    Helpers
 ========================= */
 
@@ -85,13 +39,20 @@ const PERSONA_CARD_CONFIG = {
   },
 };
 
+const normalizeScore = (v) =>
+  typeof v === "number" ? Math.round(v * 100) : 0;
+
 /* =========================
    Component
 ========================= */
 
-const PersonaOverview = ({ onBack }) => {
-  const passedCount = response.metrics.filter((m) => m.passed).length;
-  const failedCount = response.metrics.length - passedCount;
+const PersonaOverview = ({ response, onBack }) => {
+  if (!response || !Array.isArray(response.metrics)) return null;
+console.log("persona", response)
+  const metrics = response.metrics;
+
+  const passedCount = metrics.filter((m) => m.status === "passed").length;
+  const failedCount = metrics.length - passedCount;
 
   return (
     <div className="flex flex-col gap-8">
@@ -110,8 +71,8 @@ const PersonaOverview = ({ onBack }) => {
       <InsightHeaderCard
         icon={User}
         title="Persona"
-        description="Evaluates persona consistency and tone appropriateness"
-        score={Math.round(response.overall_score * 100)}
+        description="Evaluates persona consistency and communication tone"
+        score={normalizeScore(response.score)}
         passedCount={passedCount}
         failedCount={failedCount}
         theme="teal"
@@ -119,8 +80,8 @@ const PersonaOverview = ({ onBack }) => {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {response.metrics.map((metric, idx) => {
-          const config = PERSONA_CARD_CONFIG[metric.metric_name];
+        {metrics.map((metric, idx) => {
+          const config = PERSONA_CARD_CONFIG[metric.name];
           if (!config) return null;
 
           return (
@@ -128,7 +89,7 @@ const PersonaOverview = ({ onBack }) => {
               key={idx}
               icon={config.icon}
               title={config.title}
-              value={Math.round(metric.value * 100)}
+              value={normalizeScore(metric.value)}
               subtitle={config.subtitle}
             />
           );
@@ -136,22 +97,24 @@ const PersonaOverview = ({ onBack }) => {
       </div>
 
       {/* Persona Stability Panel */}
-      <div className="bg-[#0b1f26] border border-teal-500/30 rounded-xl p-6 flex items-start gap-4">
-        <div className="p-3 rounded-lg bg-teal-500/20 text-teal-400">
-          <ShieldCheck size={28} />
-        </div>
+      {failedCount === 0 && (
+        <div className="bg-[#0b1f26] border border-teal-500/30 rounded-xl p-6 flex items-start gap-4">
+          <div className="p-3 rounded-lg bg-teal-500/20 text-teal-400">
+            <ShieldCheck size={28} />
+          </div>
 
-        <div>
-          <h3 className="text-lg font-semibold text-teal-300 mb-1">
-            Persona Stable & Consistent
-          </h3>
-          <p className="text-teal-200/80">
-            The agent maintained consistent personality, tone, and cultural
-            appropriateness throughout the entire conversation. Brand safety
-            is assured.
-          </p>
+          <div>
+            <h3 className="text-lg font-semibold text-teal-300 mb-1">
+              Persona Stable & Consistent
+            </h3>
+            <p className="text-teal-200/80">
+              The agent maintained consistent personality, tone, and cultural
+              appropriateness throughout the conversation. Brand safety is
+              assured.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Radar & Details */}
       <PersonaAlignmentRadar metrics={response.metrics} />

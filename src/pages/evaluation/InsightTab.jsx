@@ -11,7 +11,7 @@ const CATEGORY_LABELS = {
   persona: "Persona",
 };
 
-const InsightTabs = ({ onChange, activeCategory, categoryScores = [] }) => {
+const InsightTabs = ({ onChange, activeCategory, categoryScores = [],enabled=true }) => {
   return (
     <div className="w-full grid grid-cols-8 gap-3">
       {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
@@ -57,7 +57,7 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [] }) => {
             )} */}
 
             {/* Hover overlay */}
-            {!isActive && (
+            {!isActive&&enabled && (
               <div className="
                 absolute inset-0 flex items-center justify-center
                 bg-black/60 opacity-0 group-hover:opacity-100

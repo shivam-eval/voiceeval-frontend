@@ -267,21 +267,11 @@ const EvaluationDashboard = ({onBack }) => {
         simulationId={simulationDataFromRes.simulation_id}
       />
 
-      <div className="grid grid-cols-4 gap-4">
-        {summaryMetrics.map((metric) => (
-          <SummaryMetric
-            key={metric.id}
-            mainText={metric.mainText}
-            successRate={metric.successRate}
-            sideText={metric.sideText}
-          />
-        ))}
-      </div>
-
       <InsightTabs
         activeCategory={activeCategory}
         onChange={setActiveCategory}
         categoryScores={categoryScores}
+        enabled={false}
       />
 
       <ImprovementsPanel 

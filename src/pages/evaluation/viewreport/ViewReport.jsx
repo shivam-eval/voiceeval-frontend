@@ -31,6 +31,8 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
   const [activeTab, setActiveTab] = useState('overview');
   const [activeCategory, setActiveCategory] = useState('');
 
+  console.log('TestReportView received evaluation:', evaluation);
+
   // Process evaluation data from the actual evaluation object
   const evaluationData = evaluation ? {
     overall_score: Math.round(evaluation.overall_score * 100),
@@ -40,25 +42,7 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
     recommendations: evaluation.recommendations || [],
     
     // Extract category scores from metric_results
-    category_scores: evaluation.metric_results?.reduce((acc, metric) => {
-      if (metric.category && metric.score !== null && metric.score !== undefined) {
-        const existingCategory = acc.find(c => c.category === metric.category);
-        if (existingCategory) {
-          // Average if multiple metrics in same category
-          existingCategory.scores.push(metric.score);
-          existingCategory.score = Math.round(
-            existingCategory.scores.reduce((sum, s) => sum + s, 0) / existingCategory.scores.length * 100
-          );
-        } else {
-          acc.push({
-            category: metric.category,
-            score: Math.round(metric.score * 100),
-            scores: [metric.score]
-          });
-        }
-      }
-      return acc;
-    }, []) || [],
+    category_scores: evaluation.category_scores || [],
     
     // Extract metric results for detailed view
     metrics: evaluation.metric_results || [],
@@ -83,7 +67,7 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
   // Prepare radar chart data from actual category scores
   const radarData = evaluationData?.category_scores.map(cat => ({
     category: cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    score: cat.score
+    score: Math.round(cat.score * 100) // Convert to percentage
   })) || [];
 
   // Extract latency data from metrics
@@ -140,65 +124,71 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
     setActiveCategory('');
   };
 
+  // FIXED: Build categoryMap from metric_results grouped by category
+  const categoryMap = React.useMemo(() => {
+    if (!evaluation?.metric_results) return {};
+
+    const map = {};
+
+    evaluation.metric_results.forEach((metric) => {
+      const category = metric.category;
+      if (!category) return;
+
+      if (!map[category]) {
+        // Find the category score
+        const categoryScore = evaluation.category_scores?.find(
+          (c) => c.category === category
+        );
+
+        map[category] = {
+          category: category,
+          score: categoryScore ? categoryScore.score : 0,
+          weight: categoryScore ? categoryScore.weight : 0,
+          metrics: []
+        };
+      }
+
+      map[category].metrics.push(metric);
+    });
+
+    console.log('Built categoryMap:', map);
+    return map;
+  }, [evaluation]);
+
   // Render category-specific view
-  const accuracyCategory = evaluation?.category_scores?.find(
-  (c) => c.category === "accuracy"
-);
-const categoryMap = React.useMemo(() => {
-  if (!evaluation?.metric_results) return {};
+  const renderCategoryView = () => {
+    console.log('Rendering category:', activeCategory);
+    console.log('Category data:', categoryMap[activeCategory]);
 
-  return evaluation.metric_results.reduce((acc, metric) => {
-    if (!metric.category) return acc;
+    switch (activeCategory) {
+      case 'accuracy':
+        return <AccuracyView response={categoryMap.accuracy} onBack={handleBackToOverview} />;
 
-    if (!acc[metric.category]) {
-      acc[metric.category] = {
-        category: metric.category,
-        score: evaluation.category_scores?.find(
-          (c) => c.category === metric.category
-        )?.score ?? 0,
-        weight: 0,
-        metrics: []
-      };
+      case 'latency':
+        return <LatencyOverview response={categoryMap.latency} onBack={handleBackToOverview} />;
+
+      case 'cost':
+        return <CostOverview response={categoryMap.cost} onBack={handleBackToOverview} />;
+
+      case 'audio_quality':
+        return <AudioOverview response={categoryMap.audio_quality} onBack={handleBackToOverview} />;
+
+      case 'endpointing':
+        return <EndpointingOverview response={categoryMap.endpointing} onBack={handleBackToOverview} />;
+
+      case 'persona':
+        return <PersonaOverview response={categoryMap.persona} onBack={handleBackToOverview} />;
+
+      case 'task_completion':
+        return <TaskCompletionOverview response={categoryMap.task_completion} onBack={handleBackToOverview} />;
+
+      case 'conversation_quality':
+        return <ConversationOverview response={categoryMap.conversation_quality} onBack={handleBackToOverview} />;
+
+      default:
+        return null;
     }
-
-    acc[metric.category].metrics.push(metric);
-    return acc;
-  }, {});
-}, [evaluation]);
-
-
-
-
- const renderCategoryView = () => {
-  switch (activeCategory) {
-    case 'accuracy':
-      return <AccuracyView response={categoryMap.accuracy} onBack={handleBackToOverview} />;
-
-    case 'latency':
-      return <LatencyOverview response={categoryMap.latency} onBack={handleBackToOverview} />;
-
-    case 'cost':
-      return <CostOverview response={categoryMap.cost} onBack={handleBackToOverview} />;
-
-    case 'audio_quality':
-      return <AudioOverview response={categoryMap.audio_quality} onBack={handleBackToOverview} />;
-
-    case 'endpointing':
-      return <EndpointingOverview response={categoryMap.endpointing} onBack={handleBackToOverview} />;
-
-    case 'persona':
-      return <PersonaOverview response={categoryMap.persona} onBack={handleBackToOverview} />;
-
-    case 'task_completion':
-      return <TaskCompletionOverview response={categoryMap.task_completion} onBack={handleBackToOverview} />;
-
-    case 'conversation_quality':
-      return <ConversationOverview response={categoryMap.conversation_quality} onBack={handleBackToOverview} />;
-
-    default:
-      return null;
-  }
-};
+  };
 
 
   return (
@@ -297,7 +287,11 @@ const categoryMap = React.useMemo(() => {
         <InsightTabs
           activeCategory={activeCategory}
           onChange={handleCategoryChange}
-          categoryScores={evaluationData.category_scores}
+          categoryScores={evaluationData.category_scores.map(cat => ({
+            category: cat.category,
+            score: Math.round(cat.score * 100),
+            weight: cat.weight
+          }))}
         />
       )}
 
@@ -408,45 +402,48 @@ const categoryMap = React.useMemo(() => {
               {/* Quick Stats Grid */}
               {evaluationData?.category_scores.length > 0 && (
                 <div className="grid grid-cols-2 gap-4">
-                  {evaluationData.category_scores.map(cat => (
-                    <div 
-                      key={cat.category}
-                      className="bg-dark-panel border border-gray-800/50 rounded-xl p-4 hover:border-gray-700/50 transition-all"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-400 mb-1">
-                            {cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </p>
-                          <p className={`text-2xl font-bold ${getScoreColor(cat.score)}`}>
-                            {cat.score}%
-                          </p>
-                        </div>
-                        <div className="w-16 h-16">
-                          <svg viewBox="0 0 36 36" className="transform -rotate-90">
-                            <circle
-                              cx="18"
-                              cy="18"
-                              r="16"
-                              fill="none"
-                              stroke="#374151"
-                              strokeWidth="3"
-                            />
-                            <circle
-                              cx="18"
-                              cy="18"
-                              r="16"
-                              fill="none"
-                              stroke={cat.score >= 90 ? '#22c55e' : cat.score >= 75 ? '#eab308' : '#ef4444'}
-                              strokeWidth="3"
-                              strokeDasharray={`${cat.score * 1.005}, 100.5`}
-                              strokeLinecap="round"
-                            />
-                          </svg>
+                  {evaluationData.category_scores.map(cat => {
+                    const scorePercentage = Math.round(cat.score * 100);
+                    return (
+                      <div 
+                        key={cat.category}
+                        className="bg-dark-panel border border-gray-800/50 rounded-xl p-4 hover:border-gray-700/50 transition-all"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-400 mb-1">
+                              {cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </p>
+                            <p className={`text-2xl font-bold ${getScoreColor(scorePercentage)}`}>
+                              {scorePercentage}%
+                            </p>
+                          </div>
+                          <div className="w-16 h-16">
+                            <svg viewBox="0 0 36 36" className="transform -rotate-90">
+                              <circle
+                                cx="18"
+                                cy="18"
+                                r="16"
+                                fill="none"
+                                stroke="#374151"
+                                strokeWidth="3"
+                              />
+                              <circle
+                                cx="18"
+                                cy="18"
+                                r="16"
+                                fill="none"
+                                stroke={scorePercentage >= 90 ? '#22c55e' : scorePercentage >= 75 ? '#eab308' : '#ef4444'}
+                                strokeWidth="3"
+                                strokeDasharray={`${scorePercentage * 1.005}, 100.5`}
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>

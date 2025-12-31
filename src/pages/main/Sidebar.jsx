@@ -103,7 +103,7 @@ const Sidebar = ({
     {
       id: "evaluations",
       label: "Evaluations",
-      path: "/evaluations",
+      path: "/evaluation",
       enabled: workflow.simulation.run,
       icon: (
         <svg

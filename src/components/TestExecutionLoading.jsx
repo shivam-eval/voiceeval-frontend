@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useWorkflow } from "../context/WorkFlowContext";
 
 const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
+  const navigate = useNavigate();
+  
   // execution state
   const [totalActive, setTotalActive] = useState(0);
   const [totalCompleted, setTotalCompleted] = useState(0);
@@ -15,6 +18,40 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
   const [progress, setProgress] = useState(0);
 
   const { setEvaluationResult } = useWorkflow();
+
+  /* -------------------------------------------------
+     0️⃣ Check for existing evaluation results on mount
+  -------------------------------------------------- */
+  useEffect(() => {
+    const checkExistingEvaluation = async () => {
+      if (!simulationId) return;
+
+      try {
+        const res = await fetch(
+          `http://localhost:8001/api/v1/evaluate/${simulationId}`,
+          {
+            method: "GET",
+            headers: { accept: "application/json" },
+          }
+        );
+
+        if (res.ok) {
+          const existingResult = await res.json();
+          console.log("✅ Found existing evaluation:", existingResult);
+          
+          setEvaluationResult(existingResult);
+          // Direct navigation to evaluation page
+          navigate("/evaluation", { 
+            state: { evaluationResult: existingResult, simulationId } 
+          });
+        }
+      } catch (err) {
+        console.log("No existing evaluation found, proceeding with execution");
+      }
+    };
+
+    checkExistingEvaluation();
+  }, [simulationId, navigate, setEvaluationResult]);
 
   /* -------------------------------------------------
      1️⃣ Poll simulation status
@@ -40,9 +77,13 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
         setTotalCompleted(completed);
 
         // ✅ Stable terminal condition
-       if (Array.isArray(data.completed) && data.completed.length > 0) {
-  setExecutionFinished(true);
-}
+        if (Array.isArray(data.completed) && data.completed.length > 0) {
+          if (completed === stableCompletedCount) {
+            setStableCompletedCount((prev) => prev + 1);
+          } else {
+            setStableCompletedCount(0);
+          }
+        }
 
         // require 2 consecutive stable polls
         if (stableCompletedCount >= 1) {
@@ -88,7 +129,7 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
   }, [currentStep, totalActive, totalCompleted, progress]);
 
   /* -------------------------------------------------
-     4️⃣ Run batch evaluation (ONLY after execution finishes)
+     4️⃣ Run batch evaluation & navigate to results
   -------------------------------------------------- */
   useEffect(() => {
     if (!executionFinished) return;
@@ -109,22 +150,36 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
           }
         );
 
+        if (!res.ok) {
+          throw new Error(`Evaluation failed with status ${res.status}`);
+        }
+
         const evaluationResult = await res.json();
         console.log("✅ Evaluation Result:", evaluationResult);
 
         setEvaluationResult(evaluationResult);
         onComplete?.(evaluationResult);
+
+        // Navigate to evaluation page with results
+        navigate("/evaluation", { 
+          state: { evaluationResult, simulationId } 
+        });
       } catch (err) {
         console.error("Evaluation failed:", err);
         onError?.(err);
+        
+        // Navigate to evaluation page even on error (with fallback UI)
+        navigate("/evaluation", { 
+          state: { error: err.message, simulationId } 
+        });
       }
     };
 
     runEvaluation();
-  }, [executionFinished, simulationId, onComplete, onError]);
+  }, [executionFinished, simulationId, onComplete, onError, navigate, setEvaluationResult]);
 
   /* -------------------------------------------------
-     UI (unchanged)
+     UI
   -------------------------------------------------- */
   const total = totalActive + totalCompleted;
 
@@ -155,6 +210,30 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
             <span>100%</span>
           </div>
         </div>
+
+        {executionFinished && (
+          <div className="text-center mt-6">
+            <div className="inline-flex items-center text-teal-400">
+              <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                  fill="none"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              Generating evaluation results...
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

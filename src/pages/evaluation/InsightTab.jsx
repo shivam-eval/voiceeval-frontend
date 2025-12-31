@@ -7,13 +7,13 @@ const CATEGORY_LABELS = {
   audio_quality: "Audio Quality",
   conversation_quality: "Conversation",
   endpointing: "Endpointing",
-  cost: "Cost",
+  // cost: "Cost",
   persona: "Persona",
 };
 
 const InsightTabs = ({ onChange, activeCategory, categoryScores = [],enabled=true }) => {
   return (
-    <div className="w-full grid grid-cols-8 gap-3">
+    <div className="w-full grid grid-cols-7 gap-3">
       {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
         const scoreData = categoryScores.find(c => c.category === key);
         const score = scoreData?.score ?? 0;

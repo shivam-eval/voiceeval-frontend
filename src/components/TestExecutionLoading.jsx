@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useWorkflow } from "../context/WorkFlowContext";
+import { getSimulationSummary } from "../api";
 
 const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
-  const navigate = useNavigate();
-
   // execution state
   const [summary, setSummary] = useState(null);
   const [sessions, setSessions] = useState([]);
@@ -15,8 +13,6 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
 
   // Completion state
   const [isCompleted, setIsCompleted] = useState(false);
-  const [evaluationData, setEvaluationData] = useState(null);
-  const [isEvaluating, setIsEvaluating] = useState(false);
 
   const { setEvaluationResult } = useWorkflow();
 
@@ -28,29 +24,19 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
       if (!simulationId) return;
 
       try {
-        const res = await fetch(
-          `http://localhost:8001/api/v1/simulation/${simulationId}/summary`,
-          {
-            method: "GET",
-            headers: { accept: "application/json" },
-          }
-        );
+        const res = await getSimulationSummary(simulationId);
+        const existingResult = res.data;
+        console.log("✅ Found existing summary:", existingResult);
 
-        if (res.ok) {
-          const existingResult = await res.json();
-          console.log("✅ Found existing summary:", existingResult);
+        // Check if all sessions are completed
+        const allCompleted =
+          existingResult.sessions?.passed?.length +
+          existingResult.sessions?.failed?.length ===
+          existingResult.total_sessions;
 
-          // Check if all sessions are completed
-          const allCompleted =
-            existingResult.sessions?.passed?.length +
-            existingResult.sessions?.failed?.length ===
-            existingResult.total_sessions;
+        if (allCompleted) {
+          setEvaluationResult(existingResult);
 
-          if (allCompleted) {
-            setEvaluationResult(existingResult);
-            // REMOVED: Don't navigate to evaluation page
-            // Just save to context, evaluation dashboard will handle display
-          }
         }
       } catch (err) {
         console.log("No existing summary found, proceeding with execution");
@@ -68,19 +54,8 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
 
     const pollSummary = async () => {
       try {
-        const res = await fetch(
-          `http://localhost:8001/api/v1/simulation/${simulationId}/summary`,
-          {
-            method: "GET",
-            headers: { accept: "application/json" },
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error(`Failed to fetch summary: ${res.status}`);
-        }
-
-        const data = await res.json();
+        const res = await getSimulationSummary(simulationId);
+        const data = res.data;
         console.log("📊 Simulation summary:", data);
 
         setSummary(data);

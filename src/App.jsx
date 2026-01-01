@@ -18,7 +18,7 @@ import TestCasesScreen from "./pages/testCases/TestCasesScreen";
 import TestCasesGenerationLoading from "./components/TestCasesGenerationLoading";
 import TestExecutionLoading from "./components/TestExecutionLoading";
 
-import { extractAgent } from "./api";
+import { extractAgent, runSimulation } from "./api";
 import { useWorkflow } from "./context/WorkflowContext";
 import EvaluationDashboard from "./pages/evaluation";
 
@@ -35,7 +35,11 @@ function App() {
     resetWorkflow,
   } = useWorkflow();
 
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  // Check if user is authenticated by looking for auth token in localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const token = localStorage.getItem("authToken");
+    return !!token; // Returns true if token exists, false otherwise
+  });
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
 
@@ -48,6 +52,7 @@ function App() {
 
   const handleLogout = () => {
     resetWorkflow();
+    localStorage.removeItem("authToken"); // Clear auth token on logout
     setIsAuthenticated(false);
   };
 
@@ -90,28 +95,16 @@ function App() {
     console.log('🌍 Region:', workflow.region);
 
     try {
+      const phoneNumber = import.meta.env.VITE_PHONE_NUMBER || "+917982693803";
       const payload = {
         test_suite_id: workflow.testSuite.testSuiteId,
-        phone_number: "+917982693803",
+        phone_number: phoneNumber,
       };
 
       console.log('📤 Sending simulation request:', payload);
 
-      const response = await fetch('http://localhost:8001/api/v1/simulation/run', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'accept': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.detail || `Simulation start failed: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const response = await runSimulation(payload);
+      const data = response.data;
       console.log('✅ Simulation started:', data);
 
       setSimulationResult({
@@ -342,13 +335,13 @@ function App() {
                         <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800/50">
                           <div className="text-center mb-8">
                             <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${workflow.simulationResult.evaluationResult?.passed
-                                ? 'bg-green-400/20'
-                                : 'bg-red-400/20'
+                              ? 'bg-green-400/20'
+                              : 'bg-red-400/20'
                               }`}>
                               <svg
                                 className={`w-10 h-10 ${workflow.simulationResult.evaluationResult?.passed
-                                    ? 'text-green-400'
-                                    : 'text-red-400'
+                                  ? 'text-green-400'
+                                  : 'text-red-400'
                                   }`}
                                 fill="none"
                                 stroke="currentColor"

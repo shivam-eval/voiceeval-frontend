@@ -18,6 +18,7 @@ import PersonaOverview from "./insights/persona";
 import TaskCompletionOverview from "./insights/task_completion";
 import ConversationOverview from "./insights/conversation";
 import { useWorkflow } from "../../context/WorkFlowContext";
+import { evaluateBatch } from "../../api";
 
 const CATEGORY = {
   OVERVIEW: "",
@@ -103,22 +104,10 @@ const EvaluationDashboard = ({ onBack }) => {
         console.log('🔄 Calling /evaluate/batch for simulation:', simulationId);
         setProgress(30);
 
-        const response = await fetch('http://localhost:8001/api/v1/evaluate/batch', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'accept': 'application/json',
-          },
-          body: JSON.stringify({ simulation_id: simulationId })
-        });
+        const response = await evaluateBatch(simulationId);
+        const batchResult = response.data;
 
         setProgress(60);
-
-        if (!response.ok) {
-          throw new Error(`Batch evaluation failed: ${response.status}`);
-        }
-
-        const batchResult = await response.json();
         console.log('✅ Batch evaluation completed:', batchResult);
 
         setProgress(90);

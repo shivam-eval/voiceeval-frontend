@@ -29,7 +29,7 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
           flow_tree: flowData,
           region: region,
           call_type: "inbound",
-          max_paths: 3,
+          max_paths: 2,
           include_edge_cases: true
         }
         

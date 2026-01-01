@@ -55,8 +55,8 @@ const Sidebar = ({
     {
       id: "test-cases",
       label: "Test Cases",
-      path: "/test-cases",
-      enabled: workflow.agent.connected,
+      path: "/testcase",
+      enabled: !!workflow.setupResult,
       icon: (
         <svg
           className="w-5 h-5"
@@ -104,7 +104,7 @@ const Sidebar = ({
       id: "evaluations",
       label: "Evaluations",
       path: "/evaluation",
-      enabled: workflow.simulation.run,
+      enabled: !!workflow.simulationResult?.completed,
       icon: (
         <svg
           className="w-5 h-5"
@@ -222,13 +222,12 @@ const Sidebar = ({
               key={item.id}
               disabled={!item.enabled}
               onClick={() => onNavigate && onNavigate(item.id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                activeView === item.id
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${activeView === item.id
                   ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
                   : item.enabled
-                  ? "text-gray-400 hover:text-white hover:bg-dark-input"
-                  : "text-gray-600 cursor-not-allowed opacity-50"
-              }`}
+                    ? "text-gray-400 hover:text-white hover:bg-dark-input"
+                    : "text-gray-600 cursor-not-allowed opacity-50"
+                }`}
             >
               {item.icon}
               {isSidebarOpen && (
@@ -253,13 +252,12 @@ const Sidebar = ({
                 key={item.id}
                 disabled={!item.enabled}
                 onClick={() => onNavigate && onNavigate(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                  activeView === item.id
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${activeView === item.id
                     ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
                     : item.enabled
-                    ? "text-gray-400 hover:text-white hover:bg-dark-input"
-                    : "text-gray-600 cursor-not-allowed opacity-50"
-                }`}
+                      ? "text-gray-400 hover:text-white hover:bg-dark-input"
+                      : "text-gray-600 cursor-not-allowed opacity-50"
+                  }`}
               >
                 {item.icon}
                 {isSidebarOpen && (

@@ -88,7 +88,7 @@ function App() {
     console.log('📁 Test suite path:', testSuitePath);
     console.log('🆔 Test suite ID:', workflow.testSuite.testSuiteId);
     console.log('🌍 Region:', workflow.region);
-    
+
     try {
       const payload = {
         test_suite_id: workflow.testSuite.testSuiteId,
@@ -120,7 +120,7 @@ function App() {
       });
 
       navigate("/testcase/running");
-      
+
     } catch (error) {
       console.error('❌ Failed to start simulation:', error);
       alert(`Failed to start test execution: ${error.message}`);
@@ -241,13 +241,13 @@ function App() {
                       region={workflow.region}
                       onComplete={(data) => {
                         console.log('✅ Generation complete:', data);
-                        
+
                         setTestSuite({
                           generated: true,
                           config: data.testSuite,
                           testSuiteId: data.testSuiteId,
                         });
-                        
+
                         navigate("/testcase");
                       }}
                       onError={(error) => {
@@ -273,8 +273,10 @@ function App() {
                       onRunTests={handleRunTests}
                       onBack={() => navigate("/workspace")}
                     />
-                  ) : (
+                  ) : workflow.setupResult ? (
                     <Navigate to="/workspace" />
+                  ) : (
+                    <Navigate to="/dashboard" />
                   )
                 }
               />
@@ -288,26 +290,26 @@ function App() {
                       simulationId={workflow.simulationResult.simulationId}
                       onComplete={(fullResponse) => {
                         console.log('✅ Execution complete, full response:', fullResponse);
-                        
+
                         // Extract the evaluation data properly
                         const evaluationResult = fullResponse.simulation_evaluation?.evaluations?.[0] || fullResponse.evaluations?.[0];
-                        
+
                         // Build simulation data for overview
                         // Build simulation data for overview
-const simulationData = {
-  simulation_id: fullResponse.simulation_id,
-  test_suite_id: workflow.testSuite.testSuiteId,
-  total_sessions: fullResponse.simulation_evaluation?.total_sessions_evaluated || 1,
-  overall_score: fullResponse.simulation_evaluation?.average_overall_score || 0,
-  transcript_results: fullResponse.evaluations?.map(evaluation => ({
-    evaluation_id: evaluation.evaluation_id,
-    session_id: evaluation.session_id,
-    path_id: evaluation.path_id,
-    overall_score: evaluation.overall_score,
-    passed: evaluation.passed,
-    transcript_result_id: evaluation.session_id, // Using session_id as transcript ID
-  })) || [],
-};
+                        const simulationData = {
+                          simulation_id: fullResponse.simulation_id,
+                          test_suite_id: workflow.testSuite.testSuiteId,
+                          total_sessions: fullResponse.simulation_evaluation?.total_sessions_evaluated || 1,
+                          overall_score: fullResponse.simulation_evaluation?.average_overall_score || 0,
+                          transcript_results: fullResponse.evaluations?.map(evaluation => ({
+                            evaluation_id: evaluation.evaluation_id,
+                            session_id: evaluation.session_id,
+                            path_id: evaluation.path_id,
+                            overall_score: evaluation.overall_score,
+                            passed: evaluation.passed,
+                            transcript_result_id: evaluation.session_id, // Using session_id as transcript ID
+                          })) || [],
+                        };
                         setSimulationResult({
                           ...workflow.simulationResult,
                           completed: true,
@@ -315,7 +317,7 @@ const simulationData = {
                           simulationData: simulationData,
                           fullResponse: fullResponse, // Keep full response for reference
                         });
-                        
+
                         navigate("/testcase/results");
                       }}
                       onError={(error) => {
@@ -339,19 +341,17 @@ const simulationData = {
                       <div className="w-full max-w-screen-2xl mx-auto">
                         <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800/50">
                           <div className="text-center mb-8">
-                            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${
-                              workflow.simulationResult.evaluationResult?.passed 
-                                ? 'bg-green-400/20' 
+                            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${workflow.simulationResult.evaluationResult?.passed
+                                ? 'bg-green-400/20'
                                 : 'bg-red-400/20'
-                            }`}>
-                              <svg 
-                                className={`w-10 h-10 ${
-                                  workflow.simulationResult.evaluationResult?.passed 
-                                    ? 'text-green-400' 
+                              }`}>
+                              <svg
+                                className={`w-10 h-10 ${workflow.simulationResult.evaluationResult?.passed
+                                    ? 'text-green-400'
                                     : 'text-red-400'
-                                }`} 
-                                fill="none" 
-                                stroke="currentColor" 
+                                  }`}
+                                fill="none"
+                                stroke="currentColor"
                                 viewBox="0 0 24 24"
                               >
                                 {workflow.simulationResult.evaluationResult?.passed ? (

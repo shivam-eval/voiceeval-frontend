@@ -11,7 +11,7 @@ const CATEGORY_LABELS = {
   persona: "Persona",
 };
 
-const InsightTabs = ({ onChange, activeCategory, categoryScores = [],enabled=true }) => {
+const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = true }) => {
   return (
     <div className="w-full grid grid-cols-7 gap-3">
       {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
@@ -22,21 +22,23 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [],enabled=tru
           score >= 85
             ? "text-emerald-400"
             : score >= 70
-            ? "text-yellow-400"
-            : "text-red-400";
+              ? "text-yellow-400"
+              : "text-red-400";
 
         const isActive = activeCategory === key;
 
         return (
           <button
             key={key}
-            onClick={() => onChange(key)}
+            onClick={() => enabled && onChange(key)}
+            disabled={!enabled}
             className={`
               relative group rounded-xl transition-all flex flex-col items-center justify-center py-4
-              ${isActive 
-                ? 'bg-teal-500/20 border-2 border-teal-500' 
-                : 'bg-gray-800 hover:bg-gray-700'
+              ${isActive
+                ? 'bg-teal-500/20 border-2 border-teal-500'
+                : 'bg-gray-800'
               }
+              ${enabled ? 'hover:bg-gray-700 cursor-pointer' : 'cursor-default'}
             `}
           >
             {/* Label */}
@@ -56,8 +58,8 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [],enabled=tru
               </div>
             )} */}
 
-            {/* Hover overlay */}
-            {!isActive&&enabled && (
+            {/* Hover overlay - only show when enabled and not active */}
+            {!isActive && enabled && (
               <div className="
                 absolute inset-0 flex items-center justify-center
                 bg-black/60 opacity-0 group-hover:opacity-100

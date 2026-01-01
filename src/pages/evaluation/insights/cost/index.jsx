@@ -8,27 +8,54 @@ import { DollarSign, Cpu, Mic, Volume2, ArrowLeft } from "lucide-react";
 const formatUSD = (v) => `$${(v ?? 0).toFixed(4)}`;
 
 const CostOverview = ({ response, onBack }) => {
-  if (!response || !Array.isArray(response.metrics)) return null;
+  console.log('CostOverview received response:', response);
 
-  const totalMetric = response.metrics.find(
+  // FIXED: Access metrics correctly
+  const metrics = response?.metrics || [];
+  
+  if (metrics.length === 0) {
+    return (
+      <div className="flex flex-col gap-8">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-4 py-2 bg-dark-input border border-gray-700 rounded-lg text-sm text-gray-300 flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Overview
+          </button>
+        )}
+        <div className="text-gray-400">No cost metrics available</div>
+      </div>
+    );
+  }
+
+  const totalMetric = metrics.find(
     (m) => m.name === "total_conversation_cost"
   );
 
+  console.log('Found totalMetric:', totalMetric);
+
+  // FIXED: Extract cost details properly
   const totalCost = totalMetric?.details?.total_cost_usd ?? 0;
   const sttCost   = totalMetric?.details?.stt_cost_usd ?? 0;
   const ttsCost   = totalMetric?.details?.tts_cost_usd ?? 0;
 
-  const score = Math.round((response.score ?? 0) * 100);
+  // FIXED: Get score from response (already converted to percentage in ViewReport)
+  const score = response?.score ?? 0;
 
-  const passedCount = response.metrics.filter(m => m.status === "passed").length;
-  const failedCount = response.metrics.filter(m => m.status === "failed").length;
+  // FIXED: Calculate passed/failed from metrics array
+  const passedCount = metrics.filter(m => m.status === "passed").length;
+  const failedCount = metrics.filter(m => m.status === "failed").length;
+
+  console.log('Cost breakdown:', { totalCost, sttCost, ttsCost, score, passedCount, failedCount });
 
   return (
     <div className="flex flex-col gap-8">
       {onBack && (
         <button
           onClick={onBack}
-          className="px-4 py-2 bg-dark-input border border-gray-700 rounded-lg text-sm text-gray-300 flex items-center gap-2"
+          className="px-4 py-2 bg-dark-input border border-gray-700 rounded-lg text-sm text-gray-300 flex items-center gap-2 hover:bg-dark-input/80 transition-all"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Overview
@@ -91,7 +118,7 @@ const CostOverview = ({ response, onBack }) => {
         />
       </div>
 
-      <CostDetailedMetrics metrics={response.metrics} />
+      <CostDetailedMetrics metrics={metrics} />
     </div>
   );
 };

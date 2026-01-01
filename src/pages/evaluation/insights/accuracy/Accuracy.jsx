@@ -24,12 +24,12 @@ const humanizeMetricName = (name) => {
    TRANSFORMER
 ========================= */
 
-const transformAccuracyMetrics = (response) => {
-  if (!response || !Array.isArray(response.metrics)) return [];
+const transformAccuracyMetrics = (metrics) => {
+  if (!metrics || !Array.isArray(metrics)) return [];
 
-  return response.metrics.map((m) => ({
+  return metrics.map((m) => ({
     label: humanizeMetricName(m.name),
-    value: typeof m.score === "number" ? Math.round(m.score) : 0, // score already 0–100
+    value: typeof m.score === "number" ? Math.round(m.score * 100) : 0, // Convert 0-1 to 0-100
     threshold: 100,
     time: "—",
     status: m.status, // passed | failed | skipped
@@ -41,12 +41,32 @@ const transformAccuracyMetrics = (response) => {
 ========================= */
 
 export default function AccuracyView({ response, onBack }) {
-  if (!response || !Array.isArray(response.metrics)) return null;
+  // FIXED: Check for the correct property structure
+  const metrics = response?.metrics || [];
+  
+  console.log('AccuracyView received response:', response);
+  console.log('AccuracyView metrics:', metrics);
+
+  if (!metrics || metrics.length === 0) {
+    return (
+      <div className="space-y-6">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Overview
+          </button>
+        )}
+        <div className="text-gray-400">No accuracy metrics available</div>
+      </div>
+    );
+  }
 
   const [activeTab] = useState("accuracy");
 
-  const metrics = response.metrics;
-  const detailedMetrics = transformAccuracyMetrics(response);
+  const detailedMetrics = transformAccuracyMetrics(metrics);
 
   /* -------------------------
      DERIVED VALUES
@@ -62,7 +82,7 @@ export default function AccuracyView({ response, onBack }) {
   const score =
     numericScores.length > 0
       ? Math.round(
-          numericScores.reduce((a, b) => a + b, 0) / numericScores.length
+          (numericScores.reduce((a, b) => a + b, 0) / numericScores.length) * 100
         )
       : 0;
 
@@ -107,7 +127,7 @@ export default function AccuracyView({ response, onBack }) {
               label: humanizeMetricName(m.name),
               value:
                 typeof m.score === "number"
-                  ? `${Math.round(m.score)}%`
+                  ? `${Math.round(m.score * 100)}%`
                   : "N/A",
             }))}
         />

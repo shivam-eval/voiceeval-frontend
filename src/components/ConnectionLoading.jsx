@@ -53,7 +53,8 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
             config: extractedConfig?.config,
             tools: extractedConfig?.tools
           },
-          model: 'gpt-4o',
+          model: 'llama-3.1-8b-instant',
+          provider:"groq"
         }
 
         console.log('📤 Sending flow generation request:', flowPayload)
@@ -75,7 +76,7 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
         
         const mermaidPayload = {
           flow_tree: flowData,
-          provider:"openai"
+          provider:"groq"
            }
 
 
@@ -106,7 +107,8 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
             console.log('✅ Calling onComplete with data')
             onComplete({ 
               flowData, 
-              mermaid 
+              mermaid,
+              systemPrompt: extractedConfig?.system_prompt
             })
           }
         }, 800)
@@ -294,4 +296,4 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
   )
 }
 
-export default ConnectionLoading
+export default ConnectionLoading;

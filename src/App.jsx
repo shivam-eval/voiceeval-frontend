@@ -1,242 +1,423 @@
-import { useState, useEffect } from 'react'
-import DashboardLoader from './components/DashboardLoader'
-import DashboardLayout from './components/DashboardLayout'
-import Dashboard from './components/Dashboard'
-import PlatformSelection from './components/PlatformSelection'
-import ConnectionForm from './components/ConnectionForm'
-import ConnectionLoading from './components/ConnectionLoading'
-import WorkspaceDashboard from './components/WorkspaceDashboard'
-import { extractAgent,flowGenerationMermaid } from './api'
+import { useState } from "react";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from "react-router-dom";
+
+import DashboardLayout from "./pages/main/index";
+import Dashboard from "./pages/dasbhboard/index";
+import PlatformSelection from "./pages/platformSelection/PlatformSelection";
+import ConnectionForm from "./pages/connectAgent";
+import ConnectionLoading from "./components/ConnectionLoading";
+import WorkspaceDashboard from "./pages/workspace";
+import AuthScreen from "./pages/auth/AuthScreen";
+import TestCasesScreen from "./pages/testCases/TestCasesScreen";
+import TestCasesGenerationLoading from "./components/TestCasesGenerationLoading";
+import TestExecutionLoading from "./components/TestExecutionLoading";
+
+import { extractAgent, runSimulation } from "./api";
+import { useWorkflow } from "./context/WorkflowContext";
+import EvaluationDashboard from "./pages/evaluation";
 
 function App() {
-  const [showDashboard, setShowDashboard] = useState(true)
-  const [showLayout, setShowLayout] = useState(false)
-  const [activeView, setActiveView] = useState('dashboard')
-  const [showPlatformSelection, setShowPlatformSelection] = useState(false)
-  const [showConnectionForm, setShowConnectionForm] = useState(false)
-  const [showConnectionLoading, setShowConnectionLoading] = useState(false)
-  const [showWorkspaceDashboard, setShowWorkspaceDashboard] = useState(false)
-  const [selectedPlatform, setSelectedPlatform] = useState(null)
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [showEvaluationDashboard, setShowEvaluationDashboard] = useState(false)
-  const [extractedConfig, setExtractedConfig] = useState(null)
-  const [setupResult, setSetupResult] = useState(null)
+  const navigate = useNavigate();
+  const location = useLocation();
 
-  console.log('App state:', {
-    showConnectionLoading,
-    showWorkspaceDashboard,
-    hasExtractedConfig: !!extractedConfig,
-    hasSetupResult: !!setupResult
-  })
+  const {
+    workflow,
+    setAgent,
+    setSetupResult,
+    setTestSuite,
+    setSimulationResult,
+    resetWorkflow,
+  } = useWorkflow();
 
-  useEffect(() => {
-    // Show dashboard loader first, then transition to dashboard with layout
-    const timer = setTimeout(() => {
-      setShowDashboard(false)
-      setTimeout(() => {
-        setShowLayout(true)
-      }, 300)
-    }, 2000)
+  // Check if user is authenticated by looking for auth token in localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const token = localStorage.getItem("authToken");
+    return !!token; // Returns true if token exists, false otherwise
+  });
+  const [selectedPlatform, setSelectedPlatform] = useState(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
-    return () => clearTimeout(timer)
-  }, [])
-
-  const handleNavigate = (viewId) => {
-    console.log('Navigating to:', viewId)
-    setActiveView(viewId)
-    
-    if (viewId === 'connect-agent') {
-      if (!showWorkspaceDashboard) {
-        setShowPlatformSelection(true)
-        setShowConnectionForm(false)
-        setShowConnectionLoading(false)
-      }
-    } else if (viewId === 'dashboard') {
-      setShowPlatformSelection(false)
-      setShowConnectionForm(false)
-      setShowConnectionLoading(false)
-      setShowWorkspaceDashboard(false)
-    }
+  /* ---------------- Auth ---------------- */
+  if (!isAuthenticated) {
+    return <AuthScreen onAuthSuccess={() => setIsAuthenticated(true)} />;
   }
+
+  /* ---------------- Handlers ---------------- */
+
+  const handleLogout = () => {
+    resetWorkflow();
+    localStorage.removeItem("authToken"); // Clear auth token on logout
+    setIsAuthenticated(false);
+  };
 
   const handlePlatformSelect = (platformId) => {
-    console.log('Platform selected:', platformId)
-    setSelectedPlatform(platformId)
-    setShowPlatformSelection(false)
-    setActiveView('connect-agent')
-    setTimeout(() => setShowConnectionForm(true), 300)
-  }
-
-  const handleBackToPlatforms = () => {
-    console.log('Back to platforms')
-    setShowConnectionForm(false)
-    setActiveView('connect-agent')
-    setTimeout(() => {
-      setShowPlatformSelection(true)
-      setSelectedPlatform(null)
-    }, 300)
-  }
+    setSelectedPlatform(platformId);
+    navigate("/connect-agent/form");
+  };
 
   const handleConnect = async ({ apiKey, assistantId }) => {
-    console.log('🔄 Starting connection...')
-    setIsConnecting(true)
-    setActiveView("connect-agent")
+    setIsConnecting(true);
 
     try {
       const payload = {
         platform: selectedPlatform,
         api_key: apiKey,
         agent_id: assistantId,
-      }
+      };
 
-      console.log("📤 Sending extract request:", payload)
+      const res = await extractAgent(payload);
 
-      const res = await extractAgent(payload)
-
-      console.log("📥 Extraction result:", res.data)
-
-      // Save extracted config
-      setExtractedConfig(res.data)
-      console.log('✅ Config extracted successfully')
-
-      // UI transitions
-      setIsConnecting(false)
-      setShowConnectionForm(false)
-
-      setTimeout(() => {
-        console.log('➡️ Showing connection loading screen')
-        setShowConnectionLoading(true)
-      }, 300)
-
+      setAgent(res.data);
+      navigate("/connect-agent/loading");
     } catch (err) {
-      console.error("❌ Connection failed:", err)
-      console.error("Error details:", {
-        message: err.message,
-        response: err?.response?.data,
-        stack: err.stack
-      })
-      
-      alert("Failed to connect: " + (err.response?.data?.detail || err.message))
-      setIsConnecting(false)
+      alert(err.response?.data?.detail || err.message);
+    } finally {
+      setIsConnecting(false);
     }
-  }
+  };
 
   const handleConnectionComplete = (result) => {
-    console.log('🎉 Connection complete with result:', result)
-    
-    // Store the setup result (flowData + mermaid)
-    setSetupResult(result)
-    
-    // Also merge into extractedConfig for persistence
-    setExtractedConfig(prev => ({
-      ...prev,
-      flowData: result?.flowData,
-      mermaid: result?.mermaid
-    }))
+    setSetupResult(result);
+    navigate("/workspace");
+  };
 
-    console.log('➡️ Transitioning to workspace dashboard')
-    
-    // Hide loader, show workspace
-    setShowConnectionLoading(false)
-    setShowWorkspaceDashboard(true)
-    setActiveView('connect-agent')
-  }
+  /* ---------------- Test Execution Handler ---------------- */
+  const handleRunTests = async (testSuitePath) => {
+    console.log('🚀 Starting test execution');
+    console.log('📁 Test suite path:', testSuitePath);
+    console.log('🆔 Test suite ID:', workflow.testSuite.testSuiteId);
+    console.log('🌍 Region:', workflow.region);
 
-  // Show loader before layout
-  if (showDashboard) {
-    return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center relative overflow-hidden">
-        {/* Animated background particles */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-teal-400 rounded-full opacity-20"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `pulse ${2 + Math.random() * 2}s ease-in-out infinite`,
-                animationDelay: `${Math.random() * 2}s`,
-              }}
-            />
-          ))}
-        </div>
-        <div className="animate-fade-in">
-          <DashboardLoader />
-        </div>
-      </div>
-    )
-  }
+    try {
+      const phoneNumber = import.meta.env.VITE_PHONE_NUMBER || "+917982693803";
+      const payload = {
+        test_suite_id: workflow.testSuite.testSuiteId,
+        phone_number: phoneNumber,
+      };
 
-  // Show layout with side panel after initialization
-  if (showLayout) {
-    return (
-      <DashboardLayout 
-        activeView={activeView} 
-        onNavigate={handleNavigate} 
-        hideRightPanel={showEvaluationDashboard}
-      >
-        {/* Dashboard - Default view */}
-        {activeView === 'dashboard' && !showPlatformSelection && !showConnectionForm && !showConnectionLoading && !showWorkspaceDashboard && (
-          <div className="p-8">
-            <Dashboard />
-          </div>
-        )}
+      console.log('📤 Sending simulation request:', payload);
 
-        {/* Platform Selection - Connect Agent flow */}
-        {showPlatformSelection && (
-          <div className="p-8">
-            <PlatformSelection onSelectPlatform={handlePlatformSelect} />
-          </div>
-        )}
+      const response = await runSimulation(payload);
+      const data = response.data;
+      console.log('✅ Simulation started:', data);
 
-        {/* Connection Form - Connect Agent flow */}
-        {showConnectionForm && (
-          <div className="p-8">
-            <ConnectionForm
-              platform={selectedPlatform}
-              onConnect={handleConnect}
-              isConnecting={isConnecting}
-              onBack={handleBackToPlatforms}
-            />
-          </div>
-        )}
+      setSimulationResult({
+        simulationId: data.simulation_id,
+        started: true,
+      });
 
-        {/* Connection Loading - Setup flow with API calls */}
-        {showConnectionLoading && extractedConfig && (
-          <div className="p-8">
-            <ConnectionLoading
-              extractedConfig={extractedConfig}
-              onComplete={handleConnectionComplete}
-            />
-          </div>
-        )}
+      navigate("/testcase/running");
 
-        {/* Workspace Dashboard - Shown after connection complete */}
-        {showWorkspaceDashboard && extractedConfig && setupResult && (
-          <div className="p-8">
-            <WorkspaceDashboard
-              systemConfig={{
-                agentId: extractedConfig.agent_id,
-                config: extractedConfig.config,
-                systemPrompt: extractedConfig.system_prompt,
-                platform: extractedConfig.platform,
-                tools: extractedConfig.tools,
-                metadata: extractedConfig.metadata,
-                // Use setup result directly to avoid race conditions
-                flowData: setupResult.flowData,
-                mermaid: setupResult.mermaid
-              }}
-              onEvaluationDashboardChange={setShowEvaluationDashboard}
-            />
-          </div>
-        )}
+    } catch (error) {
+      console.error('❌ Failed to start simulation:', error);
+      alert(`Failed to start test execution: ${error.message}`);
+    }
+  };
 
-      </DashboardLayout>
-    )
-  }
+  const activeView = location.pathname.split("/")[1] || "dashboard";
 
-  return null
+  /* ---------------- Routes ---------------- */
+
+  return (
+    <Routes>
+      <Route
+        path="/*"
+        element={
+          <DashboardLayout
+            activeView={activeView}
+            onNavigate={(v) => navigate(`/${v}`)}
+            onLogout={handleLogout}
+          >
+            <Routes>
+              <Route path="/" element={<Navigate to="/dashboard" />} />
+
+              <Route
+                path="/dashboard"
+                element={
+                  <div className="p-8">
+                    <Dashboard />
+                  </div>
+                }
+              />
+
+              {/* CONNECT AGENT */}
+              <Route
+                path="/connect-agent"
+                element={
+                  <div className="p-8">
+                    <PlatformSelection onSelectPlatform={handlePlatformSelect} />
+                  </div>
+                }
+              />
+
+              <Route
+                path="/connect-agent/form"
+                element={
+                  selectedPlatform ? (
+                    <div className="p-8">
+                      <ConnectionForm
+                        platform={selectedPlatform}
+                        onConnect={handleConnect}
+                        isConnecting={isConnecting}
+                      />
+                    </div>
+                  ) : (
+                    <Navigate to="/connect-agent" />
+                  )
+                }
+              />
+
+              <Route
+                path="/connect-agent/loading"
+                element={
+                  workflow.agent ? (
+                    <div className="p-8">
+                      <ConnectionLoading
+                        extractedConfig={workflow.agent}
+                        onComplete={handleConnectionComplete}
+                      />
+                    </div>
+                  ) : (
+                    <Navigate to="/connect-agent" />
+                  )
+                }
+              />
+
+              {/* WORKSPACE */}
+              <Route
+                path="/workspace"
+                element={
+                  workflow.setupResult ? (
+                    <div className="p-8">
+                      <WorkspaceDashboard
+                        systemConfig={{
+                          ...workflow.agent,
+                          ...workflow.setupResult,
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <Navigate to="/dashboard" />
+                  )
+                }
+              />
+
+              {/* EVALUATION DASHBOARD */}
+              <Route
+                path="/evaluation"
+                element={
+                  workflow.simulationResult?.completed ? (
+                    <EvaluationDashboard
+                      evaluationData={workflow.simulationResult.evaluationResult}
+                      simulationData={workflow.simulationResult.simulationData}
+                      onBack={() => navigate("/testcase/results")}
+                    />
+                  ) : (
+                    <Navigate to="/dashboard" />
+                  )
+                }
+              />
+
+              {/* TEST CASE GENERATION */}
+              <Route
+                path="/testcase/generating"
+                element={
+                  workflow.flow.flowData ? (
+                    <TestCasesGenerationLoading
+                      flowData={workflow.flow.flowData}
+                      region={workflow.region}
+                      onComplete={(data) => {
+                        console.log('✅ Generation complete:', data);
+
+                        setTestSuite({
+                          generated: true,
+                          config: data.testSuite,
+                          testSuiteId: data.testSuiteId,
+                        });
+
+                        navigate("/testcase");
+                      }}
+                      onError={(error) => {
+                        console.error('❌ Generation failed:', error);
+                        alert(`Failed to generate test cases: ${error}`);
+                        navigate("/workspace");
+                      }}
+                    />
+                  ) : (
+                    <Navigate to="/workspace" />
+                  )
+                }
+              />
+
+              {/* TEST CASE REVIEW */}
+              <Route
+                path="/testcase"
+                element={
+                  workflow.testSuite?.generated ? (
+                    <TestCasesScreen
+                      testSuite={workflow.testSuite.config}
+                      testSuiteId={workflow.testSuite.testSuiteId}
+                      onRunTests={handleRunTests}
+                      onBack={() => navigate("/workspace")}
+                    />
+                  ) : workflow.setupResult ? (
+                    <Navigate to="/workspace" />
+                  ) : (
+                    <Navigate to="/dashboard" />
+                  )
+                }
+              />
+
+              {/* TEST EXECUTION (Running) */}
+              <Route
+                path="/testcase/running"
+                element={
+                  workflow.simulationResult?.started ? (
+                    <TestExecutionLoading
+                      simulationId={workflow.simulationResult.simulationId}
+                      onComplete={(fullResponse) => {
+                        console.log('✅ Execution complete, full response:', fullResponse);
+
+                        // Extract the evaluation data properly
+                        const evaluationResult = fullResponse.simulation_evaluation?.evaluations?.[0] || fullResponse.evaluations?.[0];
+
+                        // Build simulation data for overview
+                        // Build simulation data for overview
+                        const simulationData = {
+                          simulation_id: fullResponse.simulation_id,
+                          test_suite_id: workflow.testSuite.testSuiteId,
+                          total_sessions: fullResponse.simulation_evaluation?.total_sessions_evaluated || 1,
+                          overall_score: fullResponse.simulation_evaluation?.average_overall_score || 0,
+                          transcript_results: fullResponse.evaluations?.map(evaluation => ({
+                            evaluation_id: evaluation.evaluation_id,
+                            session_id: evaluation.session_id,
+                            path_id: evaluation.path_id,
+                            overall_score: evaluation.overall_score,
+                            passed: evaluation.passed,
+                            transcript_result_id: evaluation.session_id, // Using session_id as transcript ID
+                          })) || [],
+                        };
+                        setSimulationResult({
+                          ...workflow.simulationResult,
+                          completed: true,
+                          evaluationResult: evaluationResult,
+                          simulationData: simulationData,
+                          fullResponse: fullResponse, // Keep full response for reference
+                        });
+
+                        navigate("/testcase/results");
+                      }}
+                      onError={(error) => {
+                        console.error('❌ Execution failed:', error);
+                        alert(`Test execution failed: ${error.message || error}`);
+                        navigate("/testcase");
+                      }}
+                    />
+                  ) : (
+                    <Navigate to="/testcase" />
+                  )
+                }
+              />
+
+              {/* TEST RESULTS */}
+              <Route
+                path="/testcase/results"
+                element={
+                  workflow.simulationResult?.completed ? (
+                    <div className="p-8">
+                      <div className="w-full max-w-screen-2xl mx-auto">
+                        <div className="bg-gray-900 rounded-2xl p-12 border border-gray-800/50">
+                          <div className="text-center mb-8">
+                            <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${workflow.simulationResult.evaluationResult?.passed
+                              ? 'bg-green-400/20'
+                              : 'bg-red-400/20'
+                              }`}>
+                              <svg
+                                className={`w-10 h-10 ${workflow.simulationResult.evaluationResult?.passed
+                                  ? 'text-green-400'
+                                  : 'text-red-400'
+                                  }`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                {workflow.simulationResult.evaluationResult?.passed ? (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                ) : (
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                )}
+                              </svg>
+                            </div>
+                            <h1 className="text-4xl font-bold text-white mb-4">
+                              {workflow.simulationResult.evaluationResult?.passed ? 'Tests Passed' : 'Tests Failed'}
+                            </h1>
+                            <p className="text-gray-400 mb-2">
+                              Overall Score: {Math.round((workflow.simulationResult.evaluationResult?.overall_score || 0) * 100)}%
+                            </p>
+                            <p className="text-gray-500 text-sm">
+                              Simulation ID: {workflow.simulationResult.simulationId}
+                            </p>
+                          </div>
+
+                          {/* Quick Stats */}
+                          <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="bg-gray-800 rounded-lg p-4">
+                              <div className="text-gray-400 text-sm mb-1">Sessions Evaluated</div>
+                              <div className="text-2xl font-bold text-white">
+                                {workflow.simulationResult.simulationData?.total_sessions || 1}
+                              </div>
+                            </div>
+                            <div className="bg-gray-800 rounded-lg p-4">
+                              <div className="text-gray-400 text-sm mb-1">Issues Found</div>
+                              <div className="text-2xl font-bold text-white">
+                                {workflow.simulationResult.evaluationResult?.issues_found || 0}
+                              </div>
+                            </div>
+                            <div className="bg-gray-800 rounded-lg p-4">
+                              <div className="text-gray-400 text-sm mb-1">Execution Time</div>
+                              <div className="text-2xl font-bold text-white">
+                                {Math.round((workflow.simulationResult.evaluationResult?.execution_time_ms || 0) / 1000)}s
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex gap-4">
+                            <button
+                              onClick={() => navigate("/testcase")}
+                              className="flex-1 px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors"
+                            >
+                              Back to Test Cases
+                            </button>
+                            <button
+                              onClick={() => navigate("/evaluation")}
+                              className="flex-1 px-6 py-3 bg-teal-400 hover:bg-teal-500 text-white rounded-lg font-semibold transition-colors"
+                            >
+                              View Detailed Evaluation
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <Navigate to="/testcase" />
+                  )
+                }
+              />
+
+              <Route path="*" element={<Navigate to="/dashboard" />} />
+            </Routes>
+          </DashboardLayout>
+        }
+      />
+    </Routes>
+  );
 }
 
-export default App
+export default App;

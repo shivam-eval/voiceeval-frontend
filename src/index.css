@@ -46,6 +46,44 @@ body {
   border-radius: 6px;
   color: white;
 }
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.category-label {
+  width: 120px;
+  color: #cfcfcf;
+  font-size: 14px;
+}
+.category-metric {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.metric-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.metric-pill.good {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+}
+
+.metric-pill.ok {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+}
+
+.metric-pill.bad {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
 
 
 /* Popup animation that doesn't conflict with transform positioning */

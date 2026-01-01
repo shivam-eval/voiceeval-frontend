@@ -35,10 +35,9 @@ function App() {
     resetWorkflow,
   } = useWorkflow();
 
-  // Check if user is authenticated by looking for auth token in localStorage
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const token = localStorage.getItem("authToken");
-    return !!token; // Returns true if token exists, false otherwise
+    // Check if token exists in localStorage on initial load
+    return !!localStorage.getItem("token");
   });
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -52,7 +51,8 @@ function App() {
 
   const handleLogout = () => {
     resetWorkflow();
-    localStorage.removeItem("authToken"); // Clear auth token on logout
+    localStorage.removeItem("token");
+    localStorage.removeItem("userEmail");
     setIsAuthenticated(false);
   };
 

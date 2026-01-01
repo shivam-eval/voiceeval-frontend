@@ -17,8 +17,7 @@ import EndpointingOverview from "./insights/endpointing";
 import PersonaOverview from "./insights/persona";
 import TaskCompletionOverview from "./insights/task_completion";
 import ConversationOverview from "./insights/conversation";
-import { useWorkflow } from "../../context/WorkFlowContext";
-import { evaluateBatch } from "../../api";
+import { useWorkflow } from "../../context/WorkflowContext";
 
 const CATEGORY = {
   OVERVIEW: "",

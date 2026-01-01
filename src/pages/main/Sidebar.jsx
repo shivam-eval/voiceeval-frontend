@@ -55,8 +55,8 @@ const Sidebar = ({
     {
       id: "test-cases",
       label: "Test Cases",
-      path: "/testcase",
-      enabled: !!workflow.setupResult,
+      path: "/test-cases",
+      enabled: workflow.agent?.connected || false,
       icon: (
         <svg
           className="w-5 h-5"
@@ -77,7 +77,7 @@ const Sidebar = ({
       id: "simulations",
       label: "Simulations",
       path: "/simulations",
-      enabled: workflow.testSuite.generated,
+      enabled: workflow.testSuite?.generated || false,
       icon: (
         <svg
           className="w-5 h-5"
@@ -103,8 +103,8 @@ const Sidebar = ({
     {
       id: "evaluations",
       label: "Evaluations",
-      path: "/evaluation",
-      enabled: !!workflow.simulationResult?.completed,
+      path: "/evaluations",
+      enabled: workflow.simulationResult?.started || false,
       icon: (
         <svg
           className="w-5 h-5"

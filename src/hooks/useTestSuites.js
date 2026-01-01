@@ -106,3 +106,58 @@ export const useAddTestCase = () => {
         },
     });
 };
+
+/**
+ * Hook to import test suite
+ */
+export const useImportTestSuite = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ fileContent, name, agentId }) => testSuitesApi.import(fileContent, name, agentId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: testSuiteKeys.lists() });
+        },
+    });
+};
+
+/**
+ * Hook to bulk update test cases
+ */
+export const useBulkUpdateTestCases = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ suiteId, testCaseIds, updates }) =>
+            testSuitesApi.bulkUpdateTestCases(suiteId, testCaseIds, updates),
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: testSuiteKeys.detail(variables.suiteId) });
+        },
+    });
+};
+
+/**
+ * Hook to get test suite statistics
+ */
+export const useTestSuiteStatistics = (id) => {
+    return useQuery({
+        queryKey: [...testSuiteKeys.detail(id), 'statistics'],
+        queryFn: () => testSuitesApi.getStatistics(id),
+        enabled: !!id,
+    });
+};
+
+/**
+ * Hook to update test suite status
+ */
+export const useUpdateTestSuiteStatus = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: ({ id, status }) => testSuitesApi.updateStatus(id, status),
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: testSuiteKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: testSuiteKeys.detail(variables.id) });
+        },
+    });
+};

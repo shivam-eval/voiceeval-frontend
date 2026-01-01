@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useTestSuite, useUpdateTestSuite, useDeleteTestSuite, useAddTestCase, useCloneTestSuite } from "../../hooks/useTestSuites";
+import { useTestSuite, useUpdateTestSuite, useDeleteTestSuite, useAddTestCase, useCloneTestSuite, useUpdateTestSuiteStatus } from "../../hooks/useTestSuites";
 import { usePersonas } from "../../hooks/usePersonas";
 import { useTestProfiles } from "../../hooks/useTestProfiles";
+import { testSuitesApi } from "../../utils/api";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 import TestCaseEditorModal from "../../components/TestCaseEditorModal";
@@ -27,6 +28,15 @@ const TestSuiteDetailView = () => {
     const deleteSuite = useDeleteTestSuite();
     const cloneSuite = useCloneTestSuite();
     const addTestCase = useAddTestCase();
+    const updateStatus = useUpdateTestSuiteStatus();
+
+    const handleStatusChange = async (newStatus) => {
+        try {
+            await updateStatus.mutateAsync({ id: suiteId, status: newStatus });
+        } catch (error) {
+            alert(error.message);
+        }
+    };
 
     const handleInlineEdit = async (field, value) => {
         try {
@@ -50,7 +60,7 @@ const TestSuiteDetailView = () => {
             }
         }
     };
-    
+
     const handleClone = async () => {
         try {
             await cloneSuite.mutateAsync(suiteId);
@@ -58,22 +68,22 @@ const TestSuiteDetailView = () => {
             alert(error.message);
         }
     };
-    
+
     const handleAddTestCase = () => {
         setEditingTestCase(null);
         setShowTestCaseModal(true);
     };
-    
+
     const handleEditTestCase = (testCase) => {
         setEditingTestCase(testCase);
         setShowTestCaseModal(true);
     };
-    
+
     const handleSaveTestCase = async (testCaseData) => {
         try {
             if (editingTestCase) {
                 // Update existing test case
-                const updatedTestCases = testCases.map(tc => 
+                const updatedTestCases = testCases.map(tc =>
                     tc.id === editingTestCase.id ? { ...tc, ...testCaseData } : tc
                 );
                 await updateSuite.mutateAsync({
@@ -93,7 +103,7 @@ const TestSuiteDetailView = () => {
             alert(error.message);
         }
     };
-    
+
     const handleDeleteTestCase = async (testCaseId) => {
         if (confirm("Are you sure you want to delete this test case?")) {
             try {
@@ -177,9 +187,20 @@ const TestSuiteDetailView = () => {
                             </h1>
                         )}
 
-                        <Badge variant={suite.status === 'ready' ? 'success' : 'default'} size="md">
-                            {suite.status}
-                        </Badge>
+                        <div className="flex items-center gap-3">
+                            <Badge variant={suite.status === 'ready' ? 'success' : 'default'} size="md">
+                                {suite.status}
+                            </Badge>
+                            <select
+                                value={suite.status}
+                                onChange={(e) => handleStatusChange(e.target.value)}
+                                className="px-3 py-1 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-300 focus:outline-none focus:border-teal-400"
+                            >
+                                <option value="draft">Draft</option>
+                                <option value="ready">Ready</option>
+                                <option value="archived">Archived</option>
+                            </select>
+                        </div>
                     </div>
 
                     {editingDescription ? (
@@ -201,11 +222,32 @@ const TestSuiteDetailView = () => {
 
                     {/* Actions */}
                     <div className="flex items-center gap-3 mt-6">
+                        <Button
+                            size="sm"
+                            onClick={() => navigate(`/simulation/evaluator?test_suite_id=${suiteId}`)}
+                            className="bg-teal-500 hover:bg-teal-600"
+                        >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Run Simulation
+                        </Button>
                         <Button size="sm" variant="outline" onClick={handleAddTestCase}>
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                             </svg>
                             Add Test Case
+                        </Button>
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:8001'}/api/v1/test-suites/${suiteId}/export?format=json`, '_blank')}
+                        >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Export
                         </Button>
                         <Button size="sm" variant="outline" onClick={handleClone}>
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -372,9 +414,23 @@ const TestSuiteDetailView = () => {
                                                             </div>
                                                             <div>
                                                                 <h4 className="text-sm font-semibold text-gray-400 mb-2">Persona</h4>
-                                                                <div className="text-teal-400">
-                                                                    {testCase.persona_id || 'No persona assigned'}
-                                                                </div>
+                                                                {testCase.assigned_personas && testCase.assigned_personas.length > 0 ? (
+                                                                    <div className="space-y-2">
+                                                                        {testCase.assigned_personas.map((persona, idx) => (
+                                                                            <div key={idx} className="bg-gray-900 rounded p-3">
+                                                                                <div className="font-medium text-teal-400">{persona.name}</div>
+                                                                                <div className="text-sm text-gray-400 mt-1">
+                                                                                    {persona.region} • {persona.age_group} • {persona.gender}
+                                                                                </div>
+                                                                                <div className="text-xs text-gray-500 mt-1">
+                                                                                    Match: {(persona.confidence_score * 100).toFixed(0)}%
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="text-gray-500">No persona assigned</div>
+                                                                )}
                                                             </div>
                                                             <div>
                                                                 <h4 className="text-sm font-semibold text-gray-400 mb-2">Metrics</h4>
@@ -408,7 +464,7 @@ const TestSuiteDetailView = () => {
                     )}
                 </div>
             </div>
-            
+
             {/* Test Case Editor Modal */}
             <TestCaseEditorModal
                 isOpen={showTestCaseModal}

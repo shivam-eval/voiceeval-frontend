@@ -44,7 +44,7 @@ const WorkspaceDashboard = ({ systemConfig }) => {
   useEffect(() => {
     if (!preloadedFlowData) return;
 
-    if (!workflow.flow.generated) {
+    if (!workflow?.flow?.generated) {
       setFlowData({
         flowData: preloadedFlowData,
         mermaid: preloadedMermaid,
@@ -53,7 +53,7 @@ const WorkspaceDashboard = ({ systemConfig }) => {
   }, [
     preloadedFlowData,
     preloadedMermaid,
-    workflow.flow.generated,
+    workflow?.flow?.generated,
     setFlowData,
   ]);
 

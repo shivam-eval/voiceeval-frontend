@@ -75,6 +75,27 @@ const Sidebar = ({
       ),
     },
     {
+      id: "personas",
+      label: "Personas",
+      path: "/personas",
+      enabled: true,
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      ),
+    },
+    {
       id: "simulations",
       label: "Simulations",
       path: "/simulations",
@@ -104,7 +125,7 @@ const Sidebar = ({
     {
       id: "evaluations",
       label: "Evaluations",
-      path: "/simulations",
+      path: "/evaluations",
       enabled: true,
       icon: (
         <svg
@@ -224,10 +245,10 @@ const Sidebar = ({
               disabled={!item.enabled}
               onClick={() => navigate(item.path)}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${activeView === item.id
-                  ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
-                  : item.enabled
-                    ? "text-gray-400 hover:text-white hover:bg-dark-input"
-                    : "text-gray-600 cursor-not-allowed opacity-50"
+                ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
+                : item.enabled
+                  ? "text-gray-400 hover:text-white hover:bg-dark-input"
+                  : "text-gray-600 cursor-not-allowed opacity-50"
                 }`}
             >
               {item.icon}
@@ -254,10 +275,10 @@ const Sidebar = ({
                 disabled={!item.enabled}
                 onClick={() => onNavigate && onNavigate(item.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${activeView === item.id
-                    ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
-                    : item.enabled
-                      ? "text-gray-400 hover:text-white hover:bg-dark-input"
-                      : "text-gray-600 cursor-not-allowed opacity-50"
+                  ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
+                  : item.enabled
+                    ? "text-gray-400 hover:text-white hover:bg-dark-input"
+                    : "text-gray-600 cursor-not-allowed opacity-50"
                   }`}
               >
                 {item.icon}

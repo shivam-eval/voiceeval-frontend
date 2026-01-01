@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Button from "./Button";
+import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
 
 const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, defaultAgentId }) => {
     const [currentStep, setCurrentStep] = useState(1);
@@ -18,12 +19,110 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
         persona_id: "",
         metrics: [],
         extra_instructions: "",
+        
+        // Audio upload specific
+        audioFiles: [],
     });
+    
+    const [uploadProgress, setUploadProgress] = useState({});
+    const [uploadResults, setUploadResults] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
 
-    const totalSteps = 3;
+    const totalSteps = formData.testCaseType === 'audio' ? 4 : 3;
 
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+    };
+    
+    const handleFileSelect = (e) => {
+        const files = Array.from(e.target.files);
+        addAudioFiles(files);
+    };
+    
+    const addAudioFiles = (files) => {
+        const audioFiles = files.filter(file => {
+            const ext = file.name.split('.').pop().toLowerCase();
+            return ['wav', 'mp3', 'flac', 'ogg', 'm4a', 'aac', 'mp4'].includes(ext);
+        });
+        
+        const newFiles = audioFiles.map(file => ({
+            file,
+            id: Date.now() + Math.random(),
+            name: file.name,
+            size: file.size,
+            status: 'pending'
+        }));
+        
+        setFormData(prev => ({
+            ...prev,
+            audioFiles: [...prev.audioFiles, ...newFiles]
+        }));
+    };
+    
+    const removeAudioFile = (fileId) => {
+        setFormData(prev => ({
+            ...prev,
+            audioFiles: prev.audioFiles.filter(f => f.id !== fileId)
+        }));
+    };
+    
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+    
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const files = Array.from(e.dataTransfer.files);
+        addAudioFiles(files);
+    };
+    
+    const uploadAudioFiles = async () => {
+        if (formData.audioFiles.length === 0) return null;
+        
+        setIsUploading(true);
+        
+        try {
+            const uploadFormData = new FormData();
+            formData.audioFiles.forEach(({ file }) => {
+                uploadFormData.append('files', file);
+            });
+            
+            const response = await fetch(
+                `${import.meta.env.VITE_API_URL}/api/v1/audio/bulk-upload?category=test_suites`,
+                {
+                    method: 'POST',
+                    body: uploadFormData,
+                }
+            );
+            
+            if (!response.ok) {
+                throw new Error(`Upload failed: ${response.statusText}`);
+            }
+            
+            const result = await response.json();
+            setUploadResults(result);
+            return result;
+        } catch (error) {
+            console.error('Upload error:', error);
+            setUploadResults({
+                success: false,
+                message: error.message,
+                total_files: formData.audioFiles.length,
+                successful_uploads: 0,
+                failed_uploads: formData.audioFiles.length
+            });
+            throw error;
+        } finally {
+            setIsUploading(false);
+        }
+    };
+    
+    const formatFileSize = (bytes) => {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
     };
 
     const handleNext = () => {
@@ -38,9 +137,31 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
         }
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        onSubmit(formData);
+        
+        // If audio type, upload files first
+        if (formData.testCaseType === 'audio' && formData.audioFiles.length > 0) {
+            try {
+                const uploadResult = await uploadAudioFiles();
+                
+                if (uploadResult && uploadResult.success) {
+                    // Create test suite with audio files metadata
+                    const suiteData = {
+                        ...formData,
+                        audioUploadBatchId: uploadResult.upload_batch_id,
+                        audioFileStatuses: uploadResult.file_statuses,
+                    };
+                    onSubmit(suiteData);
+                } else {
+                    alert('Audio upload failed. Please try again.');
+                }
+            } catch (error) {
+                console.error('Failed to upload audio files:', error);
+            }
+        } else {
+            onSubmit(formData);
+        }
     };
 
     const isStepValid = () => {
@@ -50,7 +171,14 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
             case 2:
                 return formData.testCaseType;
             case 3:
+                // If audio type, needs to proceed to upload step
+                if (formData.testCaseType === 'audio') {
+                    return true;
+                }
                 return true; // Optional fields
+            case 4:
+                // Audio upload step - at least one file required
+                return formData.audioFiles.length > 0;
             default:
                 return false;
         }
@@ -77,7 +205,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
 
                     {/* Steps Indicator */}
                     <div className="flex items-center gap-2">
-                        {[1, 2, 3].map((step) => (
+                        {Array.from({ length: totalSteps }, (_, i) => i + 1).map((step) => (
                             <div key={step} className="flex items-center flex-1">
                                 <div
                                     className={`h-2 rounded-full flex-1 ${step <= currentStep ? 'bg-teal-400' : 'bg-gray-700'
@@ -95,6 +223,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                         {currentStep === 1 && "Basic Information"}
                         {currentStep === 2 && "Test Case Type"}
                         {currentStep === 3 && "Configuration"}
+                        {currentStep === 4 && "Upload Audio Files"}
                     </div>
                 </div>
 
@@ -331,7 +460,131 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
 
                             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
                                 <p className="text-sm text-blue-400">
-                                    💡 Tip: You can add individual test cases after creating the suite.
+                                    {formData.testCaseType === 'audio' 
+                                        ? '💡 Next: Upload audio files for test case generation.'
+                                        : '💡 Tip: You can add individual test cases after creating the suite.'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* Step 4: Audio Upload (only for audio type) */}
+                    {currentStep === 4 && formData.testCaseType === 'audio' && (
+                        <div className="space-y-6">
+                            <div>
+                                <h3 className="text-lg font-semibold text-white mb-2">
+                                    Upload Audio Files
+                                </h3>
+                                <p className="text-gray-400 text-sm mb-4">
+                                    Upload call recordings that will be transcribed and analyzed to generate test cases
+                                </p>
+                            </div>
+                            
+                            {/* Drop Zone */}
+                            <div
+                                className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-teal-500 transition-colors"
+                                onDragOver={handleDragOver}
+                                onDrop={handleDrop}
+                            >
+                                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                                <p className="text-white font-medium mb-2">
+                                    Drag and drop audio files here
+                                </p>
+                                <p className="text-sm text-gray-400 mb-4">
+                                    or click to browse (WAV, MP3, FLAC, OGG, M4A, AAC, MP4)
+                                </p>
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept=".wav,.mp3,.flac,.ogg,.m4a,.aac,.mp4"
+                                    onChange={handleFileSelect}
+                                    className="hidden"
+                                    id="audio-file-upload"
+                                    disabled={isUploading}
+                                />
+                                <label
+                                    htmlFor="audio-file-upload"
+                                    className="inline-block px-6 py-3 bg-teal-600 text-white rounded-lg cursor-pointer hover:bg-teal-700 transition-colors disabled:opacity-50"
+                                >
+                                    Browse Files
+                                </label>
+                            </div>
+                            
+                            {/* Selected Files List */}
+                            {formData.audioFiles.length > 0 && (
+                                <div className="bg-gray-800 rounded-lg p-4">
+                                    <div className="flex justify-between items-center mb-3">
+                                        <h4 className="text-sm font-semibold text-white">
+                                            Selected Files ({formData.audioFiles.length})
+                                        </h4>
+                                        {!isUploading && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setFormData({...formData, audioFiles: []})}
+                                                className="text-xs text-red-400 hover:text-red-300"
+                                            >
+                                                Clear All
+                                            </button>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                                        {formData.audioFiles.map((file) => (
+                                            <div
+                                                key={file.id}
+                                                className="flex items-center justify-between bg-gray-900 rounded-lg p-3"
+                                            >
+                                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                    <div className="text-teal-400">
+                                                        🎵
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm text-white truncate">
+                                                            {file.name}
+                                                        </p>
+                                                        <p className="text-xs text-gray-400">
+                                                            {formatFileSize(file.size)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                {!isUploading && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeAudioFile(file.id)}
+                                                        className="text-gray-400 hover:text-red-400 p-1"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {/* Upload Results */}
+                            {uploadResults && (
+                                <div className={`rounded-lg p-4 ${uploadResults.success ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
+                                    <div className="flex items-center gap-2 mb-2">
+                                        {uploadResults.success ? (
+                                            <CheckCircle className="w-5 h-5 text-green-400" />
+                                        ) : (
+                                            <AlertCircle className="w-5 h-5 text-red-400" />
+                                        )}
+                                        <p className={`text-sm font-medium ${uploadResults.success ? 'text-green-400' : 'text-red-400'}`}>
+                                            {uploadResults.message}
+                                        </p>
+                                    </div>
+                                    <p className="text-xs text-gray-400">
+                                        Successful: {uploadResults.successful_uploads} | Failed: {uploadResults.failed_uploads}
+                                    </p>
+                                </div>
+                            )}
+                            
+                            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                                <p className="text-sm text-blue-400">
+                                    💡 Bulk upload supported. Audio will be transcribed and analyzed to create test cases.
                                 </p>
                             </div>
                         </div>
@@ -373,10 +626,10 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                             <Button
                                 type="submit"
                                 onClick={handleSubmit}
-                                loading={isLoading}
-                                disabled={!isStepValid()}
+                                loading={isLoading || isUploading}
+                                disabled={!isStepValid() || isUploading}
                             >
-                                Create Suite
+                                {isUploading ? 'Uploading...' : 'Create Suite'}
                             </Button>
                         )}
                     </div>

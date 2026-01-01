@@ -4,10 +4,13 @@ import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 import { useAgent, useTestAgent, useDeleteAgent } from "../../hooks/useAgents";
 import { useTestSuites } from "../../hooks/useTestSuites";
+import { useAgentFlows, useDeleteFlow } from "../../hooks/useFlows";
 import { useGenerateFlow } from "../../hooks/useGeneration";
 import DashboardLoader from "../../components/DashboardLoader";
 import GenerateFlowModal from "../../components/GenerateFlowModal";
+import GenerateTestSuiteModal from "../../components/GenerateTestSuiteModal";
 import CreateTestSuiteModal from "../../components/CreateTestSuiteModal";
+import FlowDiagramModal from "../../components/FlowDiagramModal";
 import { useCreateTestSuite } from "../../hooks/useTestSuites";
 
 const AgentDetailPage = () => {
@@ -15,19 +18,28 @@ const AgentDetailPage = () => {
     const { agentId } = useParams();
     const [activeTab, setActiveTab] = useState("overview");
     const [showGenerateFlowModal, setShowGenerateFlowModal] = useState(false);
+    const [showGenerateTestSuiteModal, setShowGenerateTestSuiteModal] = useState(false);
     const [showCreateTestSuiteModal, setShowCreateTestSuiteModal] = useState(false);
-    
+    const [selectedFlowForTestGen, setSelectedFlowForTestGen] = useState(null);
+    const [showFlowDiagramModal, setShowFlowDiagramModal] = useState(false);
+    const [selectedFlowForDiagram, setSelectedFlowForDiagram] = useState(null);
+
     // Fetch agent data
     const { data: agent, isLoading, error, refetch } = useAgent(agentId);
-    
+
+    // Fetch flows for this agent
+    const { data: flowsData, isLoading: flowsLoading, refetch: refetchFlows } = useAgentFlows(agentId);
+    const flows = flowsData?.flows || [];
+
     // Fetch test suites for this agent
     const { data: testSuitesData, isLoading: testSuitesLoading } = useTestSuites({ agent_id: agentId });
     const testSuites = testSuitesData?.test_suites || [];
-    
+
     // Mutations
     const testAgent = useTestAgent();
     const deleteAgent = useDeleteAgent();
     const generateFlow = useGenerateFlow();
+    const deleteFlow = useDeleteFlow();
     const createTestSuite = useCreateTestSuite();
 
     // Handler functions
@@ -39,7 +51,7 @@ const AgentDetailPage = () => {
             alert(`Error: ${error.message}`);
         }
     };
-    
+
     const handleReExtract = async () => {
         if (confirm("Re-extract agent configuration? This will overwrite existing data.")) {
             try {
@@ -51,16 +63,43 @@ const AgentDetailPage = () => {
             }
         }
     };
-    
+
     const handleGenerateFlow = () => {
         setShowGenerateFlowModal(true);
     };
-    
+
     const handleFlowGenerated = async (flowData) => {
         setShowGenerateFlowModal(false);
+        await refetchFlows();
         await refetch();
     };
-    
+
+    const handleGenerateTestSuiteFromFlow = (flow) => {
+        setSelectedFlowForTestGen(flow);
+        setShowGenerateTestSuiteModal(true);
+    };
+
+    const handleTestSuiteGenerated = async (testSuiteData) => {
+        setShowGenerateTestSuiteModal(false);
+        setSelectedFlowForTestGen(null);
+        // Force refetch test suites - need to use useQueryClient
+        // Wait a bit for backend to save, then refetch
+        setTimeout(async () => {
+            window.location.reload(); // Simple reload to ensure fresh data
+        }, 500);
+    };
+
+    const handleDeleteFlow = async (flowId) => {
+        if (confirm("Are you sure you want to delete this flow?")) {
+            try {
+                await deleteFlow.mutateAsync(flowId);
+                await refetchFlows();
+            } catch (error) {
+                alert(`Failed to delete flow: ${error.message}`);
+            }
+        }
+    };
+
     const handleCreateTestSuite = async (formData) => {
         try {
             await createTestSuite.mutateAsync({
@@ -73,18 +112,18 @@ const AgentDetailPage = () => {
             alert(error.message);
         }
     };
-    
+
     const tabs = [
         { id: "overview", label: "Overview", icon: "📊" },
         { id: "configuration", label: "Configuration", icon: "⚙️" },
         { id: "flows", label: "Flows", icon: "🔄" },
         { id: "test-suites", label: "Test Suites", icon: "📋" },
     ];
-    
+
     if (isLoading) {
         return <DashboardLoader message="Loading agent details..." />;
     }
-    
+
     if (error || !agent) {
         return (
             <div className="p-8">
@@ -95,7 +134,7 @@ const AgentDetailPage = () => {
             </div>
         );
     }
-    
+
     const getPlatformColor = (platform) => {
         const colors = {
             vapi: "from-purple-400 to-pink-500",
@@ -104,7 +143,7 @@ const AgentDetailPage = () => {
         };
         return colors[platform?.toLowerCase()] || "from-gray-400 to-gray-600";
     };
-    
+
     const getStatusBadge = (status) => {
         const variants = {
             active: "success",
@@ -113,7 +152,7 @@ const AgentDetailPage = () => {
         };
         return variants[status?.toLowerCase()] || "default";
     };
-    
+
     const metadata = agent.metadata || {};
     const config = metadata.configuration || {};
     const tools = config.tools || [];
@@ -163,17 +202,17 @@ const AgentDetailPage = () => {
                             <Badge variant={getStatusBadge(agent.status)}>
                                 {agent.status || "Unknown"}
                             </Badge>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={handleTestConnection}
                                 disabled={testAgent.isPending}
                             >
                                 {testAgent.isPending ? "Testing..." : "Test"}
                             </Button>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
+                            <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={handleGenerateFlow}
                             >
                                 ⚡ Generate Flow
@@ -190,8 +229,8 @@ const AgentDetailPage = () => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`px-6 py-3 font-medium transition-all ${activeTab === tab.id
-                                        ? 'text-teal-400 border-b-2 border-teal-400'
-                                        : 'text-gray-400 hover:text-white'
+                                    ? 'text-teal-400 border-b-2 border-teal-400'
+                                    : 'text-gray-400 hover:text-white'
                                     }`}
                             >
                                 {tab.icon} {tab.label}
@@ -234,7 +273,7 @@ const AgentDetailPage = () => {
                                 <div className="text-2xl font-bold text-teal-400 mb-2">
                                     {testSuitesLoading ? "..." : testSuites.length}
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setActiveTab("test-suites")}
                                     className="text-sm text-gray-500 hover:text-teal-400 transition-colors"
                                 >
@@ -244,10 +283,10 @@ const AgentDetailPage = () => {
 
                             <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                                 <div className="text-sm text-gray-400 mb-2">Flows</div>
-                                <div className="text-2xl font-bold text-teal-400 mb-2">
-                                    {metadata.flow_data ? "1" : "0"}
+                                <div className="text-2xl font-bold text-purple-400 mb-2">
+                                    {flowsLoading ? "..." : flows.length}
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setActiveTab("flows")}
                                     className="text-sm text-gray-500 hover:text-teal-400 transition-colors"
                                 >
@@ -291,31 +330,31 @@ const AgentDetailPage = () => {
                         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                             <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     className="w-full"
                                     onClick={handleTestConnection}
                                     disabled={testAgent.isPending}
                                 >
                                     {testAgent.isPending ? "Testing..." : "Test Connection"}
                                 </Button>
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     className="w-full"
                                     onClick={handleReExtract}
                                 >
                                     Re-extract Config
                                 </Button>
-                                <Button 
-                                    variant="outline" 
+                                <Button
+                                    variant="outline"
                                     className="w-full"
                                     onClick={handleGenerateFlow}
                                 >
                                     Generate Flow
                                 </Button>
-                                <Button 
-                                    variant="outline" 
-                                    className="w-full" 
+                                <Button
+                                    variant="outline"
+                                    className="w-full"
                                     onClick={() => setShowCreateTestSuiteModal(true)}
                                 >
                                     Create Test Suite
@@ -420,26 +459,81 @@ const AgentDetailPage = () => {
 
                 {activeTab === "flows" && (
                     <div className="space-y-6">
-                        {metadata.flow_data ? (
-                            <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                        {flowsLoading ? (
+                            <DashboardLoader message="Loading flows..." />
+                        ) : flows.length > 0 ? (
+                            <div className="space-y-4">
                                 <div className="flex items-center justify-between mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-white">Generated Flow</h3>
-                                        <p className="text-sm text-gray-400">
-                                            Generated {new Date(agent.updated_at).toLocaleString()}
-                                        </p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => navigate(`/workspace?agent=${agentId}`)}>View Diagram</Button>
-                                        <Button variant="outline" size="sm" onClick={() => setShowCreateTestSuiteModal(true)}>Generate Test Suite</Button>
-                                    </div>
+                                    <h3 className="text-xl font-semibold text-white">Generated Flows</h3>
+                                    <Button size="sm" onClick={handleGenerateFlow}>
+                                        Generate New Flow
+                                    </Button>
                                 </div>
-                                <div className="flex items-center gap-4 text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                                        <span className="text-gray-400">Flow extracted</span>
+                                {flows.map((flow) => (
+                                    <div
+                                        key={flow.flow_id}
+                                        className="bg-gray-900 rounded-xl p-6 border border-gray-800 hover:border-teal-400/50 transition-all"
+                                    >
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex-1">
+                                                <h4 className="text-lg font-semibold text-white mb-2">{flow.name}</h4>
+                                                {flow.description && (
+                                                    <p className="text-gray-400 text-sm mb-3">{flow.description}</p>
+                                                )}
+                                                <div className="flex items-center gap-4 text-sm">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                                                        <span className="text-gray-400">{flow.node_count} nodes</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-3 h-3 rounded-full bg-purple-500"></div>
+                                                        <span className="text-gray-400">{flow.edge_count} edges</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-gray-500">Generated:</span>
+                                                        <span className="text-white">{new Date(flow.created_at).toLocaleDateString()}</span>
+                                                    </div>
+                                                </div>
+                                                {flow.summary && (
+                                                    <p className="text-gray-400 text-sm mt-3 line-clamp-2">{flow.summary}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setSelectedFlowForDiagram(flow);
+                                                    setShowFlowDiagramModal(true);
+                                                }}
+                                            >
+                                                👁️ Preview
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => navigate(`/workspace?agent=${agentId}&flow=${flow.flow_id}`)}
+                                            >
+                                                📊 Full View
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleGenerateTestSuiteFromFlow(flow)}
+                                            >
+                                                Generate Test Suite
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleDeleteFlow(flow.flow_id)}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
                             </div>
                         ) : (
                             <div className="text-center py-12">
@@ -467,8 +561,8 @@ const AgentDetailPage = () => {
                                     </Button>
                                 </div>
                                 {testSuites.map((suite) => (
-                                    <div 
-                                        key={suite._id} 
+                                    <div
+                                        key={suite._id}
                                         onClick={() => navigate(`/test-cases/${suite._id}`)}
                                         className="bg-gray-900 rounded-xl p-6 border border-gray-800 hover:border-teal-400/50 transition-all cursor-pointer"
                                     >
@@ -515,7 +609,7 @@ const AgentDetailPage = () => {
                     </div>
                 )}
             </div>
-            
+
             {/* Generate Flow Modal */}
             <GenerateFlowModal
                 isOpen={showGenerateFlowModal}
@@ -524,7 +618,21 @@ const AgentDetailPage = () => {
                 agentMongoId={agentId}
                 onFlowGenerated={handleFlowGenerated}
             />
-            
+
+            {/* Generate Test Suite from Flow Modal */}
+            {selectedFlowForTestGen && (
+                <GenerateTestSuiteModal
+                    isOpen={showGenerateTestSuiteModal}
+                    onClose={() => {
+                        setShowGenerateTestSuiteModal(false);
+                        setSelectedFlowForTestGen(null);
+                    }}
+                    flowId={selectedFlowForTestGen.flow_id}
+                    agentId={agentId}
+                    onTestSuiteGenerated={handleTestSuiteGenerated}
+                />
+            )}
+
             {/* Create Test Suite Modal */}
             <CreateTestSuiteModal
                 isOpen={showCreateTestSuiteModal}
@@ -534,6 +642,19 @@ const AgentDetailPage = () => {
                 agents={[agent]}
                 defaultAgentId={agentId}
             />
+
+            {/* Flow Diagram Modal */}
+            {selectedFlowForDiagram && (
+                <FlowDiagramModal
+                    isOpen={showFlowDiagramModal}
+                    onClose={() => {
+                        setShowFlowDiagramModal(false);
+                        setSelectedFlowForDiagram(null);
+                    }}
+                    flowId={selectedFlowForDiagram.flow_id}
+                    flowName={selectedFlowForDiagram.name}
+                />
+            )}
         </div>
     );
 };

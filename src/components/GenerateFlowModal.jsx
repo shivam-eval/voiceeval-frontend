@@ -3,8 +3,8 @@ import { useAgents } from "../hooks/useAgents";
 import { useGenerateFlow } from "../hooks/useGeneration";
 import Button from "./Button";
 
-const GenerateFlowModal = ({ isOpen, onClose, agentId, onFlowGenerated }) => {
-    const [selectedAgentId, setSelectedAgentId] = useState(agentId || "");
+const GenerateFlowModal = ({ isOpen, onClose, agentId, agentMongoId, onFlowGenerated }) => {
+    const [selectedAgentId, setSelectedAgentId] = useState(agentMongoId || agentId || "");
     const [model, setModel] = useState("gpt-4o");
     const [provider, setProvider] = useState("openai");
     const [generationStep, setGenerationStep] = useState(0); // 0: config, 1: generating, 2: preview
@@ -14,10 +14,10 @@ const GenerateFlowModal = ({ isOpen, onClose, agentId, onFlowGenerated }) => {
     const generateFlow = useGenerateFlow();
 
     useEffect(() => {
-        if (agentId) {
-            setSelectedAgentId(agentId);
+        if (agentMongoId || agentId) {
+            setSelectedAgentId(agentMongoId || agentId);
         }
-    }, [agentId]);
+    }, [agentMongoId, agentId]);
 
     const handleGenerate = async () => {
         setGenerationStep(1);

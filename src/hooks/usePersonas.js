@@ -2,7 +2,7 @@
  * React Query hooks for Persona operations.
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { personasApi } from '../utils/api';
+import { personasApi, personasLibraryApi } from '../utils/api';
 
 export const personaKeys = {
     all: ['personas'],
@@ -15,7 +15,7 @@ export const personaKeys = {
 export const usePersonas = (params = {}) => {
     return useQuery({
         queryKey: personaKeys.list(params),
-        queryFn: () => personasApi.list(params),
+        queryFn: () => personasLibraryApi.list(params),
         staleTime: 60000, // 1 minute
     });
 };
@@ -23,7 +23,7 @@ export const usePersonas = (params = {}) => {
 export const usePersona = (id) => {
     return useQuery({
         queryKey: personaKeys.detail(id),
-        queryFn: () => personasApi.get(id),
+        queryFn: () => personasLibraryApi.get(id),
         enabled: !!id,
     });
 };

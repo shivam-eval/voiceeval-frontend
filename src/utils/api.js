@@ -101,6 +101,13 @@ export const testSuitesApi = {
     delete: (id) => apiClient.delete(`/api/v1/test-suites/${id}`),
     clone: (id) => apiClient.post(`/api/v1/test-suites/${id}/clone`, {}),
     addTestCase: (suiteId, testCase) => apiClient.post(`/api/v1/test-suites/${suiteId}/test-cases`, { test_case: testCase }),
+
+    // New endpoints
+    export: (id, format = 'json') => apiClient.get(`/api/v1/test-suites/${id}/export`, { format }),
+    import: (fileContent, name, agentId) => apiClient.post('/api/v1/test-suites/import', { file_content: fileContent, name, agent_id: agentId }),
+    bulkUpdateTestCases: (suiteId, testCaseIds, updates) => apiClient.put(`/api/v1/test-suites/${suiteId}/test-cases/bulk`, { test_case_ids: testCaseIds, updates }),
+    getStatistics: (id) => apiClient.get(`/api/v1/test-suites/${id}/statistics`),
+    updateStatus: (id, status) => apiClient.post(`/api/v1/test-suites/${id}/status`, { status }),
 };
 
 // Persona API endpoints
@@ -112,6 +119,12 @@ export const personasApi = {
     delete: (id) => apiClient.delete(`/api/v1/personas/${id}`),
 };
 
+// Personas Library API (from JSON files)
+export const personasLibraryApi = {
+    list: (params) => apiClient.get('/api/v1/personas/library', params),
+    get: (id) => apiClient.get(`/api/v1/personas/library/${id}`),
+};
+
 // Test Profile API endpoints
 export const testProfilesApi = {
     list: (params) => apiClient.get('/api/v1/test-profiles', params),
@@ -121,18 +134,21 @@ export const testProfilesApi = {
     delete: (id) => apiClient.delete(`/api/v1/test-profiles/${id}`),
 };
 
-// Personas Library API (from JSON files)
-export const personasLibraryApi = {
-    list: (params) => apiClient.get('/api/v1/personas/library', params),
-    get: (personaId) => apiClient.get(`/api/v1/personas/library/${personaId}`),
-};
-
 // Generation API endpoints
 export const generationApi = {
     generateFlow: (data) => apiClient.post('/api/v1/generate/flow', data),
     generateTestSuite: (data) => apiClient.post('/api/v1/generate/test-suite', data),
     generateFromAudio: (data) => apiClient.post('/api/v1/generate/audio', data),
     generateMermaid: (data) => apiClient.post('/api/v1/generate/flow_mermaid', data),
+};
+
+// Flow API endpoints
+export const flowsApi = {
+    list: (params) => apiClient.get('/api/v1/flows', params),
+    get: (id) => apiClient.get(`/api/v1/flows/${id}`),
+    listByAgent: (agentId) => apiClient.get(`/api/v1/flows/agent/${agentId}`),
+    getMermaid: (id) => apiClient.get(`/api/v1/flows/${id}/mermaid`),
+    delete: (id) => apiClient.delete(`/api/v1/flows/${id}`),
 };
 
 export default apiClient;

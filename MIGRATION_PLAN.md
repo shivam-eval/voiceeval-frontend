@@ -3658,5 +3658,3 @@ Key Highlights:
     Comprehensive testing workflows
 
 The platform enables users to create, test, and monitor voice AI agents through an intuitive interface that rivals existing solutions like Cekura and Coval.
-You are out of free messages until 5:30 PM
-Upgrade

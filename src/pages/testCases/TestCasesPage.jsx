@@ -6,6 +6,7 @@ import Table from "../../components/Table";
 import Badge from "../../components/Badge";
 import Button from "../../components/Button";
 import CreateTestSuiteModal from "../../components/CreateTestSuiteModal";
+import ImportTestSuiteModal from "../../components/ImportTestSuiteModal";
 
 const TestCasesPage = () => {
     const navigate = useNavigate();
@@ -18,6 +19,7 @@ const TestCasesPage = () => {
 
     // Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showImportModal, setShowImportModal] = useState(false);
 
     // Fetch test suites
     const { data, isLoading, error } = useTestSuites({
@@ -150,16 +152,29 @@ const TestCasesPage = () => {
                         <h1 className="text-4xl font-bold text-white mb-2">Test Sets</h1>
                         <p className="text-gray-400">Create and manage test suites for your agents</p>
                     </div>
-                    <Button
-                        onClick={() => setShowCreateModal(true)}
-                        icon={
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                        }
-                    >
-                        Create Test Set
-                    </Button>
+                    <div className="flex gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowImportModal(true)}
+                            icon={
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                </svg>
+                            }
+                        >
+                            Import Test Suite
+                        </Button>
+                        <Button
+                            onClick={() => setShowCreateModal(true)}
+                            icon={
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                            }
+                        >
+                            Create Test Set
+                        </Button>
+                    </div>
                 </div>
 
                 {/* Filters Bar */}
@@ -282,6 +297,13 @@ const TestCasesPage = () => {
                 onSubmit={handleCreateSuite}
                 isLoading={createTestSuite.isPending}
                 agents={agentsData?.agents || []}
+            />
+
+            {/* Import Test Suite Modal */}
+            <ImportTestSuiteModal
+                isOpen={showImportModal}
+                onClose={() => setShowImportModal(false)}
+                onSuccess={() => setShowImportModal(false)}
             />
         </div>
     );

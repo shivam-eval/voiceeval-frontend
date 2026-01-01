@@ -707,6 +707,18 @@ export const INSIGHT_TABS = [
     description: "Tone & persona adherence",
     color: "from-teal-400 to-green-400",
   },
+  {
+    id: "speech",
+    label: "Speech Analysis",
+    description: "WPM & talk ratio",
+    color: "from-violet-400 to-purple-400",
+  },
+  {
+    id: "sentiment",
+    label: "Sentiment",
+    description: "Tone & customer satisfaction",
+    color: "from-rose-400 to-pink-400",
+  },
 ];
 export const DUMMY_EVALUATION_DATA = {
   simulation_id: "sim_dummy_001",
@@ -849,7 +861,7 @@ export const CATEGORY_LABELS = {
   persona: "Persona",
 };
 
- export const EVALUATION_TABLE_DATA = [
+export const EVALUATION_TABLE_DATA = [
   {
     id: "TC-001",
     scenario: "Happy Path - Full Payment",
@@ -915,7 +927,7 @@ export const getCategoryStatus = (score) => {
 
 export const darkTheme = {
   textColor: "#cbd5f5",
-  color:"white",
+  color: "white",
   axis: {
     ticks: {
       text: {

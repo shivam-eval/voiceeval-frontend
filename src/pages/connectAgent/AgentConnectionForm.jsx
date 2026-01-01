@@ -4,7 +4,7 @@ import PrimaryButton from "../../components/PrimaryButton"
 
 const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
   const [apiKey, setApiKey] = useState("")
-  const [assistantId, setAssistantId] = useState("")
+  const [agentId, setAgentId] = useState("")
   const [focusedField, setFocusedField] = useState(null)
 
   const handleSubmit = (e) => {
@@ -12,14 +12,47 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
     onConnect({
       platform,
       apiKey,
-      assistantId: platform === "vapi" ? assistantId : null,
+      agentId,
     })
   }
 
-  const isFormValid =
-    platform === "vapi"
-      ? apiKey.trim() && assistantId.trim()
-      : apiKey.trim()
+  const isFormValid = apiKey.trim() && agentId.trim()
+
+  // Get platform-specific labels
+  const getPlatformLabels = () => {
+    switch(platform) {
+      case 'vapi':
+        return {
+          apiKeyLabel: 'VAPI API Key',
+          apiKeyPlaceholder: 'Enter your VAPI API key',
+          agentIdLabel: 'VAPI Assistant ID',
+          agentIdPlaceholder: 'Enter your VAPI Assistant ID',
+        };
+      case 'elevenlabs':
+        return {
+          apiKeyLabel: 'ElevenLabs API Key (xi-api-key)',
+          apiKeyPlaceholder: 'Enter your ElevenLabs API key',
+          agentIdLabel: 'ElevenLabs Agent ID',
+          agentIdPlaceholder: 'Enter your ElevenLabs Agent ID',
+        };
+      case 'cartesia':
+        return {
+          apiKeyLabel: 'Cartesia API Key (Bearer Token)',
+          apiKeyPlaceholder: 'Enter your Cartesia API key',
+          agentIdLabel: 'Cartesia Agent ID',
+          agentIdPlaceholder: 'Enter your Cartesia Agent ID',
+        };
+      default:
+        return {
+          apiKeyLabel: `${platform?.toUpperCase()} API Key`,
+          apiKeyPlaceholder: `Enter your ${platform?.toUpperCase()} API key`,
+          agentIdLabel: `${platform?.toUpperCase()} Agent ID`,
+          agentIdPlaceholder: `Enter your ${platform?.toUpperCase()} Agent ID`,
+        };
+    }
+  };
+
+  const labels = getPlatformLabels();
 
   return (
     <div className="bg-dark-panel rounded-2xl p-8 border border-gray-800/50 shadow-xl relative">
@@ -38,31 +71,28 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
 
       <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
         <FormInput
-          label={`${platform?.toUpperCase()} API Key`}
+          label={labels.apiKeyLabel}
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
           onFocus={() => setFocusedField("apiKey")}
           onBlur={() => setFocusedField(null)}
           focused={focusedField === "apiKey"}
-          placeholder={`Enter your ${platform?.toUpperCase()} API key`}
+          placeholder={labels.apiKeyPlaceholder}
           type="password"
           disabled={isConnecting}
         />
 
-        {platform === "vapi" && (
-          <FormInput
-            label="VAPI Assistant ID"
-            value={assistantId}
-            onChange={(e) => setAssistantId(e.target.value)}
-            onFocus={() => setFocusedField("assistantId")}
-            onBlur={() => setFocusedField(null)}
-            focused={focusedField === "assistantId"}
-            placeholder="Enter your VAPI Assistant ID"
-            type="password"
-            disabled={isConnecting}
-       
-          />
-        )}
+        <FormInput
+          label={labels.agentIdLabel}
+          value={agentId}
+          onChange={(e) => setAgentId(e.target.value)}
+          onFocus={() => setFocusedField("agentId")}
+          onBlur={() => setFocusedField(null)}
+          focused={focusedField === "agentId"}
+          placeholder={labels.agentIdPlaceholder}
+          type="password"
+          disabled={isConnecting}
+        />
 
         <p className="text-gray-400 text-sm">
           Your API key is encrypted and stored securely.

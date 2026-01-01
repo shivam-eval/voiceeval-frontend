@@ -2,11 +2,9 @@ import { useState } from 'react'
 
 
 const platforms = [
-  { id: 'vapi', name: 'Vapi', color: 'from-blue-500 to-cyan-500' },
-  { id: 'bolna', name: 'Bolna', color: 'from-purple-500 to-pink-500' },
-  { id: 'retell', name: 'Retell', color: 'from-orange-500 to-red-500' },
-  { id: 'livekit', name: 'LiveKit', color: 'from-green-500 to-emerald-500' },
-  { id: 'rime', name: 'Rime', color: 'from-yellow-500 to-amber-500' },
+  { id: 'vapi', name: 'Vapi', color: 'from-purple-500 to-pink-500' },
+  { id: 'elevenlabs', name: 'ElevenLabs', color: 'from-orange-500 to-red-500' },
+  { id: 'cartesia', name: 'Cartesia', color: 'from-teal-500 to-blue-500' },
 ]
 
 const PlatformSelection = ({ onSelectPlatform }) => {

@@ -9,9 +9,11 @@ const CATEGORY_LABELS = {
   endpointing: "Endpointing",
   // cost: "Cost",
   persona: "Persona",
+  speech: "Speech",
+  sentiment: "Sentiment",
 };
 
-const InsightTabs = ({ onChange, activeCategory, categoryScores = [],enabled=true }) => {
+const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = true }) => {
   return (
     <div className="w-full grid grid-cols-7 gap-3">
       {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
@@ -22,8 +24,8 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [],enabled=tru
           score >= 85
             ? "text-emerald-400"
             : score >= 70
-            ? "text-yellow-400"
-            : "text-red-400";
+              ? "text-yellow-400"
+              : "text-red-400";
 
         const isActive = activeCategory === key;
 
@@ -33,8 +35,8 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [],enabled=tru
             onClick={() => onChange(key)}
             className={`
               relative group rounded-xl transition-all flex flex-col items-center justify-center py-4
-              ${isActive 
-                ? 'bg-teal-500/20 border-2 border-teal-500' 
+              ${isActive
+                ? 'bg-teal-500/20 border-2 border-teal-500'
                 : 'bg-gray-800 hover:bg-gray-700'
               }
             `}
@@ -57,7 +59,7 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [],enabled=tru
             )} */}
 
             {/* Hover overlay */}
-            {!isActive&&enabled && (
+            {!isActive && enabled && (
               <div className="
                 absolute inset-0 flex items-center justify-center
                 bg-black/60 opacity-0 group-hover:opacity-100

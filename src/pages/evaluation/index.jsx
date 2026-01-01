@@ -17,6 +17,8 @@ import EndpointingOverview from "./insights/endpointing";
 import PersonaOverview from "./insights/persona";
 import TaskCompletionOverview from "./insights/task_completion";
 import ConversationOverview from "./insights/conversation";
+import SpeechMetrics from "./insights/speech";
+import SentimentAnalysis from "./insights/sentiment";
 import { useWorkflow } from "../../context/WorkFlowContext";
 
 const CATEGORY = {
@@ -28,7 +30,9 @@ const CATEGORY = {
   AUDIO: "audio_quality",
   ENDPOINTING: "endpointing",
   PERSONA: "persona",
-  CONVERSATION: "conversation_quality"
+  CONVERSATION: "conversation_quality",
+  SPEECH: "speech",
+  SENTIMENT: "sentiment"
 };
 
 const CATEGORY_TITLES = {
@@ -40,10 +44,12 @@ const CATEGORY_TITLES = {
   [CATEGORY.ENDPOINTING]: "ENDPOINTING OVERVIEW",
   [CATEGORY.PERSONA]: "PERSONA ALIGNMENT OVERVIEW",
   [CATEGORY.TASK_COMPLETION]: "TASK COMPLETION OVERVIEW",
-  [CATEGORY.CONVERSATION]: "CONVERSATION OVERVIEW"
+  [CATEGORY.CONVERSATION]: "CONVERSATION OVERVIEW",
+  [CATEGORY.SPEECH]: "SPEECH ANALYSIS OVERVIEW",
+  [CATEGORY.SENTIMENT]: "SENTIMENT ANALYSIS OVERVIEW"
 };
 
-const EvaluationDashboard = ({onBack }) => {
+const EvaluationDashboard = ({ onBack }) => {
   const [activeCategory, setActiveCategory] = useState(CATEGORY.OVERVIEW);
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedTranscript, setSelectedTranscript] = useState(null);
@@ -51,16 +57,16 @@ const EvaluationDashboard = ({onBack }) => {
 
   const { workflow } = useWorkflow();
   console.log('Full workflow:', workflow);
-  
+
   // Access the nested structure properly
   const simulationResult = workflow?.simulationResult;
   const fullResponse = simulationResult?.fullResponse;
   const evaluationResult = simulationResult?.evaluationResult;
-  
+
   console.log('simulationResult:', simulationResult);
   console.log('fullResponse:', fullResponse);
   console.log('evaluationResult:', evaluationResult);
-  
+
   if (!simulationResult || !fullResponse) {
     return <div className="text-gray-400 px-8">Loading evaluation…</div>;
   }
@@ -77,20 +83,20 @@ const EvaluationDashboard = ({onBack }) => {
   console.log('Simulation Evaluation:', simulationEvaluation);
 
   const firstEvaluation = evaluations[0];
-  
+
   // Calculate total execution time from all evaluations
   const totalExecutionTime = evaluations.reduce((sum, evaluation) => {
     return sum + (evaluation.execution_time_ms || 0);
   }, 0) || 0;
-  
-  const averageExecutionTime = evaluations.length > 0 
-    ? totalExecutionTime / evaluations.length 
+
+  const averageExecutionTime = evaluations.length > 0
+    ? totalExecutionTime / evaluations.length
     : 0;
-  
+
   // Prepare simulation data
   const passedCount = evaluations.filter(e => e.passed).length;
   const failedCount = evaluations.length - passedCount;
-  
+
   const simulationDataFromRes = {
     simulation_id: fullResponse.simulation_id || simulationResult.simulationId,
     execution_summary: {
@@ -110,14 +116,14 @@ const EvaluationDashboard = ({onBack }) => {
       path_id: evaluation.path_id,
       test_id: evaluation.test_case_name || evaluation.path_id || 'Test Case',
       status: evaluation.passed ? "completed" : "failed",
-      overall_score: typeof evaluation.overall_score === 'number' 
-        ? Math.round(evaluation.overall_score * 100) 
+      overall_score: typeof evaluation.overall_score === 'number'
+        ? Math.round(evaluation.overall_score * 100)
         : Math.round(parseFloat(evaluation.overall_score) * 100)
     })),
     flow_tree_name: firstEvaluation?.path_id || "Real Estate Qualification",
     schema_version: "1.0"
   };
-  
+
   // Calculate summary metrics
   const summaryMetrics = [
     {
@@ -155,7 +161,7 @@ const EvaluationDashboard = ({onBack }) => {
 
   // Generate improvements from ALL evaluations
   const improvements = [];
-  
+
   evaluations.forEach((evaluation, evalIndex) => {
     if (evaluation.recommendations && Array.isArray(evaluation.recommendations) && evaluation.recommendations.length > 0) {
       evaluation.recommendations.forEach((rec, recIndex) => {
@@ -165,7 +171,7 @@ const EvaluationDashboard = ({onBack }) => {
         } else if (evaluation.overall_score > 0.85 || recIndex > 1) {
           priority = "low";
         }
-        
+
         improvements.push({
           priority: priority,
           message: rec,
@@ -175,7 +181,7 @@ const EvaluationDashboard = ({onBack }) => {
         });
       });
     }
-    
+
     if ((!evaluation.recommendations || evaluation.recommendations.length === 0) && evaluation.issues_found > 0) {
       improvements.push({
         priority: evaluation.overall_score < 0.6 ? "high" : "medium",
@@ -186,7 +192,7 @@ const EvaluationDashboard = ({onBack }) => {
       });
     }
   });
-  
+
   if (improvements.length === 0) {
     improvements.push(
       {
@@ -223,7 +229,7 @@ const EvaluationDashboard = ({onBack }) => {
     const fullEvaluation = resData.evaluations?.find(
       e => e.evaluation_id === transcriptId || e.session_id === transcriptId
     );
-    
+
     if (fullEvaluation?.transcript_steps) {
       return {
         ...fullEvaluation.transcript_steps,
@@ -260,7 +266,7 @@ const EvaluationDashboard = ({onBack }) => {
     <div className="flex flex-col gap-6">
       <SimulationOverview simulationData={simulationDataFromRes} />
 
-      <CallResultsTable 
+      <CallResultsTable
         transcriptResults={simulationDataFromRes.transcript_results}
         onViewReport={handleViewReport}
         evaluationData={evaluations}
@@ -274,7 +280,7 @@ const EvaluationDashboard = ({onBack }) => {
         enabled={false}
       />
 
-      <ImprovementsPanel 
+      <ImprovementsPanel
         improvements={improvements}
         totalTestCases={evaluations.length}
       />
@@ -329,6 +335,10 @@ const EvaluationDashboard = ({onBack }) => {
         return <TaskCompletionOverview data={aggregatedData} onBack={handleBackToOverview} />;
       case CATEGORY.CONVERSATION:
         return <ConversationOverview data={aggregatedData} onBack={handleBackToOverview} />;
+      case CATEGORY.SPEECH:
+        return <SpeechMetrics evaluationData={aggregatedData} onBack={handleBackToOverview} />;
+      case CATEGORY.SENTIMENT:
+        return <SentimentAnalysis evaluationData={aggregatedData} onBack={handleBackToOverview} />;
       default:
         return renderOverview();
     }
@@ -345,8 +355,8 @@ const EvaluationDashboard = ({onBack }) => {
               </h1>
 
               <p className="text-gray-400">
-                Overall Score: {Math.round(simulationEvaluation.average_overall_score * 100)}% | 
-                Sessions: {simulationEvaluation.total_sessions_evaluated} | 
+                Overall Score: {Math.round(simulationEvaluation.average_overall_score * 100)}% |
+                Sessions: {simulationEvaluation.total_sessions_evaluated} |
                 {firstEvaluation?.passed ? "PASSED" : "NEEDS IMPROVEMENT"}
               </p>
             </div>

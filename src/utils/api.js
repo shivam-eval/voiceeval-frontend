@@ -159,8 +159,7 @@ export const flowsApi = {
 export const evaluationsApi = {
     list: (params) => apiClient.get('/api/v1/evaluate/', params),
     get: (id) => apiClient.get(`/api/v1/evaluate/${id}`),
-    getBySession: (sessionId) => apiClient.get('/api/v1/evaluate/session', { sessionId }),
-    getBySimulation: (simulationId) => apiClient.get('/api/v1/evaluate/simulation', { simulationId }),
+    getBySimulation: (simulationId) => apiClient.get(`/api/v1/evaluate/simulation/${simulationId}`),
 };
 
 // Calls API endpoints

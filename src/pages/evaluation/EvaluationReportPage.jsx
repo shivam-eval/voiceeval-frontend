@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { useEvaluation, useSessionEvaluations } from '../../hooks/useEvaluations';
+import { useEvaluation, useEvaluations } from '../../hooks/useEvaluations';
 import ViewReport from './viewreport/ViewReport';
 import DashboardLoader from '../../components/DashboardLoader';
 import { ArrowLeft } from 'lucide-react';
@@ -21,47 +21,48 @@ const EvaluationReportPage = () => {
     isLoading: isLoadingById, 
     error: errorById,
     refetch: refetchById
-  } = useEvaluation(evaluationId && evaluationId !== 'session' ? evaluationId : null);
+  } = useEvaluation(evaluationId !== 'session' ? evaluationId : null);
 
-  // If we have a sessionId, fetch by session ID using the session endpoint
+  // If we only have sessionId, fetch list and take first
   const { 
     data: evaluationsBySession, 
     isLoading: isLoadingBySession,
     error: errorBySession,
     refetch: refetchBySession
-  } = useSessionEvaluations(sessionId);
+  } = useEvaluations(sessionId ? { sessionId } : {});
 
   const evaluation = useMemo(() => {
     if (evaluationById) {
+      // Handle potential array response for single evaluation
       return Array.isArray(evaluationById) ? evaluationById[0] : evaluationById;
     }
     
-    if (evaluationsBySession) {
-      const list = Array.isArray(evaluationsBySession) 
-        ? evaluationsBySession 
-        : (evaluationsBySession?.evaluations || []);
-      return list[0];
-    }
+    // Handle both { evaluations: [] } and [ ] response formats
+    const list = Array.isArray(evaluationsBySession) 
+      ? evaluationsBySession 
+      : (evaluationsBySession?.evaluations || []);
       
-    return null;
+    return list[0];
   }, [evaluationById, evaluationsBySession]);
 
   // Poll for evaluation if not found yet
   React.useEffect(() => {
     let interval;
-    const isStillLoading = isLoadingById || isLoadingBySession;
-    const shouldPoll = !evaluation && (sessionId || evaluationId) && !isStillLoading;
+    // Poll if:
+    // 1. We have a sessionId but no evaluation yet
+    // 2. We have an evaluationId but it's not found yet (and no error, or it's a 404)
+    const shouldPoll = (!evaluation && (sessionId || evaluationId)) && !isLoading;
     
     if (shouldPoll) {
       interval = setInterval(() => {
         if (sessionId) refetchBySession();
         else if (evaluationId && evaluationId !== 'session') refetchById();
-      }, 3000);
+      }, 3000); // Poll every 3 seconds
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [evaluation, sessionId, evaluationId, isLoadingById, isLoadingBySession, refetchBySession, refetchById]);
+  }, [evaluation, sessionId, evaluationId, isLoading, refetchBySession, refetchById]);
 
   const isLoading = isLoadingById || isLoadingBySession;
   const error = errorById || errorBySession;

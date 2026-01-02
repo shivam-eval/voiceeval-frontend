@@ -550,10 +550,10 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
                       {evaluationData?.metrics.map((metric, idx) => (
                         <tr key={idx} className="border-b border-gray-800/30 hover:bg-[#1e2433]">
                           <td className="px-6 py-4 text-sm text-white font-medium">
-                            {(metric.name || 'Unknown Metric').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {metric.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-400">
-                            {(metric.category || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {metric.category?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}
                           </td>
                           <td className="px-6 py-4 text-center">
                             {metric.score !== null && metric.score !== undefined ? (

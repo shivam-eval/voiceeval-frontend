@@ -28,23 +28,10 @@ export const useEvaluation = (evaluationId) => {
 /**
  * Hook to fetch list of evaluations with filters
  */
-export const useEvaluations = (filters = null) => {
+export const useEvaluations = (filters = {}) => {
     return useQuery({
-        queryKey: evaluationKeys.list(filters || {}),
-        queryFn: () => evaluationService.getEvaluations(filters || {}),
-        enabled: !!filters,
-        staleTime: 30000,
-    });
-};
-
-/**
- * Hook to fetch evaluations for a session
- */
-export const useSessionEvaluations = (sessionId) => {
-    return useQuery({
-        queryKey: ['evaluations', 'session', sessionId],
-        queryFn: () => evaluationService.getSessionEvaluations(sessionId),
-        enabled: !!sessionId,
+        queryKey: evaluationKeys.list(filters),
+        queryFn: () => evaluationService.getEvaluations(filters),
         staleTime: 30000,
     });
 };
@@ -52,10 +39,10 @@ export const useSessionEvaluations = (sessionId) => {
 /**
  * Hook to fetch all evaluations for a simulation
  */
-export const useSimulationEvaluations = (simulationId) => {
+export const useSimulationEvaluations = (simulationId, skip = 0, limit = 100) => {
     return useQuery({
-        queryKey: evaluationKeys.simulation(simulationId),
-        queryFn: () => evaluationService.getSimulationEvaluations(simulationId),
+        queryKey: [...evaluationKeys.simulation(simulationId), { skip, limit }],
+        queryFn: () => evaluationService.getSimulationEvaluations(simulationId, skip, limit),
         enabled: !!simulationId,
         staleTime: 30000,
     });

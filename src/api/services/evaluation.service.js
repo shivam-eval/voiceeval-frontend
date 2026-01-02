@@ -24,16 +24,10 @@ export const getEvaluations = (filters = {}) => {
 };
 
 /**
- * Get evaluations for a specific session
- */
-export const getSessionEvaluations = (sessionId) =>
-  apiClient.get('/api/v1/evaluate/session', { sessionId });
-
-/**
  * Get all evaluations for a specific simulation
  */
-export const getSimulationEvaluations = (simulationId) =>
-  apiClient.get('/api/v1/evaluate/simulation', { simulationId });
+export const getSimulationEvaluations = (simulationId, skip = 0, limit = 100) =>
+  apiClient.get(`/api/v1/evaluate/simulation/${simulationId}`, { skip, limit });
 
 /**
  * Evaluate a session

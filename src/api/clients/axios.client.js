@@ -21,6 +21,19 @@ const createApiClient = (timeout = 60000) => {
     (error) => Promise.reject(error)
   );
 
+  // Add response interceptor to extract data
+  instance.interceptors.response.use(
+    (response) => response.data,
+    (error) => {
+      // Handle session expiration
+      if (error.response?.status === 401) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
+      return Promise.reject(error);
+    }
+  );
+
   return instance;
 };
 

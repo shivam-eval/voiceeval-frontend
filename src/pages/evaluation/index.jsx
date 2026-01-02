@@ -11,7 +11,6 @@ import SimulationOverview from "./SimulationOverview";
 import ImprovementsPanel from "./PriorityImprovements";
 import AccuracyView from "./insights/accuracy/Accuracy";
 import LatencyOverview from "./insights/latency";
-import CostOverview from "./insights/cost";
 import AudioOverview from "./insights/audio";
 import EndpointingOverview from "./insights/endpointing";
 import PersonaOverview from "./insights/persona";
@@ -26,7 +25,6 @@ const CATEGORY = {
   ACCURACY: "accuracy",
   TASK_COMPLETION: "task_completion",
   LATENCY: "latency",
-  COST: "cost",
   AUDIO: "audio_quality",
   ENDPOINTING: "endpointing",
   PERSONA: "persona",
@@ -39,7 +37,6 @@ const CATEGORY_TITLES = {
   [CATEGORY.OVERVIEW]: null,
   [CATEGORY.ACCURACY]: "ACCURACY OVERVIEW",
   [CATEGORY.LATENCY]: "LATENCY OVERVIEW",
-  [CATEGORY.COST]: "COST OVERVIEW",
   [CATEGORY.AUDIO]: "AUDIO QUALITY OVERVIEW",
   [CATEGORY.ENDPOINTING]: "ENDPOINTING OVERVIEW",
   [CATEGORY.PERSONA]: "PERSONA ALIGNMENT OVERVIEW",
@@ -323,8 +320,6 @@ const EvaluationDashboard = ({ onBack }) => {
         return <AccuracyView data={aggregatedData} onBack={handleBackToOverview} />;
       case CATEGORY.LATENCY:
         return <LatencyOverview data={aggregatedData} onBack={handleBackToOverview} />;
-      case CATEGORY.COST:
-        return <CostOverview data={aggregatedData} onBack={handleBackToOverview} />;
       case CATEGORY.AUDIO:
         return <AudioOverview data={aggregatedData} onBack={handleBackToOverview} />;
       case CATEGORY.ENDPOINTING:

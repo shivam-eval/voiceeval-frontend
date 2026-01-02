@@ -7,7 +7,7 @@ import CanonicalFlowDiagram from "./CanonicalFlowDiagram";
 import QueueStatsWidget from "./QueueStatsWidget";
 import RegionDropDown from "./RegionDropDown";
 
-import { useWorkflow } from "../../context/WorkflowContext";
+import { useWorkflow } from "../../context/WorkFlowContext";
 
 const WorkspaceDashboard = ({ systemConfig }) => {
   const navigate = useNavigate();

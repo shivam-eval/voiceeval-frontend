@@ -7,7 +7,6 @@ const CATEGORY_LABELS = {
   audio_quality: "Audio Quality",
   conversation_quality: "Conversation",
   endpointing: "Endpointing",
-  // cost: "Cost",
   persona: "Persona",
   speech: "Speech",
   sentiment: "Sentiment",

@@ -61,15 +61,18 @@ export const calculateSimulationAggregates = (evaluations) => {
 export const transformSessionToReport = (session) => {
     if (!session) return null;
 
+    // Handle nested evaluation structure if present
+    const data = session.evaluation || session;
+
     return {
-        transcript_result_id: session.evaluation_id || session.session_id,
-        session_id: session.session_id,
-        path_id: session.path_id || session.test_case_id,
-        test_id: session.test_case_name || session.path_id || 'Test Case',
-        status: session.status || 'unknown',
-        overall_score: typeof session.score === 'number'
-            ? Math.round(session.score)
-            : session.overall_score ? Math.round(session.overall_score) : 0
+        transcript_result_id: session.evaluation_id || data.evaluation_id || session.session_id || data.session_id,
+        session_id: session.session_id || data.session_id,
+        path_id: session.path_id || data.path_id || session.test_case_id || data.test_case_id,
+        test_id: session.test_case_name || data.test_case_name || session.path_id || data.path_id || 'Test Case',
+        status: session.status || data.status || 'unknown',
+        overall_score: typeof data.score === 'number'
+            ? Math.round(data.score <= 1 ? data.score * 100 : data.score)
+            : data.overall_score !== undefined ? Math.round(data.overall_score <= 1 ? data.overall_score * 100 : data.overall_score) : 0
     };
 };
 
@@ -105,25 +108,29 @@ export const transformToLegacyDashboardFormat = (simulation, evaluations) => {
  * @returns {Object} Transcript data
  */
 export const getTranscriptData = (session, evaluation) => {
+    // Handle nested evaluation structure if present
+    const evalData = evaluation?.evaluation || evaluation;
+    const sessData = session?.evaluation || session;
+
     // Priority: evaluation transcript > session transcript
-    if (evaluation?.transcript_steps) {
+    if (evalData?.transcript_steps) {
         return {
-            ...evaluation.transcript_steps,
+            ...evalData.transcript_steps,
             metadata: {
-                ...(evaluation.transcript_steps.metadata || {}),
-                ...(evaluation.metadata || {}),
-                audio_files: evaluation.audio_files || evaluation.metadata?.audio_files || []
+                ...(evalData.transcript_steps.metadata || {}),
+                ...(evalData.metadata || {}),
+                audio_files: evalData.audio_files || evalData.metadata?.audio_files || []
             }
         };
     }
 
-    if (session?.transcript_steps) {
+    if (sessData?.transcript_steps) {
         return {
-            ...session.transcript_steps,
+            ...sessData.transcript_steps,
             metadata: {
-                ...(session.transcript_steps.metadata || {}),
-                ...(session.metadata || {}),
-                audio_files: session.audio_files || session.metadata?.audio_files || []
+                ...(sessData.transcript_steps.metadata || {}),
+                ...(sessData.metadata || {}),
+                audio_files: sessData.audio_files || sessData.metadata?.audio_files || []
             }
         };
     }

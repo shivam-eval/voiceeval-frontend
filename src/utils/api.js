@@ -11,12 +11,16 @@ class ApiClient {
 
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
+        
+        // Don't set Content-Type if we're sending FormData
+        const headers = { ...options.headers };
+        if (!(options.body instanceof FormData)) {
+            headers['Content-Type'] = 'application/json';
+        }
+
         const config = {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers,
-            },
             ...options,
+            headers,
         };
 
         try {
@@ -149,6 +153,32 @@ export const flowsApi = {
     listByAgent: (agentId) => apiClient.get(`/api/v1/flows/agent/${agentId}`),
     getMermaid: (id) => apiClient.get(`/api/v1/flows/${id}/mermaid`),
     delete: (id) => apiClient.delete(`/api/v1/flows/${id}`),
+};
+
+// Evaluations API endpoints
+export const evaluationsApi = {
+    list: (params) => apiClient.get('/api/v1/evaluate/', params),
+    get: (id) => apiClient.get(`/api/v1/evaluate/${id}`),
+    getBySession: (sessionId) => apiClient.get('/api/v1/evaluate/session', { sessionId }),
+    getBySimulation: (simulationId) => apiClient.get('/api/v1/evaluate/simulation', { simulationId }),
+};
+
+// Calls API endpoints
+export const callsApi = {
+    list: (params) => apiClient.get('/api/v1/calls/', params),
+    get: (id) => apiClient.get(`/api/v1/calls/${id}`),
+    evaluate: (id) => apiClient.post(`/api/v1/calls/${id}/evaluate`, {}),
+    evaluateAudio: (data) => apiClient.post('/api/v1/evaluate/audio', data),
+    upload: (formData, category) => {
+        const endpoint = category 
+            ? `/api/v1/audio/bulk-upload?category=${encodeURIComponent(category)}`
+            : '/api/v1/audio/bulk-upload';
+        return apiClient.request(endpoint, {
+            method: 'POST',
+            body: formData,
+        });
+    },
+    categories: () => apiClient.get('/api/v1/calls/categories'),
 };
 
 export default apiClient;

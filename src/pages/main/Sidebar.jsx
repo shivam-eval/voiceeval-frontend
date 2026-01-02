@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useWorkflow } from "../../context/WorkflowContext";
+import { useWorkflow } from "../../context/WorkFlowContext";
 
 const Sidebar = ({
   isSidebarOpen,
@@ -145,6 +145,51 @@ const Sidebar = ({
     },
   ];
 
+  const observabilityItems = [
+    {
+      id: "calls",
+      label: "Calls",
+      path: "/calls",
+      enabled: true,
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+          />
+        </svg>
+      ),
+    },
+    {
+      id: "overview",
+      label: "Overview",
+      path: "/observability-overview",
+      enabled: true,
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+          />
+        </svg>
+      ),
+    },
+  ];
+
   const supportItems = [
     {
       id: "documentation",
@@ -257,6 +302,37 @@ const Sidebar = ({
               )}
             </button>
           ))}
+        </div>
+
+        {/* Observability Section */}
+        <div className="px-3 mt-6">
+          {isSidebarOpen && (
+            <div className="px-3 mb-2">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Observability
+              </h3>
+            </div>
+          )}
+          <div className="space-y-1 mt-2">
+            {observabilityItems.map((item) => (
+              <button
+                key={item.id}
+                disabled={!item.enabled}
+                onClick={() => navigate(item.path)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${activeView === item.id
+                    ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
+                    : item.enabled
+                      ? "text-gray-400 hover:text-white hover:bg-dark-input"
+                      : "text-gray-600 cursor-not-allowed opacity-50"
+                  }`}
+              >
+                {item.icon}
+                {isSidebarOpen && (
+                  <span className="text-sm font-medium">{item.label}</span>
+                )}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Support Section */}

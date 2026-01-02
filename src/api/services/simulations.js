@@ -31,16 +31,14 @@ export const getSimulations = async (filters = {}) => {
     if (filters.skip !== undefined) params.append('skip', filters.skip);
     if (filters.limit !== undefined) params.append('limit', filters.limit);
 
-    const response = await apiClient.get(`${BASE_PATH}?${params.toString()}`);
-    return response.data;
+    return apiClient.get(`${BASE_PATH}?${params.toString()}`);
 };
 
 /**
  * Get detailed information about a specific simulation
  */
 export const getSimulation = async (simulationId) => {
-    const response = await apiClient.get(`${BASE_PATH}/${simulationId}`);
-    return response.data;
+    return apiClient.get(`${BASE_PATH}/${simulationId}`);
 };
 
 /**
@@ -53,53 +51,42 @@ export const getSimulationSessions = async (simulationId, filters = {}) => {
     if (filters.skip !== undefined) params.append('skip', filters.skip);
     if (filters.limit !== undefined) params.append('limit', filters.limit);
 
-    const response = await apiClient.get(
-        `${BASE_PATH}/${simulationId}/sessions?${params.toString()}`
-    );
-    return response.data;
+    return apiClient.get(`${BASE_PATH}/${simulationId}/sessions?${params.toString()}`);
 };
 
 /**
- * Get simulation summary (existing endpoint)
+ * Get simulation summary statistics
  */
 export const getSimulationSummary = async (simulationId) => {
-    const response = await apiClient.get(`${BASE_PATH}/${simulationId}/summary`);
-    return response.data;
+    return apiClient.get(`${BASE_PATH}/${simulationId}/summary`);
 };
 
 /**
- * Trigger a new simulation run
+ * Trigger a new simulation
  */
-export const runSimulation = async (testSuiteId, phoneNumber) => {
-    const response = await apiClient.post(`${BASE_PATH}/run`, {
-        test_suite_id: testSuiteId,
-        phone_number: phoneNumber
-    });
-    return response.data;
+export const runSimulation = async (payload) => {
+    return apiClient.post(`${BASE_PATH}/run`, payload);
 };
 
 /**
  * Cancel a running simulation
  */
 export const cancelSimulation = async (simulationId) => {
-    const response = await apiClient.post(`${BASE_PATH}/${simulationId}/cancel`);
-    return response.data;
+    return apiClient.post(`${BASE_PATH}/${simulationId}/cancel`);
 };
 
 /**
- * Rerun a completed simulation
+ * Re-run an existing simulation
  */
 export const rerunSimulation = async (simulationId) => {
-    const response = await apiClient.post(`${BASE_PATH}/${simulationId}/rerun`);
-    return response.data;
+    return apiClient.post(`${BASE_PATH}/${simulationId}/rerun`);
 };
 
 /**
- * Delete a simulation and all associated data
+ * Delete a simulation record
  */
 export const deleteSimulation = async (simulationId) => {
-    const response = await apiClient.delete(`${BASE_PATH}/${simulationId}`);
-    return response.data;
+    return apiClient.delete(`${BASE_PATH}/${simulationId}`);
 };
 
 /**
@@ -108,18 +95,16 @@ export const deleteSimulation = async (simulationId) => {
  */
 export const exportSimulationResults = async (simulationId) => {
     // This would download a file
-    const response = await apiClient.get(`${BASE_PATH}/${simulationId}/export`, {
+    return apiClient.get(`${BASE_PATH}/${simulationId}/export`, {
         responseType: 'blob'
     });
-    return response.data;
 };
 
 /**
  * Get simulation status (existing endpoint for queue status)
  */
 export const getSimulationStatus = async () => {
-    const response = await apiClient.get(`${BASE_PATH}/status`);
-    return response.data;
+    return apiClient.get(`${BASE_PATH}/status`);
 };
 
 const simulationsService = {

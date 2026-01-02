@@ -83,7 +83,7 @@ export const pollSimulationStatus = (
     const checkStatus = async () => {
       try {
         const response = await getSimulationStatus(simulationId);
-        const { status } = response.data;
+        const status = response?.status;
         
         if (onStatusUpdate) {
           onStatusUpdate(status);

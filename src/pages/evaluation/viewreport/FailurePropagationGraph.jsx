@@ -5,9 +5,11 @@ const FailurePropagationGraph = ({ stepHealth = {}, cascadingFailures = {} }) =>
   const canvasRef = useRef(null);
   
   // Convert step_health object to array
-  const steps = Object.values(stepHealth).sort((a, b) => {
-    const aNum = parseInt(a.turn_id.replace('turn_', ''));
-    const bNum = parseInt(b.turn_id.replace('turn_', ''));
+  const steps = Object.values(stepHealth || {}).sort((a, b) => {
+    const aId = a.turn_id || '';
+    const bId = b.turn_id || '';
+    const aNum = parseInt(aId.replace('turn_', '')) || 0;
+    const bNum = parseInt(bId.replace('turn_', '')) || 0;
     return aNum - bNum;
   });
 
@@ -104,7 +106,7 @@ const FailurePropagationGraph = ({ stepHealth = {}, cascadingFailures = {} }) =>
       ctx.font = 'bold 12px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(step.turn_id.replace('turn_', ''), x, y);
+      ctx.fillText((step.turn_id || '').replace('turn_', ''), x, y);
 
       // Label below
       ctx.fillStyle = '#9ca3af';

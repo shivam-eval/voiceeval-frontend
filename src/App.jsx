@@ -20,10 +20,13 @@ import SimulationEvaluationPage from "./pages/simulations/SimulationEvaluationPa
 import SessionReportPage from "./pages/simulations/SessionReportPage";
 import EvaluationsPage from './pages/simulations/EvaluationsPage';
 import EvaluationDashboard from "./pages/evaluation";
+import EvaluationReportPage from "./pages/evaluation/EvaluationReportPage";
 import AuthScreen from "./pages/auth/AuthScreen";
+import CallsPage from "./pages/observability/CallsPage";
+import Dashboard from "./pages/dasbhboard";
 import WorkspaceLoader from "./pages/workspace/WorkspaceLoader";
 
-import { useWorkflow } from "./context/WorkflowContext";
+import { useWorkflow } from "./context/WorkFlowContext";
 
 function App() {
   const location = useLocation();
@@ -51,6 +54,8 @@ function App() {
     if (path.startsWith("/simulation")) return "simulations";
     if (path.startsWith("/simulations")) return "simulations";
     if (path.startsWith("/evaluations")) return "evaluations";
+    if (path === "/calls") return "calls";
+    if (path === "/observability-overview") return "overview";
     return "home";
   };
 
@@ -108,7 +113,21 @@ function App() {
               <Route path="/evaluations" element={<EvaluationsPage />} />
               <Route
                 path="/evaluations/:evaluationId"
-                element={<EvaluationDashboard />}
+                element={<EvaluationReportPage />}
+              />
+
+              {/* Observability */}
+              <Route
+                path="/calls"
+                element={<CallsPage />}
+              />
+              <Route
+                path="/observability-overview"
+                element={
+                  <div className="p-8">
+                    <Dashboard />
+                  </div>
+                }
               />
 
               {/* Legacy route redirects */}

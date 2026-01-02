@@ -30,16 +30,16 @@ const GenericDropdown = ({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between px-4 py-2
-                   bg-gray-900 border border-gray-700 text-white rounded-lg
-                   text-sm hover:border-teal-400 transition-colors"
+        className="w-full flex items-center justify-between px-3 py-1.5
+                   bg-dark-bg border border-gray-800 text-white rounded-md
+                   text-sm hover:border-teal-500/50 transition-all duration-200"
       >
-        <span className={value ? "text-white" : "text-gray-400"}>
+        <span className={`font-semibold ${value ? "text-white" : "text-gray-500"}`}>
           {selectedLabel}
         </span>
 
         <svg
-          className={`w-4 h-4 text-gray-400 transition-transform ${
+          className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${
             open ? "rotate-180" : ""
           }`}
           fill="none"
@@ -53,25 +53,28 @@ const GenericDropdown = ({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-2 w-full bg-gray-900
-                        border border-gray-700 rounded-lg shadow-xl overflow-hidden">
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => {
-                onChange(opt.value)
-                setOpen(false)
-              }}
-              className={`w-full text-left px-4 py-2 text-sm
-                hover:bg-gray-800 transition-colors ${
-                  value === opt.value
-                    ? "text-teal-400 bg-gray-800"
-                    : "text-white"
-                }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+        <div className="absolute z-50 mt-1.5 w-full bg-dark-panel
+                        border border-gray-800 rounded-lg shadow-2xl overflow-hidden
+                        animate-in fade-in zoom-in duration-200">
+          <div className="max-h-60 overflow-y-auto py-1">
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  onChange(opt.value)
+                  setOpen(false)
+                }}
+                className={`w-full text-left px-4 py-2 text-sm
+                  transition-colors ${
+                    value === opt.value
+                      ? "text-teal-400 bg-teal-500/10 font-medium"
+                      : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                  }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

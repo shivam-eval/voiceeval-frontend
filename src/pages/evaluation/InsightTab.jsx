@@ -7,7 +7,9 @@ const CATEGORY_LABELS = {
   audio_quality: "Audio Quality",
   conversation_quality: "Conversation",
   endpointing: "Endpointing",
-  persona: "Persona"
+  persona: "Persona",
+  speech: "Speech",
+  sentiment: "Sentiment",
 };
 
 const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = true, clickable = true }) => {

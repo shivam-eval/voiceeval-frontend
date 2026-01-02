@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ArrowLeft,
   Activity,
@@ -37,28 +37,39 @@ const transcriptData = initialTranscriptData;
   const sessionId = report?.session_id;
 
   // Process evaluation data from the actual evaluation object
-  const evaluationData = evaluation ? {
-    overall_score: Math.round(evaluation.overall_score * 100),
-    passed: evaluation.passed,
-    issues_found: evaluation.issues_found,
-    execution_time_ms: evaluation.execution_time_ms,
-    recommendations: evaluation.recommendations || [],
+  const evaluationData = useMemo(() => {
+    if (!evaluation) return null;
+    
+    // Handle nested evaluation structure if present
+    const data = evaluation.evaluation || evaluation;
+    
+    const score = data.overall_score || data.score || 0;
+    const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
-    // Extract category scores from metric_results
-    category_scores: evaluation.category_scores || [],
-
-    // Extract metric results for detailed view
-    metrics: evaluation.metric_results || [],
-
-    // Process failure propagation if available
-    failure_propagation: evaluation.failure_propagation || {
-      critical_failure_turns: [],
-      total_tainted_steps: 0,
-      propagation_depth: 0,
-      cascading_failures: {},
-      step_health: {}
-    }
-  } : null;
+    return {
+      overall_score: normalizedScore,
+      passed: data.passed,
+      issues_found: data.issues_found,
+      issues: data.issues || [],
+      execution_time_ms: data.execution_time_ms,
+      recommendations: data.recommendations || [],
+      
+      // Extract category scores from metric_results
+      category_scores: data.category_scores || [],
+      
+      // Extract metric results for detailed view
+      metrics: data.metrics || data.metric_results || [],
+      
+      // Process failure propagation if available
+      failure_propagation: data.failure_propagation || {
+        critical_failure_turns: [],
+        total_tainted_steps: 0,
+        propagation_depth: 0,
+        cascading_failures: {},
+        step_health: {}
+      }
+    };
+  }, [evaluation]);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
@@ -68,37 +79,61 @@ const transcriptData = initialTranscriptData;
   ];
 
   // Prepare radar chart data from actual category scores
-  const radarData = evaluationData?.category_scores.map(cat => ({
-    category: cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    score: Math.round(cat.score * 100) // Convert to percentage
-  })) || [];
+  const radarData = useMemo(() => {
+    if (!Array.isArray(evaluationData?.category_scores)) return [];
+    
+    return evaluationData.category_scores.map(cat => {
+      if (!cat) return null;
+      const score = cat.score || 0;
+      const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
+      
+      return {
+        category: (cat.category || 'Unknown').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        score: normalizedScore
+      };
+    }).filter(Boolean);
+  }, [evaluationData?.category_scores]);
 
   // Extract latency data from metrics
-  const latencyMetrics = evaluationData?.metrics.filter(m =>
-    m.category === 'latency' || m.name.includes('latency') || m.name.includes('duration')
-  ) || [];
+  const latencyMetrics = useMemo(() => {
+    if (!Array.isArray(evaluationData?.metrics)) return [];
+    
+    return evaluationData.metrics.filter(m => 
+      m && (
+        m.category === 'latency' || 
+        (m.name && m.name.includes('latency')) || 
+        (m.name && m.name.includes('duration'))
+      )
+    );
+  }, [evaluationData?.metrics]);
 
   // Mock latency timeline data (would need turn-by-turn data in production)
-  const latencyData = latencyMetrics.length > 0 ? [
-    {
-      id: 'Response Time',
-      data: latencyMetrics.slice(0, 5).map((metric, idx) => ({
-        x: `Turn ${idx + 1}`,
-        y: metric.details?.duration_ms ? metric.details.duration_ms / 1000 : 1.5
-      }))
+  const latencyData = useMemo(() => {
+    if (latencyMetrics.length > 0) {
+      return [
+        {
+          id: 'Response Time',
+          data: latencyMetrics.slice(0, 5).map((metric, idx) => ({
+            x: `Turn ${idx + 1}`,
+            y: metric.details?.duration_ms ? metric.details.duration_ms / 1000 : 1.5
+          }))
+        }
+      ];
     }
-  ] : [
-    {
-      id: 'Response Time',
-      data: [
-        { x: 'Turn 1', y: 1.2 },
-        { x: 'Turn 2', y: 1.5 },
-        { x: 'Turn 3', y: 1.8 },
-        { x: 'Turn 4', y: 1.3 },
-        { x: 'Turn 5', y: 1.6 }
-      ]
-    }
-  ];
+    
+    return [
+      {
+        id: 'Response Time',
+        data: [
+          { x: 'Turn 1', y: 1.2 },
+          { x: 'Turn 2', y: 1.5 },
+          { x: 'Turn 3', y: 1.8 },
+          { x: 'Turn 4', y: 1.3 },
+          { x: 'Turn 5', y: 1.6 }
+        ]
+      }
+    ];
+  }, [latencyMetrics]);
 
   const getScoreColor = (score) => {
     if (score >= 90) return 'text-green-400';
@@ -126,27 +161,35 @@ const transcriptData = initialTranscriptData;
     setActiveCategory('');
   };
 
-  // Build categoryMap from metric_results grouped by category
-  const categoryMap = React.useMemo(() => {
-    if (!evaluation?.category_scores) return {};
+  // Create a map of categories to their metrics
+  const categoryMap = useMemo(() => {
+    const metrics = evaluationData?.metrics;
+    if (!Array.isArray(metrics)) return {};
 
     const map = {};
-
-    evaluation.category_scores.forEach((categoryData) => {
-      const category = categoryData.category;
+    metrics.forEach((metric) => {
+      if (!metric) return;
+      const category = metric.category;
       if (!category) return;
 
-      map[category] = {
-        category: category,
-        score: categoryData.score || 0,
-        weight: categoryData.weight || 0,
-        metrics: categoryData.metrics || []
-      };
-    });
+      if (!map[category]) {
+        const categoryScore = Array.isArray(evaluationData.category_scores) 
+          ? evaluationData.category_scores.find((c) => c && c.category === category)
+          : null;
+        const score = categoryScore ? categoryScore.score : 0;
+        const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
-    console.log('Built categoryMap:', map);
+        map[category] = {
+          category,
+          score: normalizedScore,
+          weight: categoryScore ? categoryScore.weight : 0,
+          metrics: [],
+        };
+      }
+      map[category].metrics.push(metric);
+    });
     return map;
-  }, [evaluation]);
+  }, [evaluationData]);
 
   // Render category-specific view
   const renderCategoryView = () => {
@@ -166,8 +209,14 @@ const transcriptData = initialTranscriptData;
       case 'endpointing':
         return <EndpointingOverview response={categoryMap.endpointing} onBack={handleBackToOverview} />;
 
+      case 'cost':
+        return <CostOverview response={categoryMap.cost} onBack={handleBackToOverview} />;
+
       case 'persona':
         return <PersonaOverview response={categoryMap.persona} onBack={handleBackToOverview} />;
+
+      case 'audio_quality':
+        return <AudioOverview data={categoryMap.audio_quality} onBack={handleBackToOverview} />;
 
       case 'task_completion':
         return <TaskCompletionOverview response={categoryMap.task_completion} onBack={handleBackToOverview} />;
@@ -198,7 +247,7 @@ const transcriptData = initialTranscriptData;
             </span>
             <span className="text-gray-600">•</span>
             <span className="text-gray-400">
-              Evaluation ID: <span className="font-mono text-gray-300">{evaluation?.evaluation_id?.substring(0, 12) || 'N/A'}...</span>
+              Evaluation ID: <span className="font-mono text-gray-300">{String(evaluation?.evaluation_id || 'N/A').substring(0, 12)}...</span>
             </span>
           </div>
         </div>
@@ -256,7 +305,7 @@ const transcriptData = initialTranscriptData;
             <p className="text-xs text-gray-400 font-semibold uppercase">Total Metrics</p>
           </div>
           <p className="text-2xl font-bold text-white">
-            {evaluationData?.metrics.length || 0}
+            {evaluationData?.metrics?.length || 0}
           </p>
         </div>
 
@@ -276,35 +325,67 @@ const transcriptData = initialTranscriptData;
         <InsightTabs
           activeCategory={activeCategory}
           onChange={handleCategoryChange}
-          categoryScores={evaluationData.category_scores.map(cat => ({
-            category: cat.category,
-            score: Math.round(cat.score * 100),
-            weight: cat.weight
-          }))}
-          clickable={true}
+          categoryScores={evaluationData.category_scores.map(cat => {
+            const score = cat.score || 0;
+            // Normalize score: if it's 0-1, convert to 0-100. If already > 1, assume 0-100.
+            const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
+            
+            return {
+              category: cat.category,
+              score: normalizedScore,
+              weight: cat.weight || 0
+            };
+          })}
         />
       )}
 
       {/* Render Category View if active */}
       {activeCategory && renderCategoryView()}
 
-      {/* Recommendations Panel */}
-      {!activeCategory && evaluationData?.recommendations && evaluationData.recommendations.length > 0 && (
-        <div className="bg-dark-panel border border-yellow-500/20 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-yellow-400" />
-            Recommendations
-          </h3>
-          <div className="space-y-3">
-            {evaluationData.recommendations.map((rec, idx) => (
-              <div key={idx} className="flex items-start gap-3 p-3 bg-yellow-500/5 rounded-lg border border-yellow-500/10">
-                <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-yellow-400 text-xs font-bold">{idx + 1}</span>
-                </div>
-                <p className="text-sm text-gray-300">{rec}</p>
+      {/* Issues & Recommendations Panel */}
+      {!activeCategory && ((evaluationData?.issues && evaluationData.issues.length > 0) || (evaluationData?.recommendations && evaluationData.recommendations.length > 0)) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Issues Panel */}
+          {evaluationData?.issues && evaluationData.issues.length > 0 && (
+            <div className="bg-dark-panel border border-red-500/20 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-red-400" />
+                Key Issues Found
+              </h3>
+              <div className="space-y-3">
+                {evaluationData.issues.map((issue, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
+                    <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-red-400 text-xs font-bold">{idx + 1}</span>
+                    </div>
+                    <p className="text-sm text-gray-300">
+                      {typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue))}
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          )}
+
+          {/* Recommendations Panel */}
+          {evaluationData?.recommendations && evaluationData.recommendations.length > 0 && (
+            <div className="bg-dark-panel border border-yellow-500/20 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-yellow-400" />
+                Recommendations
+              </h3>
+              <div className="space-y-3">
+                {evaluationData.recommendations.map((rec, idx) => (
+                  <div key={idx} className="flex items-start gap-3 p-3 bg-yellow-500/5 rounded-lg border border-yellow-500/10">
+                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-yellow-400 text-xs font-bold">{idx + 1}</span>
+                    </div>
+                    <p className="text-sm text-gray-300">{rec}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -392,7 +473,9 @@ const transcriptData = initialTranscriptData;
               {evaluationData?.category_scores.length > 0 && (
                 <div className="grid grid-cols-2 gap-4">
                   {evaluationData.category_scores.map(cat => {
-                    const scorePercentage = Math.round(cat.score * 100);
+                    const score = cat.score || 0;
+                    const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
+                    
                     return (
                       <div
                         key={cat.category}
@@ -403,8 +486,8 @@ const transcriptData = initialTranscriptData;
                             <p className="text-sm text-gray-400 mb-1">
                               {cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </p>
-                            <p className={`text-2xl font-bold ${getScoreColor(scorePercentage)}`}>
-                              {scorePercentage}%
+                            <p className={`text-2xl font-bold ${getScoreColor(normalizedScore)}`}>
+                              {normalizedScore}%
                             </p>
                           </div>
                           <div className="w-16 h-16">
@@ -422,9 +505,9 @@ const transcriptData = initialTranscriptData;
                                 cy="18"
                                 r="16"
                                 fill="none"
-                                stroke={scorePercentage >= 90 ? '#22c55e' : scorePercentage >= 75 ? '#eab308' : '#ef4444'}
+                                stroke={normalizedScore >= 90 ? '#22c55e' : normalizedScore >= 75 ? '#eab308' : '#ef4444'}
                                 strokeWidth="3"
-                                strokeDasharray={`${scorePercentage * 1.005}, 100.5`}
+                                strokeDasharray={`${normalizedScore * 1.005}, 100.5`}
                                 strokeLinecap="round"
                               />
                             </svg>
@@ -480,10 +563,10 @@ const transcriptData = initialTranscriptData;
                       {evaluationData?.metrics.map((metric, idx) => (
                         <tr key={idx} className="border-b border-gray-800/30 hover:bg-[#1e2433]">
                           <td className="px-6 py-4 text-sm text-white font-medium">
-                            {metric.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {(metric.name || 'Unknown Metric').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-400">
-                            {metric.category?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'N/A'}
+                            {(metric.category || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                           </td>
                           <td className="px-6 py-4 text-center">
                             {metric.score !== null && metric.score !== undefined ? (

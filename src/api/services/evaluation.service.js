@@ -1,39 +1,45 @@
-import { apiClient } from '../clients/axios.client';
+import { apiClient } from '../../utils/api';
 
 /**
  * Get a single evaluation by ID
  */
 export const getEvaluation = (evaluationId) =>
-  apiClient.get(`/evaluate/${evaluationId}`);
+  apiClient.get(`/api/v1/evaluate/${evaluationId}`);
 
 /**
  * List evaluations with filtering
  */
 export const getEvaluations = (filters = {}) => {
-  const params = new URLSearchParams();
+  const params = {};
 
-  if (filters.sessionId) params.append('session_id', filters.sessionId);
-  if (filters.simulationId) params.append('simulation_id', filters.simulationId);
-  if (filters.minScore !== undefined) params.append('min_score', filters.minScore);
-  if (filters.maxScore !== undefined) params.append('max_score', filters.maxScore);
-  if (filters.passed !== undefined) params.append('passed', filters.passed);
-  if (filters.skip !== undefined) params.append('skip', filters.skip);
-  if (filters.limit !== undefined) params.append('limit', filters.limit);
+  if (filters.sessionId) params.session_id = filters.sessionId;
+  if (filters.simulationId) params.simulation_id = filters.simulationId;
+  if (filters.minScore !== undefined) params.min_score = filters.minScore;
+  if (filters.maxScore !== undefined) params.max_score = filters.maxScore;
+  if (filters.passed !== undefined) params.passed = filters.passed;
+  if (filters.skip !== undefined) params.skip = filters.skip;
+  if (filters.limit !== undefined) params.limit = filters.limit;
 
-  return apiClient.get(`/evaluate?${params.toString()}`);
+  return apiClient.get('/api/v1/evaluate/', params);
 };
+
+/**
+ * Get evaluations for a specific session
+ */
+export const getSessionEvaluations = (sessionId) =>
+  apiClient.get('/api/v1/evaluate/session', { sessionId });
 
 /**
  * Get all evaluations for a specific simulation
  */
-export const getSimulationEvaluations = (simulationId, skip = 0, limit = 100) =>
-  apiClient.get(`/evaluate/simulation/${simulationId}?skip=${skip}&limit=${limit}`);
+export const getSimulationEvaluations = (simulationId) =>
+  apiClient.get('/api/v1/evaluate/simulation', { simulationId });
 
 /**
  * Evaluate a session
  */
 export const evaluateSession = (sessionId, configOverrides = {}) =>
-  apiClient.post('/evaluate', {
+  apiClient.post('/api/v1/evaluate', {
     session_id: sessionId,
     config_overrides: configOverrides
   });
@@ -42,7 +48,7 @@ export const evaluateSession = (sessionId, configOverrides = {}) =>
  * Batch evaluate all sessions in a simulation
  */
 export const batchEvaluateSimulation = (simulationId) =>
-  apiClient.post('/evaluate/batch', {
+  apiClient.post('/api/v1/evaluate/batch', {
     simulation_id: simulationId
   });
 
@@ -52,7 +58,7 @@ export const batchEvaluateSimulation = (simulationId) =>
  * @returns {Promise} API response
  */
 export const evaluateTranscript = (payload) =>
-  apiClient.post('/evaluate/transcript', payload);
+  apiClient.post('/api/v1/evaluate/transcript', payload);
 
 /**
  * Get evaluation results for a simulation (existing)
@@ -60,7 +66,7 @@ export const evaluateTranscript = (payload) =>
  * @returns {Promise} API response
  */
 export const getEvaluationResults = (simulationId) =>
-  apiClient.get(`/evaluate/results/${simulationId}`);
+  apiClient.get(`/api/v1/evaluate/results/${simulationId}`);
 
 const evaluationService = {
   getEvaluation,

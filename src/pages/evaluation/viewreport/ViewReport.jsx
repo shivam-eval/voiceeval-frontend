@@ -215,9 +215,6 @@ const transcriptData = initialTranscriptData;
       case 'persona':
         return <PersonaOverview response={categoryMap.persona} onBack={handleBackToOverview} />;
 
-      case 'audio_quality':
-        return <AudioOverview data={categoryMap.audio_quality} onBack={handleBackToOverview} />;
-
       case 'task_completion':
         return <TaskCompletionOverview response={categoryMap.task_completion} onBack={handleBackToOverview} />;
 

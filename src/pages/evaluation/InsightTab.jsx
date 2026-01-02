@@ -7,13 +7,10 @@ const CATEGORY_LABELS = {
   audio_quality: "Audio Quality",
   conversation_quality: "Conversation",
   endpointing: "Endpointing",
-  // cost: "Cost",
-  persona: "Persona",
-  speech: "Speech",
-  sentiment: "Sentiment",
+  persona: "Persona"
 };
 
-const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = true }) => {
+const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = true, clickable = true }) => {
   return (
     <div className="w-full grid grid-cols-7 gap-3">
       {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
@@ -32,13 +29,16 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = 
         return (
           <button
             key={key}
-            onClick={() => onChange(key)}
+            onClick={() => clickable && onChange(key)}
+            disabled={!clickable}
             className={`
               relative group rounded-xl transition-all flex flex-col items-center justify-center py-4
               ${isActive
                 ? 'bg-teal-500/20 border-2 border-teal-500'
-                : 'bg-gray-800 hover:bg-gray-700'
+                : 'bg-gray-800'
               }
+              ${clickable && !isActive ? 'hover:bg-gray-700 cursor-pointer' : ''}
+              ${!clickable ? 'cursor-default opacity-80' : ''}
             `}
           >
             {/* Label */}
@@ -58,8 +58,8 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = 
               </div>
             )} */}
 
-            {/* Hover overlay */}
-            {!isActive && enabled && (
+            {/* Hover overlay - only show when clickable */}
+            {!isActive && enabled && clickable && (
               <div className="
                 absolute inset-0 flex items-center justify-center
                 bg-black/60 opacity-0 group-hover:opacity-100

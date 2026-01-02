@@ -100,8 +100,9 @@ function App() {
               {/* Simulation evaluator (existing scenarios page) */}
               <Route path="/simulation/evaluator" element={<SimulationsPage />} />
 
-              {/* Simulation results (evaluation dashboard) - Legacy */}
-              <Route path="/simulation/results" element={<EvaluationDashboard />} />
+              {/* Evaluation Dashboard */}
+              <Route path="/evaluations/:simulationId" element={<EvaluationDashboard />} />
+              <Route path="/evaluations/results/:simulationId" element={<EvaluationDashboard />} />
 
               {/* === EVALUATIONS === */}
               <Route path="/evaluations" element={<EvaluationsPage />} />

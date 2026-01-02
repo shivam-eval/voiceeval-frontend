@@ -106,10 +106,20 @@ export const testGeneration = async (payload) => {
 
 // SIMULATION API (QUEUE PARTS)
 export const runSimulation = async (payload) => {
-  return API.post("/simulation/run", payload);
+  // Support both old format (object with all fields) and new format (separate params)
+  const requestPayload = payload.test_suite_id ? payload : {
+    test_suite_id: payload.testSuiteId,
+    phone_number: payload.phoneNumber,
+    agent_id: payload.agentId,
+    metadata: payload.metadata,
+    parallel_execution: payload.parallelExecution,
+    max_concurrency: payload.maxConcurrency
+  };
+
+  return API.post("/simulation/run", requestPayload);
 };
 
-export const getSimulation = async ()=>{
+export const getSimulation = async () => {
   return API.get('/simulation/status')
 }
 
@@ -150,8 +160,12 @@ export const evaluateTranscript = async (payload) => {
   return API_LONG.post("/evaluate", payload);
 };
 
+export const batchEvaluate = async (simulationId) => {
+  return API_LONG.post("/evaluate/batch", { simulation_id: simulationId });
+};
+
 export const getEvaluationResults = async (simulationId) => {
-  return API.get(`/evaluate/results/${simulationId}`);
+  return API.get(`/evaluate/simulation/${simulationId}`);
 };
 
 // UTILITY FUNCTIONS

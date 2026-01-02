@@ -93,7 +93,7 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
                         ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
                         : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
                     }`}>
-                      {isUser ? 'USER' : 'AGENT'}
+                      {isUser ? 'SIMULATOR' : 'AGENT'}
                     </span>
                     
                     <span className="text-gray-500 font-mono text-xs">

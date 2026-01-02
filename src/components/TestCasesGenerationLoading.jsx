@@ -5,91 +5,91 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
   const [progress, setProgress] = useState(0)
   const [status, setStatus] = useState('Initializing...')
   const [error, setError] = useState(null)
- 
+
   useEffect(() => {
     let isMounted = true
-    
+
     const generateTestCases = async () => {
       try {
         // Stage 1: Preparing request (0-20%)
         setStatus('Preparing test generation request...')
         setProgress(10)
         await new Promise(resolve => setTimeout(resolve, 300))
-        
+
         if (!flowData) {
           throw new Error('Flow data not available')
         }
-        
+
         if (!isMounted) return
         setProgress(20)
-        
+
         // Stage 2: Sending API request (20-40%)
         setStatus('Sending request to API...')
         const payload = {
           flow_tree: flowData,
           region: region,
           call_type: "inbound",
-          max_paths: 3,
+          max_paths: 1,
           include_edge_cases: true
         }
-        
+
         console.log('📤 Sending test generation request:', payload)
-        
+
         if (!isMounted) return
         setProgress(30)
         await new Promise(resolve => setTimeout(resolve, 200))
-        
+
         if (!isMounted) return
         setProgress(40)
-        
+
         // Stage 3: Analyzing flow tree (40-60%)
         setStatus('Analyzing conversation flow tree...')
-        
+
         // Make the actual API call
         const res = await testGeneration(payload)
-        
+
         if (!isMounted) return
-        
+
         console.log('📥 Test generation response:', res)
         console.log('📥 Response data structure:', JSON.stringify(res.data, null, 2))
-        
+
         setProgress(60)
-        
+
         // Stage 4: Processing response (60-80%)
         setStatus('Generating test scenarios...')
         await new Promise(resolve => setTimeout(resolve, 300))
-        
+
         if (!isMounted) return
         setProgress(70)
         await new Promise(resolve => setTimeout(resolve, 300))
-        
+
         if (!isMounted) return
         setProgress(80)
-        
+
         // Stage 5: Creating test cases (80-95%)
         setStatus('Creating comprehensive test cases...')
         await new Promise(resolve => setTimeout(resolve, 400))
-        
+
         if (!isMounted) return
         setProgress(90)
-        
+
         // Stage 6: Finalizing (95-100%)
         setStatus('Finalizing test suite...')
         await new Promise(resolve => setTimeout(resolve, 300))
-        
+
         if (!isMounted) return
         setProgress(95)
-        
+
         await new Promise(resolve => setTimeout(resolve, 200))
-        
+
         if (!isMounted) return
         setProgress(100)
         setStatus('Test cases generated successfully!')
-        
+
         console.log('✅ Test cases generated successfully')
         console.log('✅ File saved:', res.data.test_suite_id)
         console.log('✅ Test suite structure:', res.data.test_suite ? 'Present' : 'Missing')
-        
+
         // Verify we have the necessary data
         if (!res.data.file_name) {
           console.warn('⚠️ Warning: No file_name in response')
@@ -97,34 +97,34 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
         if (!res.data.test_suite) {
           console.warn('⚠️ Warning: No test_suite in response')
         }
-        
+
         // Complete after showing success
         setTimeout(() => {
           if (isMounted && onComplete) {
-          onComplete({
-  testSuite: res.data,
-  testSuiteId: res.data.test_suite_id
-})
+            onComplete({
+              testSuite: res.data,
+              testSuiteId: res.data.test_suite_id
+            })
 
 
           }
         }, 500)
-        
+
       } catch (err) {
         if (!isMounted) return
-        
+
         console.error('❌ Test generation failed:', err)
         console.error('Error details:', {
           message: err.message,
           response: err?.response?.data,
           stack: err.stack
         })
-        
+
         const errorMessage = err?.response?.data?.detail || err.message || 'Failed to generate test cases'
         setError(errorMessage)
         setStatus('Error occurred')
         setProgress(0)
-        
+
         // Notify parent component of error
         if (onError) {
           onError(errorMessage)
@@ -133,7 +133,7 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
     }
 
     generateTestCases()
-    
+
     // Cleanup function
     return () => {
       isMounted = false
@@ -172,11 +172,10 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
           <div className="mb-6">
             <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
               <div
-                className={`h-full transition-all duration-300 ease-out ${
-                  progress === 100 
-                    ? 'bg-gradient-to-r from-green-400 to-emerald-400' 
+                className={`h-full transition-all duration-300 ease-out ${progress === 100
+                    ? 'bg-gradient-to-r from-green-400 to-emerald-400'
                     : 'bg-gradient-to-r from-teal-400 to-cyan-400'
-                }`}
+                  }`}
                 style={{ width: `${progress}%` }}
               >
                 <div className="h-full w-full animate-pulse opacity-50" />
@@ -194,12 +193,11 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
 
         {/* Status Text */}
         <div className="text-center">
-          <p className={`text-sm font-medium ${
-            error ? 'text-red-400' : progress === 100 ? 'text-green-400' : 'text-gray-400'
-          }`}>
+          <p className={`text-sm font-medium ${error ? 'text-red-400' : progress === 100 ? 'text-green-400' : 'text-gray-400'
+            }`}>
             {status}
           </p>
-          
+
           {/* Stage indicators */}
           {!error && progress < 100 && (
             <div className="mt-6 flex justify-center gap-2">
@@ -211,11 +209,10 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
                 { min: 80, max: 100, label: 'Finalize' }
               ].map((stage, idx) => (
                 <div key={idx} className="flex flex-col items-center">
-                  <div className={`w-2 h-2 rounded-full transition-colors ${
-                    progress >= stage.max ? 'bg-teal-400' : 
-                    progress >= stage.min ? 'bg-teal-400 animate-pulse' : 
-                    'bg-gray-700'
-                  }`} />
+                  <div className={`w-2 h-2 rounded-full transition-colors ${progress >= stage.max ? 'bg-teal-400' :
+                      progress >= stage.min ? 'bg-teal-400 animate-pulse' :
+                        'bg-gray-700'
+                    }`} />
                   <span className="text-xs text-gray-500 mt-1">{stage.label}</span>
                 </div>
               ))}

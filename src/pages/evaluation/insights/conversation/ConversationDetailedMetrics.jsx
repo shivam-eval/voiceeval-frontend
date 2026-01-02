@@ -9,13 +9,18 @@ const humanizeMetricName = (name) => {
   const map = {
     grammar_quality: "Grammar Quality",
     context_maintenance: "Context Maintenance",
-    clarification_request_rate: "Clarification Request Rate",
-    information_extraction_accuracy: "Information Extraction Accuracy",
+    clarification_request_rate: "Clarification Rate",
+    repetition_count: "Repetition Count",
+    not_early_termination: "Call Completion",
+    words_per_minute: "Words Per Minute",
+    talk_ratio: "Talk Ratio",
+    text_sentiment: "Sentiment Score",
   };
   return map[name] || name;
 };
 
 const normalizeScore = (score) => {
+  if (score === null || score === undefined) return "N/A";
   if (typeof score !== "number") return "N/A";
   return score <= 1 ? `${Math.round(score * 100)}%` : `${Math.round(score)}%`;
 };
@@ -59,7 +64,7 @@ const ConversationDetailedMetrics = ({ response }) => {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric, idx) => (
           <DetailedMetric
             key={idx}

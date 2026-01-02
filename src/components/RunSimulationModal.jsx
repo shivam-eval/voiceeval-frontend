@@ -43,7 +43,13 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
         try {
             const result = await runSimulation.mutateAsync({
                 testSuiteId: selectedTestSuiteId,
-                phoneNumber: phoneNumber
+                phoneNumber: phoneNumber,
+                agentId: selectedAgentId || undefined,
+                metadata: {
+                    agent_name: selectedAgent?.agent_name,
+                    test_suite_name: selectedTestSuite?.name,
+                    started_from: 'modal'
+                }
             });
 
             // Close modal and navigate to simulation detail

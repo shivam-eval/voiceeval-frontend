@@ -8,12 +8,16 @@ import {
 import { useSimulationWithLiveUpdates, useSimulationSessions, useCancelSimulation, useRerunSimulation, useDeleteSimulation } from '../../hooks/useSimulations';
 import Badge from '../../components/Badge';
 import Button from '../../components/Button';
+import { batchEvaluate, getEvaluationResults } from '../../api';
+import { useWorkflow } from '../../context/WorkFlowContext';
 
 const SimulationDetailPage = () => {
     const { simulationId } = useParams();
     const navigate = useNavigate();
     const [expandedSessions, setExpandedSessions] = useState([]);
     const [sessionFilter, setSessionFilter] = useState('all');
+    const [isEvaluating, setIsEvaluating] = useState(false);
+    const { setSimulationResult } = useWorkflow();
 
     // Fetch simulation with live updates (auto-polls if running)
     const { data: simulation, isLoading, error } = useSimulationWithLiveUpdates(simulationId);
@@ -62,6 +66,35 @@ const SimulationDetailPage = () => {
             } catch (error) {
                 alert('Failed to delete: ' + error.message);
             }
+        }
+    };
+
+    const handleViewEvaluation = async () => {
+        setIsEvaluating(true);
+        try {
+            // First, check if evaluation already exists
+            try {
+                const existingEvaluation = await getEvaluationResults(simulationId);
+                if (existingEvaluation.data) {
+                    // Evaluation exists, navigate directly to results
+                    console.log('Existing evaluation found, navigating to results');
+                    navigate(`/evaluations/results/${simulationId}`);
+                    return;
+                }
+            } catch (error) {
+                // Evaluation doesn't exist, continue to create new one
+                console.log('No existing evaluation found, creating new one');
+            }
+
+            // No existing evaluation, call batch evaluate API
+            await batchEvaluate(simulationId);
+
+            // Navigate to evaluation results page
+            navigate(`/evaluations/results/${simulationId}`);
+        } catch (error) {
+            console.error('Batch evaluation failed:', error);
+            alert('Failed to run evaluation: ' + (error.response?.data?.detail || error.message));
+            setIsEvaluating(false);
         }
     };
 
@@ -116,6 +149,31 @@ const SimulationDetailPage = () => {
                     <Button onClick={() => navigate('/simulation/runs')} className="mt-4">
                         Back to Simulations
                     </Button>
+                </div>
+            </div>
+        );
+    }
+
+    if (isEvaluating) {
+        return (
+            <div className="p-8">
+                <div className="flex items-center justify-center h-screen">
+                    <div className="bg-gray-900 rounded-xl p-12 border border-gray-800/50 shadow-xl max-w-2xl w-full">
+                        <div className="text-center">
+                            <div className="inline-block animate-spin rounded-full h-16 w-16 border-b-4 border-teal-400 mb-6"></div>
+                            <h2 className="text-3xl font-bold text-white mb-3">
+                                Running Batch Evaluation
+                            </h2>
+                            <p className="text-gray-400 mb-4">
+                                Analyzing simulation results and generating evaluation metrics...
+                            </p>
+                            <div className="mt-6">
+                                <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                                    <div className="h-full bg-gradient-to-r from-teal-400 to-green-400 animate-pulse" style={{ width: '70%' }}></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -177,11 +235,12 @@ const SimulationDetailPage = () => {
                                         Rerun
                                     </Button>
                                     <Button
-                                        onClick={() => navigate(`/simulation/results/${simulationId}`)}
-                                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                        onClick={handleViewEvaluation}
+                                        disabled={isEvaluating}
+                                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <BarChart3 className="w-4 h-4" />
-                                        View Evaluation
+                                        {isEvaluating ? 'Evaluating...' : 'View Evaluation'}
                                     </Button>
                                 </>
                             )}

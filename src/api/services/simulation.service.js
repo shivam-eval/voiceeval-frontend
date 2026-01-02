@@ -80,11 +80,12 @@ export const pollSimulationStatus = (
   interval = 2000
 ) => {
   return new Promise((resolve, reject) => {
+
     const checkStatus = async () => {
       try {
         const response = await getSimulationStatus(simulationId);
         const { status } = response.data;
-        
+
         if (onStatusUpdate) {
           onStatusUpdate(status);
         }
@@ -103,11 +104,27 @@ export const pollSimulationStatus = (
   });
 };
 
+
+/**
+ * Get session transcript
+ * @param {string} sessionId - ID of the session
+ * @returns {Promise} API response
+ */
+export const getSessionTranscript = (sessionId) =>
+  apiClient.get(`/simulation/sessions/${sessionId}/transcript`, {
+    headers: {
+      "Cache-Control": "no-cache",
+      "Pragma": "no-cache",
+      "Expires": "0",
+    }
+  });
+
 const simulationService = {
   runSimulation,
   getSimulationStatus,
   getSimulationResult,
   getSimulationTranscript,
+  getSessionTranscript,
   listSimulations,
   cancelSimulation,
   getQueueStats,

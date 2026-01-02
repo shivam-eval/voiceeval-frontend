@@ -72,11 +72,23 @@ export const useRunSimulation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ testSuiteId, phoneNumber }) =>
-            simulationsApi.runSimulation(testSuiteId, phoneNumber),
-        onSuccess: () => {
+        mutationFn: ({ testSuiteId, phoneNumber, agentId, metadata, parallelExecution, maxConcurrency }) =>
+            simulationsApi.runSimulation(testSuiteId, phoneNumber, {
+                agentId,
+                metadata,
+                parallelExecution,
+                maxConcurrency
+            }),
+        onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: simulationKeys.lists() });
+            // Optionally prefetch the new simulation details
+            if (data.simulation_id) {
+                queryClient.invalidateQueries({ queryKey: simulationKeys.detail(data.simulation_id) });
+            }
         },
+        onError: (error) => {
+            console.error('Failed to run simulation:', error);
+        }
     });
 };
 

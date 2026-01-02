@@ -16,9 +16,8 @@ import EndpointingOverview from "./insights/endpointing";
 import PersonaOverview from "./insights/persona";
 import TaskCompletionOverview from "./insights/task_completion";
 import ConversationOverview from "./insights/conversation";
-import SpeechMetrics from "./insights/speech";
-import SentimentAnalysis from "./insights/sentiment";
 import { useWorkflow } from "../../context/WorkFlowContext";
+import { getSessionTranscript } from "../../api/services/simulation.service";
 
 const CATEGORY = {
   OVERVIEW: "",
@@ -28,9 +27,7 @@ const CATEGORY = {
   AUDIO: "audio_quality",
   ENDPOINTING: "endpointing",
   PERSONA: "persona",
-  CONVERSATION: "conversation_quality",
-  SPEECH: "speech",
-  SENTIMENT: "sentiment"
+  CONVERSATION: "conversation_quality"
 };
 
 const CATEGORY_TITLES = {
@@ -41,9 +38,7 @@ const CATEGORY_TITLES = {
   [CATEGORY.ENDPOINTING]: "ENDPOINTING OVERVIEW",
   [CATEGORY.PERSONA]: "PERSONA ALIGNMENT OVERVIEW",
   [CATEGORY.TASK_COMPLETION]: "TASK COMPLETION OVERVIEW",
-  [CATEGORY.CONVERSATION]: "CONVERSATION OVERVIEW",
-  [CATEGORY.SPEECH]: "SPEECH ANALYSIS OVERVIEW",
-  [CATEGORY.SENTIMENT]: "SENTIMENT ANALYSIS OVERVIEW"
+  [CATEGORY.CONVERSATION]: "CONVERSATION OVERVIEW"
 };
 
 const EvaluationDashboard = ({ onBack }) => {
@@ -210,54 +205,49 @@ const EvaluationDashboard = ({ onBack }) => {
     );
   }
 
-  const getTranscriptData = (transcriptId) => {
-    // 1. Check if the evaluationData prop (real simulation response) has the transcript
-    if (evaluationData?.transcript_steps) {
-      return {
-        ...evaluationData.transcript_steps,
-        metadata: {
-          ...(evaluationData.transcript_steps.metadata || {}),
-          ...(evaluationData.metadata || {}) // Merge root metadata (contains audio_files)
-        }
-      };
-    }
+  const getTranscriptData = async (sessionId) => {
+    const res = await getSessionTranscript(sessionId);
+    const json = res.data;
+    const t = json.transcript_steps || {};
 
-    // 2. Check in resData evaluations for the specific transcriptId
-    const fullEvaluation = resData.evaluations?.find(
-      e => e.evaluation_id === transcriptId || e.session_id === transcriptId
-    );
-
-    if (fullEvaluation?.transcript_steps) {
-      return {
-        ...fullEvaluation.transcript_steps,
-        metadata: {
-          ...(fullEvaluation.transcript_steps.metadata || {}),
-          ...(fullEvaluation.metadata || {}),
-          audio_files: fullEvaluation.audio_files || fullEvaluation.metadata?.audio_files || []
-        }
-      };
-    }
-
-    // 3. Fallback to mock transcripts
-    return DEBT_COLLECTION_TRANSCRIPTS[transcriptId] || null;
+    return {
+      steps: (t.steps || []).map(step => ({
+        ...step,
+        turn_role: step.turn_role === "simulator" ? "user" : step.turn_role
+      })),
+      metadata: {
+        ...(t.metadata || {}),
+        duration_ms: t.timing?.duration_ms
+      }
+    };
   };
 
-  const handleViewReport = (report) => {
-    const evaluation = evaluations.find(
-      (e) => e.session_id === report.session_id
-    );
 
-    if (!evaluation) {
-      console.error("No evaluation found for session:", report.session_id);
-      return;
+  const handleViewReport = async (report) => {
+    try {
+      const evaluation = evaluations.find(
+        e => e.session_id === report.session_id
+      );
+
+      if (!evaluation) {
+        console.error("No evaluation found for session:", report.session_id);
+        return;
+      }
+
+      setSelectedReport(report);
+      setSelectedEvaluation(evaluation);
+
+      const transcript = await getTranscriptData(report.session_id);
+      setSelectedTranscript(transcript);
+
+    } catch (err) {
+      console.error("Failed to load transcript:", err);
+      setSelectedTranscript(null);
     }
-
-    setSelectedReport(report);
-    setSelectedEvaluation(evaluation);
-
-    const transcriptData = getTranscriptData(report.transcript_result_id);
-    setSelectedTranscript(transcriptData);
   };
+
+
+
 
   const renderOverview = () => (
     <div className="flex flex-col gap-6">
@@ -275,6 +265,7 @@ const EvaluationDashboard = ({ onBack }) => {
         onChange={setActiveCategory}
         categoryScores={categoryScores}
         enabled={false}
+        clickable={false}
       />
 
       <ImprovementsPanel
@@ -330,10 +321,6 @@ const EvaluationDashboard = ({ onBack }) => {
         return <TaskCompletionOverview data={aggregatedData} onBack={handleBackToOverview} />;
       case CATEGORY.CONVERSATION:
         return <ConversationOverview data={aggregatedData} onBack={handleBackToOverview} />;
-      case CATEGORY.SPEECH:
-        return <SpeechMetrics evaluationData={aggregatedData} onBack={handleBackToOverview} />;
-      case CATEGORY.SENTIMENT:
-        return <SentimentAnalysis evaluationData={aggregatedData} onBack={handleBackToOverview} />;
       default:
         return renderOverview();
     }

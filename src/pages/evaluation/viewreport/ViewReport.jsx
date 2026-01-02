@@ -19,19 +19,22 @@ import { ResponsiveLine } from '@nivo/line';
 import InsightTabs from '../InsightTab';
 import AccuracyView from '../insights/accuracy/Accuracy';
 import LatencyOverview from '../insights/latency';
-import CostOverview from '../insights/cost';
 import AudioOverview from '../insights/audio';
 import EndpointingOverview from '../insights/endpointing';
 import PersonaOverview from '../insights/persona';
 import TaskCompletionOverview from '../insights/task_completion';
 import ConversationOverview from '../insights/conversation';
 
-const TestReportView = ({ report, evaluation, transcriptData, simulationData, onBack }) => {
-
+const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [activeCategory, setActiveCategory] = useState('');
+const transcriptData = initialTranscriptData;
+
 
   console.log('TestReportView received evaluation:', evaluation);
+
+  // Extract sessionId from report
+  const sessionId = report?.session_id;
 
   // Process evaluation data from the actual evaluation object
   const evaluationData = useMemo(() => {
@@ -146,7 +149,6 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
     return 'bg-red-500/10 border-red-500/20';
   };
 
-
   const handleCategoryChange = (category) => {
     setActiveCategory(category);
     // When a category is selected, switch to overview tab to show the category view
@@ -224,7 +226,6 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
     }
   };
 
-
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
@@ -279,7 +280,7 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
             <p className="text-xs text-gray-400 font-semibold uppercase">Execution Time</p>
           </div>
           <p className="text-2xl font-bold text-white">
-            {evaluationData?.execution_time_ms 
+            {evaluationData?.execution_time_ms
               ? `${(evaluationData.execution_time_ms / 1000).toFixed(1)}s`
               : 'N/A'}
           </p>
@@ -394,11 +395,10 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
-                  activeTab === tab.id
-                    ? 'text-teal-400'
-                    : 'text-gray-400 hover:text-gray-300'
-                }`}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${activeTab === tab.id
+                  ? 'text-teal-400'
+                  : 'text-gray-400 hover:text-gray-300'
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
@@ -474,7 +474,7 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
                     const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
                     
                     return (
-                      <div 
+                      <div
                         key={cat.category}
                         className="bg-dark-panel border border-gray-800/50 rounded-xl p-4 hover:border-gray-700/50 transition-all"
                       >
@@ -518,15 +518,25 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
             </>
           )}
 
-          {activeTab === 'transcript' && (
-            <>
-              <CallTranscriptPanel transcriptData={transcriptData} />
-              <TurnByTurnAnalysis 
-                steps={transcriptData?.steps || []} 
-                stepHealth={evaluationData?.failure_propagation?.step_health || {}}
-              />
-            </>
-          )}
+      {activeTab === 'transcript' && (
+  <>
+    {transcriptData ? (
+      <>
+        <CallTranscriptPanel transcriptData={transcriptData} />
+        <TurnByTurnAnalysis
+          steps={transcriptData?.steps || []}
+          stepHealth={evaluationData?.failure_propagation?.step_health || {}}
+        />
+      </>
+    ) : (
+      <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
+        <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-400 text-sm">No transcript data available</p>
+      </div>
+    )}
+  </>
+)}
+
 
           {activeTab === 'metrics' && (
             <>

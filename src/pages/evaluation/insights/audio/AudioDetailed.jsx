@@ -10,6 +10,8 @@ const humanizeRadarLabel = (name) => {
     word_error_rate: "Word Error",
     audio_technical_quality: "Audio Technical",
     tts_naturalness: "TTS Naturalness",
+    average_pitch: "Average Pitch",
+    voice_quality_index: "Voice Quality"
   };
   return map[name] || name;
 };
@@ -21,8 +23,10 @@ const AudioQualityRadar = ({ response }) => {
   if (!response?.metrics) return null;
 
   const radarData = response.metrics.map((m) => ({
-    metric: humanizeRadarLabel(m.metric_name),
-    score: Math.round(m.value * 100),
+    metric: humanizeRadarLabel(m.name),
+    score: m.score !== null && m.score !== undefined
+      ? Math.round(m.score * 100)
+      : 100 // Default to 100 for null scores
   }));
 
   return (

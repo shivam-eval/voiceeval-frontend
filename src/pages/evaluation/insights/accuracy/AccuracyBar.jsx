@@ -6,10 +6,8 @@ import { darkTheme } from "../../const";
 ========================= */
 const humanizeMetricName = (name) => {
   const map = {
-    semantic_accuracy: "Semantic Accuracy",
     keyword_match_accuracy: "Keyword Match",
-    semantic_similarity: "Semantic Similarity",
-    intent_classification_accuracy: "Intent Classification",
+    semantic_similarity: "Semantic Similarity"
   };
   return map[name] || name;
 };
@@ -20,7 +18,12 @@ const humanizeMetricName = (name) => {
 const transformAccuracyBarData = (response) => {
   if (!response || !Array.isArray(response.metrics)) return [];
 
-  return response.metrics.map((m) => ({
+  // Filter out semantic_accuracy and intent_classification_accuracy
+  const filteredMetrics = response.metrics.filter(
+    (m) => m.name !== "semantic_accuracy" && m.name !== "intent_classification_accuracy"
+  );
+
+  return filteredMetrics.map((m) => ({
     metric: humanizeMetricName(m.name),
     value: typeof m.score === "number" ? m.score : 0, // score already 0–100
     status: m.status, // passed | failed | skipped

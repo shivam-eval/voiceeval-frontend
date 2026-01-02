@@ -12,10 +12,8 @@ import CriticalAlert from "../../../../components/CriticAlert";
 
 const humanizeMetricName = (name) => {
   const map = {
-    semantic_accuracy: "Semantic Accuracy",
     keyword_match_accuracy: "Keyword Match Accuracy",
-    semantic_similarity: "Semantic Similarity",
-    intent_classification_accuracy: "Intent Classification Accuracy",
+    semantic_similarity: "Semantic Similarity"
   };
   return map[name] || name;
 };
@@ -27,7 +25,12 @@ const humanizeMetricName = (name) => {
 const transformAccuracyMetrics = (metrics) => {
   if (!metrics || !Array.isArray(metrics)) return [];
 
-  return metrics.map((m) => ({
+  // Filter out semantic_accuracy and intent_classification_accuracy
+  const filteredMetrics = metrics.filter(
+    (m) => m.name !== "semantic_accuracy" && m.name !== "intent_classification_accuracy"
+  );
+
+  return filteredMetrics.map((m) => ({
     label: humanizeMetricName(m.name),
     value: typeof m.score === "number" ? Math.round(m.score * 100) : 0, // Convert 0-1 to 0-100
     threshold: 100,
@@ -40,11 +43,34 @@ const transformAccuracyMetrics = (metrics) => {
    COMPONENT
 ========================= */
 
-export default function AccuracyView({ response, onBack }) {
-  // FIXED: Check for the correct property structure
-  const metrics = response?.metrics || [];
-  
+export default function AccuracyView({ response, data, onBack }) {
+  // Handle both single evaluation (response) and aggregated data (data)
+  let metrics = [];
+
+  if (response) {
+    // Called from ViewReport with single evaluation's category data
+    metrics = response?.metrics || [];
+  } else if (data) {
+    // Called from Dashboard with aggregated data
+    // Extract accuracy metrics from all evaluations
+    const accuracyCategory = data.category_scores?.find(c => c.category === 'accuracy');
+    if (accuracyCategory) {
+      metrics = accuracyCategory.metrics || [];
+    } else {
+      // Fallback: aggregate metrics from all evaluations
+      const allMetrics = [];
+      data.evaluations?.forEach(evaluation => {
+        const accCategory = evaluation.category_scores?.find(c => c.category === 'accuracy');
+        if (accCategory?.metrics) {
+          allMetrics.push(...accCategory.metrics);
+        }
+      });
+      metrics = allMetrics;
+    }
+  }
+
   console.log('AccuracyView received response:', response);
+  console.log('AccuracyView received data:', data);
   console.log('AccuracyView metrics:', metrics);
 
   if (!metrics || metrics.length === 0) {
@@ -82,8 +108,8 @@ export default function AccuracyView({ response, onBack }) {
   const score =
     numericScores.length > 0
       ? Math.round(
-          (numericScores.reduce((a, b) => a + b, 0) / numericScores.length) * 100
-        )
+        (numericScores.reduce((a, b) => a + b, 0) / numericScores.length) * 100
+      )
       : 0;
 
   const isCritical = failedCount > 0;
@@ -135,7 +161,7 @@ export default function AccuracyView({ response, onBack }) {
 
       {/* Visualization */}
       <div className="mt-6 grid grid-cols-1 gap-6">
-        <AccuracyBar response={response} />
+        <AccuracyBar response={{ metrics }} />
       </div>
 
       {/* Detailed Metrics */}

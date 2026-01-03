@@ -3,7 +3,8 @@ import Sidebar from "./Sidebar";
 
 const DashboardLayout = ({
   children,
-  activeView,
+  activeSection,
+  activeTab,
   onLogout,
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -14,7 +15,8 @@ const DashboardLayout = ({
       <Sidebar
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
-        activeView={activeView}
+        activeSection={activeSection}
+        activeTab={activeTab}
         onLogout={onLogout}
       />
 

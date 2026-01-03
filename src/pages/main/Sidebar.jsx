@@ -1,192 +1,100 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWorkflow } from "../../context/WorkFlowContext";
 
 const Sidebar = ({
   isSidebarOpen,
   setIsSidebarOpen,
-  activeView,
+  activeSection,
+  activeTab,
   onLogout,
 }) => {
   const navigate = useNavigate();
   const { resetWorkflow } = useWorkflow();
+  const [expandedSections, setExpandedSections] = useState(["agents"]);
 
-  const navigationItems = [
+  // Define sections with tabs
+  const sections = [
     {
       id: "home",
       label: "Home",
       path: "/",
-      enabled: true,
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-          />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
       ),
+      standalone: true,
     },
     {
       id: "agents",
       label: "Agents",
-      path: "/agents",
-      enabled: true,
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M13 10V3L4 14h7v7l9-11h-7z"
-          />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
         </svg>
       ),
+      tabs: [
+        { id: "my-agents", label: "My Agents", path: "/agents" },
+        { id: "flows", label: "Flows", path: "/agents/flows" },
+        { id: "configuration", label: "Configuration", path: "/agents/configuration" },
+      ],
     },
     {
-      id: "test-cases",
-      label: "Test Cases",
-      path: "/test-cases",
-      enabled: true,
+      id: "testing",
+      label: "Testing",
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
       ),
-    },
-    {
-      id: "personas",
-      label: "Personas",
-      path: "/personas",
-      enabled: true,
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-          />
-        </svg>
-      ),
+      tabs: [
+        { id: "test-suites", label: "Test Suites", path: "/testing/suites" },
+        { id: "personas", label: "Personas", path: "/testing/personas" },
+        { id: "scenarios", label: "Scenarios", path: "/testing/scenarios" },
+      ],
     },
     {
       id: "simulations",
       label: "Simulations",
-      path: "/simulations",
-      enabled: true,
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
+      tabs: [
+        { id: "run", label: "Run Simulation", path: "/simulations/run" },
+        { id: "runs", label: "Simulation Runs", path: "/simulations/runs" },
+      ],
     },
     {
       id: "evaluations",
       label: "Evaluations",
-      path: "/evaluations",
-      enabled: true,
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       ),
-    },
-  ];
-
-  const observabilityItems = [
-    {
-      id: "calls",
-      label: "Calls",
-      path: "/calls",
-      enabled: true,
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-          />
-        </svg>
-      ),
+      tabs: [
+        { id: "overview", label: "Overview", path: "/evaluations/overview" },
+        { id: "reports", label: "Reports", path: "/evaluations/reports" },
+      ],
     },
     {
-      id: "overview",
-      label: "Overview",
-      path: "/observability-overview",
-      enabled: true,
+      id: "observability",
+      label: "Observability",
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
         </svg>
       ),
+      tabs: [
+        { id: "calls", label: "Calls", path: "/observability/calls" },
+        { id: "analytics", label: "Analytics", path: "/observability/analytics" },
+        { id: "logs", label: "Logs", path: "/observability/logs" },
+      ],
     },
   ];
 
@@ -194,80 +102,44 @@ const Sidebar = ({
     {
       id: "documentation",
       label: "Documentation",
-      enabled: true,
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-          />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
         </svg>
       ),
     },
     {
       id: "get-started",
       label: "Get Started",
-      enabled: true,
       icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-          />
-        </svg>
-      ),
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      enabled: true,
-      icon: (
-        <svg
-          className="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-          />
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-          />
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
         </svg>
       ),
     },
   ];
+
+  const toggleSection = (sectionId) => {
+    setExpandedSections((prev) =>
+      prev.includes(sectionId)
+        ? prev.filter((id) => id !== sectionId)
+        : [...prev, sectionId]
+    );
+  };
+
+  const handleNavigate = (path) => {
+    navigate(path);
+  };
 
   const userEmail = localStorage.getItem("userEmail") || "user@voiceeval.com";
   const userInitial = userEmail.charAt(0).toUpperCase();
 
   return (
     <div
-      className={`${isSidebarOpen ? "w-64" : "w-20"}
-      bg-dark-panel border-r border-gray-800/50 transition-all duration-300
-      flex flex-col fixed left-0 top-0 bottom-0 z-10`}
+      className={`${isSidebarOpen ? "w-64" : "w-20"
+        } bg-dark-panel border-r border-gray-800/50 transition-all duration-300 flex flex-col fixed left-0 top-0 bottom-0 z-10`}
     >
+      {/* Logo */}
       <div className="p-6 border-b border-gray-800/50 flex-shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-teal-400/20 flex items-center justify-center">
@@ -281,58 +153,99 @@ const Sidebar = ({
         </div>
       </div>
 
-      {/* Navigation Items */}
+      {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 min-h-0">
         <div className="px-3 space-y-1">
-          {navigationItems.map((item) => (
-            <button
-              key={item.id}
-              disabled={!item.enabled}
-              onClick={() => navigate(item.path)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${activeView === item.id
-                ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
-                : item.enabled
-                  ? "text-gray-400 hover:text-white hover:bg-dark-input"
-                  : "text-gray-600 cursor-not-allowed opacity-50"
-                }`}
-            >
-              {item.icon}
-              {isSidebarOpen && (
-                <span className="text-sm font-medium">{item.label}</span>
-              )}
-            </button>
-          ))}
-        </div>
+          {sections.map((section) => {
+            const isExpanded = expandedSections.includes(section.id);
+            const isActiveSection = activeSection === section.id;
 
-        {/* Observability Section */}
-        <div className="px-3 mt-6">
-          {isSidebarOpen && (
-            <div className="px-3 mb-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Observability
-              </h3>
-            </div>
-          )}
-          <div className="space-y-1 mt-2">
-            {observabilityItems.map((item) => (
-              <button
-                key={item.id}
-                disabled={!item.enabled}
-                onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${activeView === item.id
-                    ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
-                    : item.enabled
-                      ? "text-gray-400 hover:text-white hover:bg-dark-input"
-                      : "text-gray-600 cursor-not-allowed opacity-50"
-                  }`}
-              >
-                {item.icon}
-                {isSidebarOpen && (
-                  <span className="text-sm font-medium">{item.label}</span>
+            // Standalone item (like Home)
+            if (section.standalone) {
+              return (
+                <button
+                  key={section.id}
+                  onClick={() => handleNavigate(section.path)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${isActiveSection
+                      ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
+                      : "text-gray-400 hover:text-white hover:bg-dark-input"
+                    }`}
+                >
+                  {section.icon}
+                  {isSidebarOpen && (
+                    <span className="text-sm font-medium">{section.label}</span>
+                  )}
+                </button>
+              );
+            }
+
+            // Section with tabs
+            return (
+              <div key={section.id} className="mb-1">
+                {/* Section Header */}
+                <button
+                  onClick={() => {
+                    if (isSidebarOpen) {
+                      toggleSection(section.id);
+                    } else {
+                      // If collapsed, navigate to first tab
+                      handleNavigate(section.tabs[0].path);
+                    }
+                  }}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 ${isActiveSection
+                      ? "bg-teal-400/10 text-teal-400"
+                      : "text-gray-400 hover:text-white hover:bg-dark-input"
+                    }`}
+                >
+                  <div className="flex items-center gap-3">
+                    {section.icon}
+                    {isSidebarOpen && (
+                      <span className="text-sm font-semibold uppercase tracking-wide">
+                        {section.label}
+                      </span>
+                    )}
+                  </div>
+                  {isSidebarOpen && (
+                    <svg
+                      className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""
+                        }`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  )}
+                </button>
+
+                {/* Tabs */}
+                {isSidebarOpen && isExpanded && (
+                  <div className="ml-3 mt-1 space-y-1 border-l-2 border-gray-800 pl-3">
+                    {section.tabs.map((tab) => {
+                      const isActiveTab = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => handleNavigate(tab.path)}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${isActiveTab
+                              ? "bg-teal-400/20 text-teal-400 font-medium"
+                              : "text-gray-400 hover:text-white hover:bg-dark-input"
+                            }`}
+                        >
+                          {tab.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
-              </button>
-            ))}
-          </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Support Section */}
@@ -348,14 +261,8 @@ const Sidebar = ({
             {supportItems.map((item) => (
               <button
                 key={item.id}
-                disabled={!item.enabled}
-                onClick={() => onNavigate && onNavigate(item.id)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${activeView === item.id
-                  ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
-                  : item.enabled
-                    ? "text-gray-400 hover:text-white hover:bg-dark-input"
-                    : "text-gray-600 cursor-not-allowed opacity-50"
-                  }`}
+                onClick={() => { }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-gray-400 hover:text-white hover:bg-dark-input"
               >
                 {item.icon}
                 {isSidebarOpen && (
@@ -378,7 +285,7 @@ const Sidebar = ({
                 )
               ) {
                 resetWorkflow();
-                window.location.href = "/dashboard";
+                window.location.href = "/";
               }
             }}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-400/10 border border-red-400/30 text-red-400 rounded-lg text-sm font-medium hover:bg-red-400/20 transition-all group"
@@ -401,20 +308,16 @@ const Sidebar = ({
         </div>
       )}
 
-      {/* User Profile - Fixed at bottom */}
+      {/* User Profile */}
       <div className="p-4 border-t border-gray-800/50 flex-shrink-0 bg-dark-panel">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-full bg-teal-400/20 flex items-center justify-center flex-shrink-0">
-              <span className="text-teal-400 font-semibold">
-                {userInitial}
-              </span>
+              <span className="text-teal-400 font-semibold">{userInitial}</span>
             </div>
             {isSidebarOpen && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
-                  User
-                </p>
+                <p className="text-sm font-medium text-white truncate">User</p>
                 <p className="text-xs text-gray-400 truncate">{userEmail}</p>
               </div>
             )}

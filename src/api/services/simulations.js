@@ -62,70 +62,53 @@ export const getSimulationSummary = async (simulationId) => {
 };
 
 /**
+/**
  * Trigger a new simulation run
- * @param {string} testSuiteId - ID of the test suite to run
- * @param {string} phoneNumber - Phone number to call
- * @param {Object} options - Optional configuration
- * @param {string} options.agentId - ID of the agent being tested
- * @param {Object} options.metadata - Additional metadata for the simulation
- * @param {boolean} options.parallelExecution - Whether to run test cases in parallel
- * @param {number} options.maxConcurrency - Max concurrent calls (if parallel)
+ * @param {string|Object} testSuiteIdOrPayload - ID of the test suite to run or full payload object
+ * @param {string} [phoneNumber] - Phone number to call (if first arg is ID)
+ * @param {Object} [options={}] - Optional configuration (if first arg is ID)
  */
-export const runSimulation = async (testSuiteId, phoneNumber, options = {}) => {
-    // Validate required parameters
-    if (!testSuiteId) {
-        throw new Error('Test suite ID is required');
-    }
-    if (!phoneNumber) {
-        throw new Error('Phone number is required');
-    }
+export const runSimulation = async (testSuiteIdOrPayload, phoneNumber, options = {}) => {
+    // Check if we received a single payload object or separate parameters
+    let payload;
+    if (typeof testSuiteIdOrPayload === 'object' && testSuiteIdOrPayload !== null) {
+        payload = testSuiteIdOrPayload;
+    } else {
+        const testSuiteId = testSuiteIdOrPayload;
+        // Validate required parameters
+        if (!testSuiteId) {
+            throw new Error('Test suite ID is required');
+        }
+        if (!phoneNumber) {
+            throw new Error('Phone number is required');
+        }
 
-    // Validate phone number format (basic check)
-    const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-    if (!phoneRegex.test(phoneNumber.replace(/[\s-]/g, ''))) {
-        console.warn('Phone number may not be in E.164 format:', phoneNumber);
-    }
+        // Build the request payload
+        payload = {
+            test_suite_id: testSuiteId,
+            phone_number: phoneNumber,
+        };
 
-    // Build the request payload
-    const payload = {
-        test_suite_id: testSuiteId,
-        phone_number: phoneNumber,
-    };
-
-    // Add optional fields if provided
-    if (options.agentId) {
-        payload.agent_id = options.agentId;
-    }
-    if (options.metadata) {
-        payload.metadata = options.metadata;
-    }
-    if (options.parallelExecution !== undefined) {
-        payload.parallel_execution = options.parallelExecution;
-    }
-    if (options.maxConcurrency) {
-        payload.max_concurrency = options.maxConcurrency;
+        // Add optional fields if provided
+        if (options.agentId) payload.agent_id = options.agentId;
+        if (options.metadata) payload.metadata = options.metadata;
+        if (options.parallelExecution !== undefined) payload.parallel_execution = options.parallelExecution;
+        if (options.maxConcurrency) payload.max_concurrency = options.maxConcurrency;
     }
 
     try {
         const response = await apiClient.post(`${BASE_PATH}/run`, payload);
-
-        // Validate response
-        if (!response.data || !response.data.simulation_id) {
-            throw new Error('Invalid response from server: missing simulation_id');
-        }
-
         return response.data;
     } catch (error) {
         // Enhanced error handling
         if (error.response) {
-            // Server responded with error
             const status = error.response.status;
             const detail = error.response.data?.detail || error.response.data?.message;
 
             if (status === 422) {
                 throw new Error(`Validation error: ${detail || 'Invalid request parameters'}`);
             } else if (status === 404) {
-                throw new Error(`Test suite not found: ${testSuiteId}`);
+                throw new Error(`Test suite not found`);
             } else if (status === 409) {
                 throw new Error(`Simulation already running for this test suite`);
             } else if (status === 503) {
@@ -133,13 +116,8 @@ export const runSimulation = async (testSuiteId, phoneNumber, options = {}) => {
             } else {
                 throw new Error(detail || `Failed to start simulation (${status})`);
             }
-        } else if (error.request) {
-            // Request made but no response
-            throw new Error('No response from server. Please check your connection.');
-        } else {
-            // Error in request setup
-            throw error;
         }
+        throw error;
     }
 };
 

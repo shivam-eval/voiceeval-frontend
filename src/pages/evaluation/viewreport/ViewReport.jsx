@@ -37,28 +37,39 @@ const transcriptData = initialTranscriptData;
   const sessionId = report?.session_id;
 
   // Process evaluation data from the actual evaluation object
-  const evaluationData = evaluation ? {
-    overall_score: Math.round(evaluation.overall_score * 100),
-    passed: evaluation.passed,
-    issues_found: evaluation.issues_found,
-    execution_time_ms: evaluation.execution_time_ms,
-    recommendations: evaluation.recommendations || [],
+  const evaluationData = useMemo(() => {
+    if (!evaluation) return null;
+    
+    // Handle nested evaluation structure if present
+    const data = evaluation.evaluation || evaluation;
+    
+    const score = data.overall_score || data.score || 0;
+    const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
-    // Extract category scores from metric_results
-    category_scores: evaluation.category_scores || [],
-
-    // Extract metric results for detailed view
-    metrics: evaluation.metric_results || [],
-
-    // Process failure propagation if available
-    failure_propagation: evaluation.failure_propagation || {
-      critical_failure_turns: [],
-      total_tainted_steps: 0,
-      propagation_depth: 0,
-      cascading_failures: {},
-      step_health: {}
-    }
-  } : null;
+    return {
+      overall_score: normalizedScore,
+      passed: data.passed,
+      issues_found: data.issues_found,
+      issues: data.issues || [],
+      execution_time_ms: data.execution_time_ms,
+      recommendations: data.recommendations || [],
+      
+      // Extract category scores from metric_results
+      category_scores: data.category_scores || [],
+      
+      // Extract metric results for detailed view
+      metrics: data.metrics || data.metric_results || [],
+      
+      // Process failure propagation if available
+      failure_propagation: data.failure_propagation || {
+        critical_failure_turns: [],
+        total_tainted_steps: 0,
+        propagation_depth: 0,
+        cascading_failures: {},
+        step_health: {}
+      }
+    };
+  }, [evaluation]);
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
@@ -84,9 +95,17 @@ const transcriptData = initialTranscriptData;
   }, [evaluationData?.category_scores]);
 
   // Extract latency data from metrics
-  const latencyMetrics = evaluationData?.metrics.filter(m =>
-    m.category === 'latency' || m.name.includes('latency') || m.name.includes('duration')
-  ) || [];
+  const latencyMetrics = useMemo(() => {
+    if (!Array.isArray(evaluationData?.metrics)) return [];
+    
+    return evaluationData.metrics.filter(m => 
+      m && (
+        m.category === 'latency' || 
+        (m.name && m.name.includes('latency')) || 
+        (m.name && m.name.includes('duration'))
+      )
+    );
+  }, [evaluationData?.metrics]);
 
   // Mock latency timeline data (would need turn-by-turn data in production)
   const latencyData = useMemo(() => {
@@ -142,22 +161,32 @@ const transcriptData = initialTranscriptData;
     setActiveCategory('');
   };
 
-  // Build categoryMap from metric_results grouped by category
-  const categoryMap = React.useMemo(() => {
-    if (!evaluation?.category_scores) return {};
+  // Create a map of categories to their metrics
+  const categoryMap = useMemo(() => {
+    const metrics = evaluationData?.metrics;
+    if (!Array.isArray(metrics)) return {};
 
     const map = {};
-
-    evaluation.category_scores.forEach((categoryData) => {
-      const category = categoryData.category;
+    metrics.forEach((metric) => {
+      if (!metric) return;
+      const category = metric.category;
       if (!category) return;
 
-      map[category] = {
-        category: category,
-        score: categoryData.score || 0,
-        weight: categoryData.weight || 0,
-        metrics: categoryData.metrics || []
-      };
+      if (!map[category]) {
+        const categoryScore = Array.isArray(evaluationData.category_scores) 
+          ? evaluationData.category_scores.find((c) => c && c.category === category)
+          : null;
+        const score = categoryScore ? categoryScore.score : 0;
+        const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
+
+        map[category] = {
+          category,
+          score: normalizedScore,
+          weight: categoryScore ? categoryScore.weight : 0,
+          metrics: [],
+        };
+      }
+      map[category].metrics.push(metric);
     });
     return map;
   }, [evaluationData]);
@@ -173,9 +202,6 @@ const transcriptData = initialTranscriptData;
 
       case 'latency':
         return <LatencyOverview response={categoryMap.latency} onBack={handleBackToOverview} />;
-
-      case 'audio_quality':
-        return <AudioOverview response={categoryMap.audio_quality} onBack={handleBackToOverview} />;
 
       case 'endpointing':
         return <EndpointingOverview response={categoryMap.endpointing} onBack={handleBackToOverview} />;
@@ -296,12 +322,17 @@ const transcriptData = initialTranscriptData;
         <InsightTabs
           activeCategory={activeCategory}
           onChange={handleCategoryChange}
-          categoryScores={evaluationData.category_scores.map(cat => ({
-            category: cat.category,
-            score: Math.round(cat.score * 100),
-            weight: cat.weight
-          }))}
-          clickable={true}
+          categoryScores={evaluationData.category_scores.map(cat => {
+            const score = cat.score || 0;
+            // Normalize score: if it's 0-1, convert to 0-100. If already > 1, assume 0-100.
+            const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
+            
+            return {
+              category: cat.category,
+              score: normalizedScore,
+              weight: cat.weight || 0
+            };
+          })}
         />
       )}
 

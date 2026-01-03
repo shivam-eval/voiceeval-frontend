@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-const WorkflowContext = createContext();
+const WorkflowContext = createContext(null);
 
 /* =========================
    Hook
@@ -38,23 +38,34 @@ const initialState = {
     simulationId: null,
     started: false,
     completed: false,
-    evaluationResult: null, // ✅ FINAL evaluation payload
+    evaluationResult: null,
   },
 };
 
 /* =========================
    Provider
 ========================= */
-export const WorkflowProvider = ({ children }) => {
+export const WorkflowProvider = ({ children, initialWorkflow }) => {
   const [workflow, setWorkflow] = useState(() => {
+    // If initial workflow is explicitly provided (e.g. Evaluation pages),
+    // DO NOT hydrate from localStorage
+    if (initialWorkflow) {
+      return initialWorkflow;
+    }
+
     const saved = localStorage.getItem("voiceeval_workflow");
     return saved ? JSON.parse(saved) : initialState;
   });
 
-  /* Persist workflow */
+  /* Persist workflow ONLY for non-evaluation flows */
   useEffect(() => {
-    localStorage.setItem("voiceeval_workflow", JSON.stringify(workflow));
-  }, [workflow]);
+    if (!initialWorkflow) {
+      localStorage.setItem(
+        "voiceeval_workflow",
+        JSON.stringify(workflow)
+      );
+    }
+  }, [workflow, initialWorkflow]);
 
   /* =========================
      SETTERS
@@ -99,7 +110,6 @@ export const WorkflowProvider = ({ children }) => {
     }));
   };
 
-  /* ✅ IMPORTANT: store batch evaluation result */
   const setEvaluationResult = (evaluationResult) => {
     setWorkflow((prev) => ({
       ...prev,
@@ -126,8 +136,8 @@ export const WorkflowProvider = ({ children }) => {
   };
 
   const resetWorkflow = () => {
-    setWorkflow(initialState);
     localStorage.removeItem("voiceeval_workflow");
+    setWorkflow(initialState);
   };
 
   /* =========================
@@ -137,13 +147,11 @@ export const WorkflowProvider = ({ children }) => {
     <WorkflowContext.Provider
       value={{
         workflow,
-
-        // setters
         setAgent,
         setFlowData,
         setTestSuite,
         setSimulationResult,
-        setEvaluationResult, // ✅ NEW
+        setEvaluationResult,
         setSetupResult,
         setRegion,
         resetWorkflow,

@@ -71,6 +71,7 @@ const EvaluationDashboard = ({ onBack }) => {
     average_category_scores: [],
   };
 
+
   console.log('Evaluations:', evaluations);
   console.log('Simulation Evaluation:', simulationEvaluation);
 

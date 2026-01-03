@@ -1,257 +1,241 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { Play, Calendar, Clock, TrendingUp, CheckCircle, XCircle, AlertCircle, BarChart3 } from 'lucide-react';
-import { useSimulations } from '../../hooks/useSimulations';
-import DashboardLoader from '../../components/DashboardLoader';
+import { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import {
+  Play,
+  Calendar,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  BarChart3,
+} from "lucide-react";
+import { useSimulations } from "../../hooks/useSimulations";
+import DashboardLoader from "../../components/DashboardLoader";
 
-const EvaluationsPage = () => {
-    const navigate = useNavigate();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [statusFilter, setStatusFilter] = useState('all');
+/* -----------------------------
+   Helpers
+------------------------------ */
+const display = (value) =>
+  value === null || value === undefined || value === ""
+    ? "N/A"
+    : value;
 
-    // Fetch all simulations
-    const { data: simulationsData, isLoading } = useSimulations();
-    const simulations = simulationsData?.simulations || [];
+const formatDate = (dateString) => {
+  if (!dateString) return "N/A";
+  return new Date(dateString).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
 
-    // Filter simulations that are completed (have evaluations)
-    const completedSimulations = simulations.filter(sim =>
-        sim.status === 'completed' || sim.status === 'failed'
-    );
+const formatDuration = (ms) => {
+  if (!ms) return "N/A";
+  const s = Math.floor(ms / 1000);
+  const m = Math.floor(s / 60);
+  const h = Math.floor(m / 60);
+  if (h > 0) return `${h}h ${m % 60}m`;
+  if (m > 0) return `${m}m ${s % 60}s`;
+  return `${s}s`;
+};
 
-    // Apply filters
-    const filteredSimulations = completedSimulations.filter(sim => {
-        const matchesSearch = sim.test_suite_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            sim.simulation_id?.toLowerCase().includes(searchTerm.toLowerCase());
+const scoreColor = (score) => {
+  if (score == null) return "text-gray-500";
+  if (score >= 80) return "text-green-400";
+  if (score >= 70) return "text-blue-400";
+  if (score >= 50) return "text-yellow-400";
+  return "text-red-400";
+};
 
-        const matchesStatus = statusFilter === 'all' ||
-            (statusFilter === 'passed' && (sim.overall_score || 0) >= 70) ||
-            (statusFilter === 'failed' && (sim.overall_score || 0) < 70);
+const statusBadge = (sim) => {
+  const score = sim.overall_score;
 
-        return matchesSearch && matchesStatus;
-    });
-
-    const getStatusBadge = (simulation) => {
-        const score = simulation.overall_score || 0;
-        if (simulation.status === 'failed') {
-            return (
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-900/20 text-red-400 border border-red-500/30">
-                    <XCircle className="w-3 h-3" />
-                    Failed
-                </span>
-            );
-        }
-        if (score >= 80) {
-            return (
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-900/20 text-green-400 border border-green-500/30">
-                    <CheckCircle className="w-3 h-3" />
-                    Excellent
-                </span>
-            );
-        }
-        if (score >= 70) {
-            return (
-                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-900/20 text-blue-400 border border-blue-500/30">
-                    <CheckCircle className="w-3 h-3" />
-                    Good
-                </span>
-            );
-        }
-        return (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-900/20 text-yellow-400 border border-yellow-500/30">
-                <AlertCircle className="w-3 h-3" />
-                Needs Improvement
-            </span>
-        );
-    };
-
-    const getScoreColor = (score) => {
-        if (score >= 80) return 'text-green-400';
-        if (score >= 70) return 'text-blue-400';
-        if (score >= 50) return 'text-yellow-400';
-        return 'text-red-400';
-    };
-
-    const formatDate = (dateString) => {
-        if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
-        });
-    };
-
-    const formatDuration = (ms) => {
-        if (!ms) return 'N/A';
-        const seconds = Math.floor(ms / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-
-        if (hours > 0) {
-            return `${hours}h ${minutes % 60}m`;
-        }
-        if (minutes > 0) {
-            return `${minutes}m ${seconds % 60}s`;
-        }
-        return `${seconds}s`;
-    };
-
-    if (isLoading) {
-        return <DashboardLoader message="Loading evaluations..." />;
-    }
-
+  if (sim.status === "failed") {
     return (
-        <div className="h-screen overflow-hidden flex flex-col bg-dark-bg">
-            {/* Header */}
-            <div className="flex-shrink-0 border-b border-gray-800 bg-dark-surface">
-                <div className="px-8 py-6">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h1 className="text-3xl font-bold text-white mb-2">Evaluations</h1>
-                            <p className="text-gray-400">
-                                Review evaluation results from completed simulation runs
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <div className="px-4 py-2 bg-dark-input rounded-lg border border-gray-700">
-                                <div className="text-xs text-gray-400">Total Evaluations</div>
-                                <div className="text-2xl font-bold text-white">{completedSimulations.length}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Filters */}
-                    <div className="flex gap-4">
-                        <div className="flex-1">
-                            <input
-                                type="text"
-                                placeholder="Search by simulation ID or test suite..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full px-4 py-2 bg-dark-input border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
-                            />
-                        </div>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-4 py-2 bg-dark-input border border-gray-700 rounded-lg text-white focus:outline-none focus:border-primary-500"
-                        >
-                            <option value="all">All Results</option>
-                            <option value="passed">Passed (≥70%)</option>
-                            <option value="failed">Failed (&lt;70%)</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-8 py-6">
-                {filteredSimulations.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full">
-                        <div className="bg-dark-surface border border-gray-800 rounded-lg p-12 text-center max-w-md">
-                            <BarChart3 className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                            <h3 className="text-xl font-semibold text-white mb-2">No Evaluations Found</h3>
-                            <p className="text-gray-400 mb-6">
-                                {completedSimulations.length === 0
-                                    ? "Complete a simulation run to see evaluation results here."
-                                    : "No evaluations match your current filters."}
-                            </p>
-                            <Link
-                                to="/simulation/runs"
-                                className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors"
-                            >
-                                <Play className="w-4 h-4" />
-                                View Simulations
-                            </Link>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="grid gap-4">
-                        {filteredSimulations.map((simulation) => (
-                            <div
-                                key={simulation.simulation_id}
-                                onClick={() => navigate(`/evaluations/results/${simulation.simulation_id}`)}
-                                className="bg-dark-surface border border-gray-800 rounded-lg p-6 hover:border-primary-500/50 transition-all cursor-pointer group"
-                            >
-                                <div className="flex items-start justify-between mb-4">
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <h3 className="text-lg font-semibold text-white group-hover:text-primary-400 transition-colors">
-                                                {simulation.test_suite_name || 'Unnamed Test Suite'}
-                                            </h3>
-                                            {getStatusBadge(simulation)}
-                                        </div>
-                                        <p className="text-sm text-gray-400 font-mono">
-                                            {simulation.simulation_id}
-                                        </p>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className={`text-3xl font-bold ${getScoreColor(simulation.overall_score || 0)}`}>
-                                            {Math.round(simulation.overall_score || 0)}%
-                                        </div>
-                                        <div className="text-xs text-gray-500">Overall Score</div>
-                                    </div>
-                                </div>
-
-                                {/* Stats Grid */}
-                                <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-800">
-                                    <div>
-                                        <div className="text-xs text-gray-500 mb-1">Test Cases</div>
-                                        <div className="text-sm font-semibold text-white">
-                                            {simulation.completed_sessions || 0} / {simulation.total_sessions || 0}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-gray-500 mb-1">Progress</div>
-                                        <div className="text-sm font-semibold text-white">
-                                            {simulation.total_sessions > 0
-                                                ? Math.round((simulation.completed_sessions / simulation.total_sessions) * 100)
-                                                : 0}%
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                                            <Calendar className="w-3 h-3" />
-                                            Started
-                                        </div>
-                                        <div className="text-sm font-semibold text-white">
-                                            {formatDate(simulation.started_at)}
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            Duration
-                                        </div>
-                                        <div className="text-sm font-semibold text-white">
-                                            {formatDuration(simulation.duration_ms)}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Progress Bar */}
-                                {simulation.total_sessions > 0 && (
-                                    <div className="mt-4">
-                                        <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full transition-all ${(simulation.overall_score || 0) >= 70
-                                                    ? 'bg-green-500'
-                                                    : 'bg-yellow-500'
-                                                    }`}
-                                                style={{
-                                                    width: `${(simulation.completed_sessions / simulation.total_sessions) * 100}%`
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
+      <span className="badge bg-red-900/20 text-red-400 border-red-500/30">
+        <XCircle className="w-3 h-3" /> Failed
+      </span>
     );
+  }
+
+  if (score == null) {
+    return (
+      <span className="badge bg-gray-800 text-gray-400 border-gray-700">
+        <AlertCircle className="w-3 h-3" /> N/A
+      </span>
+    );
+  }
+
+  if (score >= 80) {
+    return (
+      <span className="badge bg-green-900/20 text-green-400 border-green-500/30">
+        <CheckCircle className="w-3 h-3" /> Excellent
+      </span>
+    );
+  }
+
+  if (score >= 70) {
+    return (
+      <span className="badge bg-blue-900/20 text-blue-400 border-blue-500/30">
+        <CheckCircle className="w-3 h-3" /> Good
+      </span>
+    );
+  }
+
+  return (
+    <span className="badge bg-yellow-900/20 text-yellow-400 border-yellow-500/30">
+      <AlertCircle className="w-3 h-3" /> Needs Improvement
+    </span>
+  );
+};
+
+/* -----------------------------
+   Component
+------------------------------ */
+const EvaluationsPage = () => {
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const { data, isLoading } = useSimulations();
+  const simulations = data?.simulations || [];
+
+  const filtered = simulations.filter((sim) => {
+    const name = display(sim.test_suite_name).toLowerCase();
+    const id = display(sim.simulation_id).toLowerCase();
+
+    const matchesSearch =
+      name.includes(searchTerm.toLowerCase()) ||
+      id.includes(searchTerm.toLowerCase());
+
+    const score = sim.overall_score ?? -1;
+
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "passed" && score >= 70) ||
+      (statusFilter === "failed" && score >= 0 && score < 70);
+
+    return matchesSearch && matchesStatus;
+  });
+
+  if (isLoading) {
+    return <DashboardLoader message="Loading evaluations..." />;
+  }
+
+  return (
+    <div className="h-screen flex flex-col bg-dark-bg">
+      {/* Header */}
+      <div className="border-b border-gray-800 bg-dark-surface px-8 py-6">
+        <h1 className="text-3xl font-bold text-white">Evaluations</h1>
+        <p className="text-gray-400">
+          Review evaluation results from simulation runs
+        </p>
+
+        <div className="flex gap-4 mt-6">
+          <input
+            className="flex-1 px-4 py-2 bg-dark-input border border-gray-700 rounded-lg text-white"
+            placeholder="Search by simulation ID or test suite..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+
+          <select
+            className="px-4 py-2 bg-dark-input border border-gray-700 rounded-lg text-white"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">All</option>
+            <option value="passed">Passed (≥70%)</option>
+            <option value="failed">Failed (&lt;70%)</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto px-8 py-6">
+        {filtered.length === 0 ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="text-center bg-dark-surface p-10 rounded-lg border border-gray-800">
+              <BarChart3 className="w-16 h-16 mx-auto text-gray-600 mb-4" />
+              <p className="text-gray-400 mb-4">No evaluations found</p>
+              <Link
+                to="/simulation/runs"
+                className="inline-flex items-center gap-2 bg-primary-600 px-4 py-2 rounded-lg text-white"
+              >
+                <Play className="w-4 h-4" /> View Simulations
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {filtered.map((sim) => (
+              <div
+                key={sim.simulation_id}
+                onClick={() =>
+                  navigate(`/evaluations/results/${sim.simulation_id}`)
+                }
+                className="bg-dark-surface border border-gray-800 rounded-lg p-6 cursor-pointer hover:border-primary-500/50"
+              >
+                <div className="flex justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">
+                      {display(sim.test_suite_name)}
+                    </h3>
+                    <p className="text-sm text-gray-400 font-mono">
+                      {display(sim.simulation_id)}
+                    </p>
+                    <div className="mt-2">{statusBadge(sim)}</div>
+                  </div>
+
+                  <div className="text-right">
+                    <div
+                      className={`text-3xl font-bold ${scoreColor(
+                        sim.overall_score
+                      )}`}
+                    >
+                      {sim.overall_score != null
+                        ? `${Math.round(sim.overall_score)}%`
+                        : "N/A"}
+                    </div>
+                    <div className="text-xs text-gray-500">Overall Score</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-800 text-sm">
+                  <div>
+                    <div className="text-gray-500">Test Cases</div>
+                    <div className="text-white">
+                      {display(sim.completed_sessions)} /{" "}
+                      {display(sim.total_sessions)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-gray-500">Started</div>
+                    <div className="text-white">
+                      {formatDate(sim.started_at)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-gray-500">Duration</div>
+                    <div className="text-white">
+                      {formatDuration(sim.duration_ms)}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="text-gray-500">Status</div>
+                    <div className="text-white">{display(sim.status)}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default EvaluationsPage;

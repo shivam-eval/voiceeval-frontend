@@ -104,13 +104,13 @@ const SimulationEvaluationPage = () => {
     };
 
     return (
-        <WorkflowProvider initialWorkflow={dashboardData}>
-            <div className="min-h-screen bg-dark-bg">
-                <EvaluationDashboard
-                    onBack={handleBack}
-                />
-            </div>
-        </WorkflowProvider>
+        <WorkflowProvider
+  key={simulationId}
+  initialWorkflow={dashboardData}
+>
+  <EvaluationDashboard onBack={handleBack} />
+</WorkflowProvider>
+
     );
 };
 

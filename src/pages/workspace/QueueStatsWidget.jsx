@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import { getQueueStats } from "../../api";
 
 const QueueStatsWidget = () => {
@@ -14,6 +15,7 @@ const QueueStatsWidget = () => {
         setError(null);
       } catch (err) {
         console.error("Failed to fetch queue stats:", err);
+        toast.error(`Failed to fetch queue stats: ${err.message}`);
         setError(err.message);
       } finally {
         setLoading(false);

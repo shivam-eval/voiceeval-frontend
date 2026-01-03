@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import { flowsApi } from "../utils/api";
 import CanonicalFlowDiagram from "../pages/workspace/CanonicalFlowDiagram";
 import DashboardLoader from "./DashboardLoader";
@@ -22,7 +23,9 @@ const FlowDiagramModal = ({ isOpen, onClose, flowId, flowName }) => {
             setMermaidCode(response.mermaid);
         } catch (err) {
             console.error("Failed to load mermaid:", err);
-            setError(err.message || "Failed to load diagram");
+            const errorMessage = err.message || "Failed to load diagram";
+            setError(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setLoading(false);
         }

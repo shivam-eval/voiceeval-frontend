@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 import { flowGeneration, flowGenerationMermaid } from '../api'
 
 const loadingSteps = [
@@ -125,6 +126,7 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
         
         const errorMessage = err?.response?.data?.detail || err?.message || String(err)
         setError(errorMessage)
+        toast.error(`Setup failed: ${errorMessage}`)
         
         // Still call onComplete even on error so user isn't stuck
         setTimeout(() => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import {
     ArrowLeft, StopCircle, RefreshCw, Download, MoreVertical,
     CheckCircle, XCircle, Users, Zap, AlertTriangle, Clock,
@@ -49,7 +50,7 @@ const SimulationDetailPage = () => {
             setIsEvaluating(false);
             setEvaluationTaskId(null);
             setEvaluationProgress(null);
-            alert('Evaluation failed: ' + (taskStatus.error || 'Unknown error'));
+            toast.error('Evaluation failed: ' + (taskStatus.error || 'Unknown error'));
         } else if (taskStatus?.progress) {
             setEvaluationProgress(taskStatus.progress);
         }
@@ -67,8 +68,9 @@ const SimulationDetailPage = () => {
         if (window.confirm('Are you sure you want to cancel this simulation?')) {
             try {
                 await cancelSimulation.mutateAsync(simulationId);
+                toast.success('Simulation cancelled');
             } catch (error) {
-                alert('Failed to cancel: ' + error.message);
+                // Error handled by global interceptor
             }
         }
     };
@@ -77,9 +79,10 @@ const SimulationDetailPage = () => {
         if (window.confirm('This will create a new simulation. Continue?')) {
             try {
                 const result = await rerunSimulation.mutateAsync(simulationId);
+                toast.success('Simulation rerun initiated');
                 navigate(`/simulation/runs/${result.new_simulation_id}`);
             } catch (error) {
-                alert('Failed to rerun: ' + error.message);
+                // Error handled by global interceptor
             }
         }
     };
@@ -88,9 +91,10 @@ const SimulationDetailPage = () => {
         if (window.confirm('Are you sure? This will permanently delete all simulation data.')) {
             try {
                 await deleteSimulation.mutateAsync(simulationId);
+                toast.success('Simulation deleted');
                 navigate('/simulation/runs');
             } catch (error) {
-                alert('Failed to delete: ' + error.message);
+                // Error handled by global interceptor
             }
         }
     };
@@ -130,8 +134,7 @@ const SimulationDetailPage = () => {
                 setEvaluationTaskId(result.task_id);
             }
         } catch (error) {
-            console.error('Batch evaluation failed:', error);
-            alert('Failed to run evaluation: ' + (error.response?.data?.detail || error.message));
+            // Error handled by global interceptor
             setIsEvaluating(false);
         }
     };

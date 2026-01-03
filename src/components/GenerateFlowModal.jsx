@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import { useAgents } from "../hooks/useAgents";
 import { useGenerateFlow } from "../hooks/useGeneration";
 import Button from "./Button";
@@ -25,8 +26,9 @@ const GenerateFlowModal = ({ isOpen, onClose, agentId, agentMongoId, onFlowGener
             });
             setFlowData(result);
             setGenerationStep(2);
+            toast.success("Flow generated successfully");
         } catch (error) {
-            alert(`Generation failed: ${error.message}`);
+            // Error handled by global interceptor
             setGenerationStep(0);
         }
     };

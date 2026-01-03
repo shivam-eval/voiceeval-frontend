@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { 
   Search, 
   Plus, 
@@ -23,12 +24,16 @@ import AudioUploadModal from '../../components/AudioUploadModal';
 import GenericDropdown from '../../components/DropDown';
 import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvaluateAudio } from '../../hooks/useCalls';
 import { useFlows } from '../../hooks/useFlows';
+import { useAgents } from '../../hooks/useAgents';
 
 const CallsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEvaluateModalOpen, setIsEvaluateModalOpen] = useState(false);
+  const [evalAgentId, setEvalAgentId] = useState('');
+  const [evalDirectory, setEvalDirectory] = useState('');
   
   const directory = searchParams.get('directory') || sessionStorage.getItem('last_directory') || '';
   const viewMode = searchParams.get('view') || (directory ? 'calls' : 'directories');
@@ -51,35 +56,34 @@ const CallsPage = () => {
     }, { replace });
   }, [setSearchParams]);
 
-  // Track directories created from frontend
-  const [frontendDirectories, setFrontendDirectories] = useState(() => {
-    const saved = localStorage.getItem('frontend_directories');
-    return saved ? JSON.parse(saved) : []; // Start empty, only show what user creates
-  });
-
-  const addFrontendDirectory = useCallback((dir) => {
-    if (!dir) return;
-    setFrontendDirectories(prev => {
-      if (prev.includes(dir)) return prev;
-      const next = [...prev, dir];
-      localStorage.setItem('frontend_directories', JSON.stringify(next));
-      return next;
-    });
-  }, []);
-
   // Fetch unique categories (directories) dynamically
   const { data: categoriesData, isLoading: isCategoriesLoading } = useCallCategories();
 
-  // Filter categories to only show those created from frontend
+  // Use all categories from backend
   const filteredCategories = useMemo(() => {
-    const rawCategories = Array.isArray(categoriesData) 
-      ? categoriesData 
-      : (categoriesData?.categories || []);
+    if (!categoriesData) return [];
     
-    return rawCategories.filter(cat => 
-      typeof cat === 'string' && frontendDirectories.includes(cat)
-    );
-  }, [categoriesData, frontendDirectories]);
+    // Handle various response formats: [ ], { categories: [] }, { data: [] }, { items: [] }
+    let raw = [];
+    if (Array.isArray(categoriesData)) {
+      raw = categoriesData;
+    } else if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+      raw = categoriesData.categories;
+    } else if (categoriesData?.data && Array.isArray(categoriesData.data)) {
+      raw = categoriesData.data;
+    } else if (categoriesData?.items && Array.isArray(categoriesData.items)) {
+      raw = categoriesData.items;
+    }
+    
+    // Normalize to strings
+    return raw.map(cat => {
+      if (typeof cat === 'string') return cat;
+      if (typeof cat === 'object' && cat !== null) {
+        return cat.name || cat.category || cat.id || String(cat);
+      }
+      return String(cat);
+    }).filter(cat => !!cat && cat !== 'undefined' && cat !== 'null');
+  }, [categoriesData]);
 
   // Automatically select the first directory if none is selected
   useEffect(() => {
@@ -89,10 +93,23 @@ const CallsPage = () => {
     }
   }, [filteredCategories, isCategoriesLoading, directory, viewMode, updateParams]);
 
+  // Fetch agents for the evaluation modal
+  const { data: agentsData } = useAgents();
+  const agentOptions = useMemo(() => {
+    const agents = agentsData?.agents || [];
+    return [
+      { label: 'Select an existing agent...', value: '' },
+      ...agents.map(agent => ({
+        label: `${agent.name} (${agent.provider_agent_id || agent.agent_id})`,
+        value: agent.provider_agent_id || agent.agent_id
+      }))
+    ];
+  }, [agentsData]);
+
   // Fetch flows to get a dynamic flow_id if needed
   const { data: flowsData } = useFlows();
   const flowId = useMemo(() => {
-    return flowsData?.flows?.[0]?.flow_id || "69528d4fdb229b2af9cd718b";
+    return flowsData?.flows?.[0]?.flow_id || null;
   }, [flowsData]);
 
   // Fetch calls from the backend with directory filter
@@ -103,15 +120,44 @@ const CallsPage = () => {
     include_evaluations: true
   });
 
+  const calls = useMemo(() => {
+    if (!data) return [];
+    
+    // Handle various response formats: [ ], { calls: [] }, { data: [] }, { items: [] }, { results: [] }
+    let rawCalls = [];
+    if (Array.isArray(data)) {
+      rawCalls = data;
+    } else if (data?.calls && Array.isArray(data.calls)) {
+      rawCalls = data.calls;
+    } else if (data?.data && Array.isArray(data.data)) {
+      // Could be { data: [...] } or { data: { calls: [...] } }
+      if (Array.isArray(data.data)) {
+        rawCalls = data.data;
+      } else if (data.data.calls && Array.isArray(data.data.calls)) {
+        rawCalls = data.data.calls;
+      } else if (data.data.items && Array.isArray(data.data.items)) {
+        rawCalls = data.data.items;
+      }
+    } else if (data?.items && Array.isArray(data.items)) {
+      rawCalls = data.items;
+    } else if (data?.results && Array.isArray(data.results)) {
+      rawCalls = data.results;
+    }
+    
+    // Filter out any null/undefined entries that might cause crashes
+    return rawCalls.filter(call => !!call);
+  }, [data]);
+
   // Check if any visible calls are missing evaluations or are still processing to trigger polling
   const hasPendingEvaluations = useMemo(() => {
-    if (!data) return false;
-    const rawCalls = Array.isArray(data) ? data : (data?.calls || []);
-    // Only poll if we have calls but some are missing evaluations
-    // and we are in the calls view (not directories)
-    if (viewMode !== 'calls' || rawCalls.length === 0) return false;
+    // Only poll if we are in the calls view (not directories)
+    if (viewMode !== 'calls') return false;
     
-    return rawCalls.some(call => {
+    // If no calls found yet, we might still want to poll for a short while after an upload
+    // but for now let's stick to polling when we have calls
+    if (!calls || calls.length === 0) return false;
+    
+    return calls.some(call => {
       if (!call) return false;
       // Case 1: No evaluation or evaluation ID at all
       if (!call.evaluation && !call.evaluation_id) return true;
@@ -127,7 +173,7 @@ const CallsPage = () => {
 
       return false;
     });
-  }, [data, viewMode]);
+  }, [calls, viewMode]);
 
   // Force refetch when view mode changes to calls
   useEffect(() => {
@@ -196,34 +242,35 @@ const CallsPage = () => {
     try {
       if (targetCallId) {
         await evaluateCall.mutateAsync(targetCallId);
-        alert(`Evaluation triggered for call ID: ${targetCallId}`);
+        toast.success(`Evaluation triggered for call ID: ${targetCallId}`);
       } else {
         // Fallback to directory evaluation if no specific ID
-        await evaluateAudio.mutateAsync({
-          gcp_folder_path: `audio/${directory}`,
-          flow_id: flowId,
-          skip_failures: true
-        });
-        alert(`Evaluation re-triggered for directory: audio/${directory}`);
+        handleEvaluateAll(directory);
       }
     } catch (error) {
-      console.error('Evaluation error:', error);
-      alert('Failed to start evaluation: ' + (error.message || 'Unknown error'));
+      // Error handled by global interceptor
     }
   };
 
-  const handleEvaluateAll = async (targetDirectory) => {
+  const handleEvaluateAll = (targetDirectory) => {
     if (!targetDirectory) return;
+    setEvalDirectory(targetDirectory);
+    setIsEvaluateModalOpen(true);
+  };
+
+  const submitEvaluate = async () => {
     try {
       await evaluateAudio.mutateAsync({
-        gcp_folder_path: `audio/${targetDirectory}`,
-        flow_id: flowId,
+        gcp_folder_path: `audio/${evalDirectory}`,
+        flow_id: flowId || undefined,
+        agent_id: evalAgentId || undefined,
         skip_failures: true
       });
-      alert(`Evaluation started for all calls in: audio/${targetDirectory}`);
+      toast.success(`Evaluation started for all calls in: audio/${evalDirectory}`);
+      setIsEvaluateModalOpen(false);
+      setEvalAgentId('');
     } catch (error) {
-      console.error('Evaluation error:', error);
-      alert('Failed to start evaluation: ' + (error.message || 'Unknown error'));
+      // Error handled by global interceptor
     }
   };
 
@@ -238,18 +285,17 @@ const CallsPage = () => {
 
       await uploadCalls.mutateAsync({ formData, category });
       
-      // Track this directory as being created from frontend
-      addFrontendDirectory(category);
+      // Force a refetch of calls and categories to ensure the UI updates
+      refetch();
       
       // Update state to show the uploaded calls immediately
       updateParams({ directory: category, view: 'calls' }, true);
       setSearchTerm('');
       
       setIsModalOpen(false);
-      alert('Calls uploaded successfully!');
+      toast.success('Calls uploaded successfully!');
     } catch (error) {
-      console.error('Upload error:', error);
-      alert('Failed to upload calls: ' + (error.message || 'Unknown error'));
+      // Error handled by global interceptor
     }
   };
 
@@ -384,26 +430,6 @@ const CallsPage = () => {
     return '--';
   };
 
-  const calls = useMemo(() => {
-    // Handle both { calls: [] } and [ ] response formats
-    const rawCalls = Array.isArray(data) ? data : (data?.calls || []);
-    
-    // Filter out any null/undefined entries that might cause crashes
-    const validCalls = rawCalls.filter(call => !!call);
-
-    if (!directory) return validCalls;
-    
-    // Safety check: ensure only calls for the selected directory are shown
-    // if the backend doesn't filter correctly, or handles properties differently
-    return validCalls.filter(call => {
-      if (!call) return false;
-      const callDir = call.category || call.directory || call.metadata?.category || call.metadata?.directory;
-      // If no directory info on call, assume it's correct if we filtered by directory in API
-      if (!callDir) return true;
-      return callDir === directory;
-    });
-  }, [data, directory]);
-
   // Generate dynamic options from fetched categories
   const currentOptions = useMemo(() => {
     // Use filtered categories (frontend only)
@@ -413,14 +439,14 @@ const CallsPage = () => {
     const options = backendCategories
       .filter(cat => typeof cat === 'string')
       .map(cat => ({
-        label: cat.split(/[_-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        label: cat.replace(/[_-]/g, ' '),
         value: cat
       }));
 
     // Ensure currently selected directory is in the list even if not in backend categories yet
     if (directory && typeof directory === 'string' && !backendCategories.includes(directory)) {
       options.push({
-        label: directory.split(/[_-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+        label: directory.replace(/[_-]/g, ' '),
         value: directory
       });
     }
@@ -448,8 +474,8 @@ const CallsPage = () => {
           {viewMode === 'calls' && (
             <>
               <ChevronRight className="w-4 h-4" />
-              <span className="text-teal-400 font-semibold capitalize">
-                {directory.split(/[_-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+              <span className="text-teal-400 font-semibold">
+                {directory.replace(/[_-]/g, ' ')}
               </span>
             </>
           )}
@@ -568,8 +594,8 @@ const CallsPage = () => {
                             <Folder className="w-6 h-6 text-teal-400" />
                           </div>
                           <div className="flex flex-col">
-                            <span className="text-white font-bold text-lg capitalize">
-                              {cat.split(/[_-]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                            <span className="text-white font-bold text-lg">
+                              {cat.replace(/[_-]/g, ' ')}
                             </span>
                             <span className="text-gray-500 text-sm font-mono">{cat}</span>
                           </div>
@@ -845,8 +871,82 @@ const CallsPage = () => {
         onSubmit={handleModalSubmit}
         isLoading={uploadCalls.isPending}
         mode="calls"
-        initialDirectory={directory}
+        initialDirectory={directory || 'shoplabs'}
       />
+
+      {/* Evaluate Prompt Modal */}
+      {isEvaluateModalOpen && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+          <div className="bg-dark-bg rounded-2xl max-w-md w-full border border-gray-800 relative shadow-2xl">
+            <button
+              onClick={() => {
+                setIsEvaluateModalOpen(false);
+                setEvalAgentId('');
+              }}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                  <Brain className="w-6 h-6 text-purple-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold text-white">Evaluate All Calls</h3>
+                  <p className="text-gray-400 text-sm">Configure evaluation parameters</p>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Select Agent
+                  </label>
+                  <GenericDropdown
+                    options={agentOptions}
+                    value={evalAgentId}
+                    onChange={(val) => setEvalAgentId(val)}
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Manual Agent ID Input
+                  </label>
+                  <input
+                    type="text"
+                    value={evalAgentId}
+                    onChange={(e) => setEvalAgentId(e.target.value)}
+                    placeholder="Enter agent ID to evaluate against..."
+                    className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    If provided, this ID will be used for the evaluation request.
+                  </p>
+                </div>
+
+                <div className="pt-4">
+                  <button
+                    onClick={submitEvaluate}
+                    disabled={evaluateAudio.isPending}
+                    className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-purple-600/20 disabled:opacity-50"
+                  >
+                    {evaluateAudio.isPending ? (
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Brain className="w-5 h-5" />
+                    )}
+                    Start Evaluation
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -8,6 +8,7 @@ const FormInput = ({
   focused,
   onFocus,
   onBlur,
+  ...props
 }) => {
   return (
     <div>
@@ -17,7 +18,7 @@ const FormInput = ({
 
       <div className="relative">
         <input
-        
+          {...props}
           type={type}
           value={value}
           onChange={onChange}

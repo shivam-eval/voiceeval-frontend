@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 import { useAgent, useTestAgent, useDeleteAgent } from "../../hooks/useAgents";
@@ -46,9 +47,13 @@ const AgentDetailPage = () => {
     const handleTestConnection = async () => {
         try {
             const result = await testAgent.mutateAsync(agentId);
-            alert(result.success ? "Connection successful!" : `Connection failed: ${result.message}`);
+            if (result.success) {
+                toast.success("Connection successful!");
+            } else {
+                toast.error(`Connection failed: ${result.message}`);
+            }
         } catch (error) {
-            alert(`Error: ${error.message}`);
+            // Error handled by global interceptor
         }
     };
 
@@ -56,10 +61,10 @@ const AgentDetailPage = () => {
         if (confirm("Re-extract agent configuration? This will overwrite existing data.")) {
             try {
                 await deleteAgent.mutateAsync(agentId);
-                alert("Agent deleted. Please reconnect to re-extract.");
+                toast.success("Agent deleted. Please reconnect to re-extract.");
                 navigate("/agents");
             } catch (error) {
-                alert(`Error: ${error.message}`);
+                // Error handled by global interceptor
             }
         }
     };
@@ -93,9 +98,10 @@ const AgentDetailPage = () => {
         if (confirm("Are you sure you want to delete this flow?")) {
             try {
                 await deleteFlow.mutateAsync(flowId);
+                toast.success("Flow deleted successfully");
                 await refetchFlows();
             } catch (error) {
-                alert(`Failed to delete flow: ${error.message}`);
+                // Error handled by global interceptor
             }
         }
     };
@@ -108,8 +114,9 @@ const AgentDetailPage = () => {
                 test_cases: [],
             });
             setShowCreateTestSuiteModal(false);
+            toast.success("Test suite created successfully");
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 

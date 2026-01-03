@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { toast } from 'react-toastify';
 import { Upload, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 /**
@@ -36,7 +37,7 @@ const BulkUploadPage = () => {
     }, []);
 
     // Handle drop
-    const handle Drop = useCallback((e) => {
+    const handleDrop = useCallback((e) => {
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);
@@ -92,18 +93,18 @@ const BulkUploadPage = () => {
             setUploadResult(result);
 
             if (result.success) {
+                toast.success('Files uploaded successfully!');
                 // Clear selected files on success
                 setTimeout(() => setSelectedFiles([]), 2000);
             }
         } catch (error) {
-            console.error('Upload error:', error);
+            toast.error('Upload failed: ' + (error.message || 'Unknown error'));
             setUploadResult({
                 success: false,
                 message: error.message,
                 total_files: selectedFiles.length,
                 successful_uploads: 0,
-                failed_uploads: selectedFiles.length,
-                file_statuses: []
+                failed_uploads: selectedFiles.length
             });
         } finally {
             setUploading(false);

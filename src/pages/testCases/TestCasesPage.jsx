@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useTestSuites, useDeleteTestSuite, useCloneTestSuite, useCreateTestSuite } from "../../hooks/useTestSuites";
 import { useAgents } from "../../hooks/useAgents";
 import Table from "../../components/Table";
@@ -40,8 +41,9 @@ const TestCasesPage = () => {
         try {
             await createTestSuite.mutateAsync(formData);
             setShowCreateModal(false);
+            toast.success("Test suite created successfully");
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -50,8 +52,9 @@ const TestCasesPage = () => {
         if (confirm("Are you sure you want to delete this test suite?")) {
             try {
                 await deleteTestSuite.mutateAsync(id);
+                toast.success("Test suite deleted successfully");
             } catch (error) {
-                alert(error.message);
+                // Error handled by global interceptor
             }
         }
     };
@@ -59,8 +62,9 @@ const TestCasesPage = () => {
     const handleClone = async (id) => {
         try {
             await cloneTestSuite.mutateAsync(id);
+            toast.success("Test suite cloned successfully");
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -69,8 +73,9 @@ const TestCasesPage = () => {
             try {
                 await Promise.all(selectedRows.map(id => deleteTestSuite.mutateAsync(id)));
                 setSelectedRows([]);
+                toast.success(`${selectedRows.length} test suites deleted successfully`);
             } catch (error) {
-                alert(error.message);
+                // Error handled by global interceptor
             }
         }
     };

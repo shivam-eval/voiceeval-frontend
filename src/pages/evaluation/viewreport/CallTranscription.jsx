@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Play, Pause, Download, Copy, User, Bot, Volume2, VolumeX, AlertCircle } from "lucide-react";
+import { toast } from "react-toastify";
 
 const CallTranscriptPanel = ({ transcriptData }) => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -26,7 +27,11 @@ const CallTranscriptPanel = ({ transcriptData }) => {
   useEffect(() => {
     if (audioRef.current) {
       if (isPlaying) {
-        audioRef.current.play().catch(err => console.error("Playback failed:", err));
+        audioRef.current.play().catch(err => {
+          console.error("Playback failed:", err);
+          toast.error("Audio playback failed. Please check the recording URL.");
+          setIsPlaying(false);
+        });
       } else {
         audioRef.current.pause();
       }
@@ -94,9 +99,9 @@ const CallTranscriptPanel = ({ transcriptData }) => {
     ).join('\n');
     
     navigator.clipboard.writeText(text).then(() => {
-      console.log('Transcript copied to clipboard');
+      toast.success('Transcript copied to clipboard');
     }).catch(err => {
-      console.error('Failed to copy transcript:', err);
+      toast.error('Failed to copy transcript: ' + (err.message || 'Unknown error'));
     });
   };
 

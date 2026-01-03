@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useWorkflow } from "../context/WorkFlowContext";
 
@@ -91,6 +92,7 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
         }
       } catch (err) {
         console.error("Status polling failed:", err);
+        toast.error(`Status polling failed: ${err.message}`);
         onError?.(err);
       }
     };
@@ -166,6 +168,7 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
         });
       } catch (err) {
         console.error("Evaluation failed:", err);
+        toast.error(`Evaluation failed: ${err.message}`);
         onError?.(err);
         
         // Navigate to evaluation page even on error (with fallback UI)

@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { toast } from "react-toastify";
 import Button from "./Button";
 import Badge from "./Badge";
 import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
@@ -65,6 +66,7 @@ const AudioUploadModal = ({ isOpen, onClose, onSubmit, isLoading, mode = "test_c
             setAudioFiles([]);
         } catch (error) {
             console.error('Upload error:', error);
+            toast.error(error.message || 'Failed to upload audio files');
         } finally {
             setIsUploading(false);
         }

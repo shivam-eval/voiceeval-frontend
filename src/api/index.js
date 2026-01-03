@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const API_BASE_URL = "http://localhost:8001/api/v1";
 
@@ -60,6 +61,10 @@ const setupResponseInterceptor = (instance) => {
           "Network error - backend may be unavailable:",
           error.message
         );
+        toast.error("Network error: Backend may be unavailable");
+      } else {
+        const message = error.response.data?.detail || error.message || "An error occurred";
+        toast.error(message);
       }
 
       return Promise.reject(error);

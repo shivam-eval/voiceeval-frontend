@@ -166,8 +166,8 @@ const SimulationsListPage = () => {
                                     key={status}
                                     onClick={() => handleStatusFilter(status === 'All' ? '' : status.toLowerCase())}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${(status === 'All' && !filters.status) || filters.status === status.toLowerCase()
-                                            ? 'bg-teal-500 text-white'
-                                            : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                                        ? 'bg-teal-500 text-white'
+                                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
                                         }`}
                                 >
                                     {status}
@@ -239,19 +239,19 @@ const SimulationsListPage = () => {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className="text-sm text-white">
-                                                        {sim.test_suite_name || sim.test_suite_id}
+                                                        {sim.metadata?.test_suite_name || sim.metadata?.flow_tree_name || sim.test_suite_id}
                                                     </div>
-                                                    {sim.agent_name && (
+                                                    {sim.metadata?.agent_name && (
                                                         <div className="text-xs text-gray-400 mt-1">
-                                                            Agent: {sim.agent_name}
+                                                            Agent: {sim.metadata.agent_name}
                                                         </div>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {formatDateTime(sim.started_at)}
+                                                    {formatDateTime(sim.timestamps?.started_at || sim.timestamps?.created_at)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {formatDuration(sim.duration_ms)}
+                                                    {formatDuration(sim.metrics?.total_duration_ms)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <Badge variant={getStatusBadgeVariant(sim.status)}>
@@ -268,30 +268,30 @@ const SimulationsListPage = () => {
                                                                 <div className="flex-1 bg-gray-800 rounded-full h-2">
                                                                     <div
                                                                         className="bg-teal-500 h-2 rounded-full transition-all duration-300"
-                                                                        style={{ width: `${sim.progress_percentage || 0}%` }}
+                                                                        style={{ width: `${sim.progress?.percentage || 0}%` }}
                                                                     ></div>
                                                                 </div>
                                                                 <span className="text-xs text-gray-400">
-                                                                    {Math.round(sim.progress_percentage || 0)}%
+                                                                    {Math.round(sim.progress?.percentage || 0)}%
                                                                 </span>
                                                             </div>
                                                             <div className="text-xs text-gray-400">
-                                                                {sim.completed_sessions}/{sim.total_sessions} sessions
+                                                                {sim.progress?.completed || 0}/{sim.progress?.total_sessions || 0} sessions
                                                             </div>
                                                         </div>
                                                     ) : (
                                                         <span className="text-sm text-gray-300">
-                                                            {sim.completed_sessions}/{sim.total_sessions}
+                                                            {sim.progress?.completed || 0}/{sim.progress?.total_sessions || 0}
                                                         </span>
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    {sim.overall_score !== null && sim.overall_score !== undefined ? (
-                                                        <div className={`text-sm font-semibold ${sim.overall_score >= 90 ? 'text-green-400' :
-                                                                sim.overall_score >= 70 ? 'text-yellow-400' :
-                                                                    'text-red-400'
+                                                    {sim.metrics?.overall_score !== null && sim.metrics?.overall_score !== undefined ? (
+                                                        <div className={`text-sm font-semibold ${sim.metrics.overall_score >= 0.9 ? 'text-green-400' :
+                                                            sim.metrics.overall_score >= 0.7 ? 'text-yellow-400' :
+                                                                'text-red-400'
                                                             }`}>
-                                                            {sim.overall_score.toFixed(1)}%
+                                                            {(sim.metrics.overall_score * 100).toFixed(1)}%
                                                         </div>
                                                     ) : (
                                                         <span className="text-sm text-gray-500">-</span>

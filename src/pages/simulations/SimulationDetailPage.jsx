@@ -200,11 +200,11 @@ const SimulationDetailPage = () => {
                                 Simulation {simulation.simulation_id.substring(0, 12)}...
                             </h1>
                             <div className="flex items-center gap-3">
-                                {simulation.test_suite_name && (
-                                    <Badge variant="default">{simulation.test_suite_name}</Badge>
+                                {(simulation.metadata?.test_suite_name || simulation.metadata?.flow_tree_name) && (
+                                    <Badge variant="default">{simulation.metadata?.test_suite_name || simulation.metadata?.flow_tree_name}</Badge>
                                 )}
-                                {simulation.agent_name && (
-                                    <Badge variant="default">Agent: {simulation.agent_name}</Badge>
+                                {simulation.metadata?.agent_name && (
+                                    <Badge variant="default">Agent: {simulation.metadata.agent_name}</Badge>
                                 )}
                                 <Badge variant={getStatusBadgeVariant(simulation.status)}>
                                     {simulation.status}
@@ -289,9 +289,9 @@ const SimulationDetailPage = () => {
                             </div>
                             <div className="text-sm text-gray-400">Started</div>
                         </div>
-                        <div className="text-sm text-white mt-2">{formatDateTime(simulation.started_at)}</div>
-                        {simulation.duration_ms && (
-                            <div className="text-xs text-gray-400 mt-1">Duration: {formatDuration(simulation.duration_ms)}</div>
+                        <div className="text-sm text-white mt-2">{formatDateTime(simulation.timestamps?.started_at || simulation.timestamps?.created_at)}</div>
+                        {simulation.metrics?.total_duration_ms && (
+                            <div className="text-xs text-gray-400 mt-1">Duration: {formatDuration(simulation.metrics.total_duration_ms)}</div>
                         )}
                     </div>
 
@@ -302,12 +302,12 @@ const SimulationDetailPage = () => {
                             </div>
                             <div className="text-sm text-gray-400">Overall Score</div>
                         </div>
-                        {simulation.overall_score !== null && simulation.overall_score !== undefined ? (
-                            <div className={`text-3xl font-bold mt-2 ${simulation.overall_score >= 90 ? 'text-green-400' :
-                                simulation.overall_score >= 70 ? 'text-yellow-400' :
+                        {simulation.metrics?.overall_score !== null && simulation.metrics?.overall_score !== undefined ? (
+                            <div className={`text-3xl font-bold mt-2 ${simulation.metrics.overall_score >= 0.9 ? 'text-green-400' :
+                                simulation.metrics.overall_score >= 0.7 ? 'text-yellow-400' :
                                     'text-red-400'
                                 }`}>
-                                {simulation.overall_score.toFixed(1)}%
+                                {(simulation.metrics.overall_score * 100).toFixed(1)}%
                             </div>
                         ) : (
                             <div className="text-2xl text-gray-500 mt-2">-</div>
@@ -323,21 +323,21 @@ const SimulationDetailPage = () => {
                                 <Users className="w-4 h-4 text-gray-400" />
                                 <span className="text-xs text-gray-400">Total Sessions</span>
                             </div>
-                            <div className="text-2xl font-bold text-white">{simulation.total_sessions}</div>
+                            <div className="text-2xl font-bold text-white">{simulation.progress?.total_sessions || 0}</div>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-green-500/20">
                             <div className="flex items-center gap-2 mb-1">
                                 <CheckCircle className="w-4 h-4 text-green-400" />
                                 <span className="text-xs text-gray-400">Passed</span>
                             </div>
-                            <div className="text-2xl font-bold text-green-400">{simulation.passed_sessions}</div>
+                            <div className="text-2xl font-bold text-green-400">{simulation.progress?.completed || 0}</div>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-red-500/20">
                             <div className="flex items-center gap-2 mb-1">
                                 <XCircle className="w-4 h-4 text-red-400" />
                                 <span className="text-xs text-gray-400">Failed</span>
                             </div>
-                            <div className="text-2xl font-bold text-red-400">{simulation.failed_sessions}</div>
+                            <div className="text-2xl font-bold text-red-400">{simulation.progress?.failed || 0}</div>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-gray-800/50">
                             <div className="flex items-center gap-2 mb-1">
@@ -371,10 +371,10 @@ const SimulationDetailPage = () => {
                                         }`}
                                 >
                                     {filter}
-                                    {filter === 'all' && simulation.total_sessions && ` (${simulation.total_sessions})`}
-                                    {filter === 'completed' && simulation.passed_sessions && ` (${simulation.passed_sessions})`}
-                                    {filter === 'failed' && simulation.failed_sessions && ` (${simulation.failed_sessions})`}
-                                    {filter === 'running' && simulation.active_sessions && ` (${simulation.active_sessions})`}
+                                    {filter === 'all' && simulation.progress?.total_sessions && ` (${simulation.progress.total_sessions})`}
+                                    {filter === 'completed' && simulation.progress?.completed && ` (${simulation.progress.completed})`}
+                                    {filter === 'failed' && simulation.progress?.failed && ` (${simulation.progress.failed})`}
+                                    {filter === 'running' && simulation.progress?.active && ` (${simulation.progress.active})`}
                                 </button>
                             ))}
                         </div>
@@ -419,7 +419,7 @@ const SimulationDetailPage = () => {
                                                     </code>
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-white">
-                                                    {session.test_case_name || session.path_id}
+                                                    {session.metadata?.test_case_name || session.test_case_id}
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <Badge variant={getStatusBadgeVariant(session.status)}>
@@ -427,22 +427,22 @@ const SimulationDetailPage = () => {
                                                     </Badge>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    {session.score !== null && session.score !== undefined ? (
-                                                        <span className={`text-sm font-semibold ${session.score >= 90 ? 'text-green-400' :
-                                                            session.score >= 70 ? 'text-yellow-400' :
+                                                    {session.metrics?.score !== null && session.metrics?.score !== undefined ? (
+                                                        <span className={`text-sm font-semibold ${session.metrics.score >= 90 ? 'text-green-400' :
+                                                            session.metrics.score >= 70 ? 'text-yellow-400' :
                                                                 'text-red-400'
                                                             }`}>
-                                                            {session.score.toFixed(1)}%
+                                                            {session.metrics.score.toFixed(1)}%
                                                         </span>
                                                     ) : (
                                                         <span className="text-sm text-gray-500">-</span>
                                                     )}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-gray-300">
-                                                    {formatDuration(session.duration_ms)}
+                                                    {formatDuration(session.transcript?.metadata?.duration_ms)}
                                                 </td>
                                                 <td className="px-4 py-3 text-sm text-gray-300">
-                                                    {formatDateTime(session.started_at)}
+                                                    {formatDateTime(session.timestamps?.started_at)}
                                                 </td>
                                             </tr>
                                             {expandedSessions.includes(session.session_id) && (
@@ -452,19 +452,19 @@ const SimulationDetailPage = () => {
                                                             <p className="font-semibold mb-2">Session Details</p>
                                                             <div className="grid grid-cols-2 gap-4 text-xs">
                                                                 <div>
-                                                                    <span className="text-gray-400">Path ID:</span>
-                                                                    <span className="ml-2 text-white">{session.path_id}</span>
+                                                                    <span className="text-gray-400">Test Case ID:</span>
+                                                                    <span className="ml-2 text-white">{session.test_case_id}</span>
                                                                 </div>
-                                                                {session.persona_id && (
+                                                                {session.agent_id && (
                                                                     <div>
-                                                                        <span className="text-gray-400">Persona:</span>
-                                                                        <span className="ml-2 text-white">{session.persona_id}</span>
+                                                                        <span className="text-gray-400">Agent ID:</span>
+                                                                        <span className="ml-2 text-white">{session.agent_id}</span>
                                                                     </div>
                                                                 )}
-                                                                {session.error && (
+                                                                {session.error_message && (
                                                                     <div className="col-span-2">
                                                                         <span className="text-red-400">Error:</span>
-                                                                        <span className="ml-2 text-red-300">{session.error}</span>
+                                                                        <span className="ml-2 text-red-300">{session.error_message}</span>
                                                                     </div>
                                                                 )}
                                                             </div>

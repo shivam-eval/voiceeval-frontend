@@ -20,18 +20,21 @@ const EvaluationsPage = () => {
 
     // Apply filters
     const filteredSimulations = completedSimulations.filter(sim => {
-        const matchesSearch = sim.test_suite_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const name = sim.metadata?.test_suite_name || sim.metadata?.flow_tree_name || sim.test_suite_id || '';
+        const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             sim.simulation_id?.toLowerCase().includes(searchTerm.toLowerCase());
 
+        const score = (sim.metrics?.overall_score || 0) * 100;
+
         const matchesStatus = statusFilter === 'all' ||
-            (statusFilter === 'passed' && (sim.overall_score || 0) >= 70) ||
-            (statusFilter === 'failed' && (sim.overall_score || 0) < 70);
+            (statusFilter === 'passed' && score >= 70) ||
+            (statusFilter === 'failed' && score < 70);
 
         return matchesSearch && matchesStatus;
     });
 
     const getStatusBadge = (simulation) => {
-        const score = simulation.overall_score || 0;
+        const score = (simulation.metrics?.overall_score || 0) * 100;
         if (simulation.status === 'failed') {
             return (
                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-900/20 text-red-400 border border-red-500/30">
@@ -177,7 +180,7 @@ const EvaluationsPage = () => {
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
                                             <h3 className="text-lg font-semibold text-white group-hover:text-primary-400 transition-colors">
-                                                {simulation.test_suite_name || 'Unnamed Test Suite'}
+                                                {simulation.metadata?.test_suite_name || simulation.metadata?.flow_tree_name || 'Unnamed Test Suite'}
                                             </h3>
                                             {getStatusBadge(simulation)}
                                         </div>
@@ -186,8 +189,8 @@ const EvaluationsPage = () => {
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <div className={`text-3xl font-bold ${getScoreColor(simulation.overall_score || 0)}`}>
-                                            {Math.round(simulation.overall_score || 0)}%
+                                        <div className={`text-3xl font-bold ${getScoreColor((simulation.metrics?.overall_score || 0) * 100)}`}>
+                                            {Math.round((simulation.metrics?.overall_score || 0) * 100)}%
                                         </div>
                                         <div className="text-xs text-gray-500">Overall Score</div>
                                     </div>
@@ -198,15 +201,13 @@ const EvaluationsPage = () => {
                                     <div>
                                         <div className="text-xs text-gray-500 mb-1">Test Cases</div>
                                         <div className="text-sm font-semibold text-white">
-                                            {simulation.completed_sessions || 0} / {simulation.total_sessions || 0}
+                                            {simulation.progress?.completed || 0} / {simulation.progress?.total_sessions || 0}
                                         </div>
                                     </div>
                                     <div>
                                         <div className="text-xs text-gray-500 mb-1">Progress</div>
                                         <div className="text-sm font-semibold text-white">
-                                            {simulation.total_sessions > 0
-                                                ? Math.round((simulation.completed_sessions / simulation.total_sessions) * 100)
-                                                : 0}%
+                                            {simulation.progress?.percentage ? Math.round(simulation.progress.percentage) : 0}%
                                         </div>
                                     </div>
                                     <div>
@@ -215,7 +216,7 @@ const EvaluationsPage = () => {
                                             Started
                                         </div>
                                         <div className="text-sm font-semibold text-white">
-                                            {formatDate(simulation.started_at)}
+                                            {formatDate(simulation.timestamps?.started_at || simulation.timestamps?.created_at)}
                                         </div>
                                     </div>
                                     <div>
@@ -224,22 +225,22 @@ const EvaluationsPage = () => {
                                             Duration
                                         </div>
                                         <div className="text-sm font-semibold text-white">
-                                            {formatDuration(simulation.duration_ms)}
+                                            {formatDuration(simulation.metrics?.total_duration_ms)}
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Progress Bar */}
-                                {simulation.total_sessions > 0 && (
+                                {(simulation.progress?.total_sessions || 0) > 0 && (
                                     <div className="mt-4">
                                         <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                                             <div
-                                                className={`h-full transition-all ${(simulation.overall_score || 0) >= 70
+                                                className={`h-full transition-all ${(simulation.metrics?.overall_score || 0) >= 0.7
                                                     ? 'bg-green-500'
                                                     : 'bg-yellow-500'
                                                     }`}
                                                 style={{
-                                                    width: `${(simulation.completed_sessions / simulation.total_sessions) * 100}%`
+                                                    width: `${simulation.progress?.percentage || 0}%`
                                                 }}
                                             />
                                         </div>

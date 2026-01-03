@@ -95,7 +95,7 @@ const GenerateFlowModal = ({ isOpen, onClose, agentId, agentMongoId, onFlowGener
                                 >
                                     <option value="">Select an agent...</option>
                                     {agentsData?.agents?.map((agent) => (
-                                        <option key={agent._id} value={agent.agent_id}>
+                                        <option key={agent.agent_id} value={agent.agent_id}>
                                             {agent.agent_name || agent.agent_id} ({agent.platform})
                                         </option>
                                     ))}

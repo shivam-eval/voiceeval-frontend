@@ -22,8 +22,8 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
     const testSuites = testSuitesData?.test_suites || [];
 
     // Find selected items
-    const selectedAgent = agents.find(a => a._id === selectedAgentId);
-    const selectedTestSuite = testSuites.find(ts => ts._id === selectedTestSuiteId);
+    const selectedAgent = agents.find(a => a.agent_id === selectedAgentId);
+    const selectedTestSuite = testSuites.find(ts => ts.test_suite_id === selectedTestSuiteId);
 
     // Auto-fill phone number from selected agent
     useEffect(() => {
@@ -97,7 +97,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                         >
                             <option value="">Choose an agent...</option>
                             {agents.map(agent => (
-                                <option key={agent._id} value={agent._id}>
+                                <option key={agent.agent_id} value={agent.agent_id}>
                                     {agent.agent_name || agent.agent_id} ({agent.platform})
                                 </option>
                             ))}
@@ -131,7 +131,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                                 {selectedAgentId ? 'Choose a test suite...' : 'Select an agent first...'}
                             </option>
                             {testSuites.map(suite => (
-                                <option key={suite._id} value={suite._id}>
+                                <option key={suite.test_suite_id} value={suite.test_suite_id}>
                                     {suite.name} ({suite.metadata?.total_cases || 0} test cases)
                                 </option>
                             ))}

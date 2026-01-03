@@ -33,12 +33,12 @@ const SessionReportPage = () => {
     const evaluation = session ? {
         evaluation_id: session.evaluation_id || session.session_id,
         session_id: session.session_id,
-        path_id: session.path_id || session.test_case_id,
-        test_case_name: session.test_case_name,
-        overall_score: session.score ? session.score / 100 : 0,
-        passed: session.status === 'completed' && (session.score || 0) >= 70,
+        path_id: session.test_case_id,
+        test_case_name: session.metadata?.test_case_name || session.test_case_name,
+        overall_score: (session.metrics?.score || 0) / 100,
+        passed: session.status === 'completed' && (session.metrics?.score || 0) >= 70,
         issues_found: session.issues_found || 0,
-        execution_time_ms: session.duration_ms || 0,
+        execution_time_ms: session.transcript?.metadata?.duration_ms || session.duration_ms || 0,
         recommendations: session.recommendations || [],
         category_scores: session.category_scores || [],
         metric_results: session.metrics || session.metric_results || [],
@@ -49,7 +49,7 @@ const SessionReportPage = () => {
             cascading_failures: {},
             step_health: {}
         },
-        transcript_steps: session.transcript_steps,
+        transcript_steps: session.transcript?.steps || session.transcript_steps || [],
         metadata: session.metadata,
         audio_files: session.audio_files
     } : null;
@@ -61,9 +61,9 @@ const SessionReportPage = () => {
     const allEvaluations = sessions.map(s => ({
         evaluation_id: s.evaluation_id || s.session_id,
         session_id: s.session_id,
-        overall_score: s.score ? s.score / 100 : 0,
+        overall_score: (s.metrics?.score || 0) / 100,
         passed: s.status === 'completed',
-        execution_time_ms: s.duration_ms || 0
+        execution_time_ms: s.transcript?.metadata?.duration_ms || s.duration_ms || 0
     }));
 
     const simulationData = simulation ? transformSimulationForOverview(simulation, allEvaluations) : null;

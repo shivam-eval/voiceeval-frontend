@@ -92,8 +92,8 @@ const TestCaseEditorModal = ({ isOpen, onClose, onSave, testCase, personas = [],
                                 type="button"
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`px-4 py-2 font-medium transition-all ${activeTab === tab.id
-                                        ? 'text-teal-400 border-b-2 border-teal-400'
-                                        : 'text-gray-400 hover:text-white'
+                                    ? 'text-teal-400 border-b-2 border-teal-400'
+                                    : 'text-gray-400 hover:text-white'
                                     }`}
                             >
                                 {tab.icon} {tab.label}
@@ -158,7 +158,7 @@ const TestCaseEditorModal = ({ isOpen, onClose, onSave, testCase, personas = [],
                                             value={formData.input}
                                             onChange={(e) => handleInputChange('input', e.target.value)}
                                             placeholder={
-                                                formData.type === 'transcript' 
+                                                formData.type === 'transcript'
                                                     ? "Paste conversation transcript here..."
                                                     : "Describe the test scenario or user input..."
                                             }
@@ -193,8 +193,8 @@ const TestCaseEditorModal = ({ isOpen, onClose, onSave, testCase, personas = [],
                                                 type="button"
                                                 onClick={() => handleInputChange('priority', value)}
                                                 className={`flex-1 px-4 py-3 rounded-lg border-2 transition-all ${formData.priority === value
-                                                        ? `border-${config.color}-500 bg-${config.color}-500/10`
-                                                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                                                    ? `border-${config.color}-500 bg-${config.color}-500/10`
+                                                    : 'border-gray-700 bg-gray-800 hover:border-gray-600'
                                                     }`}
                                             >
                                                 <div className="text-white font-medium">{config.label}</div>
@@ -219,7 +219,7 @@ const TestCaseEditorModal = ({ isOpen, onClose, onSave, testCase, personas = [],
                                     >
                                         <option value="">None (use default)</option>
                                         {personas.map((persona) => (
-                                            <option key={persona._id} value={persona._id}>
+                                            <option key={persona.persona_id} value={persona.persona_id}>
                                                 {persona.name} - {persona.region || 'Unknown region'}
                                             </option>
                                         ))}
@@ -484,7 +484,7 @@ const TestCaseEditorModal = ({ isOpen, onClose, onSave, testCase, personas = [],
                                     <input
                                         type="text"
                                         value={formData.dependencies.join(', ')}
-                                        onChange={(e) => handleInputChange('dependencies', 
+                                        onChange={(e) => handleInputChange('dependencies',
                                             e.target.value.split(',').map(s => s.trim()).filter(Boolean)
                                         )}
                                         placeholder="test-case-1, test-case-2"

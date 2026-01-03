@@ -253,14 +253,14 @@ const AgentsPage = () => {
                     selectable
                     selectedRows={selectedRows}
                     onSelectionChange={setSelectedRows}
-                    onRowClick={(row) => navigate(`/agents/${row._id}`)}
+                    onRowClick={(row) => navigate(`/agents/${row.agent_id}`)}
                     emptyMessage="No agents found. Connect your first agent to get started!"
                     actions={(row) => (
                         <>
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setSelectedAgentForFlow(row._id);
+                                    setSelectedAgentForFlow(row.agent_id);
                                     setShowGenerateFlowModal(true);
                                 }}
                                 className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-teal-400 transition-colors"
@@ -273,7 +273,7 @@ const AgentsPage = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleTest(row._id);
+                                    handleTest(row.agent_id);
                                 }}
                                 className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
                                 title="Test Connection"
@@ -286,7 +286,7 @@ const AgentsPage = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleClone(row._id);
+                                    handleClone(row.agent_id);
                                 }}
                                 className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
                                 title="Clone Agent"
@@ -298,7 +298,7 @@ const AgentsPage = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDelete(row._id);
+                                    handleDelete(row.agent_id);
                                 }}
                                 className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-red-400 transition-colors"
                                 title="Delete Agent"

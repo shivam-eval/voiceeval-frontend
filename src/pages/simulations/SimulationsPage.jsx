@@ -144,7 +144,7 @@ const SimulationsPage = () => {
                                             </code>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-white">
-                                            {sim.test_suite_name || 'Unknown'}
+                                            {sim.metadata?.test_suite_name || 'Unknown'}
                                         </td>
                                         <td className="px-6 py-4">
                                             <Badge variant={getStatusVariant(sim.status)}>
@@ -152,25 +152,25 @@ const SimulationsPage = () => {
                                             </Badge>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-300">
-                                            {sim.completed_sessions}/{sim.total_sessions}
+                                            {sim.progress?.completed || 0}/{sim.progress?.total_sessions || 0}
                                         </td>
                                         <td className="px-6 py-4">
-                                            {sim.overall_score !== null && sim.overall_score !== undefined ? (
-                                                <span className={`text-sm font-semibold ${sim.overall_score >= 90 ? 'text-green-400' :
-                                                        sim.overall_score >= 70 ? 'text-yellow-400' :
-                                                            'text-red-400'
+                                            {(sim.metrics?.overall_score !== null && sim.metrics?.overall_score !== undefined) ? (
+                                                <span className={`text-sm font-semibold ${(sim.metrics.overall_score * 100) >= 90 ? 'text-green-400' :
+                                                    (sim.metrics.overall_score * 100) >= 70 ? 'text-yellow-400' :
+                                                        'text-red-400'
                                                     }`}>
-                                                    {sim.overall_score.toFixed(1)}%
+                                                    {(sim.metrics.overall_score * 100).toFixed(1)}%
                                                 </span>
                                             ) : (
                                                 <span className="text-gray-500">-</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-300">
-                                            {formatDate(sim.started_at)}
+                                            {formatDate(sim.timestamps?.started_at)}
                                         </td>
                                         <td className="px-6 py-4 text-sm text-gray-300">
-                                            {formatDuration(sim.duration_ms)}
+                                            {formatDuration(sim.metrics?.total_duration_ms)}
                                         </td>
                                     </tr>
                                 ))}

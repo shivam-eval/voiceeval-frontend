@@ -92,8 +92,8 @@ export const transformToLegacyDashboardFormat = (simulation, evaluations) => {
                 simulation_id: simulation.simulation_id,
                 evaluations: evaluations || [],
                 simulation_evaluation: simulationEvaluation,
-                test_suite_name: simulation.test_suite_name,
-                agent_name: simulation.agent_name,
+                test_suite_name: simulation.metadata?.test_suite_name,
+                agent_name: simulation.metadata?.agent_name,
                 status: simulation.status
             },
             evaluationResult: simulationEvaluation
@@ -164,8 +164,8 @@ export const transformSimulationForOverview = (simulation, evaluations) => {
             failed_test_cases: failedCount,
         },
         timing: {
-            start_time_ms: new Date(simulation.started_at).getTime(),
-            end_time_ms: simulation.completed_at ? new Date(simulation.completed_at).getTime() : Date.now(),
+            start_time_ms: simulation.timestamps?.started_at ? new Date(simulation.timestamps.started_at).getTime() : Date.now(),
+            end_time_ms: simulation.timestamps?.completed_at ? new Date(simulation.timestamps.completed_at).getTime() : Date.now(),
             duration_ms: totalExecutionTime,
             average_duration_ms: averageExecutionTime
         },
@@ -179,7 +179,7 @@ export const transformSimulationForOverview = (simulation, evaluations) => {
                 ? Math.round(evaluation.overall_score * 100)
                 : Math.round(parseFloat(evaluation.overall_score || 0) * 100)
         })),
-        flow_tree_name: simulation.test_suite_name || "Test Suite",
+        flow_tree_name: simulation.metadata?.test_suite_name || "Test Suite",
         schema_version: "1.0"
     };
 };

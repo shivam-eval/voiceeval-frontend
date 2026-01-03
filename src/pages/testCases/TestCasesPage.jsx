@@ -200,7 +200,7 @@ const TestCasesPage = () => {
                         >
                             <option value="">All Agents</option>
                             {agentsData?.agents?.map((agent) => (
-                                <option key={agent._id} value={agent._id}>
+                                <option key={agent.agent_id} value={agent.agent_id}>
                                     {agent.agent_name || agent.agent_id}
                                 </option>
                             ))}
@@ -244,14 +244,14 @@ const TestCasesPage = () => {
                     selectable
                     selectedRows={selectedRows}
                     onSelectionChange={setSelectedRows}
-                    onRowClick={(row) => navigate(`/test-cases/${row._id}`)}
+                    onRowClick={(row) => navigate(`/test-cases/${row.test_suite_id}`)}
                     emptyMessage="No test suites found. Create your first test suite to get started!"
                     actions={(row) => (
                         <>
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    navigate(`/test-cases/${row._id}`);
+                                    navigate(`/test-cases/${row.test_suite_id}`);
                                 }}
                                 className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
                                 title="View/Edit"
@@ -264,7 +264,7 @@ const TestCasesPage = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleClone(row._id);
+                                    handleClone(row.test_suite_id);
                                 }}
                                 className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
                                 title="Clone Test Suite"
@@ -276,7 +276,7 @@ const TestCasesPage = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleDelete(row._id);
+                                    handleDelete(row.test_suite_id);
                                 }}
                                 className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-red-400 transition-colors"
                                 title="Delete Test Suite"

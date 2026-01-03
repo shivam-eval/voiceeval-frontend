@@ -28,25 +28,28 @@ const SimulationEvaluationPage = () => {
     // Transform sessions to evaluations format (sessions ARE evaluations with transcript data)
     const evaluations = sessions.map(session => {
         // Session data already contains what we need for evaluation display
-        // Calculate score if not present (from simulation percentage)
-        const calculatedScore = session.overall_score !== undefined
-            ? session.overall_score
-            : (simulation?.overall_score || 0);
+        // Calculate score if not present (from simulation percentage or metrics)
+        const sessionScore = session.metrics?.score;
+        const simulationScore = (simulation?.metrics?.overall_score || 0) * 100;
+
+        const calculatedScore = sessionScore !== undefined
+            ? sessionScore
+            : simulationScore;
 
         return {
             evaluation_id: session.session_id,
             session_id: session.session_id,
-            path_id: session.test_case_id || session.path_id,
-            test_case_name: session.test_case_name || `Test Case ${session.session_id}`,
+            path_id: session.test_case_id,
+            test_case_name: session.metadata?.test_case_name || session.test_case_name || `Test Case ${session.session_id}`,
             overall_score: calculatedScore / 100, // Convert percentage to decimal for legacy dashboard
             passed: session.status === 'completed' && calculatedScore >= 70,
             issues_found: 0, // Can be calculated from transcript analysis
-            execution_time_ms: session.duration_ms || 0,
+            execution_time_ms: session.transcript?.metadata?.duration_ms || session.duration_ms || 0,
             recommendations: [], // Placeholder - can be generated from analysis
             category_scores: [], // Placeholder - needs evaluation engine
             metric_results: [], // Placeholder - needs evaluation engine
             failure_propagation: {},
-            transcript_steps: session.transcript || session.transcript_steps,
+            transcript_steps: session.transcript?.steps || session.transcript_steps || [],
             metadata: session.metadata || {},
             audio_files: session.audio_files || []
         };

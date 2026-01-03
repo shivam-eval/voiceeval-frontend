@@ -562,8 +562,8 @@ const AgentDetailPage = () => {
                                 </div>
                                 {testSuites.map((suite) => (
                                     <div
-                                        key={suite._id}
-                                        onClick={() => navigate(`/test-cases/${suite._id}`)}
+                                        key={suite.test_suite_id}
+                                        onClick={() => navigate(`/test-cases/${suite.test_suite_id}`)}
                                         className="bg-gray-900 rounded-xl p-6 border border-gray-800 hover:border-teal-400/50 transition-all cursor-pointer"
                                     >
                                         <div className="flex items-start justify-between">

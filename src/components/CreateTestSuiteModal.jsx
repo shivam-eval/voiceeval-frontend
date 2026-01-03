@@ -19,11 +19,11 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
         persona_id: "",
         metrics: [],
         extra_instructions: "",
-        
+
         // Audio upload specific
         audioFiles: [],
     });
-    
+
     const [uploadProgress, setUploadProgress] = useState({});
     const [uploadResults, setUploadResults] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
@@ -33,18 +33,18 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
     const handleInputChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
-    
+
     const handleFileSelect = (e) => {
         const files = Array.from(e.target.files);
         addAudioFiles(files);
     };
-    
+
     const addAudioFiles = (files) => {
         const audioFiles = files.filter(file => {
             const ext = file.name.split('.').pop().toLowerCase();
             return ['wav', 'mp3', 'flac', 'ogg', 'm4a', 'aac', 'mp4'].includes(ext);
         });
-        
+
         const newFiles = audioFiles.map(file => ({
             file,
             id: Date.now() + Math.random(),
@@ -52,43 +52,43 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
             size: file.size,
             status: 'pending'
         }));
-        
+
         setFormData(prev => ({
             ...prev,
             audioFiles: [...prev.audioFiles, ...newFiles]
         }));
     };
-    
+
     const removeAudioFile = (fileId) => {
         setFormData(prev => ({
             ...prev,
             audioFiles: prev.audioFiles.filter(f => f.id !== fileId)
         }));
     };
-    
+
     const handleDragOver = (e) => {
         e.preventDefault();
         e.stopPropagation();
     };
-    
+
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
         const files = Array.from(e.dataTransfer.files);
         addAudioFiles(files);
     };
-    
+
     const uploadAudioFiles = async () => {
         if (formData.audioFiles.length === 0) return null;
-        
+
         setIsUploading(true);
-        
+
         try {
             const uploadFormData = new FormData();
             formData.audioFiles.forEach(({ file }) => {
                 uploadFormData.append('files', file);
             });
-            
+
             const response = await fetch(
                 `${import.meta.env.VITE_API_URL}/api/v1/audio/bulk-upload?category=test_suites`,
                 {
@@ -96,11 +96,11 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                     body: uploadFormData,
                 }
             );
-            
+
             if (!response.ok) {
                 throw new Error(`Upload failed: ${response.statusText}`);
             }
-            
+
             const result = await response.json();
             setUploadResults(result);
             return result;
@@ -118,7 +118,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
             setIsUploading(false);
         }
     };
-    
+
     const formatFileSize = (bytes) => {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
@@ -139,12 +139,12 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         // If audio type, upload files first
         if (formData.testCaseType === 'audio' && formData.audioFiles.length > 0) {
             try {
                 const uploadResult = await uploadAudioFiles();
-                
+
                 if (uploadResult && uploadResult.success) {
                     // Create test suite with audio files metadata
                     const suiteData = {
@@ -284,7 +284,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                 >
                                     <option value="">Select an agent...</option>
                                     {agents?.map((agent) => (
-                                        <option key={agent._id} value={agent._id}>
+                                        <option key={agent.agent_id} value={agent.agent_id}>
                                             {agent.agent_name || agent.agent_id} ({agent.platform})
                                         </option>
                                     ))}
@@ -311,8 +311,8 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     type="button"
                                     onClick={() => setFormData({ ...formData, testCaseType: 'scenario' })}
                                     className={`p-6 rounded-xl border-2 transition-all text-left ${formData.testCaseType === 'scenario'
-                                            ? 'border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20'
-                                            : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                                        ? 'border-blue-500 bg-blue-500/10 shadow-lg shadow-blue-500/20'
+                                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
                                         }`}
                                 >
                                     <div className="text-4xl mb-3">📝</div>
@@ -330,8 +330,8 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     type="button"
                                     onClick={() => setFormData({ ...formData, testCaseType: 'transcript' })}
                                     className={`p-6 rounded-xl border-2 transition-all text-left ${formData.testCaseType === 'transcript'
-                                            ? 'border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20'
-                                            : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                                        ? 'border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20'
+                                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
                                         }`}
                                 >
                                     <div className="text-4xl mb-3">📄</div>
@@ -349,8 +349,8 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     type="button"
                                     onClick={() => setFormData({ ...formData, testCaseType: 'audio' })}
                                     className={`p-6 rounded-xl border-2 transition-all text-left ${formData.testCaseType === 'audio'
-                                            ? 'border-teal-500 bg-teal-500/10 shadow-lg shadow-teal-500/20'
-                                            : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                                        ? 'border-teal-500 bg-teal-500/10 shadow-lg shadow-teal-500/20'
+                                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
                                         }`}
                                 >
                                     <div className="text-4xl mb-3">🎵</div>
@@ -368,8 +368,8 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     type="button"
                                     onClick={() => setFormData({ ...formData, testCaseType: 'graph' })}
                                     className={`p-6 rounded-xl border-2 transition-all text-left ${formData.testCaseType === 'graph'
-                                            ? 'border-green-500 bg-green-500/10 shadow-lg shadow-green-500/20'
-                                            : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                                        ? 'border-green-500 bg-green-500/10 shadow-lg shadow-green-500/20'
+                                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
                                         }`}
                                 >
                                     <div className="text-4xl mb-3">📊</div>
@@ -387,8 +387,8 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     type="button"
                                     onClick={() => setFormData({ ...formData, testCaseType: 'ivr' })}
                                     className={`p-6 rounded-xl border-2 transition-all text-left ${formData.testCaseType === 'ivr'
-                                            ? 'border-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/20'
-                                            : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                                        ? 'border-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/20'
+                                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
                                         }`}
                                 >
                                     <div className="text-4xl mb-3">☎️</div>
@@ -460,14 +460,14 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
 
                             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
                                 <p className="text-sm text-blue-400">
-                                    {formData.testCaseType === 'audio' 
+                                    {formData.testCaseType === 'audio'
                                         ? '💡 Next: Upload audio files for test case generation.'
                                         : '💡 Tip: You can add individual test cases after creating the suite.'}
                                 </p>
                             </div>
                         </div>
                     )}
-                    
+
                     {/* Step 4: Audio Upload (only for audio type) */}
                     {currentStep === 4 && formData.testCaseType === 'audio' && (
                         <div className="space-y-6">
@@ -479,7 +479,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     Upload call recordings that will be transcribed and analyzed to generate test cases
                                 </p>
                             </div>
-                            
+
                             {/* Drop Zone */}
                             <div
                                 className="border-2 border-dashed border-gray-700 rounded-lg p-8 text-center hover:border-teal-500 transition-colors"
@@ -509,7 +509,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     Browse Files
                                 </label>
                             </div>
-                            
+
                             {/* Selected Files List */}
                             {formData.audioFiles.length > 0 && (
                                 <div className="bg-gray-800 rounded-lg p-4">
@@ -520,14 +520,14 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                         {!isUploading && (
                                             <button
                                                 type="button"
-                                                onClick={() => setFormData({...formData, audioFiles: []})}
+                                                onClick={() => setFormData({ ...formData, audioFiles: [] })}
                                                 className="text-xs text-red-400 hover:text-red-300"
                                             >
                                                 Clear All
                                             </button>
                                         )}
                                     </div>
-                                    
+
                                     <div className="space-y-2 max-h-64 overflow-y-auto">
                                         {formData.audioFiles.map((file) => (
                                             <div
@@ -547,7 +547,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                                         </p>
                                                     </div>
                                                 </div>
-                                                
+
                                                 {!isUploading && (
                                                     <button
                                                         type="button"
@@ -562,7 +562,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     </div>
                                 </div>
                             )}
-                            
+
                             {/* Upload Results */}
                             {uploadResults && (
                                 <div className={`rounded-lg p-4 ${uploadResults.success ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30'}`}>
@@ -581,7 +581,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     </p>
                                 </div>
                             )}
-                            
+
                             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
                                 <p className="text-sm text-blue-400">
                                     💡 Bulk upload supported. Audio will be transcribed and analyzed to create test cases.

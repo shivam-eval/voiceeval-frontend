@@ -99,7 +99,14 @@ export const useAddTestCase = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ suiteId, testCase }) => testSuitesApi.addTestCase(suiteId, testCase),
+        mutationFn: ({ suiteId, testCase }) => {
+            // Ensure test case has an ID
+            const testCaseWithId = {
+                ...testCase,
+                id: testCase.id || `tc-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+            };
+            return testSuitesApi.addTestCase(suiteId, testCaseWithId);
+        },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: testSuiteKeys.detail(variables.suiteId) });
             queryClient.invalidateQueries({ queryKey: testSuiteKeys.lists() });

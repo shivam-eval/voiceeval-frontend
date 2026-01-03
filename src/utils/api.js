@@ -104,7 +104,7 @@ export const testSuitesApi = {
     update: (id, data) => apiClient.put(`/api/v1/test-suites/${id}`, data),
     delete: (id) => apiClient.delete(`/api/v1/test-suites/${id}`),
     clone: (id) => apiClient.post(`/api/v1/test-suites/${id}/clone`, {}),
-    addTestCase: (suiteId, testCase) => apiClient.post(`/api/v1/test-suites/${suiteId}/test-cases`, { test_case: testCase }),
+    addTestCase: (suiteId, testCase) => apiClient.post(`/api/v1/test-suites/${suiteId}/test-cases`, { test_case: testCase, order: 0 }),
 
     // New endpoints
     export: (id, format = 'json') => apiClient.get(`/api/v1/test-suites/${id}/export`, { format }),

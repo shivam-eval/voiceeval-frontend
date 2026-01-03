@@ -3,16 +3,46 @@ import { MessageSquare } from "lucide-react";
 import { darkTheme } from "../../const";
 
 /* =========================
-   Dummy Data (Exact Match)
+   Helpers
 ========================= */
-const data = [
-  { metric: "Grammar Quality", value: 70 },
-  { metric: "Context Maintenance", value: 90 },
-  { metric: "Information Extraction", value: 10 },
-  { metric: "Clarification Request", value: 0 },
-];
+const humanizeMetricName = (name) => {
+  const map = {
+    grammar_quality: "Grammar Quality",
+    context_maintenance: "Context Maintenance",
+    clarification_request_rate: "Clarification Rate",
+    repetition_count: "Repetition Count",
+    not_early_termination: "Call Completion",
+    words_per_minute: "Words Per Minute",
+    talk_ratio: "Talk Ratio",
+    text_sentiment: "Sentiment",
+  };
+  return map[name] || name;
+};
 
-const ConversationQualityBreakdown = () => {
+const normalizeScore = (score) => {
+  if (score === null || score === undefined) return 0;
+  if (typeof score !== "number") return 0;
+  return score <= 1 ? Math.round(score * 100) : Math.round(score);
+};
+
+/* =========================
+   Component
+========================= */
+const ConversationQualityBreakdown = ({ response }) => {
+  if (!response || !Array.isArray(response.metrics)) return null;
+
+  // Transform metrics to bar chart data
+  const data = response.metrics.map(m => ({
+    metric: humanizeMetricName(m.name),
+    value: normalizeScore(m.score),
+    status: m.status
+  }));
+
+  // Color based on status
+  const getColor = (bar) => {
+    return bar.data.status === "failed" ? "#ef4444" : "#2dd4bf";
+  };
+
   return (
     <div className="bg-[#0b1f26] border border-teal-500/20 rounded-xl p-6">
 
@@ -25,7 +55,7 @@ const ConversationQualityBreakdown = () => {
       </div>
 
       {/* Chart */}
-      <div style={{ height: 280 }}>
+      <div style={{ height: 320 }}>
         <ResponsiveBar
           data={data}
           keys={["value"]}
@@ -38,10 +68,12 @@ const ConversationQualityBreakdown = () => {
           maxValue={100}
           minValue={0}
 
-          colors={["#2dd4bf"]}
+          colors={getColor}
           borderRadius={8}
 
-          enableLabel={false}
+          enableLabel={true}
+          label={d => `${d.value}%`}
+          labelTextColor="#ffffff"
 
           axisTop={null}
           axisRight={null}

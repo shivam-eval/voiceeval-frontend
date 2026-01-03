@@ -5,6 +5,8 @@ const humanizeMetricName = (name) => {
     word_error_rate: "Word Error Rate",
     audio_technical_quality: "Audio Technical Quality",
     tts_naturalness: "TTS Naturalness",
+    average_pitch: "Average Pitch",
+    voice_quality_index: "Voice Quality Index"
   };
   return map[name] || name;
 };
@@ -12,8 +14,10 @@ const humanizeMetricName = (name) => {
 const VoiceQualityConsistency = ({ response }) => {
   // Extract metrics from response
   const metrics = response?.metrics?.map(m => ({
-    label: humanizeMetricName(m.metric_name),
-    value: Math.round(m.value * 100)
+    label: humanizeMetricName(m.name),
+    value: m.score !== null && m.score !== undefined
+      ? Math.round(m.score * 100)
+      : 100 // Default to 100 for null scores
   })) || [];
 
   // Fallback to default if no data

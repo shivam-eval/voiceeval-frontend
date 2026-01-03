@@ -170,7 +170,7 @@ const EvaluationsPage = () => {
                         {filteredSimulations.map((simulation) => (
                             <div
                                 key={simulation.simulation_id}
-                                onClick={() => navigate(`/simulation/results/${simulation.simulation_id}`)}
+                                onClick={() => navigate(`/evaluations/results/${simulation.simulation_id}`)}
                                 className="bg-dark-surface border border-gray-800 rounded-lg p-6 hover:border-primary-500/50 transition-all cursor-pointer group"
                             >
                                 <div className="flex items-start justify-between mb-4">
@@ -235,8 +235,8 @@ const EvaluationsPage = () => {
                                         <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full transition-all ${(simulation.overall_score || 0) >= 70
-                                                        ? 'bg-green-500'
-                                                        : 'bg-yellow-500'
+                                                    ? 'bg-green-500'
+                                                    : 'bg-yellow-500'
                                                     }`}
                                                 style={{
                                                     width: `${(simulation.completed_sessions / simulation.total_sessions) * 100}%`

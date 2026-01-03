@@ -6,7 +6,7 @@ const GenerateFromFlowModal = ({ isOpen, onClose, onGenerate, flows = [], person
         flow_id: "",
         include_edge_cases: true,
         cover_all_paths: true,
-        max_paths: 25,
+        max_paths: 1,
         region: "india",
     });
 

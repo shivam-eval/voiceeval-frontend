@@ -1,86 +1,67 @@
 import InsightHeaderCard from "../../../../components/InsightHeaderCard";
-import StatCard from "../../../../components/StatCard";
 import {
   MessageSquare,
-  SpellCheck,
-  Brain,
-  BookOpen,
-  HelpCircle,
   ArrowLeft,
 } from "lucide-react";
 import ConversationDetailedMetrics from "./ConversationDetailedMetrics";
-
-/* =========================
-   METADATA
-========================= */
-
-const metricMeta = {
-  grammar_quality: {
-    title: "Grammar Quality",
-    icon: SpellCheck,
-    subtitle: "Grammatical correctness",
-  },
-  context_maintenance: {
-    title: "Context Maintenance",
-    icon: Brain,
-    subtitle: "Memory and coherence",
-  },
-  information_extraction_accuracy: {
-    title: "Info Extraction",
-    icon: BookOpen,
-    subtitle: "Data capture accuracy",
-  },
-  clarification_request_rate: {
-    title: "Clarification Rate",
-    icon: HelpCircle,
-    subtitle: "Clarifications during conversation",
-  },
-};
-
-/* =========================
-   HELPERS
-========================= */
-
-const normalizeScore = (score) => {
-  if (typeof score !== "number") return 0;
-  return score <= 1 ? Math.round(score * 100) : Math.round(score);
-};
-
-const transformStatCards = (response) => {
-  if (!response || !Array.isArray(response.metrics)) return [];
-
-  return response.metrics.map((m) => ({
-    ...metricMeta[m.name],
-    value: normalizeScore(m.score),
-    highlight: m.status === "failed",
-  }));
-};
+import ConversationQualityBreakdown from "./ConversationQualityBreakdown";
 
 /* =========================
    COMPONENT
 ========================= */
 
-const ConversationOverview = ({ response, onBack }) => {
-  if (!response || !Array.isArray(response.metrics)) return null;
+const ConversationOverview = ({ response, data, onBack }) => {
+  // Handle both single evaluation (response) and aggregated data (data)
+  let metrics = [];
+  let score = 0;
+
+  if (response) {
+    // Called from ViewReport with single evaluation's category data
+    metrics = response?.metrics || [];
+    score = typeof response.score === "number" ? Math.round(response.score * 100) : 0;
+  } else if (data) {
+    // Called from Dashboard with aggregated data
+    const convCategory = data.category_scores?.find(c => c.category === 'conversation_quality');
+    if (convCategory) {
+      metrics = convCategory.metrics || [];
+      score = typeof convCategory.average_score === "number"
+        ? Math.round(convCategory.average_score * 100)
+        : 0;
+    } else {
+      // Fallback: aggregate from all evaluations
+      const allMetrics = [];
+      let totalScore = 0;
+      let scoreCount = 0;
+
+      data.evaluations?.forEach(evaluation => {
+        const convCat = evaluation.category_scores?.find(c => c.category === 'conversation_quality');
+        if (convCat?.metrics) {
+          allMetrics.push(...convCat.metrics);
+          if (typeof convCat.score === 'number') {
+            totalScore += convCat.score;
+            scoreCount++;
+          }
+        }
+      });
+
+      metrics = allMetrics;
+      score = scoreCount > 0 ? Math.round((totalScore / scoreCount) * 100) : 0;
+    }
+  }
+
+  if (!metrics || metrics.length === 0) return null;
 
   /* -------------------------
      DERIVED VALUES
   ------------------------- */
 
-  const score =
-    typeof response.score === "number"
-      ? Math.round(response.score * 100)
-      : 0;
-
-  const passedCount = response.metrics.filter(
+  const passedCount = metrics.filter(
     (m) => m.status === "passed"
   ).length;
 
-  const failedCount = response.metrics.filter(
+  const failedCount = metrics.filter(
     (m) => m.status === "failed"
   ).length;
-
-  const statCards = transformStatCards(response);
 
   /* =========================
      RENDER
@@ -110,22 +91,11 @@ const ConversationOverview = ({ response, onBack }) => {
         theme="teal"
       />
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((metric, idx) => (
-          <StatCard
-            key={idx}
-            icon={metric.icon}
-            title={metric.title}
-            value={metric.value}
-            subtitle={metric.subtitle}
-            highlight={metric.highlight}
-          />
-        ))}
-      </div>
+      {/* Bar Graph */}
+      <ConversationQualityBreakdown response={{ metrics }} />
 
       {/* Detailed Metrics */}
-      <ConversationDetailedMetrics response={response} />
+      <ConversationDetailedMetrics response={{ metrics }} />
     </div>
   );
 };

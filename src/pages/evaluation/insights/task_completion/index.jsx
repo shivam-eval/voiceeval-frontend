@@ -29,31 +29,72 @@ const normalizeMetricScore = (score) => {
 const transformStatCards = (response) => {
   if (!response || !Array.isArray(response.metrics)) return [];
 
-  return response.metrics.map((m) => ({
-    title: humanizeMetricName(m.name),
-    value: normalizeMetricScore(m.score),
-    passed: m.status === "passed",
-  }));
+  // Define priority metrics to display (only 3)
+  const priorityMetrics = [
+    'task_completion_rate',
+    'sequential_task_accuracy',
+    'step_validation_pass_rate'
+  ];
+
+  // Filter to only include priority metrics and map them
+  return response.metrics
+    .filter(m => priorityMetrics.includes(m.name))
+    .map((m) => ({
+      title: humanizeMetricName(m.name),
+      value: normalizeMetricScore(m.score),
+      passed: m.status === "passed",
+    }))
+    .slice(0, 3); // Ensure max 3 cards
 };
 
 /* =========================
    COMPONENT
 ========================= */
 
-const TaskCompletionOverview = ({ response, onBack }) => {
-  if (!response || !Array.isArray(response.metrics)) return null;
+const TaskCompletionOverview = ({ response, data, onBack }) => {
+  // Handle both single evaluation (response) and aggregated data (data)
+  let metrics = [];
+  let score = 0;
 
-  const metrics = response.metrics;
+  if (response) {
+    // Called from ViewReport with single evaluation's category data
+    metrics = response?.metrics || [];
+    score = typeof response.score === "number" ? Math.round(response.score * 100) : 0;
+  } else if (data) {
+    // Called from Dashboard with aggregated data
+    const taskCategory = data.category_scores?.find(c => c.category === 'task_completion');
+    if (taskCategory) {
+      metrics = taskCategory.metrics || [];
+      score = typeof taskCategory.average_score === "number"
+        ? Math.round(taskCategory.average_score * 100)
+        : 0;
+    } else {
+      // Fallback: aggregate from all evaluations
+      const allMetrics = [];
+      let totalScore = 0;
+      let scoreCount = 0;
+
+      data.evaluations?.forEach(evaluation => {
+        const taskCat = evaluation.category_scores?.find(c => c.category === 'task_completion');
+        if (taskCat?.metrics) {
+          allMetrics.push(...taskCat.metrics);
+          if (typeof taskCat.score === 'number') {
+            totalScore += taskCat.score;
+            scoreCount++;
+          }
+        }
+      });
+
+      metrics = allMetrics;
+      score = scoreCount > 0 ? Math.round((totalScore / scoreCount) * 100) : 0;
+    }
+  }
+
+  if (!metrics || metrics.length === 0) return null;
 
   /* -------------------------
      DERIVED VALUES
   ------------------------- */
-
-  // Category score is authoritative
-  const score =
-    typeof response.score === "number"
-      ? Math.round(response.score * 100)
-      : 0;
 
   const passedCount = metrics.filter(
     (m) => m.status === "passed"
@@ -63,7 +104,7 @@ const TaskCompletionOverview = ({ response, onBack }) => {
     (m) => m.status === "failed"
   ).length;
 
-  const statCards = transformStatCards(response);
+  const statCards = transformStatCards({ metrics });
 
   /* =========================
      RENDER
@@ -152,7 +193,7 @@ const TaskCompletionOverview = ({ response, onBack }) => {
       </div>
 
       {/* ================= STAT CARDS ================= */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {statCards.map((m, idx) => (
           <StatCard
             key={idx}
@@ -165,10 +206,10 @@ const TaskCompletionOverview = ({ response, onBack }) => {
       </div>
 
       {/* ================= DISTRIBUTION ================= */}
-      <TaskCompletionDistribution response={response} />
+      <TaskCompletionDistribution response={{ metrics }} />
 
       {/* ================= DETAILED VALIDATION ================= */}
-      <DetailedValidationSection response={response} />
+      <DetailedValidationSection response={{ metrics }} />
     </div>
   );
 };

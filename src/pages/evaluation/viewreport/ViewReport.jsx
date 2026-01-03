@@ -19,54 +19,46 @@ import { ResponsiveLine } from '@nivo/line';
 import InsightTabs from '../InsightTab';
 import AccuracyView from '../insights/accuracy/Accuracy';
 import LatencyOverview from '../insights/latency';
-import CostOverview from '../insights/cost';
 import AudioOverview from '../insights/audio';
 import EndpointingOverview from '../insights/endpointing';
 import PersonaOverview from '../insights/persona';
 import TaskCompletionOverview from '../insights/task_completion';
 import ConversationOverview from '../insights/conversation';
 
-const TestReportView = ({ report, evaluation, transcriptData, simulationData, onBack }) => {
-
+const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [activeCategory, setActiveCategory] = useState('');
+const transcriptData = initialTranscriptData;
+
 
   console.log('TestReportView received evaluation:', evaluation);
 
-  // Process evaluation data from the actual evaluation object
-  const evaluationData = useMemo(() => {
-    if (!evaluation) return null;
-    
-    // Handle nested evaluation structure if present
-    const data = evaluation.evaluation || evaluation;
-    
-    const score = data.overall_score || data.score || 0;
-    const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
+  // Extract sessionId from report
+  const sessionId = report?.session_id;
 
-    return {
-      overall_score: normalizedScore,
-      passed: data.passed,
-      issues_found: data.issues_found,
-      issues: data.issues || [],
-      execution_time_ms: data.execution_time_ms,
-      recommendations: data.recommendations || [],
-      
-      // Extract category scores from metric_results
-      category_scores: data.category_scores || [],
-      
-      // Extract metric results for detailed view
-      metrics: data.metrics || data.metric_results || [],
-      
-      // Process failure propagation if available
-      failure_propagation: data.failure_propagation || {
-        critical_failure_turns: [],
-        total_tainted_steps: 0,
-        propagation_depth: 0,
-        cascading_failures: {},
-        step_health: {}
-      }
-    };
-  }, [evaluation]);
+  // Process evaluation data from the actual evaluation object
+  const evaluationData = evaluation ? {
+    overall_score: Math.round(evaluation.overall_score * 100),
+    passed: evaluation.passed,
+    issues_found: evaluation.issues_found,
+    execution_time_ms: evaluation.execution_time_ms,
+    recommendations: evaluation.recommendations || [],
+
+    // Extract category scores from metric_results
+    category_scores: evaluation.category_scores || [],
+
+    // Extract metric results for detailed view
+    metrics: evaluation.metric_results || [],
+
+    // Process failure propagation if available
+    failure_propagation: evaluation.failure_propagation || {
+      critical_failure_turns: [],
+      total_tainted_steps: 0,
+      propagation_depth: 0,
+      cascading_failures: {},
+      step_health: {}
+    }
+  } : null;
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
@@ -92,17 +84,9 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
   }, [evaluationData?.category_scores]);
 
   // Extract latency data from metrics
-  const latencyMetrics = useMemo(() => {
-    if (!Array.isArray(evaluationData?.metrics)) return [];
-    
-    return evaluationData.metrics.filter(m => 
-      m && (
-        m.category === 'latency' || 
-        (m.name && m.name.includes('latency')) || 
-        (m.name && m.name.includes('duration'))
-      )
-    );
-  }, [evaluationData?.metrics]);
+  const latencyMetrics = evaluationData?.metrics.filter(m =>
+    m.category === 'latency' || m.name.includes('latency') || m.name.includes('duration')
+  ) || [];
 
   // Mock latency timeline data (would need turn-by-turn data in production)
   const latencyData = useMemo(() => {
@@ -146,7 +130,6 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
     return 'bg-red-500/10 border-red-500/20';
   };
 
-
   const handleCategoryChange = (category) => {
     setActiveCategory(category);
     // When a category is selected, switch to overview tab to show the category view
@@ -159,32 +142,22 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
     setActiveCategory('');
   };
 
-  // Create a map of categories to their metrics
-  const categoryMap = useMemo(() => {
-    const metrics = evaluationData?.metrics;
-    if (!Array.isArray(metrics)) return {};
+  // Build categoryMap from metric_results grouped by category
+  const categoryMap = React.useMemo(() => {
+    if (!evaluation?.category_scores) return {};
 
     const map = {};
-    metrics.forEach((metric) => {
-      if (!metric) return;
-      const category = metric.category;
+
+    evaluation.category_scores.forEach((categoryData) => {
+      const category = categoryData.category;
       if (!category) return;
 
-      if (!map[category]) {
-        const categoryScore = Array.isArray(evaluationData.category_scores) 
-          ? evaluationData.category_scores.find((c) => c && c.category === category)
-          : null;
-        const score = categoryScore ? categoryScore.score : 0;
-        const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
-
-        map[category] = {
-          category,
-          score: normalizedScore,
-          weight: categoryScore ? categoryScore.weight : 0,
-          metrics: [],
-        };
-      }
-      map[category].metrics.push(metric);
+      map[category] = {
+        category: category,
+        score: categoryData.score || 0,
+        weight: categoryData.weight || 0,
+        metrics: categoryData.metrics || []
+      };
     });
     return map;
   }, [evaluationData]);
@@ -200,6 +173,9 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
 
       case 'latency':
         return <LatencyOverview response={categoryMap.latency} onBack={handleBackToOverview} />;
+
+      case 'audio_quality':
+        return <AudioOverview response={categoryMap.audio_quality} onBack={handleBackToOverview} />;
 
       case 'endpointing':
         return <EndpointingOverview response={categoryMap.endpointing} onBack={handleBackToOverview} />;
@@ -223,7 +199,6 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
         return null;
     }
   };
-
 
   return (
     <div className="flex flex-col gap-6">
@@ -279,7 +254,7 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
             <p className="text-xs text-gray-400 font-semibold uppercase">Execution Time</p>
           </div>
           <p className="text-2xl font-bold text-white">
-            {evaluationData?.execution_time_ms 
+            {evaluationData?.execution_time_ms
               ? `${(evaluationData.execution_time_ms / 1000).toFixed(1)}s`
               : 'N/A'}
           </p>
@@ -321,17 +296,12 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
         <InsightTabs
           activeCategory={activeCategory}
           onChange={handleCategoryChange}
-          categoryScores={evaluationData.category_scores.map(cat => {
-            const score = cat.score || 0;
-            // Normalize score: if it's 0-1, convert to 0-100. If already > 1, assume 0-100.
-            const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
-            
-            return {
-              category: cat.category,
-              score: normalizedScore,
-              weight: cat.weight || 0
-            };
-          })}
+          categoryScores={evaluationData.category_scores.map(cat => ({
+            category: cat.category,
+            score: Math.round(cat.score * 100),
+            weight: cat.weight
+          }))}
+          clickable={true}
         />
       )}
 
@@ -394,11 +364,10 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${
-                  activeTab === tab.id
-                    ? 'text-teal-400'
-                    : 'text-gray-400 hover:text-gray-300'
-                }`}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all relative ${activeTab === tab.id
+                  ? 'text-teal-400'
+                  : 'text-gray-400 hover:text-gray-300'
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 {tab.label}
@@ -474,7 +443,7 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
                     const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
                     
                     return (
-                      <div 
+                      <div
                         key={cat.category}
                         className="bg-dark-panel border border-gray-800/50 rounded-xl p-4 hover:border-gray-700/50 transition-all"
                       >
@@ -518,15 +487,25 @@ const TestReportView = ({ report, evaluation, transcriptData, simulationData, on
             </>
           )}
 
-          {activeTab === 'transcript' && (
-            <>
-              <CallTranscriptPanel transcriptData={transcriptData} />
-              <TurnByTurnAnalysis 
-                steps={transcriptData?.steps || []} 
-                stepHealth={evaluationData?.failure_propagation?.step_health || {}}
-              />
-            </>
-          )}
+      {activeTab === 'transcript' && (
+  <>
+    {transcriptData ? (
+      <>
+        <CallTranscriptPanel transcriptData={transcriptData} />
+        <TurnByTurnAnalysis
+          steps={transcriptData?.steps || []}
+          stepHealth={evaluationData?.failure_propagation?.step_health || {}}
+        />
+      </>
+    ) : (
+      <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
+        <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-400 text-sm">No transcript data available</p>
+      </div>
+    )}
+  </>
+)}
+
 
           {activeTab === 'metrics' && (
             <>

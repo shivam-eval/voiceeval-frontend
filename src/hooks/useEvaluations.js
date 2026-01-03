@@ -84,15 +84,50 @@ export const useEvaluateSession = () => {
 
 /**
  * Hook to batch evaluate all sessions in a simulation
+ * Supports async task polling workflow
  */
 export const useBatchEvaluateSimulation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: (simulationId) => evaluationService.batchEvaluateSimulation(simulationId),
-        onSuccess: (data, simulationId) => {
+        mutationFn: ({ simulationId, configOverrides }) => 
+            evaluationService.batchEvaluateSimulation(simulationId, configOverrides),
+        onSuccess: (data, variables) => {
+            const { simulationId } = variables;
             queryClient.invalidateQueries({ queryKey: evaluationKeys.lists() });
             queryClient.invalidateQueries({ queryKey: evaluationKeys.simulation(simulationId) });
         },
+    });
+};
+
+/**
+ * Hook to poll batch evaluation task status
+ */
+export const useBatchEvaluationStatus = (taskId, options = {}) => {
+    return useQuery({
+        queryKey: ['evaluation', 'batch', 'status', taskId],
+        queryFn: () => evaluationService.getBatchEvaluationStatus(taskId),
+        enabled: !!taskId && options.enabled !== false,
+        refetchInterval: (data) => {
+            // Stop polling if completed or failed
+            if (!data || data.status === 'completed' || data.status === 'failed') {
+                return false;
+            }
+            // Poll every 2 seconds while running
+            return 2000;
+        },
+        staleTime: 0, // Always fetch fresh data
+    });
+};
+
+/**
+ * Hook to get simulation evaluation report
+ */
+export const useSimulationReport = (simulationId, format = 'json') => {
+    return useQuery({
+        queryKey: ['evaluation', 'report', simulationId, format],
+        queryFn: () => evaluationService.getSimulationReport(simulationId, format),
+        enabled: !!simulationId,
+        staleTime: 60000, // Cache for 1 minute
     });
 };

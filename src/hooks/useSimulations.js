@@ -72,12 +72,14 @@ export const useRunSimulation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ testSuiteId, phoneNumber, agentId, metadata, parallelExecution, maxConcurrency }) =>
-            simulationsApi.runSimulation(testSuiteId, phoneNumber, {
-                agentId,
+        mutationFn: ({ test_suite_id, phone_number, agent_id, metadata, parallel_execution, max_concurrency }) =>
+            simulationsApi.runSimulation({
+                test_suite_id,
+                phone_number,
+                agent_id,
                 metadata,
-                parallelExecution,
-                maxConcurrency
+                parallel_execution,
+                max_concurrency
             }),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: simulationKeys.lists() });

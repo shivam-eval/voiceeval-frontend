@@ -46,11 +46,27 @@ export const evaluateSession = (sessionId, configOverrides = {}) =>
 
 /**
  * Batch evaluate all sessions in a simulation
+ * Returns task_id for polling or cached results immediately
  */
-export const batchEvaluateSimulation = (simulationId) =>
+export const batchEvaluateSimulation = (simulationId, configOverrides = {}) =>
   apiClient.post('/api/v1/evaluate/batch', {
-    simulation_id: simulationId
+    simulation_id: simulationId,
+    config_overrides: configOverrides
   });
+
+/**
+ * Get status of batch evaluation task
+ */
+export const getBatchEvaluationStatus = (taskId) =>
+  apiClient.get(`/api/v1/evaluate/batch/${taskId}/status`);
+
+/**
+ * Get formatted evaluation report for a simulation
+ * @param {string} simulationId - ID of the simulation
+ * @param {string} format - 'json' (full) or 'summary' (overview)
+ */
+export const getSimulationReport = (simulationId, format = 'json') =>
+  apiClient.get(`/api/v1/evaluate/simulation/${simulationId}/report`, { format });
 
 /**
  * Evaluate a transcript (existing)
@@ -74,6 +90,8 @@ const evaluationService = {
   getSimulationEvaluations,
   evaluateSession,
   batchEvaluateSimulation,
+  getBatchEvaluationStatus,
+  getSimulationReport,
   evaluateTranscript,
   getEvaluationResults,
 };

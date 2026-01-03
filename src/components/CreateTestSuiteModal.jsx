@@ -1,6 +1,9 @@
 import { useState } from "react";
 import Button from "./Button";
 import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
+import { usePersonas } from "../hooks/usePersonas";
+import { useTestProfiles } from "../hooks/useTestProfiles";
+import { useAgentFlows } from "../hooks/useFlows";
 
 const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, defaultAgentId }) => {
     const [currentStep, setCurrentStep] = useState(1);
@@ -12,13 +15,20 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
         agent_id: defaultAgentId || "",
 
         // Step 2: Test Case Type
-        testCaseType: "scenario", // scenario, transcript, audio, graph, ivr
+        testCaseType: "scenario", // scenario, audio, graph
 
-        // Step 3: Configuration
+        // Step 3: Configuration (for scenario/audio)
         test_profile_id: "",
         persona_id: "",
         metrics: [],
         extra_instructions: "",
+
+        // Step 3: Generation Config (for graph/flow-based)
+        flow_id: "",  // Selected flow for generation
+        call_type: "inbound",
+        max_paths: 10,
+        include_edge_cases: true,
+        region: "apac_india",
 
         // Audio upload specific
         audioFiles: [],
@@ -27,6 +37,22 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
     const [uploadProgress, setUploadProgress] = useState({});
     const [uploadResults, setUploadResults] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+
+    // Load personas and test profiles
+    const { data: personasData } = usePersonas({ limit: 500 });
+    const { data: testProfilesData } = useTestProfiles({ 
+        agent_id: formData.agent_id,
+        limit: 500 
+    });
+    const { data: flowsData, isLoading: flowsLoading } = useAgentFlows(formData.agent_id);
+
+    const personas = personasData?.personas || [];
+    const testProfiles = testProfilesData?.test_profiles || [];
+    const flows = flowsData?.flows || [];
+    
+    console.log('Agent ID:', formData.agent_id);
+    console.log('Flows Data:', flowsData);
+    console.log('Flows Array:', flows);
 
     const totalSteps = formData.testCaseType === 'audio' ? 4 : 3;
 
@@ -151,6 +177,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                         description: formData.description,
                         owner: formData.owner,
                         agent_id: formData.agent_id,
+                        flow_id: formData.flow_id || undefined,
                         test_cases: [],
                         metadata: {
                             test_case_type: formData.testCaseType,
@@ -174,12 +201,20 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                 description: formData.description,
                 owner: formData.owner,
                 agent_id: formData.agent_id,
+                flow_id: formData.flow_id || undefined,
                 test_cases: [],
                 metadata: {
                     test_case_type: formData.testCaseType,
                     extra_instructions: formData.extra_instructions,
                     test_profile_id: formData.test_profile_id,
                     default_persona_id: formData.persona_id,
+                    // Include generation config for graph-based
+                    ...(formData.testCaseType === 'graph' && {
+                        call_type: formData.call_type,
+                        region: formData.region,
+                        max_paths: formData.max_paths,
+                        include_edge_cases: formData.include_edge_cases
+                    })
                 }
             };
             onSubmit(suiteData);
@@ -197,7 +232,8 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                 if (formData.testCaseType === 'audio') {
                     return true;
                 }
-                return true; // Optional fields
+                // For graph/flow-based type, flow_id is optional (will auto-generate if not provided)
+                return true;
             case 4:
                 // Audio upload step - at least one file required
                 return formData.audioFiles.length > 0;
@@ -347,25 +383,6 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     </div>
                                 </button>
 
-                                {/* Transcripts Card */}
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, testCaseType: 'transcript' })}
-                                    className={`p-6 rounded-xl border-2 transition-all text-left ${formData.testCaseType === 'transcript'
-                                        ? 'border-purple-500 bg-purple-500/10 shadow-lg shadow-purple-500/20'
-                                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
-                                        }`}
-                                >
-                                    <div className="text-4xl mb-3">📄</div>
-                                    <h4 className="text-lg font-bold text-white mb-2">Transcripts</h4>
-                                    <p className="text-sm text-gray-400">
-                                        Conversation logs from real calls. We'll replay them.
-                                    </p>
-                                    <div className="mt-4 text-xs text-gray-500">
-                                        Best for: Real conversation replay
-                                    </div>
-                                </button>
-
                                 {/* Audio Files Card */}
                                 <button
                                     type="button"
@@ -395,31 +412,12 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                         }`}
                                 >
                                     <div className="text-4xl mb-3">📊</div>
-                                    <h4 className="text-lg font-bold text-white mb-2">Graph-based</h4>
+                                    <h4 className="text-lg font-bold text-white mb-2">Flow-based</h4>
                                     <p className="text-sm text-gray-400">
-                                        Flow diagrams and decision trees for automated logic testing.
+                                        Generate test cases from flow tree for automated logic testing.
                                     </p>
                                     <div className="mt-4 text-xs text-gray-500">
                                         Best for: Complete flow coverage
-                                    </div>
-                                </button>
-
-                                {/* IVR Testing Card */}
-                                <button
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, testCaseType: 'ivr' })}
-                                    className={`p-6 rounded-xl border-2 transition-all text-left ${formData.testCaseType === 'ivr'
-                                        ? 'border-orange-500 bg-orange-500/10 shadow-lg shadow-orange-500/20'
-                                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
-                                        }`}
-                                >
-                                    <div className="text-4xl mb-3">☎️</div>
-                                    <h4 className="text-lg font-bold text-white mb-2">IVR Testing</h4>
-                                    <p className="text-sm text-gray-400">
-                                        Phone tree navigation and DTMF input sequence tests.
-                                    </p>
-                                    <div className="mt-4 text-xs text-gray-500">
-                                        Best for: IVR systems
                                     </div>
                                 </button>
                             </div>
@@ -439,32 +437,185 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                     {/* Step 3: Configuration */}
                     {currentStep === 3 && (
                         <div className="space-y-6">
+                            {/* Flow-based: Generation Config */}
+                            {formData.testCaseType === 'graph' ? (
+                                <>
+                                    {/* Flow Selection */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                            Select Flow <span className="text-gray-500">(Optional)</span>
+                                        </label>
+                                        {flowsLoading ? (
+                                            <div className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-400">
+                                                Loading flows...
+                                            </div>
+                                        ) : (
+                                            <select
+                                                value={formData.flow_id}
+                                                onChange={(e) => handleInputChange('flow_id', e.target.value)}
+                                                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
+                                                disabled={!formData.agent_id}
+                                            >
+                                                <option value="">-- Auto-generate new flow --</option>
+                                                {flows.map((flow) => (
+                                                    <option key={flow.flow_id} value={flow.flow_id}>
+                                                        {flow.name} ({new Date(flow.created_at).toLocaleDateString()})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
+                                        {!formData.agent_id && (
+                                            <p className="text-xs text-yellow-400 mt-1">
+                                                ⚠️ Please select an agent first
+                                            </p>
+                                        )}
+                                        {formData.agent_id && flows.length === 0 && !flowsLoading && (
+                                            <p className="text-xs text-blue-400 mt-1">
+                                                ℹ️ No flows found. A new flow will be automatically generated from your agent's configuration.
+                                            </p>
+                                        )}
+                                        {flows.length > 0 && (
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                Choose an existing flow or leave empty to auto-generate a new one
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Call Type */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-3">
+                                            Call Type <span className="text-red-400">*</span>
+                                        </label>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {["inbound", "outbound"].map((type) => (
+                                                <button
+                                                    key={type}
+                                                    type="button"
+                                                    onClick={() => handleInputChange('call_type', type)}
+                                                    className={`p-4 rounded-lg border-2 transition-all ${formData.call_type === type
+                                                        ? 'border-teal-400 bg-teal-400/10'
+                                                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                                                        }`}
+                                                >
+                                                    <div className="text-lg font-semibold text-white mb-1">
+                                                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                                                    </div>
+                                                    <div className="text-sm text-gray-400">
+                                                        {type === 'inbound' ? 'Customer calls agent' : 'Agent calls customer'}
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {/* Region */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                            Region <span className="text-red-400">*</span>
+                                        </label>
+                                        <select
+                                            value={formData.region}
+                                            onChange={(e) => handleInputChange('region', e.target.value)}
+                                            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
+                                        >
+                                            <option value="apac_india">APAC - India</option>
+                                            <option value="na">North America</option>
+                                            <option value="eu">Europe</option>
+                                            <option value="default">Default</option>
+                                        </select>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            Personas will be assigned based on this region
+                                        </p>
+                                    </div>
+
+                                    {/* Max Paths */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                            Maximum Test Paths
+                                        </label>
+                                        <input
+                                            type="number"
+                                            value={formData.max_paths}
+                                            onChange={(e) => handleInputChange('max_paths', parseInt(e.target.value) || 10)}
+                                            min={1}
+                                            max={50}
+                                            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
+                                        />
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            Limit the number of test paths to generate (1-50)
+                                        </p>
+                                    </div>
+
+                                    {/* Include Edge Cases */}
+                                    <div className="flex items-center justify-between p-4 bg-gray-800 rounded-lg border border-gray-700">
+                                        <div>
+                                            <label className="text-sm font-medium text-white">Include Edge Cases</label>
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                Generate additional test cases for fallback and error scenarios
+                                            </p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleInputChange('include_edge_cases', !formData.include_edge_cases)}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.include_edge_cases ? 'bg-teal-500' : 'bg-gray-600'
+                                                }`}
+                                        >
+                                            <span
+                                                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.include_edge_cases ? 'translate-x-6' : 'translate-x-1'
+                                                    }`}
+                                            />
+                                        </button>
+                                    </div>
+
+                                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                                        <p className="text-sm text-blue-400">
+                                            💡 AI will analyze your flow tree and generate test paths with auto-assigned personas
+                                        </p>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    {/* Scenario/Audio: Default Profile & Persona */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Test Profile
+                                    Test Profile <span className="text-gray-500 text-xs">(Variable Sets)</span>
                                 </label>
                                 <select
                                     value={formData.test_profile_id}
                                     onChange={(e) => handleInputChange('test_profile_id', e.target.value)}
                                     className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
                                 >
-                                    <option value="">None (use default)</option>
-                                    {/* TODO: Load test profiles */}
+                                    <option value="">None (no test data)</option>
+                                    {testProfiles.map((profile) => (
+                                        <option key={profile._id} value={profile._id}>
+                                            {profile.name}
+                                        </option>
+                                    ))}
                                 </select>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Inject variables like customer_name, order_id into test conversations
+                                </p>
                             </div>
 
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Default Persona
+                                    Default Persona <span className="text-gray-500 text-xs">(User Behavior)</span>
                                 </label>
                                 <select
                                     value={formData.persona_id}
                                     onChange={(e) => handleInputChange('persona_id', e.target.value)}
                                     className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
                                 >
-                                    <option value="">None (will set per test case)</option>
-                                    {/* TODO: Load personas */}
+                                    <option value="">None (set per test case)</option>
+                                    {personas.map((persona) => (
+                                        <option key={persona.persona_id} value={persona.persona_id}>
+                                            {persona.name}
+                                        </option>
+                                    ))}
                                 </select>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Voice characteristics and behavior traits (patience, verbosity, tech-savviness)
+                                </p>
                             </div>
 
                             <div>
@@ -487,6 +638,8 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                         : '💡 Tip: You can add individual test cases after creating the suite.'}
                                 </p>
                             </div>
+                                </>
+                            )}
                         </div>
                     )}
 

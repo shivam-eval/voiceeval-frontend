@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import {
   DEBT_COLLECTION_TRANSCRIPTS,
 } from "./const";
@@ -18,6 +19,7 @@ import TaskCompletionOverview from "./insights/task_completion";
 import ConversationOverview from "./insights/conversation";
 import { useWorkflow } from "../../context/WorkFlowContext";
 import { getSessionTranscript } from "../../api/services/simulation.service";
+import { useSimulationReport } from "../../hooks/useEvaluations";
 
 const CATEGORY = {
   OVERVIEW: "",
@@ -42,25 +44,65 @@ const CATEGORY_TITLES = {
 };
 
 const EvaluationDashboard = ({ onBack }) => {
+  const { simulationId } = useParams();
   const [activeCategory, setActiveCategory] = useState(CATEGORY.OVERVIEW);
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedTranscript, setSelectedTranscript] = useState(null);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
 
   const { workflow } = useWorkflow();
+  
+  // Fetch evaluation report from API
+  const { data: apiReport, isLoading: isLoadingReport, error: reportError } = useSimulationReport(
+    simulationId, 
+    'json'
+  );
+  
+  console.log('simulationId from URL:', simulationId);
+  console.log('API report data:', apiReport);
   console.log('Full workflow:', workflow);
 
-  // Access the nested structure properly
-  const simulationResult = workflow?.simulationResult;
-  const fullResponse = simulationResult?.fullResponse;
-  const evaluationResult = simulationResult?.evaluationResult;
+  // Try API data first, fall back to context data
+  let fullResponse, simulationResult, evaluationResult;
+  
+  if (apiReport) {
+    // Use API data
+    fullResponse = apiReport;
+    simulationResult = { simulationId };
+    evaluationResult = apiReport.simulation_evaluation;
+  } else {
+    // Fall back to context data
+    simulationResult = workflow?.simulationResult;
+    fullResponse = simulationResult?.fullResponse;
+    evaluationResult = simulationResult?.evaluationResult;
+  }
 
   console.log('simulationResult:', simulationResult);
   console.log('fullResponse:', fullResponse);
   console.log('evaluationResult:', evaluationResult);
 
+  if (isLoadingReport) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mb-4"></div>
+          <p className="text-gray-400">Loading evaluation report...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (reportError) {
+    return (
+      <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-6 m-8">
+        <h3 className="text-red-400 font-semibold mb-2">Error loading evaluation</h3>
+        <p className="text-gray-400">{reportError.message || 'Failed to load evaluation report'}</p>
+      </div>
+    );
+  }
+
   if (!simulationResult || !fullResponse) {
-    return <div className="text-gray-400 px-8">Loading evaluation…</div>;
+    return <div className="text-gray-400 px-8">No evaluation data available</div>;
   }
 
   // Get evaluations array from fullResponse

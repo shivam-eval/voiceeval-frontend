@@ -6,9 +6,10 @@ import {
     ChevronRight, ChevronDown, Eye, BarChart3, Hash, Activity, Star
 } from 'lucide-react';
 import { useSimulationWithLiveUpdates, useSimulationSessions, useCancelSimulation, useRerunSimulation, useDeleteSimulation } from '../../hooks/useSimulations';
+import { useBatchEvaluateSimulation, useBatchEvaluationStatus } from '../../hooks/useEvaluations';
 import Badge from '../../components/Badge';
 import Button from '../../components/Button';
-import { batchEvaluate, getEvaluationResults } from '../../api';
+import { getEvaluationResults } from '../../api';
 import { useWorkflow } from '../../context/WorkFlowContext';
 
 const SimulationDetailPage = () => {
@@ -17,6 +18,8 @@ const SimulationDetailPage = () => {
     const [expandedSessions, setExpandedSessions] = useState([]);
     const [sessionFilter, setSessionFilter] = useState('all');
     const [isEvaluating, setIsEvaluating] = useState(false);
+    const [evaluationTaskId, setEvaluationTaskId] = useState(null);
+    const [evaluationProgress, setEvaluationProgress] = useState(null);
     const { setSimulationResult } = useWorkflow();
 
     // Fetch simulation with live updates (auto-polls if running)
@@ -28,6 +31,29 @@ const SimulationDetailPage = () => {
     const cancelSimulation = useCancelSimulation();
     const rerunSimulation = useRerunSimulation();
     const deleteSimulation = useDeleteSimulation();
+    const batchEvaluate = useBatchEvaluateSimulation();
+    
+    // Poll task status if evaluating
+    const { data: taskStatus } = useBatchEvaluationStatus(evaluationTaskId, {
+        enabled: !!evaluationTaskId
+    });
+
+    // Handle task completion
+    useEffect(() => {
+        if (taskStatus?.status === 'completed') {
+            setIsEvaluating(false);
+            setEvaluationTaskId(null);
+            setEvaluationProgress(null);
+            navigate(`/evaluations/results/${simulationId}`);
+        } else if (taskStatus?.status === 'failed') {
+            setIsEvaluating(false);
+            setEvaluationTaskId(null);
+            setEvaluationProgress(null);
+            alert('Evaluation failed: ' + (taskStatus.error || 'Unknown error'));
+        } else if (taskStatus?.progress) {
+            setEvaluationProgress(taskStatus.progress);
+        }
+    }, [taskStatus, simulationId, navigate]);
 
     const toggleSession = (sessionId) => {
         setExpandedSessions(prev =>
@@ -71,13 +97,16 @@ const SimulationDetailPage = () => {
 
     const handleViewEvaluation = async () => {
         setIsEvaluating(true);
+        setEvaluationProgress(null);
+        
         try {
             // First, check if evaluation already exists
             try {
                 const existingEvaluation = await getEvaluationResults(simulationId);
-                if (existingEvaluation.data) {
+                if (existingEvaluation.data && existingEvaluation.data.evaluations?.length > 0) {
                     // Evaluation exists, navigate directly to results
                     console.log('Existing evaluation found, navigating to results');
+                    setIsEvaluating(false);
                     navigate(`/evaluations/results/${simulationId}`);
                     return;
                 }
@@ -87,10 +116,19 @@ const SimulationDetailPage = () => {
             }
 
             // No existing evaluation, call batch evaluate API
-            await batchEvaluate(simulationId);
+            const result = await batchEvaluate.mutateAsync({ 
+                simulationId, 
+                configOverrides: {} 
+            });
 
-            // Navigate to evaluation results page
-            navigate(`/evaluations/results/${simulationId}`);
+            // Check if cached results returned immediately
+            if (result.cached || result.status === 'completed') {
+                setIsEvaluating(false);
+                navigate(`/evaluations/results/${simulationId}`);
+            } else {
+                // Start polling with task_id
+                setEvaluationTaskId(result.task_id);
+            }
         } catch (error) {
             console.error('Batch evaluation failed:', error);
             alert('Failed to run evaluation: ' + (error.response?.data?.detail || error.message));
@@ -155,6 +193,9 @@ const SimulationDetailPage = () => {
     }
 
     if (isEvaluating) {
+        const progress = evaluationProgress || { total: 0, evaluated: 0, failed: 0 };
+        const percentage = progress.total > 0 ? Math.round((progress.evaluated / progress.total) * 100) : 0;
+        
         return (
             <div className="p-8">
                 <div className="flex items-center justify-center h-screen">
@@ -167,11 +208,37 @@ const SimulationDetailPage = () => {
                             <p className="text-gray-400 mb-4">
                                 Analyzing simulation results and generating evaluation metrics...
                             </p>
-                            <div className="mt-6">
-                                <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                                    <div className="h-full bg-gradient-to-r from-teal-400 to-green-400 animate-pulse" style={{ width: '70%' }}></div>
+                            {progress.total > 0 && (
+                                <div className="mt-6 space-y-3">
+                                    <div className="flex justify-between text-sm text-gray-400">
+                                        <span>Progress: {progress.evaluated} / {progress.total} sessions</span>
+                                        <span>{percentage}%</span>
+                                    </div>
+                                    <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-300" 
+                                            style={{ width: `${percentage}%` }}
+                                        ></div>
+                                    </div>
+                                    {progress.failed > 0 && (
+                                        <p className="text-orange-400 text-sm">
+                                            ⚠️ {progress.failed} session(s) failed to evaluate
+                                        </p>
+                                    )}
+                                    {progress.current_session_id && (
+                                        <p className="text-gray-500 text-xs">
+                                            Current: {progress.current_session_id}
+                                        </p>
+                                    )}
                                 </div>
-                            </div>
+                            )}
+                            {!progress.total && (
+                                <div className="mt-6">
+                                    <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                                        <div className="h-full bg-gradient-to-r from-teal-400 to-green-400 animate-pulse" style={{ width: '70%' }}></div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

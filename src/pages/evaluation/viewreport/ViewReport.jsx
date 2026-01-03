@@ -107,33 +107,19 @@ const transcriptData = initialTranscriptData;
     );
   }, [evaluationData?.metrics]);
 
-  // Mock latency timeline data (would need turn-by-turn data in production)
-  const latencyData = useMemo(() => {
-    if (latencyMetrics.length > 0) {
-      return [
-        {
-          id: 'Response Time',
-          data: latencyMetrics.slice(0, 5).map((metric, idx) => ({
-            x: `Turn ${idx + 1}`,
-            y: metric.details?.duration_ms ? metric.details.duration_ms / 1000 : 1.5
-          }))
-        }
-      ];
+  // Process latency timeline data from transcript steps
+  const latencyData = transcriptData?.steps?.some(s => s.latency_s !== undefined) ? [
+    {
+      id: "latency",
+      color: "hsl(172, 70%, 50%)",
+      data: transcriptData.steps
+        .filter(step => step.latency_s !== undefined)
+        .map((step, idx) => ({
+          x: idx + 1,
+          y: step.latency_s
+        }))
     }
-    
-    return [
-      {
-        id: 'Response Time',
-        data: [
-          { x: 'Turn 1', y: 1.2 },
-          { x: 'Turn 2', y: 1.5 },
-          { x: 'Turn 3', y: 1.8 },
-          { x: 'Turn 4', y: 1.3 },
-          { x: 'Turn 5', y: 1.6 }
-        ]
-      }
-    ];
-  }, [latencyMetrics]);
+  ] : [];
 
   const getScoreColor = (score) => {
     if (score >= 90) return 'text-green-400';

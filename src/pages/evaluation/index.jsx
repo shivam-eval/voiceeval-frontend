@@ -41,66 +41,34 @@ const CATEGORY_TITLES = {
   [CATEGORY.CONVERSATION]: "CONVERSATION OVERVIEW"
 };
 
-const EvaluationDashboard = ({ onBack }) => {
+const EvaluationDashboard = ({ evaluationData: propEvaluationData, simulationData: propSimulationData, onBack }) => {
   const [activeCategory, setActiveCategory] = useState(CATEGORY.OVERVIEW);
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedTranscript, setSelectedTranscript] = useState(null);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
 
   const { workflow } = useWorkflow();
-  console.log('Full workflow:', workflow);
 
-  // Access the nested structure properly
+  // Determine which data source to use: props (real), workflow (real), or resData (mock)
   const simulationResult = workflow?.simulationResult;
   const fullResponse = simulationResult?.fullResponse;
-  const evaluationResult = simulationResult?.evaluationResult;
+  
+  const evaluationData = propEvaluationData || fullResponse?.simulation_evaluation;
+  const simulationData = propSimulationData;
+  const evaluations = propEvaluationData?.evaluations || fullResponse?.evaluations || [];
+  
+  const isUsingRealData = !!(evaluationData || simulationData || fullResponse);
 
-  console.log('simulationResult:', simulationResult);
-  console.log('fullResponse:', fullResponse);
-  console.log('evaluationResult:', evaluationResult);
-
-  if (!simulationResult || !fullResponse) {
-    return <div className="text-gray-400 px-8">Loading evaluation…</div>;
-  }
-
-  // Get evaluations array from fullResponse
-  const evaluations = fullResponse.evaluations || [];
-  const simulationEvaluation = fullResponse.simulation_evaluation || {
-    total_sessions_evaluated: 0,
-    average_overall_score: 0,
-    average_category_scores: [],
-  };
-
-  console.log('Evaluations:', evaluations);
-  console.log('Simulation Evaluation:', simulationEvaluation);
-
-  const firstEvaluation = evaluations[0];
-
-  // Calculate total execution time from all evaluations
-  const totalExecutionTime = evaluations.reduce((sum, evaluation) => {
-    return sum + (evaluation.execution_time_ms || 0);
-  }, 0) || 0;
-
-  const averageExecutionTime = evaluations.length > 0
-    ? totalExecutionTime / evaluations.length
-    : 0;
-
-  // Prepare simulation data
-  const passedCount = evaluations.filter(e => e.passed).length;
-  const failedCount = evaluations.length - passedCount;
-
-  const simulationDataFromRes = {
-    simulation_id: fullResponse.simulation_id || simulationResult.simulationId,
+  // Simulation Data Logic
+  const currentSimulationData = simulationData || (fullResponse ? {
+    simulation_id: fullResponse.simulation_id || simulationResult?.simulationId,
     execution_summary: {
       total_test_cases: evaluations.length,
-      completed_test_cases: passedCount,
-      failed_test_cases: failedCount,
+      completed_test_cases: evaluations.filter(e => e.passed).length,
+      failed_test_cases: evaluations.filter(e => !e.passed).length,
     },
     timing: {
-      start_time_ms: Date.now() - totalExecutionTime,
-      end_time_ms: Date.now(),
-      duration_ms: totalExecutionTime,
-      average_duration_ms: averageExecutionTime
+      duration_ms: evaluations.reduce((sum, e) => sum + (e.execution_time_ms || 0), 0),
     },
     transcript_results: evaluations.map(evaluation => ({
       transcript_result_id: evaluation.evaluation_id,
@@ -108,169 +76,167 @@ const EvaluationDashboard = ({ onBack }) => {
       path_id: evaluation.path_id,
       test_id: evaluation.test_case_name || evaluation.path_id || 'Test Case',
       status: evaluation.passed ? "completed" : "failed",
-      overall_score: typeof evaluation.overall_score === 'number'
-        ? Math.round(evaluation.overall_score * 100)
-        : Math.round(parseFloat(evaluation.overall_score) * 100)
+      overall_score: Math.round((evaluation.overall_score || 0) * 100)
     })),
-    flow_tree_name: firstEvaluation?.path_id || "Real Estate Qualification",
-    schema_version: "1.0"
-  };
+    flow_tree_name: evaluations[0]?.path_id || "Real Estate Qualification",
+  } : {
+    simulation_id: "",
+    execution_summary: { total_test_cases: 0, completed_test_cases: 0, failed_test_cases: 0 },
+    timing: { duration_ms: 0 },
+    transcript_results: [],
+    flow_tree_name: "Real Estate Qualification",
+  });
 
-  // Calculate summary metrics
+  // Evaluation Metrics Logic
+  const evalSource = evaluationData || fullResponse?.simulation_evaluation;
+  
   const summaryMetrics = [
     {
       id: "overall_score",
-      mainText: `${Math.round(simulationEvaluation.average_overall_score * 100)}%`,
-      successRate: simulationEvaluation.average_overall_score,
+      mainText: `${Math.round((evalSource?.average_overall_score || 0) * 100)}%`,
+      successRate: evalSource?.average_overall_score || 0,
       sideText: "Overall Score"
     },
     {
       id: "accuracy",
-      mainText: `${Math.round((simulationEvaluation.average_category_scores?.find(c => c.category === "accuracy")?.average_score || 0) * 100)}%`,
-      successRate: simulationEvaluation.average_category_scores?.find(c => c.category === "accuracy")?.average_score || 0,
+      mainText: `${Math.round((evalSource?.average_category_scores?.find(c => c.category === "accuracy")?.average_score || 0) * 100)}%`,
+      successRate: evalSource?.average_category_scores?.find(c => c.category === "accuracy")?.average_score || 0,
       sideText: "Accuracy"
     },
     {
       id: "task_completion",
-      mainText: `${Math.round((simulationEvaluation.average_category_scores?.find(c => c.category === "task_completion")?.average_score || 0) * 100)}%`,
-      successRate: simulationEvaluation.average_category_scores?.find(c => c.category === "task_completion")?.average_score || 0,
+      mainText: `${Math.round((evalSource?.average_category_scores?.find(c => c.category === "task_completion")?.average_score || 0) * 100)}%`,
+      successRate: evalSource?.average_category_scores?.find(c => c.category === "task_completion")?.average_score || 0,
       sideText: "Task Completion"
     },
     {
       id: "latency",
-      mainText: `${Math.round((simulationEvaluation.average_category_scores?.find(c => c.category === "latency")?.average_score || 0) * 100)}%`,
-      successRate: simulationEvaluation.average_category_scores?.find(c => c.category === "latency")?.average_score || 0,
+      mainText: `${Math.round((evalSource?.average_category_scores?.find(c => c.category === "latency")?.average_score || 0) * 100)}%`,
+      successRate: evalSource?.average_category_scores?.find(c => c.category === "latency")?.average_score || 0,
       sideText: "Latency"
     }
   ];
 
-  // Prepare category scores for InsightTabs
-  const categoryScores = (simulationEvaluation.average_category_scores || []).map(cat => ({
+  const categoryScores = (evalSource?.average_category_scores || []).map(cat => ({
     category: cat.category,
     score: Math.round(cat.average_score * 100),
     weight: cat.average_weight
   }));
 
-  // Generate improvements from ALL evaluations
+  // Improvements Logic
+  const evaluationsList = evaluations;
   const improvements = [];
-
-  evaluations.forEach((evaluation, evalIndex) => {
-    if (evaluation.recommendations && Array.isArray(evaluation.recommendations) && evaluation.recommendations.length > 0) {
+  
+  evaluationsList.forEach((evaluation, evalIndex) => {
+    if (evaluation.recommendations?.length > 0) {
       evaluation.recommendations.forEach((rec, recIndex) => {
         let priority = "medium";
-        if (evaluation.overall_score < 0.6 || recIndex === 0) {
-          priority = "high";
-        } else if (evaluation.overall_score > 0.85 || recIndex > 1) {
-          priority = "low";
-        }
-
+        if (evaluation.overall_score < 0.6 || recIndex === 0) priority = "high";
+        else if (evaluation.overall_score > 0.85 || recIndex > 1) priority = "low";
+        
         improvements.push({
-          priority: priority,
+          priority,
           message: rec,
           metric: evaluation.test_case_name || evaluation.path_id || `Test Case #${evalIndex + 1}`,
           testCaseId: evaluation.evaluation_id,
-          score: Math.round(evaluation.overall_score * 100)
+          score: Math.round((evaluation.overall_score || 0) * 100)
         });
       });
     }
-
-    if ((!evaluation.recommendations || evaluation.recommendations.length === 0) && evaluation.issues_found > 0) {
-      improvements.push({
-        priority: evaluation.overall_score < 0.6 ? "high" : "medium",
-        message: `${evaluation.issues_found} issues found in this test case. Review detailed metrics for specifics.`,
-        metric: evaluation.test_case_name || evaluation.path_id || `Test Case #${evalIndex + 1}`,
-        testCaseId: evaluation.evaluation_id,
-        score: Math.round(evaluation.overall_score * 100)
-      });
-    }
   });
-
+  
   if (improvements.length === 0) {
     improvements.push(
-      {
-        priority: "high",
-        message: "Semantic accuracy is below threshold. Review expected responses and validation criteria.",
-        metric: "Accuracy",
-      },
-      {
-        priority: "medium",
-        message: "Pause detection flagged unusually long silences. Consider tuning endpointing thresholds.",
-        metric: "Endpointing",
-      },
-      {
-        priority: "low",
-        message: "Conversation tone consistency can be improved for better persona alignment.",
-        metric: "Persona",
-      }
+      { priority: "high", message: "Semantic accuracy is below threshold. Review expected responses.", metric: "Accuracy" },
+      { priority: "medium", message: "Pause detection flagged unusually long silences.", metric: "Endpointing" }
     );
   }
 
-  const getTranscriptData = async (sessionId) => {
-    const res = await getSessionTranscript(sessionId);
-    const json = res.data;
-    const t = json.transcript_steps || {};
+  const getTranscriptData = async (transcriptId) => {
+    // 1. Check in real evaluation data if present
+    const evaluation = evaluationsList.find(
+      e => e.evaluation_id === transcriptId || e.session_id === transcriptId
+    );
 
-    return {
-      steps: (t.steps || []).map(step => ({
-        ...step,
-        turn_role: step.turn_role === "simulator" ? "user" : step.turn_role
-      })),
-      metadata: {
-        ...(t.metadata || {}),
-        duration_ms: t.timing?.duration_ms
+    if (evaluation?.transcript_steps) {
+      return {
+        ...evaluation.transcript_steps,
+        metadata: {
+          ...(evaluation.transcript_steps.metadata || {}),
+          ...(evaluation.metadata || {}),
+          audio_files: evaluation.audio_files || evaluation.metadata?.audio_files || []
+        }
+      };
+    }
+
+    // 2. Fallback to API call if sessionId is available
+    if (evaluation?.session_id) {
+      try {
+        const res = await getSessionTranscript(evaluation.session_id);
+        const t = res.data.transcript_steps || {};
+        return {
+          steps: (t.steps || []).map(step => ({
+            ...step,
+            turn_role: step.turn_role === "simulator" ? "user" : step.turn_role
+          })),
+          metadata: {
+            ...(t.metadata || {}),
+            duration_ms: t.timing?.duration_ms,
+            audio_files: evaluation.audio_files || evaluation.metadata?.audio_files || []
+          }
+        };
+      } catch (err) {
+        console.error("Failed to fetch transcript:", err);
       }
-    };
-  };
+    }
 
+    return null;
+  };
 
   const handleViewReport = async (report) => {
-    try {
-      const evaluation = evaluations.find(
-        e => e.session_id === report.session_id
-      );
-
-      if (!evaluation) {
-        console.error("No evaluation found for session:", report.session_id);
-        return;
-      }
-
-      setSelectedReport(report);
-      setSelectedEvaluation(evaluation);
-
-      const transcript = await getTranscriptData(report.session_id);
-      setSelectedTranscript(transcript);
-
-    } catch (err) {
-      console.error("Failed to load transcript:", err);
-      setSelectedTranscript(null);
-    }
+    const transcriptId = report.transcript_result_id || report.session_id;
+    const fullEvaluation = evaluationsList.find(
+      e => e.evaluation_id === transcriptId || e.session_id === transcriptId
+    );
+    
+    setSelectedReport(report);
+    setSelectedEvaluation(fullEvaluation);
+    
+    const transcriptData = await getTranscriptData(transcriptId);
+    setSelectedTranscript(transcriptData);
   };
-
-
-
 
   const renderOverview = () => (
     <div className="flex flex-col gap-6">
-      <SimulationOverview simulationData={simulationDataFromRes} />
+      <SimulationOverview simulationData={currentSimulationData} />
 
-      <CallResultsTable
-        transcriptResults={simulationDataFromRes.transcript_results}
+      <CallResultsTable 
+        transcriptResults={currentSimulationData.transcript_results}
         onViewReport={handleViewReport}
-        evaluationData={evaluations}
-        simulationId={simulationDataFromRes.simulation_id}
+        evaluationData={evaluationsList}
+        simulationId={currentSimulationData.simulation_id}
       />
+
+      <div className="grid grid-cols-4 gap-4">
+        {summaryMetrics.map((metric) => (
+          <SummaryMetric
+            key={metric.id}
+            mainText={metric.mainText}
+            successRate={metric.successRate}
+            sideText={metric.sideText}
+          />
+        ))}
+      </div>
 
       <InsightTabs
         activeCategory={activeCategory}
         onChange={setActiveCategory}
         categoryScores={categoryScores}
-        enabled={false}
-        clickable={false}
       />
 
-      <ImprovementsPanel
+      <ImprovementsPanel 
         improvements={improvements}
-        totalTestCases={evaluations.length}
+        totalTestCases={evaluationsList.length}
       />
     </div>
   );
@@ -282,7 +248,7 @@ const EvaluationDashboard = ({ onBack }) => {
           report={selectedReport}
           evaluation={selectedEvaluation}
           transcriptData={selectedTranscript}
-          simulationData={simulationDataFromRes}
+          simulationData={currentSimulationData}
           onBack={() => {
             setSelectedReport(null);
             setSelectedTranscript(null);
@@ -298,13 +264,11 @@ const EvaluationDashboard = ({ onBack }) => {
 
     // Create aggregated data for category views
     const aggregatedData = {
-      evaluations: evaluations,
-      simulation_evaluation: simulationEvaluation,
-      category_scores: simulationEvaluation.average_category_scores,
+      evaluations: evaluationsList,
+      simulation_evaluation: evalSource,
+      category_scores: evalSource?.average_category_scores,
       fullResponse: fullResponse
     };
-
-    console.log('Passing aggregated data to category view:', aggregatedData);
 
     switch (activeCategory) {
       case CATEGORY.ACCURACY:
@@ -326,6 +290,9 @@ const EvaluationDashboard = ({ onBack }) => {
     }
   };
 
+  const displayEvaluation = evalSource || {};
+  const isPassed = evaluationsList.some(e => e.passed);
+
   return (
     <div className="w-full max-w-screen-2xl mx-auto h-full flex flex-col">
       {!selectedReport && (
@@ -337,9 +304,9 @@ const EvaluationDashboard = ({ onBack }) => {
               </h1>
 
               <p className="text-gray-400">
-                Overall Score: {Math.round(simulationEvaluation.average_overall_score * 100)}% |
-                Sessions: {simulationEvaluation.total_sessions_evaluated} |
-                {firstEvaluation?.passed ? "PASSED" : "NEEDS IMPROVEMENT"}
+                Overall Score: {Math.round((displayEvaluation.average_overall_score || 0) * 100)}% |
+                Sessions: {displayEvaluation.total_sessions_evaluated || evaluationsList.length} |
+                {isPassed ? "PASSED" : "NEEDS IMPROVEMENT"}
               </p>
             </div>
 

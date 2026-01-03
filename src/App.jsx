@@ -61,6 +61,78 @@ function App() {
 
   const activeView = getActiveView();
 
+  const handleConnect = async ({ apiKey, assistantId }) => {
+    setIsConnecting(true);
+
+    try {
+      const payload = {
+        platform: selectedPlatform,
+        api_key: apiKey,
+        agent_id: assistantId,
+      };
+
+      const res = await extractAgent(payload);
+
+      setAgent(res.data);
+      navigate("/connect-agent/loading");
+    } catch (err) {
+      alert(err.response?.data?.detail || err.message);
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleConnectionComplete = (result) => {
+    setSetupResult(result);
+    navigate("/workspace");
+  };
+
+  /* ---------------- Test Execution Handler ---------------- */
+  const handleRunTests = async (testSuitePath) => {
+    console.log('🚀 Starting test execution');
+    console.log('📁 Test suite path:', testSuitePath);
+    console.log('🆔 Test suite ID:', workflow.testSuite.testSuiteId);
+    console.log('🌍 Region:', workflow.region);
+    
+    try {
+      const payload = {
+        test_suite_id: workflow.testSuite.testSuiteId,
+        phone_number: "+917982693803",
+        agent_id: workflow.agent?.agent_id || workflow.agent?.id
+      };
+
+      console.log('📤 Sending simulation request:', payload);
+
+      const response = await fetch('http://localhost:8001/api/v1/simulation/run', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'accept': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.detail || `Simulation start failed: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Simulation started:', data);
+
+      setSimulationResult({
+        simulationId: data.simulation_id,
+        started: true,
+      });
+
+      navigate("/testcase/running");
+      
+    } catch (error) {
+      console.error('❌ Failed to start simulation:', error);
+      alert(`Failed to start test execution: ${error.message}`);
+    }
+  };
+
   /* ---------------- Routes ---------------- */
   return (
     <Routes>

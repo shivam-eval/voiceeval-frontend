@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import {
     ArrowLeft, StopCircle, RefreshCw, Download, MoreVertical,
     CheckCircle, XCircle, Users, Zap, AlertTriangle, Clock,
@@ -41,8 +42,9 @@ const SimulationDetailPage = () => {
         if (window.confirm('Are you sure you want to cancel this simulation?')) {
             try {
                 await cancelSimulation.mutateAsync(simulationId);
+                toast.success('Simulation cancellation requested');
             } catch (error) {
-                alert('Failed to cancel: ' + error.message);
+                // Handled by global interceptor
             }
         }
     };
@@ -51,9 +53,10 @@ const SimulationDetailPage = () => {
         if (window.confirm('This will create a new simulation. Continue?')) {
             try {
                 const result = await rerunSimulation.mutateAsync(simulationId);
+                toast.success('New simulation run started');
                 navigate(`/simulation/runs/${result.new_simulation_id}`);
             } catch (error) {
-                alert('Failed to rerun: ' + error.message);
+                // Handled by global interceptor
             }
         }
     };
@@ -62,9 +65,10 @@ const SimulationDetailPage = () => {
         if (window.confirm('Are you sure? This will permanently delete all simulation data.')) {
             try {
                 await deleteSimulation.mutateAsync(simulationId);
+                toast.success('Simulation deleted successfully');
                 navigate('/simulation/runs');
             } catch (error) {
-                alert('Failed to delete: ' + error.message);
+                // Handled by global interceptor
             }
         }
     };
@@ -88,12 +92,13 @@ const SimulationDetailPage = () => {
 
             // No existing evaluation, call batch evaluate API
             await batchEvaluate(simulationId);
+            toast.success('Batch evaluation started');
 
             // Navigate to evaluation results page
             navigate(`/evaluations/results/${simulationId}`);
         } catch (error) {
             console.error('Batch evaluation failed:', error);
-            alert('Failed to run evaluation: ' + (error.response?.data?.detail || error.message));
+            // Handled by global interceptor
             setIsEvaluating(false);
         }
     };

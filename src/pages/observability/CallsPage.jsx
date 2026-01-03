@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { toast } from "react-toastify";
 import { 
   Search, 
   Plus, 
@@ -196,7 +197,7 @@ const CallsPage = () => {
     try {
       if (targetCallId) {
         await evaluateCall.mutateAsync(targetCallId);
-        alert(`Evaluation triggered for call ID: ${targetCallId}`);
+        toast.success(`Evaluation triggered for call ID: ${targetCallId}`);
       } else {
         // Fallback to directory evaluation if no specific ID
         await evaluateAudio.mutateAsync({
@@ -204,11 +205,11 @@ const CallsPage = () => {
           flow_id: flowId,
           skip_failures: true
         });
-        alert(`Evaluation re-triggered for directory: audio/${directory}`);
+        toast.success(`Evaluation re-triggered for directory: audio/${directory}`);
       }
     } catch (error) {
       console.error('Evaluation error:', error);
-      alert('Failed to start evaluation: ' + (error.message || 'Unknown error'));
+      // Handled by global interceptor
     }
   };
 
@@ -220,10 +221,10 @@ const CallsPage = () => {
         flow_id: flowId,
         skip_failures: true
       });
-      alert(`Evaluation started for all calls in: audio/${targetDirectory}`);
+      toast.success(`Evaluation started for all calls in: audio/${targetDirectory}`);
     } catch (error) {
       console.error('Evaluation error:', error);
-      alert('Failed to start evaluation: ' + (error.message || 'Unknown error'));
+      // Handled by global interceptor
     }
   };
 
@@ -246,10 +247,10 @@ const CallsPage = () => {
       setSearchTerm('');
       
       setIsModalOpen(false);
-      alert('Calls uploaded successfully!');
+      toast.success('Calls uploaded successfully!');
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Failed to upload calls: ' + (error.message || 'Unknown error'));
+      // Handled by global interceptor
     }
   };
 

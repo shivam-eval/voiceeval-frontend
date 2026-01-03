@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import { X, Play, AlertCircle } from 'lucide-react';
 import { useAgents } from '../hooks/useAgents';
 import { useTestSuites } from '../hooks/useTestSuites';
@@ -36,7 +37,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
         e.preventDefault();
 
         if (!selectedTestSuiteId || !phoneNumber) {
-            alert('Please select a test suite and enter a phone number');
+            toast.warning('Please select a test suite and enter a phone number');
             return;
         }
 
@@ -54,10 +55,11 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
 
             // Close modal and navigate to simulation detail
             onClose();
+            toast.success('Simulation started successfully!');
             window.location.href = `/simulation/runs/${result.simulation_id}`;
         } catch (error) {
             console.error('Failed to run simulation:', error);
-            alert(`Failed to run simulation: ${error.message}`);
+            // Handled by global interceptor
         }
     };
 

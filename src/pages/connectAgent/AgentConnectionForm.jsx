@@ -3,24 +3,41 @@ import FormInput from "../../components/FormInput"
 import PrimaryButton from "../../components/PrimaryButton"
 
 const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
+  const [agentName, setAgentName] = useState("")
   const [apiKey, setApiKey] = useState("")
   const [agentId, setAgentId] = useState("")
+  const [customPrompt, setCustomPrompt] = useState("")
+  const [direction, setDirection] = useState("outbound")
+  const [phoneNumber, setPhoneNumber] = useState("")
   const [focusedField, setFocusedField] = useState(null)
 
   const handleSubmit = (e) => {
     e.preventDefault()
     onConnect({
       platform,
-      apiKey,
-      agentId,
+      agentName,
+      apiKey: platform === 'custom' ? undefined : apiKey,
+      agentId: platform === 'custom' ? undefined : agentId,
+      customPrompt: platform === 'custom' ? customPrompt : undefined,
+      direction,
+      phoneNumber: direction === 'inbound' ? phoneNumber : undefined,
     })
   }
 
-  const isFormValid = apiKey.trim() && agentId.trim()
+  const isFormValid = platform === 'custom' 
+    ? agentName.trim() && customPrompt.trim() && (direction === 'outbound' || phoneNumber.trim())
+    : agentName.trim() && apiKey.trim() && agentId.trim() && (direction === 'outbound' || phoneNumber.trim())
 
   // Get platform-specific labels
   const getPlatformLabels = () => {
     switch(platform) {
+      case 'custom':
+        return {
+          agentNameLabel: 'Agent Name',
+          agentNamePlaceholder: 'Enter a name for this agent',
+          customPromptLabel: 'Custom System Prompt',
+          customPromptPlaceholder: 'Enter the system prompt for your agent...',
+        };
       case 'vapi':
         return {
           apiKeyLabel: 'VAPI API Key',
@@ -71,28 +88,113 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
 
       <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
         <FormInput
-          label={labels.apiKeyLabel}
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          onFocus={() => setFocusedField("apiKey")}
+          label="Agent Name"
+          value={agentName}
+          onChange={(e) => setAgentName(e.target.value)}
+          onFocus={() => setFocusedField("agentName")}
           onBlur={() => setFocusedField(null)}
-          focused={focusedField === "apiKey"}
-          placeholder={labels.apiKeyPlaceholder}
-          type="password"
+          focused={focusedField === "agentName"}
+          placeholder="Enter a name for this agent"
           disabled={isConnecting}
         />
 
-        <FormInput
-          label={labels.agentIdLabel}
-          value={agentId}
-          onChange={(e) => setAgentId(e.target.value)}
-          onFocus={() => setFocusedField("agentId")}
-          onBlur={() => setFocusedField(null)}
-          focused={focusedField === "agentId"}
-          placeholder={labels.agentIdPlaceholder}
-          type="password"
-          disabled={isConnecting}
-        />
+        {platform === 'custom' ? (
+          <div>
+            <label className="block text-white text-base font-medium mb-3">
+              {labels.customPromptLabel}
+            </label>
+            <div className="relative">
+              <textarea
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                onFocus={() => setFocusedField("customPrompt")}
+                onBlur={() => setFocusedField(null)}
+                placeholder={labels.customPromptPlaceholder}
+                disabled={isConnecting}
+                rows={6}
+                className={`w-full px-5 py-4 bg-dark-input border rounded-xl text-white text-base placeholder-gray-500 focus:outline-none transition-all duration-300 resize-none ${
+                  focusedField === "customPrompt" || customPrompt
+                    ? "border-teal-400 shadow-lg shadow-teal-400/30"
+                    : "border-gray-700 hover:border-gray-600"
+                }`}
+              />
+              {(focusedField === "customPrompt" || customPrompt) && (
+                <div className="absolute inset-0 rounded-xl bg-teal-400 opacity-10 blur-xl -z-10 animate-glow" />
+              )}
+            </div>
+          </div>
+        ) : (
+          <>
+            <FormInput
+              label={labels.apiKeyLabel}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              onFocus={() => setFocusedField("apiKey")}
+              onBlur={() => setFocusedField(null)}
+              focused={focusedField === "apiKey"}
+              placeholder={labels.apiKeyPlaceholder}
+              type="password"
+              disabled={isConnecting}
+            />
+
+            <FormInput
+              label={labels.agentIdLabel}
+              value={agentId}
+              onChange={(e) => setAgentId(e.target.value)}
+              onFocus={() => setFocusedField("agentId")}
+              onBlur={() => setFocusedField(null)}
+              focused={focusedField === "agentId"}
+              placeholder={labels.agentIdPlaceholder}
+              type="password"
+              disabled={isConnecting}
+            />
+          </>
+        )}
+
+        <div>
+          <label className="block text-white text-base font-medium mb-3">
+            Call Direction
+          </label>
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              type="button"
+              onClick={() => setDirection("outbound")}
+              className={`py-3 px-4 rounded-xl border transition-all duration-300 ${
+                direction === "outbound"
+                  ? "bg-teal-400/10 border-teal-400 text-teal-400 shadow-lg shadow-teal-400/20"
+                  : "bg-dark-input border-gray-700 text-gray-400 hover:border-gray-600"
+              }`}
+              disabled={isConnecting}
+            >
+              Outbound
+            </button>
+            <button
+              type="button"
+              onClick={() => setDirection("inbound")}
+              className={`py-3 px-4 rounded-xl border transition-all duration-300 ${
+                direction === "inbound"
+                  ? "bg-teal-400/10 border-teal-400 text-teal-400 shadow-lg shadow-teal-400/20"
+                  : "bg-dark-input border-gray-700 text-gray-400 hover:border-gray-600"
+              }`}
+              disabled={isConnecting}
+            >
+              Inbound
+            </button>
+          </div>
+        </div>
+
+        {direction === "inbound" && (
+          <FormInput
+            label="Agent Phone Number"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            onFocus={() => setFocusedField("phoneNumber")}
+            onBlur={() => setFocusedField(null)}
+            focused={focusedField === "phoneNumber"}
+            placeholder="e.g. +1234567890"
+            disabled={isConnecting}
+          />
+        )}
 
         <p className="text-gray-400 text-sm">
           Your API key is encrypted and stored securely.

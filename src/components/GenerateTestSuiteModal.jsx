@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { useGenerateTestSuite } from "../hooks/useGeneration";
 import { usePersonasLibrary } from "../hooks/usePersonasLibrary";
 import Button from "./Button";
@@ -28,8 +29,9 @@ const GenerateTestSuiteModal = ({ isOpen, onClose, flowId, agentId, onTestSuiteG
             });
             setTestSuiteData(result);
             setGenerationStep(2);
+            toast.success('Test suite generated successfully');
         } catch (error) {
-            alert(`Generation failed: ${error.message}`);
+            // Handled by global interceptor
             setGenerationStep(0);
         }
     };

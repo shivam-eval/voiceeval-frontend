@@ -27,6 +27,8 @@ import Dashboard from "./pages/dasbhboard";
 import WorkspaceLoader from "./pages/workspace/WorkspaceLoader";
 
 import { useWorkflow } from "./context/WorkFlowContext";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const location = useLocation();
@@ -63,87 +65,101 @@ function App() {
 
   /* ---------------- Routes ---------------- */
   return (
-    <Routes>
-      <Route
-        path="/*"
-        element={
-          <DashboardLayout
-            activeView={activeView}
-            onLogout={handleLogout}
-          >
-            <Routes>
-              {/* Home */}
-              <Route path="/" element={<HomePage />} />
-              <Route path="/home" element={<HomePage />} />
-
-              {/* Agents */}
-              <Route path="/agents" element={<AgentsPage />} />
-              <Route path="/agents/:agentId" element={<AgentDetailPage />} />
-
-              {/* Workspace */}
-              <Route path="/workspace" element={<WorkspaceLoader />} />
-
-              {/* Test Cases */}
-              <Route path="/test-cases" element={<TestCasesPage />} />
-              <Route path="/test-cases/:suiteId" element={<TestSuiteDetailView />} />
-
-              {/* Personas */}
-              <Route path="/personas" element={<PersonasPage />} />
-
-              {/* === SIMULATIONS === */}
-              {/* Legacy evaluator page */}
-              <Route path="/simulations" element={<SimulationsPage />} />
-
-              {/* New simulation runs pages */}
-              <Route path="/simulation/runs" element={<SimulationsListPage />} />
-              <Route path="/simulation/runs/:simulationId" element={<SimulationDetailPage />} />
-
-              {/* Simulation results - NEW evaluation results pages */}
-              <Route path="/simulation/results/:simulationId" element={<SimulationEvaluationPage />} />
-              <Route path="/simulation/results/:simulationId/session/:sessionId" element={<SessionReportPage />} />
-
-              {/* Simulation evaluator (existing scenarios page) */}
-              <Route path="/simulation/evaluator" element={<SimulationsPage />} />
-
-              {/* Evaluation Dashboard */}
-              <Route path="/evaluations/:simulationId" element={<EvaluationDashboard />} />
-              <Route path="/evaluations/results/:simulationId" element={<EvaluationDashboard />} />
-
-              {/* === EVALUATIONS === */}
-              <Route path="/evaluations" element={<EvaluationsPage />} />
-              <Route
-                path="/evaluations/:evaluationId"
-                element={<EvaluationReportPage />}
-              />
-
-              {/* Observability */}
-              <Route
-                path="/calls"
-                element={<CallsPage />}
-              />
-              <Route
-                path="/observability-overview"
-                element={
-                  <div className="p-8">
-                    <Dashboard />
-                  </div>
-                }
-              />
-
-              {/* Legacy route redirects */}
-              <Route path="/dashboard" element={<Navigate to="/" replace />} />
-              <Route path="/connect-agent" element={<Navigate to="/agents" replace />} />
-              <Route path="/testcase" element={<Navigate to="/test-cases" replace />} />
-              <Route path="/evaluation" element={<Navigate to="/simulation/runs" replace />} />
-
-
-              {/* Catch all */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </DashboardLayout>
-        }
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
       />
-    </Routes>
+      <Routes>
+        <Route
+          path="/*"
+          element={
+            <DashboardLayout
+              activeView={activeView}
+              onLogout={handleLogout}
+            >
+              <Routes>
+                {/* Home */}
+                <Route path="/" element={<HomePage />} />
+                <Route path="/home" element={<HomePage />} />
+
+                {/* Agents */}
+                <Route path="/agents" element={<AgentsPage />} />
+                <Route path="/agents/:agentId" element={<AgentDetailPage />} />
+
+                {/* Workspace */}
+                <Route path="/workspace" element={<WorkspaceLoader />} />
+
+                {/* Test Cases */}
+                <Route path="/test-cases" element={<TestCasesPage />} />
+                <Route path="/test-cases/:suiteId" element={<TestSuiteDetailView />} />
+
+                {/* Personas */}
+                <Route path="/personas" element={<PersonasPage />} />
+
+                {/* === SIMULATIONS === */}
+                {/* Legacy evaluator page */}
+                <Route path="/simulations" element={<SimulationsPage />} />
+
+                {/* New simulation runs pages */}
+                <Route path="/simulation/runs" element={<SimulationsListPage />} />
+                <Route path="/simulation/runs/:simulationId" element={<SimulationDetailPage />} />
+
+                {/* Simulation results - NEW evaluation results pages */}
+                <Route path="/simulation/results/:simulationId" element={<SimulationEvaluationPage />} />
+                <Route path="/simulation/results/:simulationId/session/:sessionId" element={<SessionReportPage />} />
+
+                {/* Simulation evaluator (existing scenarios page) */}
+                <Route path="/simulation/evaluator" element={<SimulationsPage />} />
+
+                {/* Evaluation Dashboard */}
+                <Route path="/evaluations/:simulationId" element={<EvaluationDashboard />} />
+                <Route path="/evaluations/results/:simulationId" element={<EvaluationDashboard />} />
+
+                {/* === EVALUATIONS === */}
+                <Route path="/evaluations" element={<EvaluationsPage />} />
+                <Route
+                  path="/evaluations/:evaluationId"
+                  element={<EvaluationReportPage />}
+                />
+
+                {/* Observability */}
+                <Route
+                  path="/calls"
+                  element={<CallsPage />}
+                />
+                <Route
+                  path="/observability-overview"
+                  element={
+                    <div className="p-8">
+                      <Dashboard />
+                    </div>
+                  }
+                />
+
+                {/* Legacy route redirects */}
+                <Route path="/dashboard" element={<Navigate to="/" replace />} />
+                <Route path="/connect-agent" element={<Navigate to="/agents" replace />} />
+                <Route path="/testcase" element={<Navigate to="/test-cases" replace />} />
+                <Route path="/evaluation" element={<Navigate to="/simulation/runs" replace />} />
+
+
+                {/* Catch all */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </DashboardLayout>
+          }
+        />
+      </Routes>
+    </>
   );
 }
 

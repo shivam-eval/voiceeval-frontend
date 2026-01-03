@@ -1,6 +1,7 @@
 /**
  * API client for making HTTP requests to the backend.
  */
+import { toast } from 'react-toastify';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
 
@@ -39,6 +40,7 @@ class ApiClient {
             return await response.json();
         } catch (error) {
             console.error('API request failed:', error);
+            toast.error(error.message || 'API request failed');
             throw error;
         }
     }

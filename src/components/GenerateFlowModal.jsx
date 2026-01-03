@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 import { useAgents } from "../hooks/useAgents";
 import { useGenerateFlow } from "../hooks/useGeneration";
 import Button from "./Button";
 
 const GenerateFlowModal = ({ isOpen, onClose, agentId, agentMongoId, onFlowGenerated }) => {
     const [selectedAgentId, setSelectedAgentId] = useState(agentMongoId || agentId || "");
-    const [model, setModel] = useState("gpt-4o");
-    const [provider, setProvider] = useState("openai");
     const [generationStep, setGenerationStep] = useState(0); // 0: config, 1: generating, 2: preview
     const [flowData, setFlowData] = useState(null);
 
@@ -24,13 +23,12 @@ const GenerateFlowModal = ({ isOpen, onClose, agentId, agentMongoId, onFlowGener
         try {
             const result = await generateFlow.mutateAsync({
                 agent_id: selectedAgentId,
-                model,
-                provider,
             });
             setFlowData(result);
             setGenerationStep(2);
+            toast.success('Flow generated successfully');
         } catch (error) {
-            alert(`Generation failed: ${error.message}`);
+            // Handled by global interceptor
             setGenerationStep(0);
         }
     };
@@ -100,55 +98,6 @@ const GenerateFlowModal = ({ isOpen, onClose, agentId, agentMongoId, onFlowGener
                                         </option>
                                     ))}
                                 </select>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                                        Model
-                                    </label>
-                                    <select
-                                        value={model}
-                                        onChange={(e) => setModel(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                                    >
-                                        <optgroup label="OpenAI">
-                                            <option value="gpt-4o">GPT-4o</option>
-                                            <option value="gpt-4">GPT-4</option>
-                                            <option value="gpt-4-turbo">GPT-4 Turbo</option>
-                                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                                        </optgroup>
-                                        <optgroup label="Groq - Llama">
-                                            <option value="llama-3.3-70b-versatile">Llama 3.3 70B Versatile</option>
-                                            <option value="llama-3.1-70b-versatile">Llama 3.1 70B Versatile</option>
-                                            <option value="llama-3.1-8b-instant">Llama 3.1 8B Instant</option>
-                                            <option value="llama3-70b-8192">Llama 3 70B</option>
-                                            <option value="llama3-8b-8192">Llama 3 8B</option>
-                                            <option value="meta-llama/llama-4-scout-17b-16e-instruct">Llama 4 Scout 17B</option>
-                                        </optgroup>
-                                        <optgroup label="Groq - Mixtral">
-                                            <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
-                                        </optgroup>
-                                        <optgroup label="Groq - Gemma">
-                                            <option value="gemma2-9b-it">Gemma 2 9B</option>
-                                            <option value="gemma-7b-it">Gemma 7B</option>
-                                        </optgroup>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                                        Provider
-                                    </label>
-                                    <select
-                                        value={provider}
-                                        onChange={(e) => setProvider(e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                                    >
-                                        <option value="openai">OpenAI</option>
-                                        <option value="groq">Groq</option>
-                                    </select>
-                                </div>
                             </div>
 
                             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">

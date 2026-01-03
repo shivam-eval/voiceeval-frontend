@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 import TestCaseCard from './TestCaseCard'
 import RunTestsButton from './RunTestButton'
 import { CALL_FLOW_SCRIPT, DEFAULT_TESTS_CASES } from './Script'
@@ -59,7 +60,7 @@ const TestCasesScreen = ({
 
   const runSimulationNow = () => {
   if (!testSuiteId) {
-    alert("Test suite ID missing. Please regenerate test cases.")
+    toast.error("Test suite ID missing. Please regenerate test cases.")
     return
   }
 

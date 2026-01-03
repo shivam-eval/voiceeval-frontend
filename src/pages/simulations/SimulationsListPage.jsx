@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { Play, Eye, StopCircle, RefreshCw, Download, Trash2, Search } from 'lucide-react';
 import { useSimulations, useDeleteSimulation, useRerunSimulation, useCancelSimulation } from '../../hooks/useSimulations';
 import Badge from '../../components/Badge';
@@ -43,8 +44,9 @@ const SimulationsListPage = () => {
         if (window.confirm('Are you sure you want to delete this simulation? This action cannot be undone.')) {
             try {
                 await deleteSimulation.mutateAsync(simulationId);
+                toast.success('Simulation deleted successfully');
             } catch (error) {
-                alert('Failed to delete simulation: ' + error.message);
+                // Handled by global interceptor
             }
         }
     };
@@ -54,10 +56,10 @@ const SimulationsListPage = () => {
         if (window.confirm('This will create a new simulation with the same parameters. Continue?')) {
             try {
                 const result = await rerunSimulation.mutateAsync(simulationId);
-                alert(`Simulation rerun initiated! New ID: ${result.new_simulation_id}`);
+                toast.success(`Simulation rerun initiated! New ID: ${result.new_simulation_id}`);
                 navigate(`/simulation/runs/${result.new_simulation_id}`);
             } catch (error) {
-                alert('Failed to rerun simulation: ' + error.message);
+                // Handled by global interceptor
             }
         }
     };
@@ -67,8 +69,9 @@ const SimulationsListPage = () => {
         if (window.confirm('Are you sure you want to cancel this running simulation?')) {
             try {
                 await cancelSimulation.mutateAsync(simulationId);
+                toast.success('Simulation cancellation requested');
             } catch (error) {
-                alert('Failed to cancel simulation: ' + error.message);
+                // Handled by global interceptor
             }
         }
     };

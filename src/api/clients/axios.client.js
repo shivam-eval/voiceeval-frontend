@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "react-toastify";
 
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
 
@@ -30,6 +31,17 @@ const createApiClient = (timeout = 60000) => {
         localStorage.removeItem("token");
         window.location.href = "/login";
       }
+
+      // Extract error message
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.response?.data?.message ||
+        error.message ||
+        "An unexpected error occurred";
+
+      // Show toast notification
+      toast.error(errorMessage);
+
       return Promise.reject(error);
     }
   );

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import Button from "./Button";
 import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
 
@@ -153,11 +154,14 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                         audioFileStatuses: uploadResult.file_statuses,
                     };
                     onSubmit(suiteData);
+                    toast.success('Audio files uploaded and test suite created');
                 } else {
-                    alert('Audio upload failed. Please try again.');
+                    toast.error('Audio upload failed. Please try again.');
                 }
             } catch (error) {
                 console.error('Failed to upload audio files:', error);
+                // Handled by global interceptor if it was an axios call, but this is fetch
+                toast.error(`Upload failed: ${error.message}`);
             }
         } else {
             onSubmit(formData);

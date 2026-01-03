@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useAgents, useDeleteAgent, useTestAgent, useCloneAgent, useCreateAgent } from "../../hooks/useAgents";
 import Table from "../../components/Table";
 import Badge from "../../components/Badge";
@@ -43,18 +44,23 @@ const AgentsPage = () => {
         setSelectedPlatform(platformId);
     };
 
-    const handleConnect = async ({ apiKey, agentId }) => {
+    const handleConnect = async ({ agentName, apiKey, agentId, customPrompt, direction, phoneNumber }) => {
         try {
             await createAgent.mutateAsync({
                 platform: selectedPlatform,
+                agent_name: agentName,
                 api_key: apiKey,
                 agent_id: agentId,
+                custom_prompt: customPrompt,
+                direction: direction,
+                phone_number: phoneNumber,
             });
 
             setShowConnectModal(false);
             setSelectedPlatform(null);
+            toast.success("Agent connected successfully!");
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -71,8 +77,9 @@ const AgentsPage = () => {
         if (confirm("Are you sure you want to delete this agent?")) {
             try {
                 await deleteAgent.mutateAsync(id);
+                toast.success("Agent deleted successfully");
             } catch (error) {
-                alert(error.message);
+                // Error handled by global interceptor
             }
         }
     };
@@ -80,17 +87,22 @@ const AgentsPage = () => {
     const handleTest = async (id) => {
         try {
             const result = await testAgent.mutateAsync(id);
-            alert(result.success ? "Connection successful!" : `Connection failed: ${result.message}`);
+            if (result.success) {
+                toast.success("Connection successful!");
+            } else {
+                toast.error(`Connection failed: ${result.message}`);
+            }
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
     const handleClone = async (id) => {
         try {
             await cloneAgent.mutateAsync(id);
+            toast.success("Agent cloned successfully");
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -99,8 +111,9 @@ const AgentsPage = () => {
             try {
                 await Promise.all(selectedRows.map(id => deleteAgent.mutateAsync(id)));
                 setSelectedRows([]);
+                toast.success(`${selectedRows.length} agents deleted successfully`);
             } catch (error) {
-                alert(error.message);
+                // Error handled by global interceptor
             }
         }
     };

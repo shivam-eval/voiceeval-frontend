@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import { loginUser, signupUser } from "../../api";
 
 const AuthScreen = ({ onAuthSuccess }) => {
@@ -20,7 +21,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
       } else {
         // SIGNUP LOGIC: Changed
         await signupUser({ email, password });
-        alert(
+        toast.success(
           "Account created successfully! Please log in with your credentials."
         );
 
@@ -29,7 +30,8 @@ const AuthScreen = ({ onAuthSuccess }) => {
         setIsLogin(true);
       }
     } catch (err) {
-      alert(err.response?.data?.detail || "Authentication failed");
+      // Error handled by global interceptor if using axios client, 
+      // but AuthScreen uses API from src/api/index.js which we also updated.
     } finally {
       setLoading(false);
     }

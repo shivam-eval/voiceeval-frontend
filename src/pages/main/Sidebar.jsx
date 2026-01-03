@@ -37,7 +37,6 @@ const Sidebar = ({
       tabs: [
         { id: "my-agents", label: "My Agents", path: "/agents" },
         { id: "flows", label: "Flows", path: "/agents/flows" },
-        { id: "configuration", label: "Configuration", path: "/agents/configuration" },
       ],
     },
     {
@@ -92,8 +91,7 @@ const Sidebar = ({
       ),
       tabs: [
         { id: "calls", label: "Calls", path: "/observability/calls" },
-        { id: "analytics", label: "Analytics", path: "/observability/analytics" },
-        { id: "logs", label: "Logs", path: "/observability/logs" },
+        { id: "analytics", label: "Analytics", path: "/observability/analytics" }
       ],
     },
   ];

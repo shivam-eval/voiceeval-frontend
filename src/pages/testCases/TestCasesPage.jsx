@@ -38,13 +38,7 @@ const TestCasesPage = () => {
 
     const handleCreateSuite = async (formData) => {
         try {
-            await createTestSuite.mutateAsync({
-                name: formData.name,
-                description: formData.description,
-                owner: formData.owner,
-                agent_id: formData.agent_id,
-                test_cases: [],
-            });
+            await createTestSuite.mutateAsync(formData);
             setShowCreateModal(false);
         } catch (error) {
             alert(error.message);
@@ -244,6 +238,7 @@ const TestCasesPage = () => {
                     selectable
                     selectedRows={selectedRows}
                     onSelectionChange={setSelectedRows}
+                    primaryKey="test_suite_id"
                     onRowClick={(row) => navigate(`/test-cases/${row.test_suite_id}`)}
                     emptyMessage="No test suites found. Create your first test suite to get started!"
                     actions={(row) => (

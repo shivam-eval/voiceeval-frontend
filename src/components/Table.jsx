@@ -13,6 +13,7 @@ const Table = ({
     actions,
     emptyMessage = "No data available",
     loading = false,
+    primaryKey = "id", // Default to 'id' but allow override
 }) => {
     const [sortColumn, setSortColumn] = useState(null);
     const [sortDirection, setSortDirection] = useState("asc");

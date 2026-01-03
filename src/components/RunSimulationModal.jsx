@@ -42,9 +42,9 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
 
         try {
             const result = await runSimulation.mutateAsync({
-                testSuiteId: selectedTestSuiteId,
-                phoneNumber: phoneNumber,
-                agentId: selectedAgentId || undefined,
+                test_suite_id: selectedTestSuiteId,
+                phone_number: phoneNumber,
+                agent_id: selectedAgentId || undefined,
                 metadata: {
                     agent_name: selectedAgent?.agent_name,
                     test_suite_name: selectedTestSuite?.name,

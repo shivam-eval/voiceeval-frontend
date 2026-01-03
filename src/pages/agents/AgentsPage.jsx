@@ -27,7 +27,7 @@ const AgentsPage = () => {
     // Fetch agents
     const { data, isLoading, error } = useAgents({
         search: searchQuery,
-        platform: platformFilter.length > 0 ? platformFilter : undefined,
+        provider: platformFilter.length > 0 ? platformFilter : undefined,
         direction: directionFilter,
         status: statusFilter,
     });
@@ -43,12 +43,14 @@ const AgentsPage = () => {
         setSelectedPlatform(platformId);
     };
 
-    const handleConnect = async ({ apiKey, agentId }) => {
+    const handleConnect = async ({ apiKey, agentId, name, direction }) => {
         try {
             await createAgent.mutateAsync({
-                platform: selectedPlatform,
+                provider: selectedPlatform,
                 api_key: apiKey,
-                agent_id: agentId,
+                provider_agent_id: agentId,
+                name: name,
+                direction: direction,
             });
 
             setShowConnectModal(false);
@@ -108,15 +110,15 @@ const AgentsPage = () => {
     // Table columns
     const columns = [
         {
-            key: "platform",
-            label: "Platform",
+            key: "provider",
+            label: "Provider",
             sortable: true,
             render: (value) => (
                 <span className="capitalize font-medium">{value}</span>
             ),
         },
         {
-            key: "agent_name",
+            key: "name",
             label: "Agent Name",
             sortable: true,
             render: (value, row) => (
@@ -133,14 +135,17 @@ const AgentsPage = () => {
             render: (value) => value || "-",
         },
         {
-            key: "direction",
+            key: "direction", // Keep key for potential sorting if backend supports it mapped, or filtered locally
             label: "Direction",
             sortable: true,
-            render: (value) => (
-                <Badge variant={value === "inbound" ? "info" : "primary"} size="sm">
-                    {value}
-                </Badge>
-            ),
+            render: (value, row) => {
+                const direction = row.metadata?.direction || value || "unknown";
+                return (
+                    <Badge variant={direction === "inbound" ? "info" : "primary"} size="sm">
+                        {direction}
+                    </Badge>
+                );
+            },
         },
         {
             key: "status",
@@ -253,6 +258,7 @@ const AgentsPage = () => {
                     selectable
                     selectedRows={selectedRows}
                     onSelectionChange={setSelectedRows}
+                    primaryKey="agent_id"
                     onRowClick={(row) => navigate(`/agents/${row.agent_id}`)}
                     emptyMessage="No agents found. Connect your first agent to get started!"
                     actions={(row) => (

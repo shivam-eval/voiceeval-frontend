@@ -146,11 +146,20 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                 const uploadResult = await uploadAudioFiles();
 
                 if (uploadResult && uploadResult.success) {
-                    // Create test suite with audio files metadata
                     const suiteData = {
-                        ...formData,
-                        audioUploadBatchId: uploadResult.upload_batch_id,
-                        audioFileStatuses: uploadResult.file_statuses,
+                        name: formData.name,
+                        description: formData.description,
+                        owner: formData.owner,
+                        agent_id: formData.agent_id,
+                        test_cases: [],
+                        metadata: {
+                            test_case_type: formData.testCaseType,
+                            audio_upload_batch_id: uploadResult.upload_batch_id,
+                            audio_file_statuses: uploadResult.file_statuses,
+                            extra_instructions: formData.extra_instructions,
+                            test_profile_id: formData.test_profile_id,
+                            default_persona_id: formData.persona_id,
+                        }
                     };
                     onSubmit(suiteData);
                 } else {
@@ -160,7 +169,20 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                 console.error('Failed to upload audio files:', error);
             }
         } else {
-            onSubmit(formData);
+            const suiteData = {
+                name: formData.name,
+                description: formData.description,
+                owner: formData.owner,
+                agent_id: formData.agent_id,
+                test_cases: [],
+                metadata: {
+                    test_case_type: formData.testCaseType,
+                    extra_instructions: formData.extra_instructions,
+                    test_profile_id: formData.test_profile_id,
+                    default_persona_id: formData.persona_id,
+                }
+            };
+            onSubmit(suiteData);
         }
     };
 

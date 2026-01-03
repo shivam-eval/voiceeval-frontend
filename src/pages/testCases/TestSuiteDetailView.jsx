@@ -12,6 +12,10 @@ const TestSuiteDetailView = () => {
     const { suiteId } = useParams();
     const navigate = useNavigate();
 
+    const truncate = (str, n) => {
+        return (str.length > n) ? str.substr(0, n - 1) + '...' : str;
+    };
+
     const [editingName, setEditingName] = useState(false);
     const [editingDescription, setEditingDescription] = useState(false);
     const [expandedRows, setExpandedRows] = useState(new Set());
@@ -75,16 +79,35 @@ const TestSuiteDetailView = () => {
     };
 
     const handleEditTestCase = (testCase) => {
-        setEditingTestCase(testCase);
+        // Unpack metadata for the editor
+        const unpackedTestCase = {
+            ...testCase,
+            ...(testCase.metadata || {}),
+            test_case_id: testCase.test_case_id || testCase.id
+        };
+        setEditingTestCase(unpackedTestCase);
         setShowTestCaseModal(true);
     };
 
     const handleSaveTestCase = async (testCaseData) => {
         try {
+            // Pack fields into metadata for V2 compliance
+            const v2TestCaseData = {
+                ...testCaseData,
+                metadata: {
+                    ...(testCaseData.metadata || {}),
+                    priority: testCaseData.priority,
+                    metrics: testCaseData.metrics,
+                    success_criteria: testCaseData.success_criteria,
+                    tags: testCaseData.tags,
+                    extra_instructions: testCaseData.extra_instructions,
+                }
+            };
+
             if (editingTestCase) {
                 // Update existing test case
                 const updatedTestCases = testCases.map(tc =>
-                    tc.id === editingTestCase.id ? { ...tc, ...testCaseData } : tc
+                    (tc.test_case_id === editingTestCase.test_case_id) ? { ...tc, ...v2TestCaseData } : tc
                 );
                 await updateSuite.mutateAsync({
                     id: suiteId,
@@ -94,7 +117,7 @@ const TestSuiteDetailView = () => {
                 // Add new test case
                 await addTestCase.mutateAsync({
                     suiteId,
-                    testCase: testCaseData,
+                    testCase: v2TestCaseData,
                 });
             }
             setShowTestCaseModal(false);
@@ -107,7 +130,7 @@ const TestSuiteDetailView = () => {
     const handleDeleteTestCase = async (testCaseId) => {
         if (confirm("Are you sure you want to delete this test case?")) {
             try {
-                const updatedTestCases = testCases.filter(tc => tc.id !== testCaseId);
+                const updatedTestCases = testCases.filter(tc => (tc.test_case_id || tc.id) !== testCaseId);
                 await updateSuite.mutateAsync({
                     id: suiteId,
                     data: { test_cases: updatedTestCases },
@@ -327,13 +350,13 @@ const TestSuiteDetailView = () => {
                                     {testCases.map((testCase, index) => (
                                         <>
                                             <tr
-                                                key={testCase.id || index}
+                                                key={testCase.test_case_id || index}
                                                 className="border-t border-gray-800 hover:bg-gray-800/30 cursor-pointer transition-colors"
-                                                onClick={() => toggleRow(testCase.id || index)}
+                                                onClick={() => toggleRow(testCase.test_case_id || index)}
                                             >
                                                 <td className="px-4 py-4">
                                                     <svg
-                                                        className={`w-5 h-5 text-gray-500 transition-transform ${expandedRows.has(testCase.id || index) ? 'rotate-90' : ''}`}
+                                                        className={`w-5 h-5 text-gray-500 transition-transform ${expandedRows.has(testCase.test_case_id || index) ? 'rotate-90' : ''}`}
                                                         fill="none"
                                                         stroke="currentColor"
                                                         viewBox="0 0 24 24"
@@ -342,7 +365,7 @@ const TestSuiteDetailView = () => {
                                                     </svg>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <div className="font-medium text-white">{testCase.id || `TC-${index + 1}`}</div>
+                                                    <div className="font-medium text-white">{truncate(testCase.test_case_id || `TC-${index + 1}`, 12)}</div>
                                                     {testCase.name && (
                                                         <div className="text-sm text-gray-500">{testCase.name}</div>
                                                     )}
@@ -382,7 +405,7 @@ const TestSuiteDetailView = () => {
                                                         <button
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
-                                                                handleDeleteTestCase(testCase.id);
+                                                                handleDeleteTestCase(testCase.test_case_id);
                                                             }}
                                                             className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-red-400 transition-colors"
                                                             title="Delete"
@@ -396,7 +419,7 @@ const TestSuiteDetailView = () => {
                                             </tr>
 
                                             {/* Expanded Row */}
-                                            {expandedRows.has(testCase.id || index) && (
+                                            {expandedRows.has(testCase.test_case_id || index) && (
                                                 <tr className="border-t border-gray-800 bg-gray-800/20">
                                                     <td colSpan="7" className="px-4 py-6">
                                                         <div className="grid grid-cols-2 gap-6">

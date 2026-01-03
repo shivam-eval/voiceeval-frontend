@@ -5,6 +5,8 @@ import PrimaryButton from "../../components/PrimaryButton"
 const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
   const [apiKey, setApiKey] = useState("")
   const [agentId, setAgentId] = useState("")
+  const [name, setName] = useState("")
+  const [direction, setDirection] = useState("both")
   const [focusedField, setFocusedField] = useState(null)
 
   const handleSubmit = (e) => {
@@ -13,6 +15,8 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
       platform,
       apiKey,
       agentId,
+      name,
+      direction,
     })
   }
 
@@ -20,7 +24,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
 
   // Get platform-specific labels
   const getPlatformLabels = () => {
-    switch(platform) {
+    switch (platform) {
       case 'vapi':
         return {
           apiKeyLabel: 'VAPI API Key',
@@ -71,6 +75,17 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
 
       <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
         <FormInput
+          label="Agent Name (Optional)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onFocus={() => setFocusedField("name")}
+          onBlur={() => setFocusedField(null)}
+          focused={focusedField === "name"}
+          placeholder="My Voice Agent"
+          disabled={isConnecting}
+        />
+
+        <FormInput
           label={labels.apiKeyLabel}
           value={apiKey}
           onChange={(e) => setApiKey(e.target.value)}
@@ -93,6 +108,20 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
           type="password"
           disabled={isConnecting}
         />
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-300">Direction</label>
+          <select
+            value={direction}
+            onChange={(e) => setDirection(e.target.value)}
+            className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-400 transition-colors"
+            disabled={isConnecting}
+          >
+            <option value="both">Inbound & Outbound</option>
+            <option value="inbound">Inbound Only</option>
+            <option value="outbound">Outbound Only</option>
+          </select>
+        </div>
 
         <p className="text-gray-400 text-sm">
           Your API key is encrypted and stored securely.

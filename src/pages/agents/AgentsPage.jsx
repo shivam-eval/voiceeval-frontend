@@ -8,10 +8,13 @@ import PlatformSelection from "../platformSelection/PlatformSelection";
 import ConnectionForm from "../connectAgent";
 import GenerateFlowModal from "../../components/GenerateFlowModal";
 
+import ConfirmationModal from "../../components/ConfirmationModal";
+
 const AgentsPage = () => {
     const navigate = useNavigate();
 
     // Filters and search
+    // ... existing state ...
     const [searchQuery, setSearchQuery] = useState("");
     const [platformFilter, setPlatformFilter] = useState([]);
     const [directionFilter, setDirectionFilter] = useState(null);
@@ -24,7 +27,17 @@ const AgentsPage = () => {
     const [showGenerateFlowModal, setShowGenerateFlowModal] = useState(false);
     const [selectedAgentForFlow, setSelectedAgentForFlow] = useState(null);
 
+    // Confirmation Modal State
+    const [confirmationModal, setConfirmationModal] = useState({
+        isOpen: false,
+        title: "",
+        message: "",
+        onConfirm: () => { },
+        isLoading: false
+    });
+
     // Fetch agents
+    // ... useAgents hook ...
     const { data, isLoading, error } = useAgents({
         search: searchQuery,
         provider: platformFilter.length > 0 ? platformFilter : undefined,
@@ -34,16 +47,18 @@ const AgentsPage = () => {
 
     // Mutations
     const deleteAgent = useDeleteAgent();
+    // ... other hooks ...
     const testAgent = useTestAgent();
     const cloneAgent = useCloneAgent();
     const createAgent = useCreateAgent();
 
-    // Handlers
+    // ... existing handlers ...
     const handlePlatformSelect = (platformId) => {
         setSelectedPlatform(platformId);
     };
 
     const handleConnect = async ({ apiKey, agentId, name, direction }) => {
+        // ... existing handleConnect logic ...
         try {
             await createAgent.mutateAsync({
                 provider: selectedPlatform,
@@ -69,17 +84,31 @@ const AgentsPage = () => {
         setSelectedPlatform(null);
     };
 
-    const handleDelete = async (id) => {
-        if (confirm("Are you sure you want to delete this agent?")) {
-            try {
-                await deleteAgent.mutateAsync(id);
-            } catch (error) {
-                alert(error.message);
+    const handleDelete = (id) => {
+        setConfirmationModal({
+            isOpen: true,
+            title: "Delete Agent",
+            message: "Are you sure you want to delete this agent? This action cannot be undone.",
+            variant: "danger",
+            confirmText: "Delete",
+            onConfirm: async () => {
+                setConfirmationModal(prev => ({ ...prev, isLoading: true }));
+                try {
+                    console.log("🚀 Executing delete for:", id);
+                    await deleteAgent.mutateAsync(id);
+                    setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+                    console.log("✅ Delete successful");
+                } catch (error) {
+                    console.error("❌ Delete failed:", error);
+                    alert(error.message);
+                    setConfirmationModal(prev => ({ ...prev, isLoading: false }));
+                }
             }
-        }
+        });
     };
 
     const handleTest = async (id) => {
+        // ... existing handleTest logic ...
         try {
             const result = await testAgent.mutateAsync(id);
             alert(result.success ? "Connection successful!" : `Connection failed: ${result.message}`);
@@ -89,6 +118,7 @@ const AgentsPage = () => {
     };
 
     const handleClone = async (id) => {
+        // ... existing handleClone logic ...
         try {
             await cloneAgent.mutateAsync(id);
         } catch (error) {
@@ -96,18 +126,31 @@ const AgentsPage = () => {
         }
     };
 
-    const handleBulkDelete = async () => {
-        if (confirm(`Are you sure you want to delete ${selectedRows.length} agents?`)) {
-            try {
-                await Promise.all(selectedRows.map(id => deleteAgent.mutateAsync(id)));
-                setSelectedRows([]);
-            } catch (error) {
-                alert(error.message);
+    const handleBulkDelete = () => {
+        setConfirmationModal({
+            isOpen: true,
+            title: "Delete Agents",
+            message: `Are you sure you want to delete ${selectedRows.length} agents? This action cannot be undone.`,
+            variant: "danger",
+            confirmText: "Delete All",
+            onConfirm: async () => {
+                setConfirmationModal(prev => ({ ...prev, isLoading: true }));
+                try {
+                    console.log("🚀 Executing bulk delete for:", selectedRows);
+                    await Promise.all(selectedRows.map(id => deleteAgent.mutateAsync(id)));
+                    setSelectedRows([]);
+                    setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+                    console.log("✅ Bulk delete successful");
+                } catch (error) {
+                    console.error("❌ Bulk delete failed:", error);
+                    alert(error.message);
+                    setConfirmationModal(prev => ({ ...prev, isLoading: false }));
+                }
             }
-        }
+        });
     };
 
-    // Table columns
+    // ... Table columns ...
     const columns = [
         {
             key: "provider",
@@ -319,6 +362,7 @@ const AgentsPage = () => {
             </div>
 
             {/* Connect Agent Modal */}
+            {/* ... */}
             {showConnectModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-dark-bg rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-800">
@@ -362,6 +406,18 @@ const AgentsPage = () => {
                 onFlowGenerated={(flowData) => {
                     console.log("Flow generated:", flowData);
                 }}
+            />
+
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                isOpen={confirmationModal.isOpen}
+                onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmationModal.onConfirm}
+                title={confirmationModal.title}
+                message={confirmationModal.message}
+                isLoading={confirmationModal.isLoading}
+                variant={confirmationModal.variant}
+                confirmText={confirmationModal.confirmText}
             />
         </div>
     );

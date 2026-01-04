@@ -28,7 +28,7 @@ import ConversationOverview from '../insights/conversation';
 const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [activeCategory, setActiveCategory] = useState('');
-const transcriptData = initialTranscriptData;
+  const transcriptData = initialTranscriptData;
 
 
   console.log('TestReportView received evaluation:', evaluation);
@@ -39,10 +39,10 @@ const transcriptData = initialTranscriptData;
   // Process evaluation data from the actual evaluation object
   const evaluationData = useMemo(() => {
     if (!evaluation) return null;
-    
+
     // Handle nested evaluation structure if present
     const data = evaluation.evaluation || evaluation;
-    
+
     const score = data.overall_score || data.score || 0;
     const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
@@ -53,13 +53,13 @@ const transcriptData = initialTranscriptData;
       issues: data.issues || [],
       execution_time_ms: data.execution_time_ms,
       recommendations: data.recommendations || [],
-      
+
       // Extract category scores from metric_results
       category_scores: data.category_scores || [],
-      
+
       // Extract metric results for detailed view
       metrics: data.metrics || data.metric_results || [],
-      
+
       // Process failure propagation if available
       failure_propagation: data.failure_propagation || {
         critical_failure_turns: [],
@@ -81,12 +81,12 @@ const transcriptData = initialTranscriptData;
   // Prepare radar chart data from actual category scores
   const radarData = useMemo(() => {
     if (!Array.isArray(evaluationData?.category_scores)) return [];
-    
+
     return evaluationData.category_scores.map(cat => {
       if (!cat) return null;
       const score = cat.score || 0;
       const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
-      
+
       return {
         category: (cat.category || 'Unknown').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         score: normalizedScore
@@ -97,11 +97,11 @@ const transcriptData = initialTranscriptData;
   // Extract latency data from metrics
   const latencyMetrics = useMemo(() => {
     if (!Array.isArray(evaluationData?.metrics)) return [];
-    
-    return evaluationData.metrics.filter(m => 
+
+    return evaluationData.metrics.filter(m =>
       m && (
-        m.category === 'latency' || 
-        (m.name && m.name.includes('latency')) || 
+        m.category === 'latency' ||
+        (m.name && m.name.includes('latency')) ||
         (m.name && m.name.includes('duration'))
       )
     );
@@ -120,7 +120,7 @@ const transcriptData = initialTranscriptData;
         }
       ];
     }
-    
+
     return [
       {
         id: 'Response Time',
@@ -173,7 +173,7 @@ const transcriptData = initialTranscriptData;
       if (!category) return;
 
       if (!map[category]) {
-        const categoryScore = Array.isArray(evaluationData.category_scores) 
+        const categoryScore = Array.isArray(evaluationData.category_scores)
           ? evaluationData.category_scores.find((c) => c && c.category === category)
           : null;
         const score = categoryScore ? categoryScore.score : 0;
@@ -208,9 +208,6 @@ const transcriptData = initialTranscriptData;
 
       case 'endpointing':
         return <EndpointingOverview response={categoryMap.endpointing} onBack={handleBackToOverview} />;
-
-      case 'cost':
-        return <CostOverview response={categoryMap.cost} onBack={handleBackToOverview} />;
 
       case 'persona':
         return <PersonaOverview response={categoryMap.persona} onBack={handleBackToOverview} />;
@@ -326,13 +323,14 @@ const transcriptData = initialTranscriptData;
             const score = cat.score || 0;
             // Normalize score: if it's 0-1, convert to 0-100. If already > 1, assume 0-100.
             const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
-            
+
             return {
               category: cat.category,
               score: normalizedScore,
               weight: cat.weight || 0
             };
           })}
+          clickable={true}
         />
       )}
 
@@ -472,7 +470,7 @@ const transcriptData = initialTranscriptData;
                   {evaluationData.category_scores.map(cat => {
                     const score = cat.score || 0;
                     const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
-                    
+
                     return (
                       <div
                         key={cat.category}
@@ -518,24 +516,24 @@ const transcriptData = initialTranscriptData;
             </>
           )}
 
-      {activeTab === 'transcript' && (
-  <>
-    {transcriptData ? (
-      <>
-        <CallTranscriptPanel transcriptData={transcriptData} />
-        <TurnByTurnAnalysis
-          steps={transcriptData?.steps || []}
-          stepHealth={evaluationData?.failure_propagation?.step_health || {}}
-        />
-      </>
-    ) : (
-      <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
-        <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-        <p className="text-gray-400 text-sm">No transcript data available</p>
-      </div>
-    )}
-  </>
-)}
+          {activeTab === 'transcript' && (
+            <>
+              {transcriptData ? (
+                <>
+                  <CallTranscriptPanel transcriptData={transcriptData} />
+                  <TurnByTurnAnalysis
+                    steps={transcriptData?.steps || []}
+                    stepHealth={evaluationData?.failure_propagation?.step_health || {}}
+                  />
+                </>
+              ) : (
+                <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
+                  <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400 text-sm">No transcript data available</p>
+                </div>
+              )}
+            </>
+          )}
 
 
           {activeTab === 'metrics' && (

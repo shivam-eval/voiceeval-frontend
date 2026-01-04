@@ -15,6 +15,24 @@ const MetricCard = ({
     return "border-green-500";
   };
 
+  const getIconBgColor = () => {
+    if (status === "critical") return "bg-red-500/20";
+    if (status === "warning") return "bg-yellow-500/20";
+    return "bg-green-500/20";
+  };
+
+  const getIconColor = () => {
+    if (status === "critical") return "text-red-400";
+    if (status === "warning") return "text-yellow-400";
+    return "text-green-400";
+  };
+
+  const getProgressColor = () => {
+    if (status === "critical") return "text-red-500";
+    if (status === "warning") return "text-yellow-500";
+    return "text-green-500";
+  };
+
   return (
     <div
       className={`border rounded-xl p-6 bg-[#0b0f1a] ${getStatusColor()}`}
@@ -23,8 +41,8 @@ const MetricCard = ({
       <div className="flex items-start justify-between">
         {/* Left: Icon + Text */}
         <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-red-500/20">
-            <Icon size={24} className="text-red-400" />
+          <div className={`p-3 rounded-xl ${getIconBgColor()}`}>
+            <Icon size={24} className={getIconColor()} />
           </div>
 
           <div>
@@ -62,13 +80,13 @@ const MetricCard = ({
                 strokeDashoffset={
                   2 * Math.PI * 40 * (1 - value / 100)
                 }
-                className="text-red-500"
+                className={getProgressColor()}
                 strokeLinecap="round"
               />
             </svg>
 
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold text-red-500">
+              <span className={`text-2xl font-bold ${getProgressColor()}`}>
                 {value}%
               </span>
             </div>

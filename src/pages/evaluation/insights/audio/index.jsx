@@ -115,7 +115,9 @@ const AudioOverview = ({ response, data, onBack }) => {
     );
   }
 
-  const score = Math.round(processedResponse.score * 100);
+  const score = processedResponse.score > 1
+    ? Math.round(processedResponse.score)
+    : Math.round(processedResponse.score * 100);
   const passedCount = processedResponse.metrics.filter((m) => m.status === "passed").length;
   const failedCount = processedResponse.metrics.length - passedCount;
   const statCards = transformStatCards(processedResponse.metrics);

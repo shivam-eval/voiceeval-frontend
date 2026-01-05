@@ -8,11 +8,13 @@ import Button from "../../components/Button";
 import PlatformSelection from "../platformSelection/PlatformSelection";
 import ConnectionForm from "../connectAgent";
 import GenerateFlowModal from "../../components/GenerateFlowModal";
+import { useWorkflow } from "../../context/WorkFlowContext";
 
 import ConfirmationModal from "../../components/ConfirmationModal";
 
 const AgentsPage = () => {
     const navigate = useNavigate();
+    const { setAssistantId } = useWorkflow();
 
     // Filters and search
     // ... existing state ...
@@ -70,6 +72,11 @@ const AgentsPage = () => {
                 phone_number: phoneNumber,
                 metadata: selectedPlatform === 'custom' ? { system_prompt: customPrompt } : undefined
             });
+
+            // Store the agentId (assistant ID) in global context
+            if (agentId) {
+                setAssistantId(agentId);
+            }
 
             setShowConnectModal(false);
             setSelectedPlatform(null);

@@ -25,14 +25,16 @@ import GenericDropdown from '../../components/DropDown';
 import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvaluateAudio } from '../../hooks/useCalls';
 import { useFlows } from '../../hooks/useFlows';
 import { useAgents } from '../../hooks/useAgents';
+import { useWorkflow } from '../../context/WorkFlowContext';
 
 const CallsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { workflow } = useWorkflow();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEvaluateModalOpen, setIsEvaluateModalOpen] = useState(false);
-  const [evalAgentId, setEvalAgentId] = useState('');
+  const [evalAgentId, setEvalAgentId] = useState(workflow?.assistantId || '');
   const [evalDirectory, setEvalDirectory] = useState('');
   
   const directory = searchParams.get('directory') || sessionStorage.getItem('last_directory') || '';
@@ -97,14 +99,25 @@ const CallsPage = () => {
   const { data: agentsData } = useAgents();
   const agentOptions = useMemo(() => {
     const agents = agentsData?.agents || [];
-    return [
+    const options = [
       { label: 'Select an existing agent...', value: '' },
       ...agents.map(agent => ({
         label: `${agent.name} (${agent.provider_agent_id || agent.agent_id})`,
         value: agent.provider_agent_id || agent.agent_id
       }))
     ];
-  }, [agentsData]);
+
+    // Add the stored assistant ID if it's not already in the list
+    const storedAssistantId = workflow?.assistantId;
+    if (storedAssistantId && !options.find(opt => opt.value === storedAssistantId)) {
+      options.splice(1, 0, {
+        label: `Last Connected Agent (${storedAssistantId})`,
+        value: storedAssistantId
+      });
+    }
+
+    return options;
+  }, [agentsData, workflow?.assistantId]);
 
   // Fetch flows to get a dynamic flow_id if needed
   const { data: flowsData } = useFlows();
@@ -255,6 +268,10 @@ const CallsPage = () => {
   const handleEvaluateAll = (targetDirectory) => {
     if (!targetDirectory) return;
     setEvalDirectory(targetDirectory);
+    // Ensure the evalAgentId is synced with the latest stored assistantId when opening the modal
+    if (!evalAgentId && workflow?.assistantId) {
+      setEvalAgentId(workflow.assistantId);
+    }
     setIsEvaluateModalOpen(true);
   };
 
@@ -268,7 +285,6 @@ const CallsPage = () => {
       });
       toast.success(`Evaluation started for all calls in: audio/${evalDirectory}`);
       setIsEvaluateModalOpen(false);
-      setEvalAgentId('');
     } catch (error) {
       // Error handled by global interceptor
     }
@@ -881,7 +897,6 @@ const CallsPage = () => {
             <button
               onClick={() => {
                 setIsEvaluateModalOpen(false);
-                setEvalAgentId('');
               }}
               className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
             >

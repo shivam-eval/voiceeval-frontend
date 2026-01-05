@@ -36,7 +36,6 @@ const Sidebar = ({
       ),
       tabs: [
         { id: "my-agents", label: "My Agents", path: "/agents" },
-        { id: "flows", label: "Flows", path: "/agents/flows" },
       ],
     },
     {
@@ -165,8 +164,8 @@ const Sidebar = ({
                   key={section.id}
                   onClick={() => handleNavigate(section.path)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${isActiveSection
-                      ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
-                      : "text-gray-400 hover:text-white hover:bg-dark-input"
+                    ? "bg-teal-400/20 text-teal-400 border border-teal-400/50"
+                    : "text-gray-400 hover:text-white hover:bg-dark-input"
                     }`}
                 >
                   {section.icon}
@@ -191,8 +190,8 @@ const Sidebar = ({
                     }
                   }}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all duration-200 ${isActiveSection
-                      ? "bg-teal-400/10 text-teal-400"
-                      : "text-gray-400 hover:text-white hover:bg-dark-input"
+                    ? "bg-teal-400/10 text-teal-400"
+                    : "text-gray-400 hover:text-white hover:bg-dark-input"
                     }`}
                 >
                   <div className="flex items-center gap-3">
@@ -231,8 +230,8 @@ const Sidebar = ({
                           key={tab.id}
                           onClick={() => handleNavigate(tab.path)}
                           className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${isActiveTab
-                              ? "bg-teal-400/20 text-teal-400 font-medium"
-                              : "text-gray-400 hover:text-white hover:bg-dark-input"
+                            ? "bg-teal-400/20 text-teal-400 font-medium"
+                            : "text-gray-400 hover:text-white hover:bg-dark-input"
                             }`}
                         >
                           {tab.label}

@@ -11,6 +11,7 @@ export const transformEvaluationData = (api) => {
 
   // Category scores
   const categoryScores = api.category_scores.map((cs) => ({
+    category: cs.category,
     name: humanizeCategory(cs.category),
     score: Math.round(cs.score * 100)
   }))
@@ -62,6 +63,8 @@ export const transformEvaluationData = (api) => {
     ],
 
     categoryScores,
+
+    metricResults: api.metric_results,
 
     improvements: [
       {

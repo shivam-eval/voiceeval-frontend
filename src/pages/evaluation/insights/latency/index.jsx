@@ -1,372 +1,114 @@
-import { DUMMY_CATEGORY_SCORES } from '../../const'
-import InsightTabs from '../../InsightTab'
-import { ArrowLeft } from 'lucide-react'
-const latencyData={
-  "category": "latency",
-  "overall_score": 0.88,
-  "passed": true,
-  "metrics": [
-    {
-      "metric_name": "response_latency",
-      "category": "latency",
-      "status": "passed",
-      "passed": true,
-      "value": 1690,
-      "threshold": 2000,
-      "details": {
-        "average_ms": 1690,
-        "max_ms": 1800,
-        "min_ms": 1200,
-        "median_ms": 1700,
-        "p95_ms": 1800,
-        "p99_ms": 1800,
-        "count": 11,
-        "std_dev": 175.8
-      }
-    },
-    {
-      "metric_name": "time_to_first_token",
-      "category": "latency",
-      "status": "passed",
-      "passed": true,
-      "value": 480,
-      "threshold": 500
-    },
-    {
-      "metric_name": "time_to_complete_transcript",
-      "category": "latency",
-      "status": "passed",
-      "passed": true,
-      "value": 920,
-      "threshold": 1000
-    },
-    {
-      "metric_name": "total_duration",
-      "category": "latency",
-      "status": "passed",
-      "passed": true,
-      "value": 68000
-    }
-  ]
-}
+import { Target, ArrowLeft, Clock, Zap, Activity, Timer } from "lucide-react";
+import MetricCard from "../accuracy/MetricCard";
+import DetailedMetric from "../../../../components/DetailedMetric";
+import CriticalAlert from "../../../../components/CriticAlert";
 
+/* =========================
+   MOCK API RESPONSE
+========================= */
+const response = {
+  category: "latency",
+  overall_score: 0.92,
+  passed: true,
+  metrics: [
+    {
+      name: "total_duration",
+      score: 1,
+      status: "passed",
+      threshold: 0.9,
+      execution_time_ms: 1250,
+    },
+    {
+      name: "response_latency",
+      score: 0.85,
+      status: "passed",
+      threshold: 0.8,
+      execution_time_ms: 450,
+    },
+    {
+      name: "time_to_first_token",
+      score: 0.95,
+      status: "passed",
+      threshold: 0.9,
+      execution_time_ms: 120,
+    },
+    {
+      name: "time_to_complete_transcript",
+      score: 0.88,
+      status: "passed",
+      threshold: 0.85,
+      execution_time_ms: 680,
+    },
+  ],
+};
+
+const humanizeMetricName = (name) => {
+  const map = {
+    total_duration: "Total Duration",
+    response_latency: "Response Latency",
+    time_to_first_token: "Time To First Token",
+    time_to_complete_transcript: "Transcript Completion",
+  };
+  return map[name] || name;
+};
+
+const transformLatencyMetrics = (response) =>
+  response.metrics.map((m) => ({
+    label: humanizeMetricName(m.name),
+    value: m.execution_time_ms ? m.execution_time_ms : (m.score ? Math.round(m.score * 100) : (m.status === 'passed' ? 100 : 0)),
+    unit: m.execution_time_ms ? "ms" : "%",
+    threshold: m.execution_time_ms ? m.threshold * 1000 : (m.threshold ? Math.round(m.threshold * 100) : 80),
+    time: m.execution_time_ms ? `${m.execution_time_ms.toFixed(2)}ms` : '0ms',
+    status: m.status === "passed" ? "passed" : "failed",
+  }));
+
+/* =========================
+   Sub-components
+========================= */
+const StatCard = ({ label, value, unit = "", icon: Icon, status = "passed" }) => (
+  <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5 flex items-center justify-between group hover:border-teal-500/30 transition-all">
+    <div className="flex items-center gap-4">
+      <div className={`p-3 rounded-lg ${status === 'passed' ? 'bg-teal-500/10 text-teal-400' : 'bg-red-500/10 text-red-400'}`}>
+        <Icon size={20} />
+      </div>
+      <div>
+        <div className="text-gray-400 text-sm">{label}</div>
+        <div className="text-2xl font-bold text-white">
+          {value}
+          <span className="text-sm ml-1 text-gray-500 font-normal">{unit}</span>
+        </div>
+      </div>
+    </div>
+    <div className={`text-xs font-semibold px-2 py-1 rounded-full border ${
+      status === 'passed' ? 'border-teal-500/30 text-teal-400 bg-teal-500/5' : 'border-red-500/30 text-red-400 bg-red-500/5'
+    }`}>
+      {status === 'passed' ? 'STABLE' : 'DELAYED'}
+    </div>
+  </div>
+);
+
+/* =========================
+   Component
+========================= */
 const LatencyOverview = ({ onBack }) => {
-  const COLORS = { accent: '#b61249', bg: '#000000', teal: '#2dd4bf', text: '#9da3af', white: '#ffffff' }
-  const metrics = Array.isArray(latencyData?.metrics) ? latencyData.metrics : []
-  const byName = (n) => metrics.find(m => m.metric_name === n)
-  const rl = byName('response_latency')
-  const ttft = byName('time_to_first_token')
-  const ttct = byName('time_to_complete_transcript')
-  const total = byName('total_duration')
-  const passedCount = metrics.filter(m => !!m.passed).length
-  const totalCount = metrics.length || 1
-  const passPct = Math.round((latencyData.overall_score || 0.92) * 100)
-  const fmtNum = (n) => n?.toLocaleString?.('en-US') ?? String(n ?? '')
-  const handleTabChange = (key) => {
-    const map = {
-      accuracy: 'accuracy',
-      task_completion: 'accuracy',
-      latency: 'latency',
-      audio_quality: 'latency',
-      conversation_quality: 'latency',
-      endpointing: 'endpointing',
-      cost: 'latency',
-      persona: 'latency',
-    }
-    const target = map[key] || 'latency'
-    const url = new URL(window.location.href)
-    url.searchParams.set('preview', target)
-    window.location.href = url.toString()
-  }
-  const donut = () => {
-    const r = 34
-    const cx = 40
-    const cy = 40
-    const circ = 2 * Math.PI * r
-    const offset = circ * (1 - passPct / 100)
-    return (
-      <svg width="100" height="100" viewBox="0 0 80 80">
-        <circle cx={cx} cy={cy} r={r} stroke="#0a0f19" strokeWidth="8" fill="none"/>
-        <circle
-          cx={cx} cy={cy} r={r}
-          stroke={latencyData.passed ? COLORS.teal : COLORS.accent}
-          strokeWidth="8"
-          fill="none"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform="rotate(-90 40 40)"
-        />
-        <text x="40" y="46" textAnchor="middle" fontSize="16" fill={COLORS.white} fontWeight="700">{passPct}%</text>
-      </svg>
-    )
-  }
-  const card = (m, title, unit = 'ms') => {
-    if (!m) return null
-    const passed = !!m.passed
-    const threshold = typeof m.threshold === 'number' ? m.threshold : null
-    const valRaw = m.value
-    const val = Math.round(valRaw)
-    const pct = threshold ? Math.max(0, Math.min(100, Math.round((val / threshold) * 100))) : 100
-    const exec = typeof m.execution_time_ms === 'number' ? Number(m.execution_time_ms.toFixed(2)) : 0
-    const valueLabel = m.metric_name === 'total_duration' ? `${(valRaw / 1000).toFixed(1)}s` : `${val}${unit}`
-    return (
-      <div className="p-4 rounded-xl border" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="font-semibold" style={{ color: COLORS.white }}>{title}</div>
-            <div className="flex items-center gap-2 text-xs mt-1" style={{ color: COLORS.text }}>
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3" />
-              </svg>
-              <span>{exec}ms execution</span>
-            </div>
-          </div>
-          <span
-            className="px-2 py-1 rounded-full text-xs font-semibold border"
-            style={{
-              color: passed ? COLORS.teal : COLORS.accent,
-              borderColor: passed ? COLORS.teal : COLORS.accent,
-              backgroundColor: passed ? 'rgba(45,212,191,0.08)' : 'rgba(182,18,73,0.08)'
-            }}
-          >
-            {passed ? 'Passed' : 'Failed'}
-          </span>
-        </div>
-        <div className="mt-4">
-          <div className="text-2xl font-bold" style={{ color: COLORS.teal }}>{valueLabel}</div>
-          <div className="h-2 rounded-full overflow-hidden mt-2" style={{ backgroundColor: COLORS.bg }}>
-            <div className="h-full" style={{ width: `${pct}%`, backgroundColor: COLORS.teal }} />
-          </div>
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-2 text-sm" style={{ color: COLORS.text }}>
-          {threshold !== null && (
-            <div>
-              Threshold
-              <div className="font-semibold" style={{ color: COLORS.white }}>{m.metric_name === 'total_duration' ? `${(threshold / 1000).toFixed(1)}s` : `${threshold}${unit}`}</div>
-            </div>
-          )}
-          {m.details?.average_ms !== undefined && (
-            <div>
-              Average Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(Math.round(m.details.average_ms))}</div>
-            </div>
-          )}
-          {m.details?.max_ms !== undefined && (
-            <div>
-              Max Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.max_ms)}</div>
-            </div>
-          )}
-          {m.details?.min_ms !== undefined && (
-            <div>
-              Min Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.min_ms)}</div>
-            </div>
-          )}
-          {m.details?.median_ms !== undefined && (
-            <div>
-              Median Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.median_ms)}</div>
-            </div>
-          )}
-          {m.details?.p95_ms !== undefined && (
-            <div>
-              P95 Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.p95_ms)}</div>
-            </div>
-          )}
-          {m.details?.p99_ms !== undefined && (
-            <div>
-              P99 Ms
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.p99_ms)}</div>
-            </div>
-          )}
-          {m.details?.count !== undefined && (
-            <div>
-              Count
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.count)}</div>
-            </div>
-          )}
-          {m.details?.std_dev !== undefined && (
-            <div>
-              Std Dev
-              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(Math.round(m.details.std_dev))}</div>
-            </div>
-          )}
-        </div>
-      </div>
-    )
-  }
-  const metricBars = () => {
-    const labelMap = {
-      response_latency: 'Response Latency',
-      time_to_first_token: 'First Token',
-      time_to_complete_transcript: 'Complete Transcript'
-    }
-    const list = [rl, ttft, ttct].filter(Boolean).map(m => ({
-      ...m,
-      sec: (m.value || 0) / 1000,
-      thrSec: m.threshold ? m.threshold / 1000 : null,
-      label: labelMap[m.metric_name] || (m.metric_name || '').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase())
-    }))
-    const maxSec = 2.2 // Fixed scale to match image
-    const toPct = (sec) => Math.max(0, Math.min(100, (sec / maxSec) * 100))
-    const twoSecPct = toPct(2)
+  const detailedMetrics = transformLatencyMetrics(response);
+  const score = Math.round(response.overall_score * 100);
+  const passedCount = response.metrics.filter((m) => m.status === "passed").length;
+  const failedCount = response.metrics.length - passedCount;
+  const isCritical = !response.passed;
 
-    return (
-      <div className="rounded-xl border p-8 relative overflow-hidden" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <svg className="w-5 h-5" fill="none" stroke={COLORS.teal} viewBox="0 0 24 24" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 12h3m3 0h3m3 0h3" />
-              <rect x="2" y="4" width="20" height="16" rx="2" strokeWidth="2" />
-            </svg>
-            <div className="text-lg font-bold" style={{ color: COLORS.white }}>Latency Breakdown</div>
-            <div className="text-xs ml-2" style={{ color: COLORS.text }}>Human perception threshold: 2s</div>
-          </div>
-        </div>
+  const getMetricData = (name) => {
+    const m = response.metrics.find(m => m.name === name);
+    if (!m) return { value: 0, unit: "ms", status: "passed" };
+    return {
+      value: m.execution_time_ms ? m.execution_time_ms : Math.round(m.score * 100),
+      unit: m.execution_time_ms ? "ms" : "%",
+      status: m.status
+    };
+  };
 
-        <div className="flex items-end gap-24 px-16 pb-12 relative h-64">
-          {/* Threshold Line (2s) */}
-          <div 
-            className="absolute left-0 right-0 border-t-2 border-dashed border-orange-500/50 flex items-center justify-end pr-4 pointer-events-none"
-            style={{ bottom: `${(2.0 / 2.2) * 100}%`, zIndex: 10 }}
-          >
-            <span className="bg-orange-500/10 text-orange-500 text-[10px] px-1.5 py-0.5 rounded -mt-6">
-              2s Human Perception
-            </span>
-          </div>
-
-          {/* Axis Labels (0s, 1.1s, 2.2s) */}
-          <div className="absolute left-4 top-0 bottom-12 flex flex-col justify-between text-[11px] text-gray-500 py-1 z-50">
-            <span>2.2s</span>
-            <span>1.1s</span>
-            <span>0s</span>
-          </div>
-
-          {/* Bars */}
-          {list.map((m, idx) => {
-            const pct = toPct(m.sec);
-
-            return (
-              <div key={m.metric_name} className="relative flex flex-col items-center flex-1 h-full justify-end">
-                <div 
-                  className="w-20 rounded-t-lg transition-all duration-500 shadow-lg shadow-teal-500/10" 
-                  style={{ 
-                    background: m.passed 
-                      ? `linear-gradient(to top, ${COLORS.teal}44, ${COLORS.teal})` 
-                      : `linear-gradient(to top, ${COLORS.accent}44, ${COLORS.accent})`,
-                    height: `${pct}%`,
-                    minHeight: '8px',
-                    opacity: 0.9,
-                    zIndex: 30,
-                    border: `1px solid ${m.passed ? COLORS.teal : COLORS.accent}44`
-                  }} 
-                />
-                <span className="absolute -bottom-10 text-xs text-gray-400 font-medium whitespace-nowrap">
-                  {m.label}
-                </span>
-              </div>
-            );
-          })}
-
-          {/* Straight Dotted Trend Line */}
-          <div className="absolute inset-0 px-16 pb-12 pointer-events-none" style={{ zIndex: 40 }}>
-            <svg className="w-full h-full">
-              {(() => {
-                const count = list.length;
-                const points = list.map((m, i) => {
-                  const xPct = ((i + 0.5) / count) * 100;
-                  return {
-                    x: xPct,
-                    y: 100 - toPct(m.sec)
-                  };
-                });
-                
-                let d = `M ${points[0].x}% ${points[0].y}%`;
-                for (let i = 1; i < points.length; i++) {
-                  d += ` L ${points[i].x}% ${points[i].y}%`;
-                }
-
-                return (
-                  <g>
-                    <path 
-                      d={d} 
-                      stroke="white" 
-                      strokeWidth="1.5" 
-                      strokeDasharray="4 4" 
-                      fill="none" 
-                      className="opacity-40"
-                    />
-                    {points.map((p, i) => (
-                      <circle 
-                        key={i} 
-                        cx={`${p.x}%`} 
-                        cy={`${p.y}%`} 
-                        r="4" 
-                        fill="white"
-                        className="opacity-60"
-                      />
-                    ))}
-                  </g>
-                );
-              })()}
-            </svg>
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="mt-8 flex items-center justify-center gap-10 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS.teal }} />
-            <span style={{ color: COLORS.text }}>Within threshold</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full" style={{ backgroundColor: COLORS.accent }} />
-            <span style={{ color: COLORS.text }}>Exceeds threshold</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-10 border-t-2 border-dashed" style={{ borderColor: '#fbbf24' }} />
-            <span style={{ color: COLORS.text }}>2s Human Perception</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-  const distributionTiles = () => {
-    if (!rl?.details) return null
-    const d = rl.details
-    const toSec = (ms) => `${(ms / 1000).toFixed(2)}s`
-    const tiles = [
-      { k: 'Average Ms', v: toSec(d.average_ms) },
-      { k: 'Max Ms', v: toSec(d.max_ms) },
-      { k: 'Min Ms', v: toSec(d.min_ms) },
-      { k: 'Median Ms', v: toSec(d.median_ms) },
-      { k: 'P95 Ms', v: toSec(d.p95_ms) },
-      { k: 'P99 Ms', v: toSec(d.p99_ms) },
-    ]
-    return (
-      <div className="rounded-xl border p-8" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
-        <div className="flex items-center gap-3 mb-8">
-          <svg className="w-5 h-5" fill="none" stroke={COLORS.teal} viewBox="0 0 24 24" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-          </svg>
-          <div className="text-lg font-bold" style={{ color: COLORS.white }}>Latency Distribution</div>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {tiles.map(t => (
-            <div key={t.k} className="bg-gray-800/20 rounded-xl p-5 border transition-all hover:bg-gray-800/30" style={{ borderColor: '#1f2937' }}>
-              <div className="text-xs font-medium uppercase tracking-wider" style={{ color: COLORS.text }}>{t.k}</div>
-              <div className="mt-3 text-2xl font-black" style={{ color: COLORS.white }}>{t.v}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-8">
       {/* Back Button */}
       {onBack && (
         <button
@@ -377,46 +119,64 @@ const LatencyOverview = ({ onBack }) => {
           Back to Overview
         </button>
       )}
-      
-      {/* <InsightTabs active="latency" onChange={handleTabChange} categoryScores={DUMMY_CATEGORY_SCORES} /> */}
-      <div className="rounded-xl border p-6" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: '#0a0f19', border: '1px solid #1f2937' }}>
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke={COLORS.teal}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l4 2" />
-              </svg>
+
+      {/* ================= HEADER CARD ================= */}
+      <MetricCard
+        icon={Clock}
+        title="Latency"
+        description="Measures response times and processing delays"
+        value={score}
+        passed={passedCount}
+        failed={failedCount}
+        status={isCritical ? "critical" : "success"}
+      />
+
+      {/* ================= QUICK STATS ================= */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard 
+          label="Avg Response" 
+          {...getMetricData('response_latency')}
+          icon={Zap}
+        />
+        <StatCard 
+          label="First Token" 
+          {...getMetricData('time_to_first_token')}
+          icon={Activity}
+        />
+        <StatCard 
+          label="Transcript" 
+          {...getMetricData('time_to_complete_transcript')}
+          icon={Timer}
+        />
+        <StatCard 
+          label="Total Duration" 
+          {...getMetricData('total_duration')}
+          icon={Clock}
+        />
+      </div>
+
+      {/* ================= DETAILED METRICS ================= */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-teal-400 rounded-full flex items-center justify-center">
+              <div className="w-2 h-2 bg-teal-400 rounded-full" />
             </div>
-            <div>
-              <div className="text-xl font-bold" style={{ color: COLORS.white }}>Latency</div>
-              <div className="text-sm" style={{ color: COLORS.text }}>Measures response times and processing speed</div>
-            </div>
-            <span
-              className="px-2 py-1 rounded-full text-xs font-semibold border self-start ml-2"
-              style={{ color: latencyData.passed ? COLORS.teal : COLORS.accent, borderColor: latencyData.passed ? COLORS.teal : COLORS.accent, backgroundColor: latencyData.passed ? 'rgba(45,212,191,0.08)' : 'rgba(182,18,73,0.08)' }}
-            >
-              {latencyData.passed ? 'Passed' : 'Failed'}
-            </span>
           </div>
-          <div className="flex items-center gap-4">
-            {donut()}
-            <div className="text-right">
-              <div className="text-2xl font-bold" style={{ color: COLORS.white }}>{passedCount}/{totalCount}</div>
-              <div className="text-sm" style={{ color: COLORS.text }}>Metrics Passed</div>
-            </div>
-          </div>
+          <h2 className="text-xl font-semibold text-white">Detailed Metrics</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {detailedMetrics.map((metric, idx) => (
+            <DetailedMetric 
+              key={idx} 
+              {...metric} 
+            />
+          ))}
         </div>
       </div>
-      {metricBars()}
-      {distributionTiles()}
-      <div className="grid grid-cols-2 gap-4">
-        {card(rl, 'Response Latency')}
-        {card(ttft, 'Time To First Token')}
-        {card(ttct, 'Time To Complete Transcript')}
-        {card(total, 'Total Duration', 'ms')}
-      </div>
     </div>
-  )
-}
+  );
+};
 
 export default LatencyOverview;

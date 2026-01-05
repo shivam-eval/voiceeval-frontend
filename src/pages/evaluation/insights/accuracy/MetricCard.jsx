@@ -9,22 +9,21 @@ const MetricCard = ({
   failed = 2,
   status = "critical",
 }) => {
-  const getStatusColor = () => {
-    if (status === "critical") return "border-red-500";
-    if (status === "warning") return "border-yellow-500";
-    return "border-green-500";
-  };
+  const isHealthy = value > 60;
+  const colorClass = isHealthy ? "text-teal-500" : "text-red-500";
+  const bgColorClass = isHealthy ? "bg-teal-500/20" : "bg-red-500/20";
+  const iconColorClass = isHealthy ? "text-teal-400" : "text-red-400";
 
   return (
     <div
-      className={`border rounded-xl p-6 bg-[#0b0f1a] ${getStatusColor()}`}
+      className={`border rounded-xl p-6 bg-[#0b0f1a] border-gray-800`}
     >
       {/* ================= Header ================= */}
       <div className="flex items-start justify-between">
         {/* Left: Icon + Text */}
         <div className="flex items-start gap-4">
-          <div className="p-3 rounded-xl bg-red-500/20">
-            <Icon size={24} className="text-red-400" />
+          <div className={`p-3 rounded-xl ${bgColorClass}`}>
+            <Icon size={24} className={iconColorClass} />
           </div>
 
           <div>
@@ -62,13 +61,13 @@ const MetricCard = ({
                 strokeDashoffset={
                   2 * Math.PI * 40 * (1 - value / 100)
                 }
-                className="text-red-500"
+                className={colorClass}
                 strokeLinecap="round"
               />
             </svg>
 
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold text-red-500">
+              <span className={`text-2xl font-bold ${colorClass}`}>
                 {value}%
               </span>
             </div>

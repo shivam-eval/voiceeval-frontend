@@ -12,7 +12,7 @@ const CriticalAlert = ({ title, description, metrics }) => (
         </h4>
         <p className="text-gray-300 mb-4">{description}</p>
         <div className="flex gap-6 text-sm">
-          {metrics.map((metric, idx) => (
+          {metrics && metrics.map((metric, idx) => (
             <div key={idx} className="flex items-center gap-2">
               <metric.icon className="text-red-400" size={18} />
               <span className="text-gray-400">{metric.label}:</span>

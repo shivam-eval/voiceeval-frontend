@@ -109,8 +109,8 @@ const EvaluationDashboard = ({ evaluationData, simulationData, onBack }) => {
         active={activeCategory}
         onChange={setActiveCategory}
         categoryScores={
-          displayData?.category_scores?.length
-            ? displayData.category_scores
+          displayData?.categoryScores?.length
+            ? displayData.categoryScores
             : DUMMY_CATEGORY_SCORES
         }
       />

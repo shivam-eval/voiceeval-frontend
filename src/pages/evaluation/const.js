@@ -24,6 +24,7 @@ export const EVALUATION_DATA = {
     { category: "cost", score: 97 },
     { category: "persona", score: 91 }
   ],
+  metricResults: DEBT_COLLECTION_EVALUATION.metric_results,
   improvements: [
     {
       priority: 1,

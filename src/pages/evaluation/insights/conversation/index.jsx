@@ -1,5 +1,3 @@
-import InsightHeaderCard from "../../../../components/InsightHeaderCard";
-import StatCard from "../../../../components/StatCard";
 import {
   MessageSquare,
   SpellCheck,
@@ -7,9 +5,13 @@ import {
   BookOpen,
   HelpCircle,
   ArrowLeft,
+  RefreshCw,
+  Activity,
 } from "lucide-react";
-import ConversationDetailedMetrics from "./ConversationDetailedMetrics";
-import PersonaAlignmentRadar from "../persona/PersonaRadar";
+
+import MetricCard from "../accuracy/MetricCard";
+import DetailedMetric from "../../../../components/DetailedMetric";
+import CriticalAlert from "../../../../components/CriticAlert";
 
 /* =========================
    Dummy API Response
@@ -20,31 +22,32 @@ const response = {
   passed: true,
   metrics: [
     {
-      metric_name: "grammar_quality",
-      passed: true,
-      execution_time_ms: 7546.151161193848,
-      value: 0.92,
+      name: "conversation_flow",
+      score: 0.92,
+      status: "passed",
       threshold: 0.8,
+      execution_time_ms: 0.02,
     },
     {
-      metric_name: "context_maintenance",
-      passed: true,
-      execution_time_ms: 3906.0778617858887,
-      value: 0.85,
+      name: "turn_taking_efficiency",
+      score: 0.85,
+      status: "passed",
+      threshold: 0.8,
+      execution_time_ms: 0.01,
+    },
+    {
+      name: "user_engagement_score",
+      score: 0.94,
+      status: "passed",
       threshold: 0.85,
+      execution_time_ms: 0.01,
     },
     {
-      metric_name: "information_extraction_accuracy",
-      passed: true,
-      execution_time_ms: 0.017404556274414062,
-      value: 0.94,
-      threshold: 0.9,
-    },
-    {
-      metric_name: "clarification_request_rate",
-      passed: true,
-      execution_time_ms: 0.0362396240234375,
-      value: 0.08,
+      name: "context_maintenance",
+      score: 0.88,
+      status: "passed",
+      threshold: 0.8,
+      execution_time_ms: 0.01,
     },
   ],
 };
@@ -52,45 +55,74 @@ const response = {
 /* =========================
    Helpers
 ========================= */
-const metricMeta = {
-  grammar_quality: {
-    title: "Grammar Quality",
-    icon: SpellCheck,
-    subtitle: "Grammatical correctness",
-  },
-  context_maintenance: {
-    title: "Context Maintenance",
-    icon: Brain,
-    subtitle: "Memory and coherence",
-  },
-  information_extraction_accuracy: {
-    title: "Info Extraction",
-    icon: BookOpen,
-    subtitle: "Data capture accuracy",
-  },
-  clarification_request_rate: {
-    title: "Clarification Rate",
-    icon: HelpCircle,
-    subtitle: "No clarifications needed – efficient!",
-  },
+
+const humanizeMetricName = (name) => {
+  const map = {
+    conversation_flow: "Conversation Flow",
+    turn_taking_efficiency: "Turn-taking Efficiency",
+    user_engagement_score: "User Engagement",
+    context_maintenance: "Context Maintenance",
+    grammar_quality: "Grammar Quality",
+    information_extraction_accuracy: "Info Extraction",
+    clarification_request_rate: "Clarification Rate",
+  };
+  return map[name] || name;
 };
 
-const transformStatCards = (response) =>
+const transformConversationMetrics = (response) =>
   response.metrics.map((m) => ({
-    ...metricMeta[m.metric_name],
-    value: Math.round(m.value * 100),
-    highlight: !m.passed,
+    label: humanizeMetricName(m.name),
+    value: m.execution_time_ms ? m.execution_time_ms : (m.score ? Math.round(m.score * 100) : (m.status === "passed" ? 100 : 0)),
+    unit: m.execution_time_ms ? "ms" : "%",
+    threshold: m.execution_time_ms ? m.threshold * 1000 : (m.threshold ? Math.round(m.threshold * 100) : 80),
+    time: m.execution_time_ms ? `${m.execution_time_ms.toFixed(2)}ms` : "0ms",
+    status: m.status === "passed" ? "passed" : "failed",
   }));
+
+/* =========================
+   Sub-components
+========================= */
+const StatCard = ({ label, value, unit = "", icon: Icon, status = "passed" }) => (
+  <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5 flex items-center justify-between group hover:border-teal-500/30 transition-all">
+    <div className="flex items-center gap-4">
+      <div className={`p-3 rounded-lg ${status === 'passed' ? 'bg-teal-500/10 text-teal-400' : 'bg-red-500/10 text-red-400'}`}>
+        <Icon size={20} />
+      </div>
+      <div>
+        <div className="text-gray-400 text-sm">{label}</div>
+        <div className="text-2xl font-bold text-white">
+          {value}
+          <span className="text-sm ml-1 text-gray-500 font-normal">{unit}</span>
+        </div>
+      </div>
+    </div>
+    <div className={`text-xs font-semibold px-2 py-1 rounded-full border ${
+      status === 'passed' ? 'border-teal-500/30 text-teal-400 bg-teal-500/5' : 'border-red-500/30 text-red-400 bg-red-500/5'
+    }`}>
+      {status === 'passed' ? 'NATURAL' : 'STIFF'}
+    </div>
+  </div>
+);
 
 /* =========================
    Conversation Overview
 ========================= */
 const ConversationOverview = ({ onBack }) => {
+  const detailedMetrics = transformConversationMetrics(response);
   const score = Math.round(response.overall_score * 100);
-  const passedCount = response.metrics.filter((m) => m.passed).length;
+  const passedCount = response.metrics.filter((m) => m.status === "passed").length;
   const failedCount = response.metrics.length - passedCount;
+  const isCritical = !response.passed;
 
-  const statCards = transformStatCards(response);
+  const getMetricData = (name) => {
+    const m = response.metrics.find(m => m.name === name);
+    if (!m) return { value: 0, unit: "%", status: "passed" };
+    return {
+      value: m.execution_time_ms ? m.execution_time_ms : Math.round(m.score * 100),
+      unit: m.execution_time_ms ? "ms" : "%",
+      status: m.status
+    };
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -106,35 +138,72 @@ const ConversationOverview = ({ onBack }) => {
       )}
 
       {/* Header */}
-      <InsightHeaderCard
+      <MetricCard
         icon={MessageSquare}
         title="Conversation Quality"
-        description="Assesses grammar, context retention, and coherence"
-        score={score}
-        passedCount={passedCount}
-        failedCount={failedCount}
-        theme="teal"
+        description="Evaluates the overall flow and coherence of the dialogue"
+        value={score}
+        passed={passedCount}
+        failed={failedCount}
+        status={isCritical ? "critical" : "success"}
       />
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {statCards.map((metric, idx) => (
-          <StatCard
-            key={idx}
-            icon={metric.icon}
-            title={metric.title}
-            value={metric.value}
-            subtitle={metric.subtitle}
-            highlight={metric.highlight}
-          />
-        ))}
+      {/* Critical Alert (ONLY IF FAILED) */}
+      {isCritical && (
+        <CriticalAlert
+          title="Critical: Poor Conversation Flow"
+          description="The agent struggled with context maintenance or natural turn-taking during the conversation."
+        />
+      )}
+
+      {/* ================= QUICK STATS ================= */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard 
+          label="Flow Coherence" 
+          {...getMetricData('conversation_flow')}
+          icon={RefreshCw}
+        />
+        <StatCard 
+          label="Efficiency" 
+          {...getMetricData('turn_taking_efficiency')}
+          icon={Activity}
+        />
+        <StatCard 
+          label="Engagement" 
+          {...getMetricData('user_engagement_score')}
+          icon={Brain}
+        />
+        <StatCard 
+          label="Context" 
+          {...getMetricData('context_maintenance')}
+          icon={BookOpen}
+        />
       </div>
 
       {/* Detailed Metrics */}
-      {/* ================= Radar ================= */}
-      <PersonaAlignmentRadar response={response} />
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-teal-400 rounded-full flex items-center justify-center">
+              <div className="w-2 h-2 bg-teal-400 rounded-full" />
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-white">Detailed Metrics</h3>
+        </div>
 
-      <ConversationDetailedMetrics response={response} />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {detailedMetrics.map((metric, idx) => (
+            <DetailedMetric
+              key={idx}
+              label={metric.label}
+              value={metric.value}
+              threshold={metric.threshold}
+              time={metric.time}
+              status={metric.status}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

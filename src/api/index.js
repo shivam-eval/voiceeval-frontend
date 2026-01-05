@@ -1,7 +1,7 @@
 import axios from "axios";
 import { toast } from "react-toastify";
 
-const API_BASE_URL = "http://localhost:8001/api/v1";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
 
 const API = axios.create({
   baseURL: API_BASE_URL,
@@ -15,7 +15,7 @@ const API_LONG = axios.create({
 
 // AUTH
 const addAuthHeader = (config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("authToken"); // Changed from "token" to "authToken"
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -171,6 +171,20 @@ export const batchEvaluate = async (simulationId) => {
 
 export const getEvaluationResults = async (simulationId) => {
   return API.get(`/evaluate/simulation/${simulationId}`);
+};
+
+/**
+ * Batch evaluate all passed sessions from a simulation
+ */
+export const evaluateBatch = async (simulationId) => {
+  return API_LONG.post("/evaluate/batch", { simulation_id: simulationId });
+};
+
+/**
+ * Get simulation summary with session status
+ */
+export const getSimulationSummary = async (simulationId) => {
+  return API.get(`/simulation/${simulationId}/summary`);
 };
 
 // UTILITY FUNCTIONS

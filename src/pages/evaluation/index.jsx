@@ -50,6 +50,12 @@ const EvaluationDashboard = ({ onBack }) => {
   const [selectedReport, setSelectedReport] = useState(null);
   const [selectedTranscript, setSelectedTranscript] = useState(null);
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const [batchEvaluationData, setBatchEvaluationData] = useState(null);
+
+  // Ref to track if evaluation has been called
+  const hasCalledEvaluation = useRef(false);
 
   const { workflow } = useWorkflow();
 
@@ -136,12 +142,14 @@ const EvaluationDashboard = ({ onBack }) => {
     ? totalExecutionTime / evaluations.length
     : 0;
 
+
   // Prepare simulation data
   const passedCount = evaluations.filter(e => e.passed).length;
   const failedCount = evaluations.length - passedCount;
 
+
   const simulationDataFromRes = {
-    simulation_id: fullResponse.simulation_id || simulationResult.simulationId,
+    simulation_id: resData?.simulation_id || simulationId,
     execution_summary: {
       total_test_cases: evaluations.length,
       completed_test_cases: passedCount,
@@ -238,6 +246,7 @@ const EvaluationDashboard = ({ onBack }) => {
   // Generate improvements from ALL evaluations
   const improvements = [];
 
+
   evaluations.forEach((evaluation, evalIndex) => {
     if (evaluation.recommendations && Array.isArray(evaluation.recommendations) && evaluation.recommendations.length > 0) {
       evaluation.recommendations.forEach((rec, recIndex) => {
@@ -247,6 +256,7 @@ const EvaluationDashboard = ({ onBack }) => {
         } else if (evaluation.overall_score > 0.85 || recIndex > 1) {
           priority = "low";
         }
+
 
         improvements.push({
           priority: priority,
@@ -258,6 +268,7 @@ const EvaluationDashboard = ({ onBack }) => {
       });
     }
 
+
     if ((!evaluation.recommendations || evaluation.recommendations.length === 0) && evaluation.issues_found > 0) {
       improvements.push({
         priority: evaluation.overall_score < 0.6 ? "high" : "medium",
@@ -268,6 +279,7 @@ const EvaluationDashboard = ({ onBack }) => {
       });
     }
   });
+
 
   if (improvements.length === 0) {
     improvements.push(

@@ -35,8 +35,23 @@ import { useWorkflow } from "./context/WorkFlowContext";
 
 function App() {
   const location = useLocation();
-  const { resetWorkflow } = useWorkflow();
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
+
+  const {
+    workflow,
+    setAgent,
+    setSetupResult,
+    setTestSuite,
+    setSimulationResult,
+    resetWorkflow,
+  } = useWorkflow();
+
+  // Check if user is authenticated by looking for auth token in localStorage
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    const token = localStorage.getItem("authToken");
+    return !!token; // Returns true if token exists, false otherwise
+  });
+  const [selectedPlatform, setSelectedPlatform] = useState(null);
+  const [isConnecting, setIsConnecting] = useState(false);
 
   /* ---------------- Auth ---------------- */
   if (!isAuthenticated) {
@@ -46,6 +61,7 @@ function App() {
   /* ---------------- Handlers ---------------- */
   const handleLogout = () => {
     resetWorkflow();
+    localStorage.removeItem("authToken"); // Clear auth token on logout
     setIsAuthenticated(false);
   };
 

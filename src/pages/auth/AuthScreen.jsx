@@ -15,7 +15,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
       if (isLogin) {
         // LOGIN LOGIC: Stays the same
         const res = await loginUser({ email, password });
-        localStorage.setItem("token", res.data.access_token);
+        localStorage.setItem("authToken", res.data.access_token); // Changed from "token" to "authToken"
         localStorage.setItem("userEmail", email);
         onAuthSuccess();
       } else {

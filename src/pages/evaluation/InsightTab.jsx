@@ -29,16 +29,13 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = 
         return (
           <button
             key={key}
-            onClick={() => clickable && onChange(key)}
-            disabled={!clickable}
+            onClick={() => onChange(key)}
             className={`
               relative group rounded-xl transition-all flex flex-col items-center justify-center py-4
               ${isActive
                 ? 'bg-teal-500/20 border-2 border-teal-500'
                 : 'bg-gray-800'
               }
-              ${clickable && !isActive ? 'hover:bg-gray-700 cursor-pointer' : ''}
-              ${!clickable ? 'cursor-default opacity-80' : ''}
             `}
           >
             {/* Label */}
@@ -58,8 +55,8 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = 
               </div>
             )} */}
 
-            {/* Hover overlay - only show when clickable */}
-            {!isActive && enabled && clickable && (
+            {/* Hover overlay */}
+            {!isActive&&enabled && (
               <div className="
                 absolute inset-0 flex items-center justify-center
                 bg-black/60 opacity-0 group-hover:opacity-100

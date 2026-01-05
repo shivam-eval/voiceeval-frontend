@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
 import Button from "./Button";
 import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
 import { usePersonas } from "../hooks/usePersonas";
@@ -132,6 +133,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
             return result;
         } catch (error) {
             console.error('Upload error:', error);
+            toast.error(`Upload failed: ${error.message}`);
             setUploadResults({
                 success: false,
                 message: error.message,
@@ -190,10 +192,10 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                     };
                     onSubmit(suiteData);
                 } else {
-                    alert('Audio upload failed. Please try again.');
+                    toast.error('Audio upload failed. Please try again.');
                 }
             } catch (error) {
-                console.error('Failed to upload audio files:', error);
+                // Error handled by global interceptor
             }
         } else {
             const suiteData = {

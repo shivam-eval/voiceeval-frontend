@@ -1,3 +1,5 @@
+import { toast } from "react-toastify";
+
 /**
  * API client for making HTTP requests to the backend.
  */
@@ -27,8 +29,10 @@ class ApiClient {
             const response = await fetch(url, config);
 
             if (!response.ok) {
-                const error = await response.json().catch(() => ({}));
-                throw new Error(error.detail || `HTTP error! status: ${response.status}`);
+                const errorData = await response.json().catch(() => ({}));
+                const message = errorData.detail || `HTTP error! status: ${response.status}`;
+                toast.error(message);
+                throw new Error(message);
             }
 
             // Handle 204 No Content
@@ -157,7 +161,7 @@ export const flowsApi = {
 
 // Evaluations API endpoints
 export const evaluationsApi = {
-    list: (params) => apiClient.get('/api/v1/evaluate/', params),
+    list: (params) => apiClient.get('/api/v1/evaluate', params),
     get: (id) => apiClient.get(`/api/v1/evaluate/${id}`),
     getBySession: (sessionId) => apiClient.get('/api/v1/evaluate/session', { sessionId }),
     getBySimulation: (simulationId) => apiClient.get('/api/v1/evaluate/simulation', { simulationId }),
@@ -165,7 +169,7 @@ export const evaluationsApi = {
 
 // Calls API endpoints
 export const callsApi = {
-    list: (params) => apiClient.get('/api/v1/calls/', params),
+    list: (params) => apiClient.get('/api/v1/calls', params),
     get: (id) => apiClient.get(`/api/v1/calls/${id}`),
     evaluate: (id) => apiClient.post(`/api/v1/calls/${id}/evaluate`, {}),
     evaluateAudio: (data) => apiClient.post('/api/v1/evaluate/audio', data),

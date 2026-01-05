@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import mermaid from "mermaid";
+import { toast } from "react-toastify";
 
 mermaid.initialize({
   startOnLoad: false,
@@ -50,6 +51,7 @@ const CanonicalFlowDiagram = ({ mermaidCode }) => {
         }
       } catch (err) {
         console.error("Mermaid rendering error:", err);
+        toast.error("Failed to render diagram: " + (err.message || "Unknown error"));
         setError(err.message || "Failed to render diagram");
         
         // Display error in the component

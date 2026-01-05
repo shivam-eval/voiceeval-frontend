@@ -6,6 +6,8 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
   const [apiKey, setApiKey] = useState("")
   const [agentId, setAgentId] = useState("")
   const [name, setName] = useState("")
+  const [customPrompt, setCustomPrompt] = useState("")
+  const [phoneNumber, setPhoneNumber] = useState("")
   const [direction, setDirection] = useState("both")
   const [focusedField, setFocusedField] = useState(null)
 
@@ -13,14 +15,21 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
     e.preventDefault()
     onConnect({
       platform,
-      apiKey,
-      agentId,
+      apiKey: platform === 'custom' ? 'custom' : apiKey,
+      agentId: platform === 'custom' ? 'custom' : agentId,
       name,
+      customPrompt: platform === 'custom' ? customPrompt : "",
       direction,
+      phoneNumber: (direction === "inbound" || direction === "both") ? phoneNumber : "",
     })
   }
 
-  const isFormValid = apiKey.trim() && agentId.trim()
+  const isFormValid = 
+    name.trim() && 
+    (platform === 'custom' 
+      ? customPrompt.trim() 
+      : (apiKey.trim() && agentId.trim())) && 
+    ((direction === "inbound" || direction === "both") ? phoneNumber.trim() : true)
 
   // Get platform-specific labels
   const getPlatformLabels = () => {
@@ -46,6 +55,13 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
           agentIdLabel: 'Cartesia Agent ID',
           agentIdPlaceholder: 'Enter your Cartesia Agent ID',
         };
+      case 'custom':
+        return {
+          apiKeyLabel: '',
+          apiKeyPlaceholder: '',
+          agentIdLabel: '',
+          agentIdPlaceholder: '',
+        };
       default:
         return {
           apiKeyLabel: `${platform?.toUpperCase()} API Key`,
@@ -69,13 +85,15 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
           Connect your Voice Agent API
         </h3>
         <p className="text-gray-400 text-base">
-          Enter your {platform?.toUpperCase()} credentials to get started
+          {platform === 'custom' 
+            ? 'Enter your agent details and system prompt' 
+            : `Enter your ${platform?.toUpperCase()} credentials to get started`}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
         <FormInput
-          label="Agent Name (Optional)"
+          label="Agent Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           onFocus={() => setFocusedField("name")}
@@ -83,31 +101,57 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
           focused={focusedField === "name"}
           placeholder="My Voice Agent"
           disabled={isConnecting}
+          required
         />
 
-        <FormInput
-          label={labels.apiKeyLabel}
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          onFocus={() => setFocusedField("apiKey")}
-          onBlur={() => setFocusedField(null)}
-          focused={focusedField === "apiKey"}
-          placeholder={labels.apiKeyPlaceholder}
-          type="password"
-          disabled={isConnecting}
-        />
+        {platform === 'custom' ? (
+          <div>
+            <label className="block text-white text-base font-medium mb-3">
+              Custom Prompt
+            </label>
+            <textarea
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              onFocus={() => setFocusedField("customPrompt")}
+              onBlur={() => setFocusedField(null)}
+              placeholder="Enter your system prompt here..."
+              disabled={isConnecting}
+              rows={6}
+              className={`w-full px-5 py-4 bg-dark-input border rounded-xl text-white text-base placeholder-gray-500 focus:outline-none transition-all duration-300 ${
+                focusedField === "customPrompt" || customPrompt
+                  ? "border-teal-400 shadow-lg shadow-teal-400/30"
+                  : "border-gray-700 hover:border-gray-600"
+              }`}
+              required
+            />
+          </div>
+        ) : (
+          <>
+            <FormInput
+              label={labels.apiKeyLabel}
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              onFocus={() => setFocusedField("apiKey")}
+              onBlur={() => setFocusedField(null)}
+              focused={focusedField === "apiKey"}
+              placeholder={labels.apiKeyPlaceholder}
+              type="password"
+              disabled={isConnecting}
+            />
 
-        <FormInput
-          label={labels.agentIdLabel}
-          value={agentId}
-          onChange={(e) => setAgentId(e.target.value)}
-          onFocus={() => setFocusedField("agentId")}
-          onBlur={() => setFocusedField(null)}
-          focused={focusedField === "agentId"}
-          placeholder={labels.agentIdPlaceholder}
-          type="password"
-          disabled={isConnecting}
-        />
+            <FormInput
+              label={labels.agentIdLabel}
+              value={agentId}
+              onChange={(e) => setAgentId(e.target.value)}
+              onFocus={() => setFocusedField("agentId")}
+              onBlur={() => setFocusedField(null)}
+              focused={focusedField === "agentId"}
+              placeholder={labels.agentIdPlaceholder}
+              type="password"
+              disabled={isConnecting}
+            />
+          </>
+        )}
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-300">Direction</label>
@@ -123,6 +167,20 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
           </select>
         </div>
 
+        {(direction === "inbound" || direction === "both") && (
+          <FormInput
+            label="Agent Phone Number"
+            value={phoneNumber}
+            onChange={(e) => setPhoneNumber(e.target.value)}
+            onFocus={() => setFocusedField("phoneNumber")}
+            onBlur={() => setFocusedField(null)}
+            focused={focusedField === "phoneNumber"}
+            placeholder="+1234567890"
+            disabled={isConnecting}
+            required
+          />
+        )}
+
         <p className="text-gray-400 text-sm">
           Your API key is encrypted and stored securely.
         </p>
@@ -137,7 +195,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
         <div className="mt-6 flex items-center justify-center gap-3 text-teal-400 animate-pulse relative z-10">
           <div className="w-2.5 h-2.5 bg-teal-400 rounded-full animate-glow" />
           <span className="text-base font-medium">
-            Establishing connection...
+            {platform === 'custom' ? 'Saving agent details...' : 'Establishing connection...'}
           </span>
         </div>
       )}

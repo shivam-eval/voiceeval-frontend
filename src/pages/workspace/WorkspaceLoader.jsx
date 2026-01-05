@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { agentsApi, flowsApi } from "../../utils/api";
 import WorkspaceDashboard from "./index";
 import DashboardLoader from "../../components/DashboardLoader";
@@ -80,7 +81,12 @@ const WorkspaceLoader = () => {
             setLoading(false);
         } catch (err) {
             console.error("Failed to load workspace data:", err);
-            setError(err.message || "Failed to load workspace data");
+            const msg = err.message || "Failed to load workspace data";
+            // Only toast if it's not a standard API error (which are already toasted)
+            if (!err.message?.includes("HTTP error")) {
+                toast.error(msg);
+            }
+            setError(msg);
             setLoading(false);
         }
     };

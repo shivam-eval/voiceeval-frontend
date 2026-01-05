@@ -40,6 +40,8 @@ const initialState = {
     completed: false,
     evaluationResult: null, // ✅ FINAL evaluation payload
   },
+
+  assistantId: localStorage.getItem("voiceeval_assistant_id") || "",
 };
 
 /* =========================
@@ -125,9 +127,18 @@ export const WorkflowProvider = ({ children }) => {
     }));
   };
 
+  const setAssistantId = (id) => {
+    setWorkflow((prev) => ({
+      ...prev,
+      assistantId: id,
+    }));
+    localStorage.setItem("voiceeval_assistant_id", id);
+  };
+
   const resetWorkflow = () => {
     setWorkflow(initialState);
     localStorage.removeItem("voiceeval_workflow");
+    localStorage.removeItem("voiceeval_assistant_id");
   };
 
   /* =========================
@@ -146,6 +157,7 @@ export const WorkflowProvider = ({ children }) => {
         setEvaluationResult, // ✅ NEW
         setSetupResult,
         setRegion,
+        setAssistantId,
         resetWorkflow,
       }}
     >

@@ -5,6 +5,7 @@ const platforms = [
   { id: 'vapi', name: 'Vapi', color: 'from-purple-500 to-pink-500' },
   { id: 'elevenlabs', name: 'ElevenLabs', color: 'from-orange-500 to-red-500' },
   { id: 'cartesia', name: 'Cartesia', color: 'from-teal-500 to-blue-500' },
+  { id: 'custom', name: 'Custom Prompt', color: 'from-gray-500 to-gray-700' },
 ]
 
 const PlatformSelection = ({ onSelectPlatform }) => {
@@ -20,24 +21,6 @@ const PlatformSelection = ({ onSelectPlatform }) => {
                 Voice<span className="text-teal-400">Eval</span>
               </h1>
             </div>
-            <button
-              className="w-10 h-10 rounded-full bg-dark-input hover:bg-gray-700/50 flex items-center justify-center text-gray-400 hover:text-white transition-all duration-200 group"
-              onClick={() => window.location.reload()}
-            >
-              <svg
-                className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
           </div>
 
           {/* Main Heading */}

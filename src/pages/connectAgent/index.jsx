@@ -6,17 +6,24 @@ const ConnectionForm = ({ platform, onConnect, isConnecting, onBack }) => {
       <div className="space-y-8">
 
         {/* Logo + Back */}
-        <div className="flex items-start justify-between">
-          <h1 className="text-4xl font-bold text-white">
-            Voice<span className="text-teal-400">Eval</span>
-          </h1>
-
+        <div className="flex items-center gap-4">
           <button
             onClick={onBack}
-            className="w-10 h-10 rounded-full bg-dark-input hover:bg-gray-700/50 flex items-center justify-center text-gray-400 hover:text-white"
+            className="w-10 h-10 rounded-full bg-dark-input hover:bg-gray-700/50 flex items-center justify-center text-gray-400 hover:text-white transition-all duration-200 group"
+            title="Go back"
           >
-            ←
+            <svg 
+              className="w-5 h-5 group-hover:-translate-x-1 transition-transform duration-200" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
           </button>
+          <h1 className="text-4xl font-bold text-white tracking-tight">
+            Voice<span className="text-teal-400">Eval</span>
+          </h1>
         </div>
 
         {/* Hero */}

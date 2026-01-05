@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useTestSuite, useUpdateTestSuite, useDeleteTestSuite, useAddTestCase, useCloneTestSuite, useUpdateTestSuiteStatus } from "../../hooks/useTestSuites";
 import { usePersonas } from "../../hooks/usePersonas";
 import { useTestProfiles } from "../../hooks/useTestProfiles";
@@ -37,8 +38,9 @@ const TestSuiteDetailView = () => {
     const handleStatusChange = async (newStatus) => {
         try {
             await updateStatus.mutateAsync({ id: suiteId, status: newStatus });
+            toast.success(`Status updated to ${newStatus}`);
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -49,8 +51,9 @@ const TestSuiteDetailView = () => {
                 data: { [field]: value },
             });
             field === 'name' ? setEditingName(false) : setEditingDescription(false);
+            toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`);
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -58,9 +61,10 @@ const TestSuiteDetailView = () => {
         if (confirm("Are you sure you want to delete this test suite?")) {
             try {
                 await deleteSuite.mutateAsync(suiteId);
+                toast.success("Test suite deleted successfully");
                 navigate("/test-cases");
             } catch (error) {
-                alert(error.message);
+                // Error handled by global interceptor
             }
         }
     };
@@ -68,8 +72,9 @@ const TestSuiteDetailView = () => {
     const handleClone = async () => {
         try {
             await cloneSuite.mutateAsync(suiteId);
+            toast.success("Test suite cloned successfully");
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -122,8 +127,9 @@ const TestSuiteDetailView = () => {
             }
             setShowTestCaseModal(false);
             setEditingTestCase(null);
+            toast.success(editingTestCase ? "Test case updated" : "Test case added");
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -135,8 +141,9 @@ const TestSuiteDetailView = () => {
                     id: suiteId,
                     data: { test_cases: updatedTestCases },
                 });
+                toast.success("Test case deleted");
             } catch (error) {
-                alert(error.message);
+                // Error handled by global interceptor
             }
         }
     };

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import {
   DEBT_COLLECTION_TRANSCRIPTS,
 } from "./const";
@@ -314,6 +315,7 @@ const EvaluationDashboard = ({ onBack }) => {
 
       if (!evaluation) {
         console.error("No evaluation found for session:", report.session_id);
+        toast.error("Evaluation data not found for this session");
         return;
       }
 
@@ -324,7 +326,7 @@ const EvaluationDashboard = ({ onBack }) => {
       setSelectedTranscript(transcript);
 
     } catch (err) {
-      console.error("Failed to load transcript:", err);
+      toast.error("Failed to load transcript: " + (err.message || "Unknown error"));
       setSelectedTranscript(null);
     }
   };

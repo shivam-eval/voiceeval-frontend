@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { toast } from 'react-toastify'
 import { testGeneration } from '../api'
 
 const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) => {
@@ -122,6 +123,7 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
 
         const errorMessage = err?.response?.data?.detail || err.message || 'Failed to generate test cases'
         setError(errorMessage)
+        toast.error(`Test generation failed: ${errorMessage}`)
         setStatus('Error occurred')
         setProgress(0)
 

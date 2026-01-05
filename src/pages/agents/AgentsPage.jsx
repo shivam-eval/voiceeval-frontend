@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import { useAgents, useDeleteAgent, useTestAgent, useCloneAgent, useCreateAgent } from "../../hooks/useAgents";
 import Table from "../../components/Table";
 import Badge from "../../components/Badge";
@@ -7,11 +8,13 @@ import Button from "../../components/Button";
 import PlatformSelection from "../platformSelection/PlatformSelection";
 import ConnectionForm from "../connectAgent";
 import GenerateFlowModal from "../../components/GenerateFlowModal";
+import { useWorkflow } from "../../context/WorkFlowContext";
 
 import ConfirmationModal from "../../components/ConfirmationModal";
 
 const AgentsPage = () => {
     const navigate = useNavigate();
+    const { setAssistantId } = useWorkflow();
 
     // Filters and search
     // ... existing state ...
@@ -57,7 +60,7 @@ const AgentsPage = () => {
         setSelectedPlatform(platformId);
     };
 
-    const handleConnect = async ({ apiKey, agentId, name, direction }) => {
+    const handleConnect = async ({ apiKey, agentId, name, customPrompt, direction, phoneNumber }) => {
         // ... existing handleConnect logic ...
         try {
             await createAgent.mutateAsync({
@@ -66,12 +69,20 @@ const AgentsPage = () => {
                 provider_agent_id: agentId,
                 name: name,
                 direction: direction,
+                phone_number: phoneNumber,
+                metadata: selectedPlatform === 'custom' ? { system_prompt: customPrompt } : undefined
             });
+
+            // Store the agentId (assistant ID) in global context
+            if (agentId) {
+                setAssistantId(agentId);
+            }
 
             setShowConnectModal(false);
             setSelectedPlatform(null);
+            toast.success("Agent connected successfully!");
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -97,10 +108,11 @@ const AgentsPage = () => {
                     console.log("🚀 Executing delete for:", id);
                     await deleteAgent.mutateAsync(id);
                     setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+                    toast.success("Agent deleted successfully");
                     console.log("✅ Delete successful");
                 } catch (error) {
                     console.error("❌ Delete failed:", error);
-                    alert(error.message);
+                    // Error handled by global interceptor
                     setConfirmationModal(prev => ({ ...prev, isLoading: false }));
                 }
             }
@@ -111,9 +123,13 @@ const AgentsPage = () => {
         // ... existing handleTest logic ...
         try {
             const result = await testAgent.mutateAsync(id);
-            alert(result.success ? "Connection successful!" : `Connection failed: ${result.message}`);
+            if (result.success) {
+                toast.success("Connection successful!");
+            } else {
+                toast.error(`Connection failed: ${result.message}`);
+            }
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -121,8 +137,9 @@ const AgentsPage = () => {
         // ... existing handleClone logic ...
         try {
             await cloneAgent.mutateAsync(id);
+            toast.success("Agent cloned successfully");
         } catch (error) {
-            alert(error.message);
+            // Error handled by global interceptor
         }
     };
 
@@ -140,10 +157,11 @@ const AgentsPage = () => {
                     await Promise.all(selectedRows.map(id => deleteAgent.mutateAsync(id)));
                     setSelectedRows([]);
                     setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+                    toast.success(`${selectedRows.length} agents deleted successfully`);
                     console.log("✅ Bulk delete successful");
                 } catch (error) {
                     console.error("❌ Bulk delete failed:", error);
-                    alert(error.message);
+                    // Error handled by global interceptor
                     setConfirmationModal(prev => ({ ...prev, isLoading: false }));
                 }
             }
@@ -365,20 +383,18 @@ const AgentsPage = () => {
             {/* ... */}
             {showConnectModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-dark-bg rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-800">
-                        <div className="p-8">
-                            {/* Close Button */}
-                            <div className="flex justify-end mb-4">
-                                <button
-                                    onClick={handleCloseModal}
-                                    className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
+                    <div className="bg-dark-bg rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-800 relative">
+                        {/* Close Button */}
+                        <button
+                            onClick={handleCloseModal}
+                            className="absolute top-6 right-6 w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-all duration-200 z-10 group"
+                        >
+                            <svg className="w-5 h-5 group-hover:rotate-90 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
 
+                        <div className="p-8">
                             {/* Modal Content */}
                             {!selectedPlatform ? (
                                 <PlatformSelection onSelectPlatform={handlePlatformSelect} />

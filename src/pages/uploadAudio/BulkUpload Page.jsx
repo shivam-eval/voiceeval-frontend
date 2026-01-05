@@ -36,7 +36,7 @@ const BulkUploadPage = () => {
     }, []);
 
     // Handle drop
-    const handle Drop = useCallback((e) => {
+    const handleDrop = useCallback((e) => {
         e.preventDefault();
         e.stopPropagation();
         setDragActive(false);

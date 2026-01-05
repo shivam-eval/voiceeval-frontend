@@ -21,7 +21,7 @@ const HomePage = () => {
         <div className="p-8">
             <div className="w-full max-w-screen-2xl mx-auto">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-10">
                     <h1 className="text-4xl font-bold text-white mb-2">
                         Welcome to Voice<span className="text-teal-400">Eval</span>
                     </h1>
@@ -31,7 +31,7 @@ const HomePage = () => {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                     <button
                         onClick={handleConnectAgent}
                         className="bg-gray-900 rounded-2xl p-6 border border-gray-800/50 hover:border-teal-400/50 transition-all group text-left"
@@ -86,7 +86,6 @@ const HomePage = () => {
                 </div>
 
                 {/* Getting Started */}
-
                 <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800/50">
                     <h2 className="text-2xl font-bold text-white mb-6">Get Started</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -129,7 +128,7 @@ const HomePage = () => {
                 </div>
 
                 {/* Recent Activity Placeholder */}
-                <div className="mt-8 bg-gray-900 rounded-2xl p-8 border border-gray-800/50">
+                {/* <div className="mt-8 bg-gray-900 rounded-2xl p-8 border border-gray-800/50">
                     <h2 className="text-2xl font-bold text-white mb-4">Recent Activity</h2>
                     <div className="text-center py-12">
                         <div className="text-gray-500 mb-4">
@@ -140,7 +139,7 @@ const HomePage = () => {
                             <p className="text-sm mt-2">Start by connecting an agent to see your workflow history</p>
                         </div>
                     </div>
-                </div>
+                </div> */}
             </div >
         </div >
     );

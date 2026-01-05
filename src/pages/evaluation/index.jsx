@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -149,7 +149,7 @@ const EvaluationDashboard = ({ onBack }) => {
 
 
   const simulationDataFromRes = {
-    simulation_id: resData?.simulation_id || simulationId,
+    simulation_id: fullResponse?.simulation_id || simulationId,
     execution_summary: {
       total_test_cases: evaluations.length,
       completed_test_cases: passedCount,
@@ -396,14 +396,53 @@ const EvaluationDashboard = ({ onBack }) => {
     // Create aggregated data for category views
     // Convert category scores to array format for components and populate metrics
     const categoryScoresArray = categoryScores.map(cs => {
-      // Find metrics for this category from the first evaluation (or aggregate if needed)
-      const firstEvaluation = evaluations[0];
-      const categoryData = firstEvaluation?.category_scores?.find(cat => cat.category === cs.category);
+      // Aggregate metrics for this category across all evaluations
+      // to ensure we have a complete list even if some sessions skipped certain metrics
+      const metricMap = new Map();
+
+      if (Array.isArray(evaluations)) {
+        evaluations.forEach(ev => {
+          // Standard: pull metrics from this category
+          const catData = ev.category_scores?.find(cat => cat.category === cs.category);
+          if (catData?.metrics && Array.isArray(catData.metrics)) {
+            catData.metrics.forEach(m => {
+              const mName = m.name || m.metric_name;
+              if (mName && !metricMap.has(mName)) {
+                metricMap.set(mName, {
+                  ...m,
+                  name: mName
+                });
+              }
+            });
+          }
+
+          // Special Case: ensure 'response_consistency' and 'semantic_accuracy' are in Accuracy
+          if (cs.category === 'accuracy') {
+            const allMetrics = ev.metrics || ev.metric_results || [];
+            // If they are not in the top level, they might be in other categories
+            const nestedMetrics = ev.category_scores?.flatMap(c => c.metrics || []) || [];
+            const combined = [...allMetrics, ...nestedMetrics];
+
+            combined.forEach(m => {
+              const mName = m.name || m.metric_name;
+              if ((mName === 'response_consistency' || mName === 'semantic_accuracy') && !metricMap.has(mName)) {
+                metricMap.set(mName, {
+                  ...m,
+                  name: mName,
+                  category: 'accuracy' // Force category match for consistency
+                });
+              }
+            });
+          }
+        });
+      }
+
+      const metrics = Array.from(metricMap.values());
 
       return {
         category: cs.category,
         average_score: cs.score / 100, // Convert back to 0-1 for components
-        metrics: categoryData?.metrics || [] // Populate with actual metrics
+        metrics: metrics
       };
     });
 

@@ -7,13 +7,15 @@ import { darkTheme } from "../../const";
 ========================= */
 
 const humanizeMetricName = (name) => {
+  if (!name) return "Unknown Metric";
+  if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
   const map = {
     persona_consistency: "Persona Consistency",
     tone_appropriateness: "Tone Appropriateness",
     region_appropriate_language: "Region Appropriate Language",
     behavior_trait_alignment: "Behavior Trait Alignment",
   };
-  return map[name] || name.replace(/_/g, " ");
+  return map[name] || String(name).replace(/_/g, " ");
 };
 
 const toPercent = (v) =>
@@ -27,8 +29,8 @@ const PersonaAlignmentRadar = ({ metrics = [] }) => {
   if (!metrics.length) return null;
 
   const radarData = metrics.map((m) => ({
-    metric: humanizeMetricName(m.name),
-    score: toPercent(m.value),
+    metric: humanizeMetricName(m.name || m.metric_name),
+    score: toPercent(m.value || m.score),
   }));
 
   return (

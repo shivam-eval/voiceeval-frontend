@@ -11,6 +11,8 @@ import VoiceQualityConsistency from "./VoiceQuality";
 ========================= */
 
 const humanizeMetricName = (name) => {
+  if (!name) return "Unknown Metric";
+  if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
   const map = {
     word_error_rate: "Word Error Rate",
     audio_technical_quality: "Audio Technical Quality",
@@ -18,14 +20,14 @@ const humanizeMetricName = (name) => {
     average_pitch: "Average Pitch",
     voice_quality_index: "Voice Quality Index"
   };
-  return map[name] || name;
+  return map[name] || String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const transformStatCards = (audioMetrics) => {
   if (!audioMetrics || audioMetrics.length === 0) return [];
 
   return audioMetrics.map((m) => ({
-    title: humanizeMetricName(m.name),
+    title: humanizeMetricName(m.name || m.metric_name),
     value: m.score !== null && m.score !== undefined
       ? Math.round(m.score * 100)
       : 100, // Default to 100 if score is null (passed metrics)

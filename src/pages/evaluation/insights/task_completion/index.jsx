@@ -8,13 +8,15 @@ import DetailedValidationSection from "./DetailedValidationSection";
 ========================= */
 
 const humanizeMetricName = (name) => {
+  if (!name) return "Unknown Metric";
+  if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
   const map = {
     task_completion_rate: "Task Completion",
     sequential_task_accuracy: "Sequential Accuracy",
     step_validation_pass_rate: "Step Validation",
     flow_path_coverage: "Flow Coverage",
   };
-  return map[name] || name;
+  return map[name] || String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 /* =========================
@@ -41,7 +43,7 @@ const transformStatCards = (response) => {
   return response.metrics
     .filter(m => priorityMetrics.includes(m.name))
     .map((m) => ({
-      title: humanizeMetricName(m.name),
+      title: humanizeMetricName(m.name || m.metric_name),
       value: normalizeMetricScore(m.score),
       passed: m.status === "passed",
     }));

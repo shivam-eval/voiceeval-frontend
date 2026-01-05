@@ -6,6 +6,8 @@ import { darkTheme } from "../../const";
    Helpers
 ========================= */
 const humanizeRadarLabel = (name) => {
+  if (!name) return "Unknown Metric";
+  if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
   const map = {
     word_error_rate: "Word Error",
     audio_technical_quality: "Audio Technical",
@@ -13,7 +15,7 @@ const humanizeRadarLabel = (name) => {
     average_pitch: "Average Pitch",
     voice_quality_index: "Voice Quality"
   };
-  return map[name] || name;
+  return map[name] || String(name).replace(/_/g, " ");
 };
 
 /* =========================
@@ -23,7 +25,7 @@ const AudioQualityRadar = ({ response }) => {
   if (!response?.metrics) return null;
 
   const radarData = response.metrics.map((m) => ({
-    metric: humanizeRadarLabel(m.name),
+    metric: humanizeRadarLabel(m.name || m.metric_name),
     score: m.score !== null && m.score !== undefined
       ? Math.round(m.score * 100)
       : 100 // Default to 100 for null scores

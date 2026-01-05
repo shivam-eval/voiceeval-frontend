@@ -167,26 +167,43 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
     if (!Array.isArray(metrics)) return {};
 
     const map = {};
-    metrics.forEach((metric) => {
-      if (!metric) return;
-      const category = metric.category;
-      if (!category) return;
 
-      if (!map[category]) {
+    // Helper to ensure category exists in map
+    const ensureCategory = (catName) => {
+      if (!map[catName]) {
         const categoryScore = Array.isArray(evaluationData.category_scores)
-          ? evaluationData.category_scores.find((c) => c && c.category === category)
+          ? evaluationData.category_scores.find((c) => c && c.category === catName)
           : null;
         const score = categoryScore ? categoryScore.score : 0;
         const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
-        map[category] = {
-          category,
+        map[catName] = {
+          category: catName,
           score: normalizedScore,
           weight: categoryScore ? categoryScore.weight : 0,
           metrics: [],
         };
       }
-      map[category].metrics.push(metric);
+    };
+
+    metrics.forEach((metric) => {
+      if (!metric) return;
+      const mName = metric.name || metric.metric_name;
+      let category = metric.category;
+
+      // Special override: force these to accuracy
+      if (mName === 'response_consistency' || mName === 'semantic_accuracy') {
+        category = 'accuracy';
+      }
+
+      if (!category) return;
+
+      ensureCategory(category);
+
+      // Check for duplicates if we forced category
+      if (!map[category].metrics.some(m => (m.name || m.metric_name) === mName)) {
+        map[category].metrics.push(metric);
+      }
     });
     return map;
   }, [evaluationData]);
@@ -558,7 +575,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                       {evaluationData?.metrics.map((metric, idx) => (
                         <tr key={idx} className="border-b border-gray-800/30 hover:bg-[#1e2433]">
                           <td className="px-6 py-4 text-sm text-white font-medium">
-                            {(metric.name || 'Unknown Metric').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {(metric.name || metric.metric_name || 'Unknown Metric').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-400">
                             {(metric.category || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}

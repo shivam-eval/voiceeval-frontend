@@ -5,8 +5,9 @@ import { darkTheme } from "../../const";
    Helpers
 ========================= */
 const humanizeMetricName = (name) => {
-  // Convert snake_case to Title Case dynamically
-  return name
+  if (!name) return "Unknown Metric";
+  if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
+  return String(name)
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
@@ -20,7 +21,7 @@ const transformAccuracyBarData = (response) => {
 
   // Show all accuracy metrics including semantic_accuracy
   return response.metrics.map((m) => ({
-    metric: humanizeMetricName(m.name),
+    metric: humanizeMetricName(m.name || m.metric_name),
     value: typeof m.score === "number" ? m.score * 100 : 0, // Convert 0-1 to 0-100 for display
     status: m.status, // passed | failed | skipped
   }));

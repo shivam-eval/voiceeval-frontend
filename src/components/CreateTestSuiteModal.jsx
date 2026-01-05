@@ -41,16 +41,16 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
 
     // Load personas and test profiles
     const { data: personasData } = usePersonas({ limit: 500 });
-    const { data: testProfilesData } = useTestProfiles({ 
+    const { data: testProfilesData } = useTestProfiles({
         agent_id: formData.agent_id,
-        limit: 500 
+        limit: 500
     });
     const { data: flowsData, isLoading: flowsLoading } = useAgentFlows(formData.agent_id);
 
     const personas = personasData?.personas || [];
     const testProfiles = testProfilesData?.test_profiles || [];
     const flows = flowsData?.flows || [];
-    
+
     console.log('Agent ID:', formData.agent_id);
     console.log('Flows Data:', flowsData);
     console.log('Flows Array:', flows);
@@ -442,47 +442,6 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                             {/* Flow-based: Generation Config */}
                             {formData.testCaseType === 'graph' ? (
                                 <>
-                                    {/* Flow Selection */}
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-300 mb-2">
-                                            Select Flow <span className="text-gray-500">(Optional)</span>
-                                        </label>
-                                        {flowsLoading ? (
-                                            <div className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-400">
-                                                Loading flows...
-                                            </div>
-                                        ) : (
-                                            <select
-                                                value={formData.flow_id}
-                                                onChange={(e) => handleInputChange('flow_id', e.target.value)}
-                                                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                                                disabled={!formData.agent_id}
-                                            >
-                                                <option value="">-- Auto-generate new flow --</option>
-                                                {flows.map((flow) => (
-                                                    <option key={flow.flow_id} value={flow.flow_id}>
-                                                        {flow.name} ({new Date(flow.created_at).toLocaleDateString()})
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        )}
-                                        {!formData.agent_id && (
-                                            <p className="text-xs text-yellow-400 mt-1">
-                                                ⚠️ Please select an agent first
-                                            </p>
-                                        )}
-                                        {formData.agent_id && flows.length === 0 && !flowsLoading && (
-                                            <p className="text-xs text-blue-400 mt-1">
-                                                ℹ️ No flows found. A new flow will be automatically generated from your agent's configuration.
-                                            </p>
-                                        )}
-                                        {flows.length > 0 && (
-                                            <p className="text-xs text-gray-400 mt-1">
-                                                Choose an existing flow or leave empty to auto-generate a new one
-                                            </p>
-                                        )}
-                                    </div>
-
                                     {/* Call Type */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-300 mb-3">
@@ -578,68 +537,68 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                             ) : (
                                 <>
                                     {/* Scenario/Audio: Default Profile & Persona */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Test Profile <span className="text-gray-500 text-xs">(Variable Sets)</span>
-                                </label>
-                                <select
-                                    value={formData.test_profile_id}
-                                    onChange={(e) => handleInputChange('test_profile_id', e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                                >
-                                    <option value="">None (no test data)</option>
-                                    {testProfiles.map((profile) => (
-                                        <option key={profile._id} value={profile._id}>
-                                            {profile.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="text-xs text-gray-400 mt-1">
-                                    Inject variables like customer_name, order_id into test conversations
-                                </p>
-                            </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                            Test Profile <span className="text-gray-500 text-xs">(Variable Sets)</span>
+                                        </label>
+                                        <select
+                                            value={formData.test_profile_id}
+                                            onChange={(e) => handleInputChange('test_profile_id', e.target.value)}
+                                            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
+                                        >
+                                            <option value="">None (no test data)</option>
+                                            {testProfiles.map((profile) => (
+                                                <option key={profile._id} value={profile._id}>
+                                                    {profile.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            Inject variables like customer_name, order_id into test conversations
+                                        </p>
+                                    </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Default Persona <span className="text-gray-500 text-xs">(User Behavior)</span>
-                                </label>
-                                <select
-                                    value={formData.persona_id}
-                                    onChange={(e) => handleInputChange('persona_id', e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                                >
-                                    <option value="">None (set per test case)</option>
-                                    {personas.map((persona) => (
-                                        <option key={persona.persona_id} value={persona.persona_id}>
-                                            {persona.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="text-xs text-gray-400 mt-1">
-                                    Voice characteristics and behavior traits (patience, verbosity, tech-savviness)
-                                </p>
-                            </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                            Default Persona <span className="text-gray-500 text-xs">(User Behavior)</span>
+                                        </label>
+                                        <select
+                                            value={formData.persona_id}
+                                            onChange={(e) => handleInputChange('persona_id', e.target.value)}
+                                            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
+                                        >
+                                            <option value="">None (set per test case)</option>
+                                            {personas.map((persona) => (
+                                                <option key={persona.persona_id} value={persona.persona_id}>
+                                                    {persona.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <p className="text-xs text-gray-400 mt-1">
+                                            Voice characteristics and behavior traits (patience, verbosity, tech-savviness)
+                                        </p>
+                                    </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Extra Instructions
-                                </label>
-                                <textarea
-                                    value={formData.extra_instructions}
-                                    onChange={(e) => handleInputChange('extra_instructions', e.target.value)}
-                                    placeholder="Additional instructions for evaluators..."
-                                    rows={4}
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-teal-400 resize-none"
-                                />
-                            </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                            Extra Instructions
+                                        </label>
+                                        <textarea
+                                            value={formData.extra_instructions}
+                                            onChange={(e) => handleInputChange('extra_instructions', e.target.value)}
+                                            placeholder="Additional instructions for evaluators..."
+                                            rows={4}
+                                            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-teal-400 resize-none"
+                                        />
+                                    </div>
 
-                            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                                <p className="text-sm text-blue-400">
-                                    {formData.testCaseType === 'audio'
-                                        ? '💡 Next: Upload audio files for test case generation.'
-                                        : '💡 Tip: You can add individual test cases after creating the suite.'}
-                                </p>
-                            </div>
+                                    <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                                        <p className="text-sm text-blue-400">
+                                            {formData.testCaseType === 'audio'
+                                                ? '💡 Next: Upload audio files for test case generation.'
+                                                : '💡 Tip: You can add individual test cases after creating the suite.'}
+                                        </p>
+                                    </div>
                                 </>
                             )}
                         </div>

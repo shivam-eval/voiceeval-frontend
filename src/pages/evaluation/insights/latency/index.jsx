@@ -81,11 +81,14 @@ const LatencyOverview = ({ response, data, onBack }) => {
   const ttft = byName('time_to_first_token')
   const ttct = byName('time_to_complete_transcript')
   const total = byName('total_duration')
+  const repetition = byName('repetition_count')
+  
   const passedCount = metrics.filter(m => m.status === "passed" || m.passed === true).length
   const totalCount = metrics.length || 1
   const passPct = Math.round((passedCount / totalCount) * 100)
   const isPassed = response?.passed ?? (passedCount === totalCount)
   const fmtNum = (n) => n?.toLocaleString?.('en-US') ?? String(n ?? '')
+  
   const handleTabChange = (key) => {
     const map = {
       accuracy: 'accuracy',
@@ -102,6 +105,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
     url.searchParams.set('preview', target)
     window.location.href = url.toString()
   }
+  
   const donut = () => {
     const r = 34
     const cx = 40
@@ -125,16 +129,18 @@ const LatencyOverview = ({ response, data, onBack }) => {
       </svg>
     )
   }
-  const card = (m, title, unit = 'ms') => {
+  
+  const card = (m, title, unit = 'ms', isCount = false) => {
     if (!m) return null
     const passed = m.status === "passed" || m.passed === true
     const threshold = typeof m.threshold === 'number' ? m.threshold : null
-    const valRaw = m.value ?? m.details?.average_ms ?? 0
-    const val = Math.round(valRaw)
-    const pct = threshold ? Math.max(0, Math.min(100, Math.round((val / threshold) * 100))) : (m.score ? Math.round(m.score * 100) : 100)
+    const valRaw = m.value ?? m.details?.average_ms ?? (m.details?.repetition_count !== undefined ? m.details.repetition_count : 0)
+    const val = isCount ? valRaw : Math.round(valRaw)
+    const pct = threshold ? Math.max(0, Math.min(100, Math.round((val / threshold) * 100))) : (m.score !== undefined ? Math.round(m.score * 100) : 100)
     const exec = typeof m.execution_time_ms === 'number' ? Number(m.execution_time_ms.toFixed(2)) : 0
     const metricName = m.metric_name || m.name
-    const valueLabel = metricName === 'total_duration' ? `${(valRaw / 1000).toFixed(1)}s` : `${val}${unit}`
+    const valueLabel = isCount ? `${val}` : (metricName === 'total_duration' ? `${(valRaw / 1000).toFixed(1)}s` : `${val}${unit}`)
+    
     return (
       <div className="p-4 rounded-xl border" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
         <div className="flex items-start justify-between">
@@ -169,6 +175,12 @@ const LatencyOverview = ({ response, data, onBack }) => {
             <div>
               Threshold
               <div className="font-semibold" style={{ color: COLORS.white }}>{m.metric_name === 'total_duration' ? `${(threshold / 1000).toFixed(1)}s` : `${threshold}${unit}`}</div>
+            </div>
+          )}
+          {m.details?.agent_turns_analyzed !== undefined && (
+            <div>
+              Turns Analyzed
+              <div className="font-semibold" style={{ color: COLORS.white }}>{fmtNum(m.details.agent_turns_analyzed)}</div>
             </div>
           )}
           {m.details?.average_ms !== undefined && (
@@ -223,6 +235,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
       </div>
     )
   }
+  
   const metricBars = () => {
     const labelMap = {
       response_latency: 'Response Latency',
@@ -318,6 +331,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
       </div>
     )
   }
+  
   const distributionTiles = () => {
     if (!rl?.details) return null
     const d = rl.details
@@ -351,6 +365,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
       </div>
     )
   }
+  
   return (
     <div className="space-y-6">
       {/* Back Button */}
@@ -365,6 +380,8 @@ const LatencyOverview = ({ response, data, onBack }) => {
       )}
 
       {/* <InsightTabs active="latency" onChange={handleTabChange} categoryScores={DUMMY_CATEGORY_SCORES} /> */}
+      
+      {/* Header Card */}
       <div className="rounded-xl border p-6" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
         <div className="flex items-center justify-between">
           <div className="flex items-start gap-3">
@@ -393,14 +410,128 @@ const LatencyOverview = ({ response, data, onBack }) => {
           </div>
         </div>
       </div>
+      
+      {/* Latency Breakdown Chart */}
       {metricBars()}
+      
+      {/* Distribution Tiles */}
       {distributionTiles()}
+      
+      {/* Metric Cards */}
       <div className="grid grid-cols-2 gap-4">
         {card(rl, 'Response Latency')}
         {card(ttft, 'Time To First Token')}
         {card(ttct, 'Time To Complete Transcript')}
         {card(total, 'Total Duration', 'ms')}
+        {card(repetition, 'Repetition Count', '', true)}
       </div>
+
+      {/* Turn-by-Turn Analysis for Repetition Count */}
+      {repetition?.details?.agent_sentences && repetition.details.agent_sentences.length > 0 && (
+        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center">
+              <svg className="w-4 h-4 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12M8 12h12M8 17h12M3 7h.01M3 12h.01M3 17h.01" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-white">Turn-by-Turn Analysis</h2>
+          </div>
+
+          {/* Summary Stats */}
+          <div className="flex items-center gap-6 mb-8 p-4 bg-dark-input/30 rounded-xl border border-gray-800/50">
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Agent Turns</span>
+              <span className="text-xl font-semibold text-white">{repetition.details.agent_turns_analyzed || 0}</span>
+            </div>
+            <div className="w-[1px] h-10 bg-gray-800/80" />
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Repetitions Found</span>
+              <span className="text-xl font-semibold text-teal-400">{repetition.details.repetition_count || 0}</span>
+            </div>
+            <div className="w-[1px] h-10 bg-gray-800/80" />
+            <div className="flex flex-col gap-1">
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Status</span>
+              <div className="flex items-center gap-2">
+                <span className={`text-xl font-semibold ${repetition.status === 'passed' ? 'text-green-400' : 'text-red-400'}`}>
+                  {repetition.details.repetition_count === 0 ? 'Clean' : 'Repetitive'}
+                </span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${repetition.status === 'passed' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                  {repetition.status === 'passed' ? 'Pass' : 'Fail'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Agent Turns */}
+          <div className="space-y-4">
+            {repetition.details.agent_sentences.map((sentence, idx) => {
+              const turnNumber = idx + 1;
+              const isPassed = repetition.status === 'passed';
+
+              return (
+                <div key={idx} className={`border rounded-xl p-6 ${isPassed ? 'bg-dark-input border-gray-800/50' : 'bg-red-950/20 border-red-900/50'}`}>
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center bg-purple-500/20">
+                        <div className="text-xl">🤖</div>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium px-2 py-1 rounded bg-teal-500/20 text-teal-300">
+                            AGENT
+                          </span>
+                          <span className="text-gray-500 text-sm">
+                            Turn #{turnNumber}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-medium ${isPassed ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                      {isPassed ? '✓ No Repetition' : '✗ Repetitive'}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-xs text-gray-400 mb-2">Agent Response:</div>
+                      <p className="text-gray-200 leading-relaxed font-medium">
+                        {sentence.text || '—'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Repetitions List (if any) */}
+          {repetition.details.repetitions && repetition.details.repetitions.length > 0 && (
+            <div className="mt-6 p-4 bg-red-950/20 border border-red-900/50 rounded-xl">
+              <div className="text-sm font-semibold text-red-400 mb-3">Detected Repetitions:</div>
+              <div className="space-y-2">
+                {repetition.details.repetitions.map((rep, idx) => (
+                  <div key={idx} className="text-sm text-gray-300 pl-4 border-l-2 border-red-500/50">
+                    {rep}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Reasoning */}
+          {repetition.details.reasoning && (
+            <div className="mt-6 p-4 bg-dark-input/30 border border-gray-800/50 rounded-xl">
+              <div className="text-xs text-gray-400 mb-2">Analysis Reasoning:</div>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                {repetition.details.reasoning}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

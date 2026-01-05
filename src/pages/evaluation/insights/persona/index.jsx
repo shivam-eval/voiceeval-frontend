@@ -1,14 +1,11 @@
 import {
   User,
-  MessageSquare,
-  Globe,
-  Heart,
+  CheckCircle,
+  XCircle,
   ShieldCheck,
   ArrowLeft,
 } from "lucide-react";
 
-import InsightHeaderCard from "../../../../components/InsightHeaderCard";
-import StatCard from "../../../../components/StatCard";
 import PersonaDetailedMetrics from "./PersonaDetailedMetric";
 import PersonaAlignmentRadar from "./PersonaRadar";
 
@@ -16,27 +13,16 @@ import PersonaAlignmentRadar from "./PersonaRadar";
    Helpers
 ========================= */
 
-const PERSONA_CARD_CONFIG = {
-  persona_consistency: {
-    icon: User,
-    title: "Consistency",
-    subtitle: "Persona maintained throughout",
-  },
-  tone_appropriateness: {
-    icon: MessageSquare,
-    title: "Tone",
-    subtitle: "Appropriate communication style",
-  },
-  region_appropriate_language: {
-    icon: Globe,
-    title: "Regional Language",
-    subtitle: "Culturally appropriate",
-  },
-  behavior_trait_alignment: {
-    icon: Heart,
-    title: "Behavior",
-    subtitle: "Trait alignment",
-  },
+const humanizeMetricName = (name) => {
+  if (!name) return "Unknown Metric";
+  if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
+  const map = {
+    persona_consistency: "Persona Consistency",
+    tone_appropriateness: "Tone Appropriateness",
+    region_appropriate_language: "Region Appropriate Language",
+    behavior_trait_alignment: "Behavior Trait Alignment",
+  };
+  return map[name] || String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const normalizeScore = (v) =>
@@ -125,9 +111,10 @@ const PersonaOverview = ({ response, data, onBack }) => {
 
   const passedCount = metrics.filter((m) => m.status === "passed").length;
   const failedCount = metrics.length - passedCount;
+  const normalizedScore = normalizeScore(score);
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {/* Back Button */}
       {onBack && (
         <button
@@ -139,58 +126,162 @@ const PersonaOverview = ({ response, data, onBack }) => {
         </button>
       )}
 
-      {/* Header */}
-      <InsightHeaderCard
-        icon={User}
-        title="Persona"
-        description="Evaluates persona consistency and communication tone"
-        score={normalizeScore(score)}
-        passedCount={passedCount}
-        failedCount={failedCount}
-        theme="teal"
-      />
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {metrics.map((metric, idx) => {
-          const config = PERSONA_CARD_CONFIG[metric.name];
-          if (!config) return null;
-
-          return (
-            <StatCard
-              key={idx}
-              icon={config.icon}
-              title={config.title}
-              value={normalizeScore(metric.value)}
-              subtitle={config.subtitle}
-            />
-          );
-        })}
-      </div>
-
-      {/* Persona Stability Panel */}
-      {failedCount === 0 && (
-        <div className="bg-[#0b1f26] border border-teal-500/30 rounded-xl p-6 flex items-start gap-4">
-          <div className="p-3 rounded-lg bg-teal-500/20 text-teal-400">
-            <ShieldCheck size={28} />
+      {/* ================= HEADER CARD ================= */}
+      <div className="bg-[#0b1f26] border border-teal-500/40 rounded-xl p-6 flex items-center justify-between">
+        {/* Left */}
+        <div className="flex items-start gap-4">
+          <div className="p-4 rounded-xl bg-teal-500/20 text-teal-400">
+            <User size={28} />
           </div>
-
           <div>
-            <h3 className="text-lg font-semibold text-teal-300 mb-1">
-              Persona Stable & Consistent
-            </h3>
-            <p className="text-teal-200/80">
-              The agent maintained consistent personality, tone, and cultural
-              appropriateness throughout the conversation. Brand safety is
-              assured.
+            <h2 className="text-2xl font-semibold text-white">
+              Persona
+            </h2>
+            <p className="text-gray-400 mt-1">
+              Evaluates persona consistency and communication tone
             </p>
           </div>
         </div>
-      )}
 
-      {/* Radar & Details */}
-      <PersonaAlignmentRadar metrics={metrics} />
-      <PersonaDetailedMetrics metrics={metrics} />
+        {/* Right */}
+        <div className="flex items-center gap-6">
+          {/* Ring */}
+          <div className="relative w-24 h-24">
+            <svg className="w-24 h-24 -rotate-90">
+              <circle
+                cx="48"
+                cy="48"
+                r="40"
+                stroke="currentColor"
+                strokeWidth="8"
+                fill="none"
+                className="text-teal-900"
+              />
+              <circle
+                cx="48"
+                cy="48"
+                r="40"
+                stroke="currentColor"
+                strokeWidth="8"
+                fill="none"
+                strokeDasharray={2 * Math.PI * 40}
+                strokeDashoffset={
+                  2 * Math.PI * 40 * (1 - normalizedScore / 100)
+                }
+                className="text-teal-400"
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-2xl font-bold text-teal-300">
+                {normalizedScore}%
+              </span>
+            </div>
+          </div>
+
+          {/* Passed / Failed */}
+          <div className="flex gap-6 text-sm">
+            <div className="flex items-center gap-2 text-teal-400">
+              <CheckCircle size={16} />
+              <span className="font-medium">{passedCount}</span>
+              <span className="text-gray-400">Passed</span>
+            </div>
+            <div className="flex items-center gap-2 text-red-500">
+              <XCircle size={16} />
+              <span className="font-medium">{failedCount}</span>
+              <span className="text-gray-400">Failed</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ================= PERSONA ANALYTICS ================= */}
+      <div className="pt-6">
+        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-8 bg-teal-500/10 rounded-lg flex items-center justify-center">
+              <User className="w-5 h-5 text-teal-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white">Persona Analytics</h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6">
+            {metrics.map((metric, idx) => {
+              const isPassed = metric.status === "passed";
+              const mName = metric.name || metric.metric_name;
+              const label = humanizeMetricName(mName);
+              const score = typeof metric.score === 'number' ? Math.round(metric.score * 100) : 0;
+
+              // Filter and humanize details
+              const details = Object.entries(metric.details || {})
+                .filter(([key]) => !['passed', 'execution_time_ms', 'error_message', 'reasoning'].includes(key));
+
+              return (
+                <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{label}</span>
+                      <span className={`text-2xl font-bold ${isPassed ? 'text-teal-400' : 'text-red-400'}`}>
+                        {score}%
+                      </span>
+                    </div>
+                    <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                      {isPassed ? '✓ PASSED' : '✗ FAILED'}
+                    </div>
+                  </div>
+
+                  {details.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
+                      {details.map(([key, value]) => (
+                        <div key={key} className="flex flex-col gap-1.5">
+                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
+                          <div className="text-sm">
+                            {value === null ? (
+                              <span className="text-gray-600 italic">Not available</span>
+                            ) : typeof value === 'object' && !Array.isArray(value) ? (
+                              <div className="space-y-1">
+                                {Object.entries(value).map(([subKey, subValue]) => (
+                                  <div key={subKey} className="text-gray-300">
+                                    <span className="text-gray-500">{subKey.replace(/_/g, " ")}:</span> {String(subValue)}
+                                  </div>
+                                ))}
+                              </div>
+                            ) : Array.isArray(value) ? (
+                              value.length === 0 ? (
+                                <span className="text-gray-500">None</span>
+                              ) : (
+                                <ul className="space-y-1.5">
+                                  {value.map((item, i) => (
+                                    <li key={i} className="text-gray-300 flex items-start gap-2">
+                                      <div className="w-1 h-1 bg-teal-500/40 rounded-full mt-2 flex-shrink-0" />
+                                      <span>{typeof item === 'object' ? JSON.stringify(item) : String(item)}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )
+                            ) : (
+                              <span className="text-gray-300 leading-relaxed">
+                                {typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
+                                  typeof value === 'number' ? (
+                                    // Format numbers nicely
+                                    key.includes('threshold') || key.includes('value') ? `${(value * 100).toFixed(0)}%` :
+                                      value.toFixed(2)
+                                  ) : String(value)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+
     </div>
   );
 };

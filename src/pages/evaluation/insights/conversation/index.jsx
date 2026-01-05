@@ -1,47 +1,89 @@
-import InsightHeaderCard from "../../../../components/InsightHeaderCard";
 import {
   MessageSquare,
+  CheckCircle,
+  XCircle,
   ArrowLeft,
 } from "lucide-react";
 import ConversationDetailedMetrics from "./ConversationDetailedMetrics";
 import ConversationQualityBreakdown from "./ConversationQualityBreakdown";
 
 /* =========================
+   HELPERS
+========================= */
+
+const StatBlock = ({ label, value }) => (
+  <div className="flex flex-col gap-1">
+    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+      {label}
+    </span>
+    <span className="text-xl font-semibold text-white">
+      {value ?? "—"}
+    </span>
+  </div>
+);
+const MetricSectionHeader = ({ title, status }) => (
+  <div className="flex items-center justify-between">
+    <h3 className="text-lg font-semibold text-white">
+      {title}
+    </h3>
+    {status && (
+      <span
+        className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${status === "passed"
+            ? "bg-green-500/20 text-green-400"
+            : "bg-red-500/20 text-red-400"
+          }`}
+      >
+        {status}
+      </span>
+    )}
+  </div>
+);
+
+/* =========================
    COMPONENT
 ========================= */
 
 const ConversationOverview = ({ response, data, onBack }) => {
-  // Handle both single evaluation (response) and aggregated data (data)
   let metrics = [];
   let score = 0;
 
+  /* -------------------------
+     DATA NORMALIZATION
+  ------------------------- */
+
   if (response) {
-    // Called from ViewReport with single evaluation's category data
     metrics = response?.metrics || [];
-    score = typeof response.score === "number"
-      ? (response.score > 1 ? Math.round(response.score) : Math.round(response.score * 100))
-      : 0;
+    score =
+      typeof response.score === "number"
+        ? response.score > 1
+          ? Math.round(response.score)
+          : Math.round(response.score * 100)
+        : 0;
   } else if (data) {
-    // Called from Dashboard with aggregated data
-    const convCategory = data.category_scores?.find(c => c.category === 'conversation_quality');
+    const convCategory = data.category_scores?.find(
+      (c) => c.category === "conversation_quality"
+    );
+
     if (convCategory) {
       metrics = convCategory.metrics || [];
-      score = typeof convCategory.average_score === "number"
-        ? (convCategory.average_score > 1
-          ? Math.round(convCategory.average_score)
-          : Math.round(convCategory.average_score * 100))
-        : 0;
+      score =
+        typeof convCategory.average_score === "number"
+          ? convCategory.average_score > 1
+            ? Math.round(convCategory.average_score)
+            : Math.round(convCategory.average_score * 100)
+          : 0;
     } else {
-      // Fallback: aggregate from all evaluations
       const allMetrics = [];
       let totalScore = 0;
       let scoreCount = 0;
 
-      data.evaluations?.forEach(evaluation => {
-        const convCat = evaluation.category_scores?.find(c => c.category === 'conversation_quality');
+      data.evaluations?.forEach((evaluation) => {
+        const convCat = evaluation.category_scores?.find(
+          (c) => c.category === "conversation_quality"
+        );
         if (convCat?.metrics) {
           allMetrics.push(...convCat.metrics);
-          if (typeof convCat.score === 'number') {
+          if (typeof convCat.score === "number") {
             totalScore += convCat.score;
             scoreCount++;
           }
@@ -49,7 +91,10 @@ const ConversationOverview = ({ response, data, onBack }) => {
       });
 
       metrics = allMetrics;
-      score = scoreCount > 0 ? Math.round((totalScore / scoreCount) * 100) : 0;
+      score =
+        scoreCount > 0
+          ? Math.round((totalScore / scoreCount) * 100)
+          : 0;
     }
   }
 
@@ -59,20 +104,23 @@ const ConversationOverview = ({ response, data, onBack }) => {
      DERIVED VALUES
   ------------------------- */
 
-  const passedCount = metrics.filter(
-    (m) => m.status === "passed"
-  ).length;
+  const passedCount = metrics.filter((m) => m.status === "passed").length;
+  const failedCount = metrics.filter((m) => m.status === "failed").length;
 
-  const failedCount = metrics.filter(
-    (m) => m.status === "failed"
-  ).length;
+  const hasTurnByTurn = metrics.some(
+    (m) =>
+      (m.metric_name === "words_per_minute" &&
+        m.details?.turn_breakdown?.length) ||
+      (m.metric_name === "text_sentiment" &&
+        m.details?.per_turn_sentiment?.length)
+  );
 
   /* =========================
      RENDER
   ========================= */
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       {/* Back Button */}
       {onBack && (
         <button
@@ -84,22 +132,390 @@ const ConversationOverview = ({ response, data, onBack }) => {
         </button>
       )}
 
-      {/* Header */}
-      <InsightHeaderCard
-        icon={MessageSquare}
-        title="Conversation Quality"
-        description="Assesses grammar, context retention, and coherence"
-        score={score}
-        passedCount={passedCount}
-        failedCount={failedCount}
-        theme="teal"
-      />
+      {/* ================= HEADER CARD ================= */}
+      <div className="bg-[#0b1f26] border border-teal-500/40 rounded-xl p-6 flex items-center justify-between">
+        {/* Left */}
+        <div className="flex items-start gap-4">
+          <div className="p-4 rounded-xl bg-teal-500/20 text-teal-400">
+            <MessageSquare size={28} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-semibold text-white">
+              Conversation Quality
+            </h2>
+            <p className="text-gray-400 mt-1">
+              Assesses grammar, context retention, and coherence
+            </p>
+          </div>
+        </div>
+
+        {/* Right */}
+        <div className="flex items-center gap-6">
+          {/* Ring */}
+          <div className="relative w-24 h-24">
+            <svg className="w-24 h-24 -rotate-90">
+              <circle
+                cx="48"
+                cy="48"
+                r="40"
+                stroke="currentColor"
+                strokeWidth="8"
+                fill="none"
+                className="text-teal-900"
+              />
+              <circle
+                cx="48"
+                cy="48"
+                r="40"
+                stroke="currentColor"
+                strokeWidth="8"
+                fill="none"
+                strokeDasharray={2 * Math.PI * 40}
+                strokeDashoffset={
+                  2 * Math.PI * 40 * (1 - score / 100)
+                }
+                className="text-teal-400"
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-2xl font-bold text-teal-300">
+                {score}%
+              </span>
+            </div>
+          </div>
+
+          {/* Passed / Failed */}
+          <div className="flex gap-6 text-sm">
+            <div className="flex items-center gap-2 text-teal-400">
+              <CheckCircle size={16} />
+              <span className="font-medium">{passedCount}</span>
+              <span className="text-gray-400">Passed</span>
+            </div>
+            <div className="flex items-center gap-2 text-red-500">
+              <XCircle size={16} />
+              <span className="font-medium">{failedCount}</span>
+              <span className="text-gray-400">Failed</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Bar Graph */}
-      <ConversationQualityBreakdown response={{ metrics }} />
+      {/* <ConversationQualityBreakdown response={{ metrics }} /> */}
 
       {/* Detailed Metrics */}
-      <ConversationDetailedMetrics response={{ metrics }} />
+      {/* <ConversationDetailedMetrics response={{ metrics }} /> */}
+
+      {/* ================= CONVERSATION ANALYTICS ================= */}
+      <div className="pt-6">
+        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-8 bg-teal-500/10 rounded-lg flex items-center justify-center">
+              <MessageSquare className="w-5 h-5 text-teal-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white">Conversation Analytics</h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6">
+            {metrics
+              .filter((m) => !m.metric_name?.includes('words_per_minute') && !m.metric_name?.includes('text_sentiment'))
+              .map((metric, idx) => {
+                const isPassed = metric.status === "passed";
+                const mName = metric.name || metric.metric_name;
+                const label = mName?.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()) || "Unknown Metric";
+                const score = typeof metric.score === 'number' ? Math.round(metric.score * 100) : 0;
+
+                // Filter and humanize details
+                const details = Object.entries(metric.details || {})
+                  .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'llm_usage', 'value', 'error_message', 'reasoning'].includes(key));
+
+                return (
+                  <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{label}</span>
+                        <span className={`text-2xl font-bold ${isPassed ? 'text-teal-400' : 'text-red-400'}`}>
+                          {score}%
+                        </span>
+                      </div>
+                      <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                        {isPassed ? '✓ PASSED' : '✗ FAILED'}
+                      </div>
+                    </div>
+
+                    {details.length > 0 && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
+                        {details.map(([key, value]) => (
+                          <div key={key} className="flex flex-col gap-1.5">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
+                            <div className="text-sm">
+                              {value === null ? (
+                                <span className="text-gray-600 italic">Not available</span>
+                              ) : typeof value === 'object' && !Array.isArray(value) ? (
+                                <div className="space-y-1">
+                                  {Object.entries(value).map(([subKey, subValue]) => (
+                                    <div key={subKey} className="text-gray-300">
+                                      <span className="text-gray-500">{subKey.replace(/_/g, " ")}:</span> {String(subValue)}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : Array.isArray(value) ? (
+                                value.length === 0 ? (
+                                  <span className="text-gray-500">None</span>
+                                ) : (
+                                  <ul className="space-y-1.5">
+                                    {value.map((item, i) => (
+                                      <li key={i} className="text-gray-300 flex items-start gap-2">
+                                        <div className="w-1 h-1 bg-teal-500/40 rounded-full mt-2 flex-shrink-0" />
+                                        <span>{typeof item === 'object' ? JSON.stringify(item) : String(item)}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )
+                              ) : (
+                                <span className="text-gray-300 leading-relaxed">
+                                  {typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
+                                    typeof value === 'number' ? (
+                                      // Format numbers nicely
+                                      key.includes('score') || key.includes('rate') ? `${(value * 100).toFixed(1)}%` :
+                                        key.includes('count') ? value :
+                                          value.toFixed(2)
+                                    ) : String(value)}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
+        </div>
+      </div>
+
+      {/* =========================
+         TURN-BY-TURN ANALYSIS
+      ========================= */}
+      {hasTurnByTurn && (
+        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
+          {/* Header (UNCHANGED) */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-teal-500/20 rounded-lg flex items-center justify-center">
+              <MessageSquare className="w-4 h-4 text-teal-400" />
+            </div>
+            <h2 className="text-xl font-semibold text-white">
+              Turn-by-Turn Analysis
+            </h2>
+          </div>
+
+          <div className="space-y-10">
+            {/* WORDS PER MINUTE */}
+            {metrics
+              .filter((m) => m.metric_name === "words_per_minute")
+              .map((metric, idx) => (
+                <div key={idx} className="space-y-6">
+                  {/* Summary */}
+                  <MetricSectionHeader
+                    title="Words Per Minute"
+                    status={metric.status}
+                  />
+                  <div className="flex items-center gap-6 p-4 bg-dark-input/30 rounded-xl border border-gray-800/50">
+                    <StatBlock
+                      label="Overall WPM"
+                      value={Math.round(metric.details?.overall_wpm)}
+                    />
+                    <div className="w-[1px] h-10 bg-gray-800/80" />
+                    <StatBlock
+                      label="Ideal Range"
+                      value={metric.details?.ideal_range}
+                    />
+                    <div className="w-[1px] h-10 bg-gray-800/80" />
+                    <StatBlock
+                      label="Turns Analyzed"
+                      value={metric.details?.turns_analyzed}
+                    />
+                  </div>
+
+                  {/* Turn Cards */}
+                  <div className="space-y-4">
+                    {metric.details.turn_breakdown.map((turn, tIdx) => {
+                      const isIdeal =
+                        turn.wpm >= 120 && turn.wpm <= 150;
+
+                      return (
+                        <div
+                          key={tIdx}
+                          className={`rounded-xl p-5 border ${isIdeal
+                            ? "bg-dark-input border-gray-800/50"
+                            : "bg-red-950/20 border-red-900/50"
+                            }`}
+                        >
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-sm text-gray-300">
+                              Turn #{tIdx + 1}
+                            </span>
+
+                            <span
+                              className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${isIdeal
+                                ? "bg-green-500/20 text-green-400"
+                                : "bg-red-500/20 text-red-400"
+                                }`}
+                            >
+                              {Math.round(turn.wpm)} WPM
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-6 text-sm text-gray-400">
+                            <div>
+                              Words
+                              <div className="text-gray-200 font-medium">
+                                {turn.word_count}
+                              </div>
+                            </div>
+                            <div>
+                              Duration
+                              <div className="text-gray-200 font-medium">
+                                {Math.round(
+                                  turn.duration_ms / 1000
+                                )}
+                                s
+                              </div>
+                            </div>
+                            <div>
+                              Status
+                              <div className="text-gray-200 font-medium">
+                                {isIdeal ? "Ideal" : "Too Fast"}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+            {/* TEXT SENTIMENT */}
+            {metrics
+              .filter((m) => m.metric_name === "text_sentiment")
+              .map((metric, idx) => (
+                <div key={idx} className="space-y-6">
+                  {/* Summary */}
+                  <MetricSectionHeader
+                    title="Text Sentiment"
+                    status={metric.status}
+                  />
+                  <div className="flex items-center gap-6 p-4 bg-dark-input/30 rounded-xl border border-gray-800/50">
+                    <StatBlock
+                      label="Agent Tone"
+                      value={metric.details?.agent_tone}
+                    />
+                    <div className="w-[1px] h-10 bg-gray-800/80" />
+                    <StatBlock
+                      label="Customer Sentiment"
+                      value={metric.details?.customer_sentiment}
+                    />
+                    <div className="w-[1px] h-10 bg-gray-800/80" />
+                    <StatBlock
+                      label="Dominant Emotion"
+                      value={metric.details?.dominant_emotion}
+                    />
+                  </div>
+
+                  {/* Turn Cards */}
+                  <div className="space-y-4">
+                    {metric.details.per_turn_sentiment.map(
+                      (turn, tIdx) => (
+                        <div
+                          key={tIdx}
+                          className="rounded-xl p-5 bg-dark-input border border-gray-800/50"
+                        >
+                          <MetricSectionHeader
+                            title={`Turn ${turn.turn_index + 1}`}
+                            status={turn.status}
+                          />
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-sm text-gray-300">
+                              Turn #{turn.turn_index + 1}
+                            </span>
+
+                            <span className="text-[10px] px-2 py-1 rounded font-bold uppercase bg-teal-500/20 text-teal-400">
+                              {turn.emotion}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-sm text-gray-400">
+                            <span>Sentiment Score</span>
+                            <span className="text-gray-200 font-medium">
+                              {Math.round(
+                                turn.sentiment_score * 100
+                              )}
+                              %
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    )}
+                  </div>
+
+                  {/* Inflection Points */}
+                  {metric.details?.inflection_points?.length >
+                    0 && (
+                      <div className="pt-6 border-t border-gray-800/50">
+                        <MetricSectionHeader
+                          title="Inflection Points"
+                          status={metric.status}
+                        />
+                        <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-4">
+                          Inflection Points
+                        </div>
+
+                        <div className="space-y-3">
+                          {metric.details.inflection_points.map(
+                            (inf, iIdx) => (
+                              <div
+                                key={iIdx}
+                                className={`flex items-center justify-between p-4 rounded-lg border ${inf.direction === "positive"
+                                  ? "bg-green-950/20 border-green-900/40"
+                                  : "bg-red-950/20 border-red-900/40"
+                                  }`}
+                              >
+                                <div className="text-sm text-gray-300">
+                                  Turn #{inf.turn_index + 1}
+                                </div>
+
+                                <div className="flex items-center gap-4 text-sm">
+                                  <span className="text-gray-400">
+                                    Δ{" "}
+                                    {Math.round(
+                                      inf.change_magnitude * 100
+                                    )}
+                                    %
+                                  </span>
+
+                                  <span
+                                    className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${inf.direction === "positive"
+                                      ? "bg-green-500/20 text-green-400"
+                                      : "bg-red-500/20 text-red-400"
+                                      }`}
+                                  >
+                                    {inf.direction}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

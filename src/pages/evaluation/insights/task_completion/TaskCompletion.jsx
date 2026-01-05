@@ -33,12 +33,13 @@ const transformMetrics = (response) => {
 
   const transformed = response.metrics
     .map((m) => {
+      const name = m.name || m.metric_name;
       const normalized = normalizeScore(m.score);
-      console.log(`Metric: ${m.name}, Score: ${m.score}, Normalized: ${normalized}`);
+      console.log(`Metric: ${name}, Score: ${m.score}, Normalized: ${normalized}`);
       return {
-        label: humanizeMetricName(m.name),
+        label: humanizeMetricName(name),
         value: normalized,
-        name: m.name, // Keep original name for debugging
+        name: name, // Keep original name for debugging
       };
     });
 
@@ -126,12 +127,11 @@ const TaskCompletionDistribution = ({ response }) => {
 
   return (
     <div className="bg-[#071a23] border border-teal-500/20 rounded-xl p-8 w-full">
-      {/* Header */}
       <div className="flex items-center gap-3 mb-8">
-        <GitBranch className="text-teal-400" size={20} />
-        <h3 className="text-white text-lg font-semibold">
-          Task Completion Distribution
-        </h3>
+        <div className="w-8 h-8 bg-teal-500/10 rounded-lg flex items-center justify-center">
+          <GitBranch className="w-5 h-5 text-teal-400" />
+        </div>
+        <h3 className="text-xl font-semibold text-white">Task Completion</h3>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">

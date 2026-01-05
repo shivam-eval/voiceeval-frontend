@@ -2,6 +2,7 @@ import { CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 import StatCard from "../../../../components/StatCard";
 import TaskCompletionDistribution from "./TaskCompletion";
 import DetailedValidationSection from "./DetailedValidationSection";
+import { GitBranch } from "lucide-react";
 
 /* =========================
    HELPERS
@@ -41,7 +42,7 @@ const transformStatCards = (response) => {
 
   // Filter to only include priority metrics and map them
   return response.metrics
-    .filter(m => priorityMetrics.includes(m.name))
+    .filter(m => m && priorityMetrics.includes(m.name || m.metric_name))
     .map((m) => ({
       title: humanizeMetricName(m.name || m.metric_name),
       value: normalizeMetricScore(m.score),
@@ -101,8 +102,15 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
     }
   }
 
-  console.log('Final metrics array:', metrics);
-  console.log('Final score:', score);
+  // Ensure metrics is an array of objects
+  const safeMetrics = Array.isArray(metrics) ? metrics.filter(Boolean) : [];
+
+  // Ensure score is a valid number for the ring visualization
+  const displayScore = typeof score === 'number' && !isNaN(score) ? score : 0;
+
+  // Use safe versions for the rest of the component
+  metrics = safeMetrics;
+  score = displayScore;
 
   if (!metrics || metrics.length === 0) {
     console.warn('No task completion metrics available - showing empty state');
@@ -231,7 +239,7 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
       </div>
 
       {/* ================= STAT CARDS ================= */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {statCards.map((m, idx) => (
           <StatCard
             key={idx}
@@ -241,13 +249,86 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
             subtitle={m.passed ? "Passed validation" : "Below threshold"}
           />
         ))}
-      </div>
+      </div> */}
 
       {/* ================= DISTRIBUTION ================= */}
-      <TaskCompletionDistribution response={{ metrics }} />
+      {/* <TaskCompletionDistribution response={{ metrics }} /> */}
+
+      {/* ================= EXECUTION ANALYTICS ================= */}
+      <div className="pt-6">
+        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-8 bg-teal-500/10 rounded-lg flex items-center justify-center">
+              <GitBranch className="w-5 h-5 text-teal-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white">Execution Analytics</h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6">
+            {metrics.map((metric, idx) => {
+              const isPassed = metric.status === "passed";
+              const mName = metric.name || metric.metric_name;
+              const label = humanizeMetricName(mName);
+              const score = typeof metric.score === 'number' ? Math.round(metric.score * 100) : 0;
+
+              // Filter and humanize details
+              const details = Object.entries(metric.details || {})
+                .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'llm_usage', 'value'].includes(key));
+
+              return (
+                <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{label}</span>
+                      <span className={`text-2xl font-bold ${isPassed ? 'text-teal-400' : 'text-red-400'}`}>
+                        {score}%
+                      </span>
+                    </div>
+                    <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                      {isPassed ? '✓ PASSED' : '✗ FAILED'}
+                    </div>
+                  </div>
+
+                  {details.length > 0 && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
+                      {details.map(([key, value]) => (
+                        <div key={key} className="flex flex-col gap-1.5">
+                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
+                          <div className="text-sm">
+                            {value === null ? (
+                              <span className="text-gray-600 italic">Not available</span>
+                            ) : Array.isArray(value) ? (
+                              value.length === 0 ? (
+                                <span className="text-gray-600 italic">Empty</span>
+                              ) : (
+                                <ul className="space-y-1.5">
+                                  {value.map((item, i) => (
+                                    <li key={i} className="text-gray-300 flex items-start gap-2">
+                                      <div className="w-1 h-1 bg-teal-500/40 rounded-full mt-2 flex-shrink-0" />
+                                      <span>{typeof item === 'object' ? JSON.stringify(item) : String(item)}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )
+                            ) : (
+                              <span className="text-gray-300 leading-relaxed capitalize">
+                                {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
 
       {/* ================= DETAILED VALIDATION ================= */}
-      <DetailedValidationSection response={{ metrics }} />
+      {/* <DetailedValidationSection response={{ metrics }} /> */}
     </div>
   );
 };

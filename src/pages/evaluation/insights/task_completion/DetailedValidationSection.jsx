@@ -23,7 +23,7 @@ const transformDetailedMetrics = (response) => {
   if (!response || !Array.isArray(response.metrics)) return [];
 
   return response.metrics.map((m) => ({
-    label: humanizeMetricName(m.name),
+    label: humanizeMetricName(m.name || m.metric_name),
 
     // metric score → percentage (safe for null / 0–1 / 0–100)
     value:

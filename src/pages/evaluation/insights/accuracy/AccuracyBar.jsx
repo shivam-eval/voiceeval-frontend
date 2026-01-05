@@ -5,11 +5,11 @@ import { darkTheme } from "../../const";
    Helpers
 ========================= */
 const humanizeMetricName = (name) => {
-  const map = {
-    keyword_match_accuracy: "Keyword Match",
-    semantic_similarity: "Semantic Similarity"
-  };
-  return map[name] || name;
+  // Convert snake_case to Title Case dynamically
+  return name
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 };
 
 /* =========================
@@ -18,14 +18,10 @@ const humanizeMetricName = (name) => {
 const transformAccuracyBarData = (response) => {
   if (!response || !Array.isArray(response.metrics)) return [];
 
-  // Filter out semantic_accuracy and intent_classification_accuracy
-  const filteredMetrics = response.metrics.filter(
-    (m) => m.name !== "semantic_accuracy" && m.name !== "intent_classification_accuracy"
-  );
-
-  return filteredMetrics.map((m) => ({
+  // Show all accuracy metrics including semantic_accuracy
+  return response.metrics.map((m) => ({
     metric: humanizeMetricName(m.name),
-    value: typeof m.score === "number" ? m.score : 0, // score already 0–100
+    value: typeof m.score === "number" ? m.score * 100 : 0, // Convert 0-1 to 0-100 for display
     status: m.status, // passed | failed | skipped
   }));
 };

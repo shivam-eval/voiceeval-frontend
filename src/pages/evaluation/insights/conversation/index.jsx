@@ -18,14 +18,18 @@ const ConversationOverview = ({ response, data, onBack }) => {
   if (response) {
     // Called from ViewReport with single evaluation's category data
     metrics = response?.metrics || [];
-    score = typeof response.score === "number" ? Math.round(response.score * 100) : 0;
+    score = typeof response.score === "number"
+      ? (response.score > 1 ? Math.round(response.score) : Math.round(response.score * 100))
+      : 0;
   } else if (data) {
     // Called from Dashboard with aggregated data
     const convCategory = data.category_scores?.find(c => c.category === 'conversation_quality');
     if (convCategory) {
       metrics = convCategory.metrics || [];
       score = typeof convCategory.average_score === "number"
-        ? Math.round(convCategory.average_score * 100)
+        ? (convCategory.average_score > 1
+          ? Math.round(convCategory.average_score)
+          : Math.round(convCategory.average_score * 100))
         : 0;
     } else {
       // Fallback: aggregate from all evaluations

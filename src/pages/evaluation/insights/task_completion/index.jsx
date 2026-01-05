@@ -29,11 +29,12 @@ const normalizeMetricScore = (score) => {
 const transformStatCards = (response) => {
   if (!response || !Array.isArray(response.metrics)) return [];
 
-  // Define priority metrics to display (only 3)
+  // Define priority metrics to display
   const priorityMetrics = [
     'task_completion_rate',
     'sequential_task_accuracy',
-    'step_validation_pass_rate'
+    'step_validation_pass_rate',
+    'flow_path_coverage'
   ];
 
   // Filter to only include priority metrics and map them
@@ -43,8 +44,7 @@ const transformStatCards = (response) => {
       title: humanizeMetricName(m.name),
       value: normalizeMetricScore(m.score),
       passed: m.status === "passed",
-    }))
-    .slice(0, 3); // Ensure max 3 cards
+    }));
 };
 
 /* =========================
@@ -52,17 +52,25 @@ const transformStatCards = (response) => {
 ========================= */
 
 const TaskCompletionOverview = ({ response, data, onBack }) => {
+  console.log('=== TaskCompletionOverview Render ===');
+  console.log('TaskCompletionOverview received response:', response);
+  console.log('TaskCompletionOverview received data:', data);
+
   // Handle both single evaluation (response) and aggregated data (data)
   let metrics = [];
   let score = 0;
 
   if (response) {
     // Called from ViewReport with single evaluation's category data
+    console.log('Using response.metrics:', response.metrics);
     metrics = response?.metrics || [];
     score = typeof response.score === "number" ? Math.round(response.score * 100) : 0;
   } else if (data) {
     // Called from Dashboard with aggregated data
+    console.log('Using data - category_scores:', data.category_scores);
     const taskCategory = data.category_scores?.find(c => c.category === 'task_completion');
+    console.log('Found task_completion category:', taskCategory);
+
     if (taskCategory) {
       metrics = taskCategory.metrics || [];
       score = typeof taskCategory.average_score === "number"
@@ -87,10 +95,38 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
 
       metrics = allMetrics;
       score = scoreCount > 0 ? Math.round((totalScore / scoreCount) * 100) : 0;
+      console.log('Aggregated metrics from evaluations:', metrics);
     }
   }
 
-  if (!metrics || metrics.length === 0) return null;
+  console.log('Final metrics array:', metrics);
+  console.log('Final score:', score);
+
+  if (!metrics || metrics.length === 0) {
+    console.warn('No task completion metrics available - showing empty state');
+    return (
+      <div className="space-y-6">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Overview
+          </button>
+        )}
+        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
+          <CheckCircle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-400 text-sm">No task completion metrics available</p>
+          <p className="text-gray-600 text-xs mt-1">
+            {response ? 'Response has no metrics' : data ? 'Data has no task_completion category' : 'No data provided'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('Rendering TaskCompletionOverview with', metrics.length, 'metrics');
 
   /* -------------------------
      DERIVED VALUES
@@ -171,7 +207,7 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-2xl font-bold text-teal-300">
-                {score}%
+                {score / 100}%
               </span>
             </div>
           </div>

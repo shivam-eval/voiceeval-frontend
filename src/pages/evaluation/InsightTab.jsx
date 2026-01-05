@@ -8,8 +8,6 @@ const CATEGORY_LABELS = {
   conversation_quality: "Conversation",
   endpointing: "Endpointing",
   persona: "Persona",
-  speech: "Speech",
-  sentiment: "Sentiment",
 };
 
 const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = true, clickable = true }) => {

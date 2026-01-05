@@ -51,20 +51,20 @@ const EvaluationDashboard = ({ onBack }) => {
   const [selectedEvaluation, setSelectedEvaluation] = useState(null);
 
   const { workflow } = useWorkflow();
-  
+
   // Fetch evaluation report from API
   const { data: apiReport, isLoading: isLoadingReport, error: reportError } = useSimulationReport(
-    simulationId, 
+    simulationId,
     'json'
   );
-  
+
   console.log('simulationId from URL:', simulationId);
   console.log('API report data:', apiReport);
   console.log('Full workflow:', workflow);
 
   // Try API data first, fall back to context data
   let fullResponse, simulationResult, evaluationResult;
-  
+
   if (apiReport) {
     // Use API data
     fullResponse = apiReport;
@@ -101,6 +101,7 @@ const EvaluationDashboard = ({ onBack }) => {
     );
   }
 
+
   if (!simulationResult || !fullResponse) {
     return <div className="text-gray-400 px-8">No evaluation data available</div>;
   }
@@ -109,8 +110,15 @@ const EvaluationDashboard = ({ onBack }) => {
   const evaluations = fullResponse.evaluations || [];
   const simulationEvaluation = fullResponse.simulation_evaluation || {
     total_sessions_evaluated: 0,
+    total_sessions: 0,
+    evaluated_sessions: 0,
     average_overall_score: 0,
-    average_category_scores: [],
+    average_scores: {
+      overall: 0,
+      by_category: {},
+      by_metric: {}
+    },
+    average_category_scores: [], // Legacy format
   };
 
   console.log('Evaluations:', evaluations);
@@ -158,40 +166,73 @@ const EvaluationDashboard = ({ onBack }) => {
     schema_version: "1.0"
   };
 
+  // Extract category scores - support both old and new formats
+  const getCategoryScore = (category) => {
+    // New format: average_scores.by_category
+    if (simulationEvaluation.average_scores?.by_category) {
+      return simulationEvaluation.average_scores.by_category[category] || 0;
+    }
+    // Old format: average_category_scores array
+    if (simulationEvaluation.average_category_scores) {
+      const cat = simulationEvaluation.average_category_scores.find(c => c.category === category);
+      return cat?.average_score || 0;
+    }
+    return 0;
+  };
+
+  // Get overall score - support both formats
+  const overallScore = simulationEvaluation.average_scores?.overall
+    || simulationEvaluation.average_overall_score
+    || 0;
+
   // Calculate summary metrics
   const summaryMetrics = [
     {
       id: "overall_score",
-      mainText: `${Math.round(simulationEvaluation.average_overall_score * 100)}%`,
-      successRate: simulationEvaluation.average_overall_score,
+      mainText: `${Math.round(overallScore * 100)}%`,
+      successRate: overallScore,
       sideText: "Overall Score"
     },
     {
       id: "accuracy",
-      mainText: `${Math.round((simulationEvaluation.average_category_scores?.find(c => c.category === "accuracy")?.average_score || 0) * 100)}%`,
-      successRate: simulationEvaluation.average_category_scores?.find(c => c.category === "accuracy")?.average_score || 0,
+      mainText: `${Math.round(getCategoryScore("accuracy") * 100)}%`,
+      successRate: getCategoryScore("accuracy"),
       sideText: "Accuracy"
     },
     {
       id: "task_completion",
-      mainText: `${Math.round((simulationEvaluation.average_category_scores?.find(c => c.category === "task_completion")?.average_score || 0) * 100)}%`,
-      successRate: simulationEvaluation.average_category_scores?.find(c => c.category === "task_completion")?.average_score || 0,
+      mainText: `${Math.round(getCategoryScore("task_completion") * 100)}%`,
+      successRate: getCategoryScore("task_completion"),
       sideText: "Task Completion"
     },
     {
       id: "latency",
-      mainText: `${Math.round((simulationEvaluation.average_category_scores?.find(c => c.category === "latency")?.average_score || 0) * 100)}%`,
-      successRate: simulationEvaluation.average_category_scores?.find(c => c.category === "latency")?.average_score || 0,
+      mainText: `${Math.round(getCategoryScore("latency") * 100)}%`,
+      successRate: getCategoryScore("latency"),
       sideText: "Latency"
     }
   ];
 
-  // Prepare category scores for InsightTabs
-  const categoryScores = (simulationEvaluation.average_category_scores || []).map(cat => ({
-    category: cat.category,
-    score: Math.round(cat.average_score * 100),
-    weight: cat.average_weight
-  }));
+  // Prepare category scores for InsightTabs - support both formats
+  let categoryScores = [];
+
+  if (simulationEvaluation.average_scores?.by_category) {
+    // New format: convert object to array
+    categoryScores = Object.entries(simulationEvaluation.average_scores.by_category).map(([category, score]) => ({
+      category: category,
+      score: Math.round(score * 100),
+      weight: 0 // Weight not provided in new format
+    }));
+  } else if (simulationEvaluation.average_category_scores) {
+    // Old format: use existing array
+    categoryScores = simulationEvaluation.average_category_scores.map(cat => ({
+      category: cat.category,
+      score: Math.round(cat.average_score * 100),
+      weight: cat.average_weight || 0
+    }));
+  }
+
+  console.log('Category scores for InsightTabs:', categoryScores);
 
   // Generate improvements from ALL evaluations
   const improvements = [];
@@ -339,10 +380,23 @@ const EvaluationDashboard = ({ onBack }) => {
     };
 
     // Create aggregated data for category views
+    // Convert category scores to array format for components and populate metrics
+    const categoryScoresArray = categoryScores.map(cs => {
+      // Find metrics for this category from the first evaluation (or aggregate if needed)
+      const firstEvaluation = evaluations[0];
+      const categoryData = firstEvaluation?.category_scores?.find(cat => cat.category === cs.category);
+
+      return {
+        category: cs.category,
+        average_score: cs.score / 100, // Convert back to 0-1 for components
+        metrics: categoryData?.metrics || [] // Populate with actual metrics
+      };
+    });
+
     const aggregatedData = {
       evaluations: evaluations,
       simulation_evaluation: simulationEvaluation,
-      category_scores: simulationEvaluation.average_category_scores,
+      category_scores: categoryScoresArray,
       fullResponse: fullResponse
     };
 
@@ -379,9 +433,21 @@ const EvaluationDashboard = ({ onBack }) => {
               </h1>
 
               <p className="text-gray-400">
-                Overall Score: {Math.round(simulationEvaluation.average_overall_score * 100)}% |
-                Sessions: {simulationEvaluation.total_sessions_evaluated} |
+                Overall Score: {Math.round(overallScore * 100)}% |
+                Sessions: {simulationEvaluation.total_sessions || simulationEvaluation.evaluated_sessions || simulationEvaluation.total_sessions_evaluated || 0} |
                 {firstEvaluation?.passed ? "PASSED" : "NEEDS IMPROVEMENT"}
+                {simulationEvaluation.created_at && (
+                  <>
+                    {" | "}
+                    Created: {new Date(simulationEvaluation.created_at).toLocaleString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </>
+                )}
               </p>
             </div>
 

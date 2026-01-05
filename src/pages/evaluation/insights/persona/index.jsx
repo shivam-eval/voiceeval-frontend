@@ -40,16 +40,88 @@ const PERSONA_CARD_CONFIG = {
 };
 
 const normalizeScore = (v) =>
-  typeof v === "number" ? Math.round(v * 100) : 0;
+  typeof v === "number"
+    ? (v > 1 ? Math.round(v) : Math.round(v * 100))
+    : 0;
 
 /* =========================
    Component
 ========================= */
 
-const PersonaOverview = ({ response, onBack }) => {
-  if (!response || !Array.isArray(response.metrics)) return null;
-console.log("persona", response)
-  const metrics = response.metrics;
+const PersonaOverview = ({ response, data, onBack }) => {
+  console.log('=== PersonaOverview Render ===');
+  console.log('PersonaOverview received response:', response);
+  console.log('PersonaOverview received data:', data);
+
+  // Handle both single evaluation (response) and aggregated data (data)
+  let metrics = [];
+  let score = 0;
+
+  if (response) {
+    // Called from ViewReport with single evaluation's category data
+    console.log('Using response.metrics:', response.metrics);
+    metrics = response?.metrics || [];
+    score = response?.score || 0;
+  } else if (data) {
+    // Called from Dashboard with aggregated data
+    console.log('Using data - category_scores:', data.category_scores);
+    const personaCategory = data.category_scores?.find(c => c.category === 'persona');
+    console.log('Found persona category:', personaCategory);
+
+    if (personaCategory) {
+      metrics = personaCategory.metrics || [];
+      score = personaCategory.average_score || 0;
+    } else {
+      // Fallback: aggregate from all evaluations
+      const allMetrics = [];
+      let totalScore = 0;
+      let scoreCount = 0;
+
+      data.evaluations?.forEach(evaluation => {
+        const personaCat = evaluation.category_scores?.find(c => c.category === 'persona');
+        if (personaCat?.metrics) {
+          allMetrics.push(...personaCat.metrics);
+          if (typeof personaCat.score === 'number') {
+            totalScore += personaCat.score;
+            scoreCount++;
+          }
+        }
+      });
+
+      metrics = allMetrics;
+      score = scoreCount > 0 ? totalScore / scoreCount : 0;
+      console.log('Aggregated persona metrics from evaluations:', metrics);
+    }
+  }
+
+  console.log('Final metrics array:', metrics);
+  console.log('Final score:', score);
+
+  if (!metrics || metrics.length === 0) {
+    console.warn('No persona metrics available - showing empty state');
+    return (
+      <div className="space-y-6">
+        {onBack && (
+          <button
+            onClick={onBack}
+            className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Overview
+          </button>
+        )}
+        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
+          <User className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+          <p className="text-gray-400 text-sm">No persona metrics available</p>
+          <p className="text-gray-600 text-xs mt-1">
+            {response ? 'Response has no metrics' : data ? 'Data has no persona category' : 'No data provided'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log('Rendering PersonaOverview with', metrics.length, 'metrics');
 
   const passedCount = metrics.filter((m) => m.status === "passed").length;
   const failedCount = metrics.length - passedCount;
@@ -72,7 +144,7 @@ console.log("persona", response)
         icon={User}
         title="Persona"
         description="Evaluates persona consistency and communication tone"
-        score={normalizeScore(response.score)}
+        score={normalizeScore(score)}
         passedCount={passedCount}
         failedCount={failedCount}
         theme="teal"
@@ -117,8 +189,8 @@ console.log("persona", response)
       )}
 
       {/* Radar & Details */}
-      <PersonaAlignmentRadar metrics={response.metrics} />
-      <PersonaDetailedMetrics metrics={response.metrics} />
+      <PersonaAlignmentRadar metrics={metrics} />
+      <PersonaDetailedMetrics metrics={metrics} />
     </div>
   );
 };

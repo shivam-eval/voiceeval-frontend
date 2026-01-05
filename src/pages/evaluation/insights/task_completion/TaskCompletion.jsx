@@ -24,12 +24,26 @@ const normalizeScore = (score) => {
 ========================= */
 
 const transformMetrics = (response) => {
-  if (!response || !Array.isArray(response.metrics)) return [];
+  if (!response || !Array.isArray(response.metrics)) {
+    console.log('transformMetrics: Invalid response or metrics array');
+    return [];
+  }
 
-  return response.metrics.map((m) => ({
-    label: humanizeMetricName(m.name),
-    value: normalizeScore(m.score),
-  }));
+  console.log('transformMetrics: Processing', response.metrics.length, 'metrics');
+
+  const transformed = response.metrics
+    .map((m) => {
+      const normalized = normalizeScore(m.score);
+      console.log(`Metric: ${m.name}, Score: ${m.score}, Normalized: ${normalized}`);
+      return {
+        label: humanizeMetricName(m.name),
+        value: normalized,
+        name: m.name, // Keep original name for debugging
+      };
+    });
+
+  console.log('transformMetrics: Returning', transformed.length, 'transformed metrics');
+  return transformed;
 };
 
 /* =========================
@@ -99,7 +113,14 @@ const ProgressBar = ({ label, value }) => (
 ========================= */
 
 const TaskCompletionDistribution = ({ response }) => {
+  console.log('=== TaskCompletionDistribution ===');
+  console.log('Received response:', response);
+  console.log('response.metrics:', response?.metrics);
+
   const metrics = transformMetrics(response);
+
+  console.log('Transformed metrics:', metrics);
+  console.log('Metrics length:', metrics.length);
 
   if (!metrics.length) return null;
 

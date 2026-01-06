@@ -286,20 +286,47 @@ const EvaluationDashboard = ({ onBack }) => {
   }
 
   const getTranscriptData = async (sessionId) => {
-    const res = await getSessionTranscript(sessionId);
-    const json = res.data;
-    const t = json.transcript_steps || {};
+    try {
+      console.log('Fetching transcript for session:', sessionId);
+      const json = await getSessionTranscript(sessionId);  // axios interceptor already extracts .data
+      console.log('Transcript data:', json);
 
-    return {
-      steps: (t.steps || []).map(step => ({
-        ...step,
-        turn_role: step.turn_role === "simulator" ? "user" : step.turn_role
-      })),
-      metadata: {
-        ...(t.metadata || {}),
-        duration_ms: t.timing?.duration_ms
+      // transcript_steps is directly an array in the API response
+      const steps = json.transcript_steps || [];
+      console.log('Transcript steps count:', steps.length);
+
+      if (steps.length === 0) {
+        console.warn('No transcript steps found in response');
+        return null;
       }
-    };
+
+      // Map the steps to the format expected by CallTranscriptPanel
+      const mappedSteps = steps.map(step => ({
+        ...step,
+        turn_role: step.role === "agent" ? "agent" : "user",  // Map 'role' to 'turn_role'
+        speech_start_ms: step.timing?.speech_start_ms,
+        speech_end_ms: step.timing?.speech_end_ms,
+        duration_ms: step.timing?.duration_ms,
+        turn_number: step.step_number
+      }));
+
+      const transcriptData = {
+        steps: mappedSteps,
+        metadata: {
+          session_id: json.session_id,
+          simulation_id: json.simulation_id,
+          total_turns: steps.length,
+          duration_ms: steps.length > 0 ? steps[steps.length - 1].timing?.speech_end_ms : 0
+        }
+      };
+
+      console.log('Mapped transcript data:', transcriptData);
+      return transcriptData;
+    } catch (error) {
+      console.error('Error fetching transcript:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      throw error;
+    }
   };
 
 

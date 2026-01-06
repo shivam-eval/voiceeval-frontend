@@ -6,8 +6,6 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-import PersonaDetailedMetrics from "./PersonaDetailedMetric";
-import PersonaAlignmentRadar from "./PersonaRadar";
 
 /* =========================
    Helpers
@@ -17,7 +15,7 @@ const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
   // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-  
+
   // No hardcoded map - just transform the snake_case name to Title Case
   return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
@@ -186,7 +184,7 @@ const PersonaOverview = ({ response, data, onBack }) => {
 
           // Filter and humanize details
           const details = Object.entries(metric.details || {})
-            .filter(([key]) => !['passed', 'execution_time_ms', 'error_message', 'reasoning'].includes(key));
+            .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'error_message', 'reasoning'].includes(key));
 
           return (
             <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>

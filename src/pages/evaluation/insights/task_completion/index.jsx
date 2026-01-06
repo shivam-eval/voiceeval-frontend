@@ -146,11 +146,8 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
     (m) => m.status === "passed"
   ).length;
 
-  const failedCount = metrics.filter(
-    (m) => m.status === "failed"
-  ).length;
-
-  const statCards = transformStatCards({ metrics });
+  const totalCount = metrics.length;
+  const failedCount = totalCount - passedCount;
 
   /* =========================
      RENDER
@@ -170,17 +167,17 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
       )}
 
       {/* ================= HEADER CARD ================= */}
-      <div className="bg-[#0b1f26] border border-teal-500/40 rounded-xl p-6 flex items-center justify-between">
+      <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-6 flex items-center justify-between shadow-lg">
         {/* Left */}
         <div className="flex items-start gap-4">
-          <div className="p-4 rounded-xl bg-teal-500/20 text-teal-400">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-teal-500/10 border border-teal-500/20 text-teal-400">
             <CheckCircle size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold text-white">
-              Task Completion
+            <h2 className="text-2xl font-bold text-white">
+              Task Completion Analytics
             </h2>
-            <p className="text-gray-400 mt-1">
+            <p className="text-gray-400 text-sm mt-1">
               Tracks successful task and flow completion rates
             </p>
           </div>
@@ -188,147 +185,88 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
 
         {/* Right */}
         <div className="flex items-center gap-6">
-          {/* Ring */}
-          <div className="relative w-24 h-24">
-            <svg className="w-24 h-24 -rotate-90">
-              <circle
-                cx="48"
-                cy="48"
-                r="40"
-                stroke="currentColor"
-                strokeWidth="8"
-                fill="none"
-                className="text-teal-900"
-              />
-              <circle
-                cx="48"
-                cy="48"
-                r="40"
-                stroke="currentColor"
-                strokeWidth="8"
-                fill="none"
-                strokeDasharray={2 * Math.PI * 40}
-                strokeDashoffset={
-                  2 * Math.PI * 40 * (1 - score / 100)
-                }
-                className="text-teal-400"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold text-teal-300">
-                {score / 100}%
-              </span>
-            </div>
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-4xl font-bold text-teal-400">{score}%</span>
+            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Overall Score</span>
           </div>
+
+          <div className="h-10 w-px bg-gray-800" />
 
           {/* Passed / Failed */}
           <div className="flex gap-6 text-sm">
-            <div className="flex items-center gap-2 text-teal-400">
-              <CheckCircle size={16} />
-              <span className="font-medium">{passedCount}</span>
-              <span className="text-gray-400">Passed</span>
+            <div className="flex flex-col items-end">
+              <div className="text-2xl font-bold text-white">{passedCount}</div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Passed</div>
             </div>
-            <div className="flex items-center gap-2 text-red-500">
-              <XCircle size={16} />
-              <span className="font-medium">{failedCount}</span>
-              <span className="text-gray-400">Failed</span>
+            <div className="flex flex-col items-end">
+              <div className="text-2xl font-bold text-white">{failedCount}</div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Failed</div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* ================= STAT CARDS ================= */}
-      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {statCards.map((m, idx) => (
-          <StatCard
-            key={idx}
-            icon={CheckCircle}
-            title={m.title}
-            value={m.value}
-            subtitle={m.passed ? "Passed validation" : "Below threshold"}
-          />
-        ))}
-      </div> */}
-
-      {/* ================= DISTRIBUTION ================= */}
-      {/* <TaskCompletionDistribution response={{ metrics }} /> */}
 
       {/* ================= EXECUTION ANALYTICS ================= */}
-      <div className="pt-6">
-        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 bg-teal-500/10 rounded-lg flex items-center justify-center">
-              <GitBranch className="w-5 h-5 text-teal-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-white">Execution Analytics</h3>
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {metrics.map((metric, idx) => {
+          const isPassed = metric.status === "passed";
+          const mName = metric.name || metric.metric_name;
+          const label = humanizeMetricName(mName);
+          const score = typeof metric.score === 'number' ? Math.round(metric.score * 100) : 0;
 
-          <div className="grid grid-cols-1 gap-6">
-            {metrics.map((metric, idx) => {
-              const isPassed = metric.status === "passed";
-              const mName = metric.name || metric.metric_name;
-              const label = humanizeMetricName(mName);
-              const score = typeof metric.score === 'number' ? Math.round(metric.score * 100) : 0;
+          // Filter and humanize details
+          const details = Object.entries(metric.details || {})
+            .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'llm_usage', 'value'].includes(key));
 
-              // Filter and humanize details
-              const details = Object.entries(metric.details || {})
-                .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'llm_usage', 'value'].includes(key));
-
-              return (
-                <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{label}</span>
-                      <span className={`text-2xl font-bold ${isPassed ? 'text-teal-400' : 'text-red-400'}`}>
-                        {score}%
-                      </span>
-                    </div>
-                    <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                      {isPassed ? '✓ PASSED' : '✗ FAILED'}
-                    </div>
-                  </div>
-
-                  {details.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
-                      {details.map(([key, value]) => (
-                        <div key={key} className="flex flex-col gap-1.5">
-                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
-                          <div className="text-sm">
-                            {value === null ? (
-                              <span className="text-gray-600 italic">Not available</span>
-                            ) : Array.isArray(value) ? (
-                              value.length === 0 ? (
-                                <span className="text-gray-600 italic">Empty</span>
-                              ) : (
-                                <ul className="space-y-1.5">
-                                  {value.map((item, i) => (
-                                    <li key={i} className="text-gray-300 flex items-start gap-2">
-                                      <div className="w-1 h-1 bg-teal-500/40 rounded-full mt-2 flex-shrink-0" />
-                                      <span>{typeof item === 'object' ? JSON.stringify(item) : String(item)}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )
-                            ) : (
-                              <span className="text-gray-300 leading-relaxed capitalize">
-                                {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+          return (
+            <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{label}</span>
+                  <span className={`text-2xl font-bold ${isPassed ? 'text-teal-400' : 'text-red-400'}`}>
+                    {score}%
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+                <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                  {isPassed ? '✓ PASSED' : '✗ FAILED'}
+                </div>
+              </div>
 
-      {/* ================= DETAILED VALIDATION ================= */}
-      {/* <DetailedValidationSection response={{ metrics }} /> */}
+              {details.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
+                  {details.map(([key, value]) => (
+                    <div key={key} className="flex flex-col gap-1.5">
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
+                      <div className="text-sm">
+                        {value === null ? (
+                          <span className="text-gray-600 italic">Not available</span>
+                        ) : Array.isArray(value) ? (
+                          value.length === 0 ? (
+                            <span className="text-gray-600 italic">Empty</span>
+                          ) : (
+                            <ul className="space-y-1.5">
+                              {value.map((item, i) => (
+                                <li key={i} className="text-gray-300 flex items-start gap-2">
+                                  <div className="w-1 h-1 bg-teal-500/40 rounded-full mt-2 flex-shrink-0" />
+                                  <span>{typeof item === 'object' ? JSON.stringify(item) : String(item)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )
+                        ) : (
+                          <span className="text-gray-300 leading-relaxed capitalize">
+                            {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

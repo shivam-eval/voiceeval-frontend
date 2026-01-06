@@ -105,7 +105,8 @@ const ConversationOverview = ({ response, data, onBack }) => {
   ------------------------- */
 
   const passedCount = metrics.filter((m) => m.status === "passed").length;
-  const failedCount = metrics.filter((m) => m.status === "failed").length;
+  const totalCount = metrics.length;
+  const failedCount = totalCount - passedCount;
 
   const hasTurnByTurn = metrics.some(
     (m) =>
@@ -133,17 +134,17 @@ const ConversationOverview = ({ response, data, onBack }) => {
       )}
 
       {/* ================= HEADER CARD ================= */}
-      <div className="bg-[#0b1f26] border border-teal-500/40 rounded-xl p-6 flex items-center justify-between">
+      <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-6 flex items-center justify-between shadow-lg">
         {/* Left */}
         <div className="flex items-start gap-4">
-          <div className="p-4 rounded-xl bg-teal-500/20 text-teal-400">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-teal-500/10 border border-teal-500/20 text-teal-400">
             <MessageSquare size={28} />
           </div>
           <div>
-            <h2 className="text-2xl font-semibold text-white">
+            <h2 className="text-2xl font-bold text-white">
               Conversation Quality
             </h2>
-            <p className="text-gray-400 mt-1">
+            <p className="text-gray-400 text-sm mt-1">
               Assesses grammar, context retention, and coherence
             </p>
           </div>
@@ -151,76 +152,30 @@ const ConversationOverview = ({ response, data, onBack }) => {
 
         {/* Right */}
         <div className="flex items-center gap-6">
-          {/* Ring */}
-          <div className="relative w-24 h-24">
-            <svg className="w-24 h-24 -rotate-90">
-              <circle
-                cx="48"
-                cy="48"
-                r="40"
-                stroke="currentColor"
-                strokeWidth="8"
-                fill="none"
-                className="text-teal-900"
-              />
-              <circle
-                cx="48"
-                cy="48"
-                r="40"
-                stroke="currentColor"
-                strokeWidth="8"
-                fill="none"
-                strokeDasharray={2 * Math.PI * 40}
-                strokeDashoffset={
-                  2 * Math.PI * 40 * (1 - score / 100)
-                }
-                className="text-teal-400"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-2xl font-bold text-teal-300">
-                {score}%
-              </span>
-            </div>
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-4xl font-bold text-teal-400">{score}%</span>
+            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Overall Score</span>
           </div>
-
+          <div className="h-10 w-px bg-gray-800" />
           {/* Passed / Failed */}
           <div className="flex gap-6 text-sm">
-            <div className="flex items-center gap-2 text-teal-400">
-              <CheckCircle size={16} />
-              <span className="font-medium">{passedCount}</span>
-              <span className="text-gray-400">Passed</span>
+            <div className="flex flex-col items-end">
+              <div className="text-2xl font-bold text-white">{passedCount}</div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Passed</div>
             </div>
-            <div className="flex items-center gap-2 text-red-500">
-              <XCircle size={16} />
-              <span className="font-medium">{failedCount}</span>
-              <span className="text-gray-400">Failed</span>
+            <div className="flex flex-col items-end">
+              <div className="text-2xl font-bold text-white">{failedCount}</div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Failed</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Bar Graph */}
-      {/* <ConversationQualityBreakdown response={{ metrics }} /> */}
-
-      {/* Detailed Metrics */}
-      {/* <ConversationDetailedMetrics response={{ metrics }} /> */}
-
       {/* ================= CONVERSATION ANALYTICS ================= */}
-      <div className="pt-6">
-        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-8 bg-teal-500/10 rounded-lg flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-teal-400" />
-            </div>
-            <h3 className="text-xl font-semibold text-white">Conversation Analytics</h3>
-          </div>
-
-          <div className="grid grid-cols-1 gap-6">
-            {metrics
-              .filter((m) => !m.metric_name?.includes('words_per_minute') && !m.metric_name?.includes('text_sentiment'))
-              .map((metric, idx) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {metrics
+          .filter((m) => !m.metric_name?.includes('words_per_minute') && !m.metric_name?.includes('text_sentiment'))
+          .map((metric, idx) => {
                 const isPassed = metric.status === "passed";
                 const mName = metric.name || metric.metric_name;
                 const label = mName?.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase()) || "Unknown Metric";
@@ -292,8 +247,6 @@ const ConversationOverview = ({ response, data, onBack }) => {
                   </div>
                 );
               })}
-          </div>
-        </div>
       </div>
 
       {/* =========================

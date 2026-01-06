@@ -1,10 +1,6 @@
-import { DUMMY_CATEGORY_SCORES } from '../../const'
-import InsightTabs from '../../InsightTab'
 import { ArrowLeft, Clock } from 'lucide-react'
 
 const LatencyOverview = ({ response, data, onBack }) => {
-  console.log('=== LatencyOverview Render ===');
-
   // Handle both single evaluation (response) and aggregated data (data)
   let metrics = [];
   let score = 0;
@@ -13,27 +9,46 @@ const LatencyOverview = ({ response, data, onBack }) => {
     metrics = response?.metrics || [];
     score = response?.score || 0;
   } else if (data) {
-    const latencyCategory = data.category_scores?.find(c => c.category === 'latency');
-    if (latencyCategory) {
-      metrics = latencyCategory.metrics || [];
-      score = latencyCategory.average_score || 0;
-    } else {
-      const allMetrics = [];
-      let totalScore = 0;
-      let scoreCount = 0;
-
-      data.evaluations?.forEach(evaluation => {
-        const latCat = evaluation.category_scores?.find(c => c.category === 'latency');
-        if (latCat?.metrics) {
-          allMetrics.push(...latCat.metrics);
-          if (typeof latCat.score === 'number') {
-            totalScore += latCat.score;
-            scoreCount++;
-          }
+    // Called from Dashboard with aggregated data
+    // 1. Try to find in simulation_evaluation (new res.json format)
+    const simEval = data.simulation_evaluation;
+    if (simEval) {
+      // Extract score from average_scores.by_category
+      if (simEval.average_scores?.by_category?.latency !== undefined) {
+        score = simEval.average_scores.by_category.latency;
+      } else if (Array.isArray(simEval.average_category_scores)) {
+        const cat = simEval.average_category_scores.find(c => c.category === 'latency');
+        if (cat) {
+          score = cat.average_score || 0;
         }
-      });
-      metrics = allMetrics;
-      score = scoreCount > 0 ? totalScore / scoreCount : 0;
+      }
+
+      // Extract metrics from average_metric_results
+      if (Array.isArray(simEval.average_metric_results)) {
+        metrics = simEval.average_metric_results
+          .filter(m => m.category === 'latency')
+          .map(m => ({
+            ...m,
+            score: m.average_score,
+            status: m.average_score >= 0.7 ? 'passed' : 'failed' // Heuristic status
+          }));
+      }
+    }
+
+    // 2. Fallback to evaluations[0].metric_results (new res.json format)
+    if (metrics.length === 0 && Array.isArray(data.evaluations) && data.evaluations.length > 0) {
+      metrics = data.evaluations[0].metric_results?.filter(m => m.category === 'latency') || [];
+    }
+
+    // 3. Fallback to data.category_scores if metrics still empty (legacy)
+    if (metrics.length === 0 && Array.isArray(data.category_scores)) {
+      const latencyCategory = data.category_scores.find(c => c.category === 'latency');
+      if (latencyCategory) {
+        metrics = latencyCategory.metrics || [];
+        if (score === 0) {
+          score = latencyCategory.average_score || 0;
+        }
+      }
     }
   }
 
@@ -64,15 +79,11 @@ const LatencyOverview = ({ response, data, onBack }) => {
 
   const humanizeMetricName = (name) => {
     if (!name) return "Unknown Metric";
+    // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
     if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-    const map = {
-      response_latency: "Response Latency",
-      time_to_first_token: "Time To First Token",
-      time_to_complete_transcript: "Time To Complete Transcript",
-      total_duration: "Total Duration",
-      repetition_count: "Repetition Count",
-    };
-    return map[name] || String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    
+    // No hardcoded map - just transform the snake_case name to Title Case
+    return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
   };
 
   return (

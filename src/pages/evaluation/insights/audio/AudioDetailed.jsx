@@ -7,15 +7,11 @@ import { darkTheme } from "../../const";
 ========================= */
 const humanizeRadarLabel = (name) => {
   if (!name) return "Unknown Metric";
+  // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-  const map = {
-    word_error_rate: "Word Error",
-    audio_technical_quality: "Audio Technical",
-    tts_naturalness: "TTS Naturalness",
-    average_pitch: "Average Pitch",
-    voice_quality_index: "Voice Quality"
-  };
-  return map[name] || String(name).replace(/_/g, " ");
+  
+  // No hardcoded map - just transform the snake_case name to Title Case
+  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 /* =========================

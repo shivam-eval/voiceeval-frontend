@@ -40,50 +40,76 @@ const MetricSectionHeader = ({ title, status }) => (
 );
 
 /* =========================
-   COMPONENT
+   Extract Conversation Category Data
 ========================= */
-
-const ConversationOverview = ({ response, data, onBack }) => {
+const extractConversationData = (response, data) => {
   let metrics = [];
   let score = 0;
 
-  /* -------------------------
-     DATA NORMALIZATION
-  ------------------------- */
-
   if (response) {
+    // Called from ViewReport with single evaluation's category data
     metrics = response?.metrics || [];
-    score =
-      typeof response.score === "number"
-        ? response.score > 1
-          ? Math.round(response.score)
-          : Math.round(response.score * 100)
-        : 0;
+    score = response?.score || 0;
   } else if (data) {
-    const convCategory = data.category_scores?.find(
-      (c) => c.category === "conversation_quality"
-    );
+    // Called from Dashboard with aggregated data
+    
+    // 1. Try to find in simulation_evaluation (new res.json format)
+    const simEval = data.simulation_evaluation;
+    if (simEval) {
+      // Extract metrics from average_metric_results
+      if (Array.isArray(simEval.average_metric_results)) {
+        metrics = simEval.average_metric_results
+          .filter(m => m.category === 'conversation_quality')
+          .map(m => ({
+            ...m,
+            score: m.average_score,
+            status: m.average_score >= 0.7 ? 'passed' : 'failed' // Heuristic status
+          }));
+      }
 
-    if (convCategory) {
-      metrics = convCategory.metrics || [];
-      score =
-        typeof convCategory.average_score === "number"
-          ? convCategory.average_score > 1
-            ? Math.round(convCategory.average_score)
-            : Math.round(convCategory.average_score * 100)
-          : 0;
-    } else {
+      // Extract score - Prioritize by_category over average_category_scores
+      if (simEval.average_scores?.by_category?.conversation_quality !== undefined) {
+        score = simEval.average_scores.by_category.conversation_quality;
+      } else if (Array.isArray(simEval.average_category_scores)) {
+        const cat = simEval.average_category_scores.find(c => c.category === 'conversation_quality');
+        if (cat) {
+          score = cat.average_score || 0;
+        }
+      }
+    }
+
+    // 2. Fallback to evaluations[0].metric_results (new res.json format)
+    if (metrics.length === 0 && Array.isArray(data.evaluations) && data.evaluations.length > 0) {
+      metrics = data.evaluations[0].metric_results?.filter(m => m.category === 'conversation_quality') || [];
+      // Calculate heuristic status for each metric if not present
+      metrics = metrics.map(m => ({
+        ...m,
+        status: m.status || (m.score >= 0.7 ? 'passed' : 'failed')
+      }));
+    }
+
+    // 3. Fallback to data.category_scores if metrics still empty
+    if (metrics.length === 0 && Array.isArray(data.category_scores)) {
+      const convCategory = data.category_scores.find(c => c.category === 'conversation_quality');
+      if (convCategory) {
+        metrics = convCategory.metrics || [];
+        if (score === 0) {
+          score = convCategory.average_score || 0;
+        }
+      }
+    }
+
+    // 4. Last fallback: aggregate from all evaluations
+    if (metrics.length === 0 && Array.isArray(data.evaluations)) {
       const allMetrics = [];
       let totalScore = 0;
       let scoreCount = 0;
 
-      data.evaluations?.forEach((evaluation) => {
-        const convCat = evaluation.category_scores?.find(
-          (c) => c.category === "conversation_quality"
-        );
+      data.evaluations.forEach(evaluation => {
+        const convCat = evaluation.category_scores?.find(c => c.category === 'conversation_quality');
         if (convCat?.metrics) {
           allMetrics.push(...convCat.metrics);
-          if (typeof convCat.score === "number") {
+          if (typeof convCat.score === 'number') {
             totalScore += convCat.score;
             scoreCount++;
           }
@@ -91,12 +117,27 @@ const ConversationOverview = ({ response, data, onBack }) => {
       });
 
       metrics = allMetrics;
-      score =
-        scoreCount > 0
-          ? Math.round((totalScore / scoreCount) * 100)
-          : 0;
+      if (score === 0) {
+        score = scoreCount > 0 ? totalScore / scoreCount : 0;
+      }
     }
   }
+
+  return {
+    score,
+    metrics
+  };
+};
+
+/* =========================
+   COMPONENT
+========================= */
+
+const ConversationOverview = ({ response, data, onBack }) => {
+  const processedResponse = extractConversationData(response, data);
+  const metrics = processedResponse.metrics || [];
+  const rawScore = processedResponse.score;
+  const score = rawScore > 1 ? Math.round(rawScore) : Math.round(rawScore * 100);
 
   if (!metrics || metrics.length === 0) return null;
 

@@ -7,14 +7,11 @@ import DetailedMetric from "../../../../components/DetailedMetric";
 
 const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
+  // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-  const map = {
-    persona_consistency: "Persona Consistency",
-    tone_appropriateness: "Tone Appropriateness",
-    region_appropriate_language: "Region Appropriate Language",
-    behavior_trait_alignment: "Behavior Trait Alignment",
-  };
-  return map[name] || String(name).replace(/_/g, " ");
+  
+  // No hardcoded map - just transform the snake_case name to Title Case
+  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const toPercent = (v) =>

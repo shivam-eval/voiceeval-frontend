@@ -65,10 +65,6 @@ const EvaluationDashboard = ({ onBack }) => {
     'json'
   );
 
-  console.log('simulationId from URL:', simulationId);
-  console.log('API report data:', apiReport);
-  console.log('Full workflow:', workflow);
-
   // Try API data first, fall back to context data
   let fullResponse, simulationResult, evaluationResult;
 
@@ -83,10 +79,6 @@ const EvaluationDashboard = ({ onBack }) => {
     fullResponse = simulationResult?.fullResponse;
     evaluationResult = simulationResult?.evaluationResult;
   }
-
-  console.log('simulationResult:', simulationResult);
-  console.log('fullResponse:', fullResponse);
-  console.log('evaluationResult:', evaluationResult);
 
   if (isLoadingReport) {
     return (
@@ -127,9 +119,6 @@ const EvaluationDashboard = ({ onBack }) => {
     },
     average_category_scores: [], // Legacy format
   };
-
-  console.log('Evaluations:', evaluations);
-  console.log('Simulation Evaluation:', simulationEvaluation);
 
   const firstEvaluation = evaluations[0];
 
@@ -225,23 +214,34 @@ const EvaluationDashboard = ({ onBack }) => {
   // Prepare category scores for InsightTabs - support both formats
   let categoryScores = [];
 
-  if (simulationEvaluation.average_scores?.by_category) {
+  const avgScores = simulationEvaluation.average_scores;
+  const avgCatScores = simulationEvaluation.average_category_scores;
+
+  if (avgScores?.by_category && Object.keys(avgScores.by_category).length > 0) {
     // New format: convert object to array
-    categoryScores = Object.entries(simulationEvaluation.average_scores.by_category).map(([category, score]) => ({
+    categoryScores = Object.entries(avgScores.by_category).map(([category, score]) => ({
       category: category,
       score: Math.round(score * 100),
       weight: 0 // Weight not provided in new format
     }));
-  } else if (simulationEvaluation.average_category_scores) {
+  } else if (Array.isArray(avgCatScores) && avgCatScores.length > 0) {
     // Old format: use existing array
-    categoryScores = simulationEvaluation.average_category_scores.map(cat => ({
+    categoryScores = avgCatScores.map(cat => ({
       category: cat.category,
       score: Math.round(cat.average_score * 100),
       weight: cat.average_weight || 0
     }));
+  } else if (Array.isArray(evaluations) && evaluations.length > 0) {
+    // Fallback: extract from first evaluation if available
+    const firstEval = evaluations[0];
+    if (Array.isArray(firstEval.category_scores)) {
+      categoryScores = firstEval.category_scores.map(cat => ({
+        category: cat.category,
+        score: Math.round((cat.score || 0) * 100),
+        weight: cat.weight || 0
+      }));
+    }
   }
-
-  console.log('Category scores for InsightTabs:', categoryScores);
 
   // Generate improvements from ALL evaluations
   const improvements = [];
@@ -282,23 +282,7 @@ const EvaluationDashboard = ({ onBack }) => {
 
 
   if (improvements.length === 0) {
-    improvements.push(
-      {
-        priority: "high",
-        message: "Semantic accuracy is below threshold. Review expected responses and validation criteria.",
-        metric: "Accuracy",
-      },
-      {
-        priority: "medium",
-        message: "Pause detection flagged unusually long silences. Consider tuning endpointing thresholds.",
-        metric: "Endpointing",
-      },
-      {
-        priority: "low",
-        message: "Conversation tone consistency can be improved for better persona alignment.",
-        metric: "Persona",
-      }
-    );
+    // No hardcoded fallbacks - just leave it empty if the backend doesn't provide anything
   }
 
   const getTranscriptData = async (sessionId) => {
@@ -452,8 +436,6 @@ const EvaluationDashboard = ({ onBack }) => {
       category_scores: categoryScoresArray,
       fullResponse: fullResponse
     };
-
-    console.log('Passing aggregated data to category view:', aggregatedData);
 
     switch (activeCategory) {
       case CATEGORY.ACCURACY:

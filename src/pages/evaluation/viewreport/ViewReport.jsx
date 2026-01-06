@@ -46,6 +46,13 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
     const score = data.overall_score || data.score || 0;
     const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
+    // Extract metric results for detailed view - ensure we get them from category_scores if flat array is missing
+    let allMetrics = data.metrics || data.metric_results || [];
+    
+    if (allMetrics.length === 0 && Array.isArray(data.category_scores)) {
+      allMetrics = data.category_scores.flatMap(cat => cat.metrics || []);
+    }
+
     return {
       overall_score: normalizedScore,
       passed: data.passed,
@@ -54,11 +61,11 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
       execution_time_ms: data.execution_time_ms,
       recommendations: data.recommendations || [],
 
-      // Extract category scores from metric_results
+      // Extract category scores
       category_scores: data.category_scores || [],
 
-      // Extract metric results for detailed view
-      metrics: data.metrics || data.metric_results || [],
+      // Final metrics array
+      metrics: allMetrics,
 
       // Process failure propagation if available
       failure_propagation: data.failure_propagation || {
@@ -163,48 +170,56 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
   // Create a map of categories to their metrics
   const categoryMap = useMemo(() => {
-    const metrics = evaluationData?.metrics;
-    if (!Array.isArray(metrics)) return {};
-
     const map = {};
 
-    // Helper to ensure category exists in map
-    const ensureCategory = (catName) => {
-      if (!map[catName]) {
-        const categoryScore = Array.isArray(evaluationData.category_scores)
-          ? evaluationData.category_scores.find((c) => c && c.category === catName)
-          : null;
-        const score = categoryScore ? categoryScore.score : 0;
+    // 1. Initialize map with all available category scores
+    if (Array.isArray(evaluationData?.category_scores)) {
+      evaluationData.category_scores.forEach(cat => {
+        if (!cat || !cat.category) return;
+        const score = cat.score || 0;
         const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
-        map[catName] = {
-          category: catName,
+        map[cat.category] = {
+          category: cat.category,
           score: normalizedScore,
-          weight: categoryScore ? categoryScore.weight : 0,
-          metrics: [],
+          weight: cat.weight || 0,
+          metrics: Array.isArray(cat.metrics) ? cat.metrics : [],
         };
-      }
-    };
+      });
+    }
 
-    metrics.forEach((metric) => {
-      if (!metric) return;
-      const mName = metric.name || metric.metric_name;
-      let category = metric.category;
+    // 2. Add any additional metrics that might not be in category_scores (fallback/legacy)
+    const metrics = evaluationData?.metrics;
+    if (Array.isArray(metrics)) {
+      metrics.forEach((metric) => {
+        if (!metric) return;
+        const mName = metric.name || metric.metric_name;
+        let category = metric.category;
 
-      // Special override: force these to accuracy
-      if (mName === 'response_consistency' || mName === 'semantic_accuracy') {
-        category = 'accuracy';
-      }
+        // Special override: force these to accuracy
+        if (mName === 'response_consistency' || mName === 'semantic_accuracy') {
+          category = 'accuracy';
+        }
 
-      if (!category) return;
+        if (!category) return;
 
-      ensureCategory(category);
+        // Ensure category exists
+        if (!map[category]) {
+          map[category] = {
+            category: category,
+            score: 0,
+            weight: 0,
+            metrics: [],
+          };
+        }
 
-      // Check for duplicates if we forced category
-      if (!map[category].metrics.some(m => (m.name || m.metric_name) === mName)) {
-        map[category].metrics.push(metric);
-      }
-    });
+        // Check for duplicates
+        if (!map[category].metrics.some(m => (m.name || m.metric_name) === mName)) {
+          map[category].metrics.push(metric);
+        }
+      });
+    }
+    
     return map;
   }, [evaluationData]);
 

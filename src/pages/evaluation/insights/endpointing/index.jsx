@@ -6,68 +6,76 @@ import { MessageCircle, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 
 const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
+  // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-  const map = {
-    interruption_count: "Interruption Count",
-    pause_detection: "Pause Detection",
-    turn_boundary_accuracy: "Turn Boundary Accuracy",
-  };
-  return map[name] || String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  
+  // No hardcoded map - just transform the snake_case name to Title Case
+  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 /* =========================
    COMPONENT
 ========================= */
 const EndpointingOverview = ({ response, data, onBack }) => {
-  console.log('=== EndpointingOverview Render ===');
-  console.log('EndpointingOverview received response:', response);
-  console.log('EndpointingOverview received data:', data);
-
   // Handle both single evaluation (response) and aggregated data (data)
   let processedResponse = response;
 
   if (!response && data) {
     // Called from Dashboard with aggregated data
-    console.log('Using data - category_scores:', data.category_scores);
-    const endpointingCategory = data.category_scores?.find(c => c.category === 'endpointing');
-    console.log('Found endpointing category:', endpointingCategory);
 
-    if (endpointingCategory) {
-      processedResponse = {
-        metrics: endpointingCategory.metrics || [],
-        score: endpointingCategory.average_score || 0,
-        passed: endpointingCategory.metrics?.every(m => m.status === 'passed') || false
-      };
-    } else {
-      // Fallback: aggregate from all evaluations
-      const allMetrics = [];
-      data.evaluations?.forEach(evaluation => {
-        const endCat = evaluation.category_scores?.find(c => c.category === 'endpointing');
-        if (endCat?.metrics) {
-          allMetrics.push(...endCat.metrics);
-        }
-      });
-      processedResponse = {
-        metrics: allMetrics,
-        score: 0,
-        passed: false
-      };
-      console.log('Aggregated endpointing metrics from evaluations:', allMetrics);
+    // 1. Try to find in simulation_evaluation (new res.json format)
+    const simEval = data.simulation_evaluation;
+    let metrics = [];
+    let score = 0;
+
+    if (simEval) {
+      // Extract score from average_scores.by_category
+      if (simEval.average_scores?.by_category?.endpointing !== undefined) {
+        score = simEval.average_scores.by_category.endpointing;
+      } else if (Array.isArray(simEval.average_category_scores)) {
+        const cat = simEval.average_category_scores.find(c => c.category === 'endpointing');
+        if (cat) score = cat.average_score || 0;
+      }
+
+      // Extract metrics from average_metric_results
+      if (Array.isArray(simEval.average_metric_results)) {
+        metrics = simEval.average_metric_results
+          .filter(m => m.category === 'endpointing')
+          .map(m => ({
+            ...m,
+            score: m.average_score,
+            status: m.average_score >= 0.7 ? 'passed' : 'failed'
+          }));
+      }
     }
-  }
 
-  console.log('Processed response:', processedResponse);
+    // 2. Fallback to evaluations[0].metric_results (new res.json format)
+    if (metrics.length === 0 && Array.isArray(data.evaluations) && data.evaluations.length > 0) {
+      metrics = data.evaluations[0].metric_results?.filter(m => m.category === 'endpointing') || [];
+    }
+
+    // 3. Fallback to data.category_scores if metrics still empty (legacy)
+    if (metrics.length === 0 && Array.isArray(data.category_scores)) {
+      const endpointingCategory = data.category_scores.find(c => c.category === 'endpointing');
+      if (endpointingCategory) {
+        metrics = endpointingCategory.metrics || [];
+        if (score === 0) score = endpointingCategory.average_score || 0;
+      }
+    }
+
+    processedResponse = {
+      metrics,
+      score,
+      passed: score >= 0.7
+    };
+  }
 
   const metrics = Array.isArray(processedResponse?.metrics) ? processedResponse.metrics : [];
   const score = typeof processedResponse?.score === 'number'
     ? (processedResponse.score > 1 ? Math.round(processedResponse.score) : Math.round(processedResponse.score * 100))
     : 0;
 
-  console.log('Final metrics array:', metrics);
-  console.log('Metrics length:', metrics.length);
-
   if (!metrics || metrics.length === 0) {
-    console.warn('No endpointing metrics available - showing empty state');
     return (
       <div className="space-y-6">
         {onBack && (

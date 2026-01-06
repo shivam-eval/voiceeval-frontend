@@ -6,24 +6,17 @@ import { Volume2, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 
 const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
+  // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-  const map = {
-    word_error_rate: "Word Error Rate",
-    audio_technical_quality: "Audio Technical Quality",
-    tts_naturalness: "TTS Naturalness",
-    average_pitch: "Average Pitch",
-    voice_quality_index: "Voice Quality Index"
-  };
-  return map[name] || String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  
+  // No hardcoded map - just transform the snake_case name to Title Case
+  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 /* =========================
    Extract Audio Category Data
 ========================= */
 const extractAudioData = (response, data) => {
-  console.log('AudioOverview received response:', response);
-  console.log('AudioOverview received data:', data);
-
   let metrics = [];
   let score = 0;
 
@@ -33,37 +26,47 @@ const extractAudioData = (response, data) => {
     score = response?.score || 0;
   } else if (data) {
     // Called from Dashboard with aggregated data
-    const audioCategory = data.category_scores?.find(c => c.category === 'audio_quality');
-    if (audioCategory) {
-      metrics = audioCategory.metrics || [];
-      score = audioCategory.average_score || 0;
-    } else {
-      // Fallback: aggregate from all evaluations
-      const allMetrics = [];
-      let totalScore = 0;
-      let scoreCount = 0;
-
-      data.evaluations?.forEach(evaluation => {
-        const audioCat = evaluation.category_scores?.find(c => c.category === 'audio_quality');
-        if (audioCat?.metrics) {
-          allMetrics.push(...audioCat.metrics);
-          if (typeof audioCat.score === 'number') {
-            totalScore += audioCat.score;
-            scoreCount++;
-          }
+    // 1. Try to find in simulation_evaluation (new res.json format)
+    const simEval = data.simulation_evaluation;
+    if (simEval) {
+      // Extract score from average_scores.by_category
+      if (simEval.average_scores?.by_category?.audio_quality !== undefined) {
+        score = simEval.average_scores.by_category.audio_quality;
+      } else if (Array.isArray(simEval.average_category_scores)) {
+        const cat = simEval.average_category_scores.find(c => c.category === 'audio_quality');
+        if (cat) {
+          score = cat.average_score || 0;
         }
-      });
+      }
 
-      metrics = allMetrics;
-      score = scoreCount > 0 ? totalScore / scoreCount : 0;
+      // Extract metrics from average_metric_results
+      if (Array.isArray(simEval.average_metric_results)) {
+        metrics = simEval.average_metric_results
+          .filter(m => m.category === 'audio_quality')
+          .map(m => ({
+            ...m,
+            score: m.average_score,
+            status: m.average_score >= 0.7 ? 'passed' : 'failed' // Heuristic status
+          }));
+      }
+    }
+
+    // 2. Fallback to evaluations[0].metric_results (new res.json format)
+    if (metrics.length === 0 && Array.isArray(data.evaluations) && data.evaluations.length > 0) {
+      metrics = data.evaluations[0].metric_results?.filter(m => m.category === 'audio_quality') || [];
+    }
+
+    // 3. Fallback to data.category_scores if metrics still empty (legacy)
+    if (metrics.length === 0 && Array.isArray(data.category_scores)) {
+      const audioCategory = data.category_scores.find(c => c.category === 'audio_quality');
+      if (audioCategory) {
+        metrics = audioCategory.metrics || [];
+        if (score === 0) {
+          score = audioCategory.average_score || 0;
+        }
+      }
     }
   }
-
-  console.log('Extracted audio data:', {
-    score,
-    metrics,
-    metricCount: metrics.length
-  });
 
   return {
     score,
@@ -77,8 +80,6 @@ const extractAudioData = (response, data) => {
 ========================= */
 const AudioOverview = ({ response, data, onBack }) => {
   const processedResponse = extractAudioData(response, data);
-
-  console.log('Processed response:', processedResponse);
 
   const metrics = processedResponse.metrics || [];
   const score = processedResponse.score > 1

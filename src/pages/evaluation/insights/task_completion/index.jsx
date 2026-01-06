@@ -8,16 +8,99 @@ import { GitBranch } from "lucide-react";
    HELPERS
 ========================= */
 
+const extractTaskCompletionData = (response, data) => {
+  let metrics = [];
+  let score = 0;
+
+  if (response) {
+    // Called from ViewReport with single evaluation's category data
+    metrics = response?.metrics || [];
+    score = typeof response.score === "number" ? Math.round(response.score * 100) : 0;
+  } else if (data) {
+    // Called from Dashboard with aggregated data
+    
+    // 1. Try to find in simulation_evaluation (new res.json format)
+    const simEval = data.simulation_evaluation;
+    if (simEval) {
+      // Extract metrics from average_metric_results
+      if (Array.isArray(simEval.average_metric_results)) {
+        metrics = simEval.average_metric_results
+          .filter(m => m.category === 'task_completion')
+          .map(m => ({
+            ...m,
+            score: m.average_score,
+            status: m.average_score >= 0.7 ? 'passed' : 'failed' // Heuristic status
+          }));
+      }
+      
+      // Extract score - Prioritize by_category over average_category_scores
+      if (simEval.average_scores?.by_category?.task_completion !== undefined) {
+        score = Math.round(simEval.average_scores.by_category.task_completion * 100);
+      } else if (Array.isArray(simEval.average_category_scores)) {
+        const cat = simEval.average_category_scores.find(c => c.category === 'task_completion');
+        if (cat) {
+          score = Math.round((cat.average_score || 0) * 100);
+        }
+      }
+    }
+
+    // 2. Fallback to evaluations[0].metric_results (new res.json format)
+    if (metrics.length === 0 && Array.isArray(data.evaluations) && data.evaluations.length > 0) {
+      metrics = data.evaluations[0].metric_results?.filter(m => m.category === 'task_completion') || [];
+      // Calculate heuristic status for each metric if not present
+      metrics = metrics.map(m => ({
+        ...m,
+        status: m.status || (m.score >= 0.7 ? 'passed' : 'failed')
+      }));
+    }
+
+    // 3. Fallback to data.category_scores if metrics still empty
+    if (metrics.length === 0 && Array.isArray(data.category_scores)) {
+      const taskCategory = data.category_scores.find(c => c.category === 'task_completion');
+      if (taskCategory) {
+        metrics = taskCategory.metrics || [];
+        if (score === 0) {
+          score = typeof taskCategory.average_score === "number"
+            ? Math.round(taskCategory.average_score * 100)
+            : 0;
+        }
+      }
+    }
+
+    // 4. Last fallback: aggregate from all evaluations
+    if (metrics.length === 0 && Array.isArray(data.evaluations)) {
+      const allMetrics = [];
+      let totalScore = 0;
+      let scoreCount = 0;
+
+      data.evaluations.forEach(evaluation => {
+        const taskCat = evaluation.category_scores?.find(c => c.category === 'task_completion');
+        if (taskCat?.metrics) {
+          allMetrics.push(...taskCat.metrics);
+          if (typeof taskCat.score === 'number') {
+            totalScore += taskCat.score;
+            scoreCount++;
+          }
+        }
+      });
+
+      metrics = allMetrics;
+      if (score === 0) {
+        score = scoreCount > 0 ? Math.round((totalScore / scoreCount) * 100) : 0;
+      }
+    }
+  }
+
+  return { metrics, score };
+};
+
 const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
+  // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-  const map = {
-    task_completion_rate: "Task Completion",
-    sequential_task_accuracy: "Sequential Accuracy",
-    step_validation_pass_rate: "Step Validation",
-    flow_path_coverage: "Flow Coverage",
-  };
-  return map[name] || String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+
+  // No hardcoded map - just transform the snake_case name to Title Case
+  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 /* =========================
@@ -32,17 +115,9 @@ const normalizeMetricScore = (score) => {
 const transformStatCards = (response) => {
   if (!response || !Array.isArray(response.metrics)) return [];
 
-  // Define priority metrics to display
-  const priorityMetrics = [
-    'task_completion_rate',
-    'sequential_task_accuracy',
-    'step_validation_pass_rate',
-    'flow_path_coverage'
-  ];
-
-  // Filter to only include priority metrics and map them
+  // Map all metrics
   return response.metrics
-    .filter(m => m && priorityMetrics.includes(m.name || m.metric_name))
+    .filter(m => m)
     .map((m) => ({
       title: humanizeMetricName(m.name || m.metric_name),
       value: normalizeMetricScore(m.score),
@@ -55,65 +130,14 @@ const transformStatCards = (response) => {
 ========================= */
 
 const TaskCompletionOverview = ({ response, data, onBack }) => {
-  console.log('=== TaskCompletionOverview Render ===');
-  console.log('TaskCompletionOverview received response:', response);
-  console.log('TaskCompletionOverview received data:', data);
-
-  // Handle both single evaluation (response) and aggregated data (data)
-  let metrics = [];
-  let score = 0;
-
-  if (response) {
-    // Called from ViewReport with single evaluation's category data
-    console.log('Using response.metrics:', response.metrics);
-    metrics = response?.metrics || [];
-    score = typeof response.score === "number" ? Math.round(response.score * 100) : 0;
-  } else if (data) {
-    // Called from Dashboard with aggregated data
-    console.log('Using data - category_scores:', data.category_scores);
-    const taskCategory = data.category_scores?.find(c => c.category === 'task_completion');
-    console.log('Found task_completion category:', taskCategory);
-
-    if (taskCategory) {
-      metrics = taskCategory.metrics || [];
-      score = typeof taskCategory.average_score === "number"
-        ? Math.round(taskCategory.average_score * 100)
-        : 0;
-    } else {
-      // Fallback: aggregate from all evaluations
-      const allMetrics = [];
-      let totalScore = 0;
-      let scoreCount = 0;
-
-      data.evaluations?.forEach(evaluation => {
-        const taskCat = evaluation.category_scores?.find(c => c.category === 'task_completion');
-        if (taskCat?.metrics) {
-          allMetrics.push(...taskCat.metrics);
-          if (typeof taskCat.score === 'number') {
-            totalScore += taskCat.score;
-            scoreCount++;
-          }
-        }
-      });
-
-      metrics = allMetrics;
-      score = scoreCount > 0 ? Math.round((totalScore / scoreCount) * 100) : 0;
-      console.log('Aggregated metrics from evaluations:', metrics);
-    }
-  }
-
+  const { metrics: extractedMetrics, score: extractedScore } = extractTaskCompletionData(response, data);
+  
   // Ensure metrics is an array of objects
-  const safeMetrics = Array.isArray(metrics) ? metrics.filter(Boolean) : [];
-
+  const metrics = Array.isArray(extractedMetrics) ? extractedMetrics.filter(Boolean) : [];
   // Ensure score is a valid number for the ring visualization
-  const displayScore = typeof score === 'number' && !isNaN(score) ? score : 0;
-
-  // Use safe versions for the rest of the component
-  metrics = safeMetrics;
-  score = displayScore;
+  const score = typeof extractedScore === 'number' && !isNaN(extractedScore) ? extractedScore : 0;
 
   if (!metrics || metrics.length === 0) {
-    console.warn('No task completion metrics available - showing empty state');
     return (
       <div className="space-y-6">
         {onBack && (
@@ -135,8 +159,6 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
       </div>
     );
   }
-
-  console.log('Rendering TaskCompletionOverview with', metrics.length, 'metrics');
 
   /* -------------------------
      DERIVED VALUES

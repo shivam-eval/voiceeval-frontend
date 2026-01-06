@@ -15,14 +15,11 @@ import PersonaAlignmentRadar from "./PersonaRadar";
 
 const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
+  // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-  const map = {
-    persona_consistency: "Persona Consistency",
-    tone_appropriateness: "Tone Appropriateness",
-    region_appropriate_language: "Region Appropriate Language",
-    behavior_trait_alignment: "Behavior Trait Alignment",
-  };
-  return map[name] || String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  
+  // No hardcoded map - just transform the snake_case name to Title Case
+  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const normalizeScore = (v) =>
@@ -31,60 +28,74 @@ const normalizeScore = (v) =>
     : 0;
 
 /* =========================
-   Component
+   Extract Persona Category Data
 ========================= */
-
-const PersonaOverview = ({ response, data, onBack }) => {
-  console.log('=== PersonaOverview Render ===');
-  console.log('PersonaOverview received response:', response);
-  console.log('PersonaOverview received data:', data);
-
-  // Handle both single evaluation (response) and aggregated data (data)
+const extractPersonaData = (response, data) => {
   let metrics = [];
   let score = 0;
 
   if (response) {
     // Called from ViewReport with single evaluation's category data
-    console.log('Using response.metrics:', response.metrics);
     metrics = response?.metrics || [];
     score = response?.score || 0;
   } else if (data) {
     // Called from Dashboard with aggregated data
-    console.log('Using data - category_scores:', data.category_scores);
-    const personaCategory = data.category_scores?.find(c => c.category === 'persona');
-    console.log('Found persona category:', personaCategory);
+    // 1. Try to find in simulation_evaluation (new res.json format)
+    const simEval = data.simulation_evaluation;
+    if (simEval) {
+      // Extract score from average_scores.by_category
+      if (simEval.average_scores?.by_category?.persona !== undefined) {
+        score = simEval.average_scores.by_category.persona;
+      } else if (Array.isArray(simEval.average_category_scores)) {
+        const cat = simEval.average_category_scores.find(c => c.category === 'persona');
+        if (cat) score = cat.average_score || 0;
+      }
 
-    if (personaCategory) {
-      metrics = personaCategory.metrics || [];
-      score = personaCategory.average_score || 0;
-    } else {
-      // Fallback: aggregate from all evaluations
-      const allMetrics = [];
-      let totalScore = 0;
-      let scoreCount = 0;
+      // Extract metrics from average_metric_results
+      if (Array.isArray(simEval.average_metric_results)) {
+        metrics = simEval.average_metric_results
+          .filter(m => m.category === 'persona')
+          .map(m => ({
+            ...m,
+            score: m.average_score,
+            status: m.average_score >= 0.7 ? 'passed' : 'failed' // Heuristic status
+          }));
+      }
+    }
 
-      data.evaluations?.forEach(evaluation => {
-        const personaCat = evaluation.category_scores?.find(c => c.category === 'persona');
-        if (personaCat?.metrics) {
-          allMetrics.push(...personaCat.metrics);
-          if (typeof personaCat.score === 'number') {
-            totalScore += personaCat.score;
-            scoreCount++;
-          }
+    // 2. Fallback to evaluations[0].metric_results (new res.json format)
+    if (metrics.length === 0 && Array.isArray(data.evaluations) && data.evaluations.length > 0) {
+      metrics = data.evaluations[0].metric_results?.filter(m => m.category === 'persona') || [];
+    }
+
+    // 3. Fallback to data.category_scores if metrics still empty (legacy)
+    if (metrics.length === 0 && Array.isArray(data.category_scores)) {
+      const personaCategory = data.category_scores.find(c => c.category === 'persona');
+      if (personaCategory) {
+        metrics = personaCategory.metrics || [];
+        if (score === 0) {
+          score = personaCategory.average_score || 0;
         }
-      });
-
-      metrics = allMetrics;
-      score = scoreCount > 0 ? totalScore / scoreCount : 0;
-      console.log('Aggregated persona metrics from evaluations:', metrics);
+      }
     }
   }
 
-  console.log('Final metrics array:', metrics);
-  console.log('Final score:', score);
+  return {
+    score,
+    metrics
+  };
+};
+
+/* =========================
+   Component
+========================= */
+
+const PersonaOverview = ({ response, data, onBack }) => {
+  const processedResponse = extractPersonaData(response, data);
+  const metrics = processedResponse.metrics || [];
+  const score = processedResponse.score;
 
   if (!metrics || metrics.length === 0) {
-    console.warn('No persona metrics available - showing empty state');
     return (
       <div className="space-y-6">
         {onBack && (
@@ -106,8 +117,6 @@ const PersonaOverview = ({ response, data, onBack }) => {
       </div>
     );
   }
-
-  console.log('Rendering PersonaOverview with', metrics.length, 'metrics');
 
   const passedCount = metrics.filter((m) => m.status === "passed").length;
   const totalCount = metrics.length;

@@ -5,13 +5,12 @@ import { CheckCircle, XCircle } from "lucide-react";
 ========================= */
 
 const humanizeMetricName = (name) => {
-  const map = {
-    grammar_quality: "Grammar Quality",
-    context_maintenance: "Context Maintenance",
-    clarification_request_rate: "Clarification Request Rate",
-    information_extraction_accuracy: "Information Extraction Accuracy",
-  };
-  return map[name] || name;
+  if (!name) return "Unknown Metric";
+  // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
+  if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
+  
+  // No hardcoded map - just transform the snake_case name to Title Case
+  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const normalizeScore = (score) => {

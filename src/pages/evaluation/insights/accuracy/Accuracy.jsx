@@ -12,18 +12,11 @@ import TurnByTurnAnalysis from "../../../../../src/components/TurnCard"
 
 const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
+  // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
 
-  const map = {
-    semantic_accuracy: "Semantic Accuracy",
-    response_consistency: "Response Consistency",
-    hallucination_check: "Hallucination Check",
-  };
-
-  return map[name] || String(name)
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  // No hardcoded map - just transform the snake_case name to Title Case
+  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const normalizeScore = (v) =>
@@ -36,8 +29,6 @@ const normalizeScore = (v) =>
 ========================= */
 
 export default function AccuracyView({ response, data, onBack }) {
-  console.log('=== AccuracyView Render ===');
-
   // Handle both single evaluation (response) and aggregated data (data)
   let metrics = [];
   let score = 0;
@@ -46,16 +37,50 @@ export default function AccuracyView({ response, data, onBack }) {
     metrics = response?.metrics || [];
     score = response?.score || 0;
   } else if (data) {
-    const accuracyCategory = data.category_scores?.find(c => c.category === 'accuracy');
-    if (accuracyCategory) {
-      metrics = accuracyCategory.metrics || [];
-      score = accuracyCategory.average_score || 0;
-    } else {
+    // Called from Dashboard with aggregated data
+    // 1. Try to find in simulation_evaluation (new res.json format)
+    const simEval = data.simulation_evaluation;
+    if (simEval) {
+      // Extract metrics from average_metric_results
+      if (Array.isArray(simEval.average_metric_results)) {
+        metrics = simEval.average_metric_results
+          .filter(m => m.category === 'accuracy')
+          .map(m => ({
+            ...m,
+            score: m.average_score,
+            status: m.average_score >= 0.7 ? 'passed' : 'failed' // Heuristic status
+          }));
+      }
+
+      // Extract score from average_category_scores
+      if (Array.isArray(simEval.average_category_scores)) {
+        const cat = simEval.average_category_scores.find(c => c.category === 'accuracy');
+        if (cat) {
+          score = cat.average_score || 0;
+        }
+      } else if (simEval.average_scores?.by_category?.accuracy !== undefined) {
+        score = simEval.average_scores.by_category.accuracy;
+      }
+    }
+
+    // 2. Fallback to data.category_scores if metrics still empty
+    if (metrics.length === 0 && Array.isArray(data.category_scores)) {
+      const accuracyCategory = data.category_scores.find(c => c.category === 'accuracy');
+      if (accuracyCategory) {
+        metrics = accuracyCategory.metrics || [];
+        if (score === 0) {
+          score = accuracyCategory.average_score || 0;
+        }
+      }
+    }
+
+    // 3. Last fallback: aggregate from all evaluations
+    if (metrics.length === 0 && Array.isArray(data.evaluations)) {
       const allMetrics = [];
       let totalScore = 0;
       let scoreCount = 0;
 
-      data.evaluations?.forEach(evaluation => {
+      data.evaluations.forEach(evaluation => {
         const accCategory = evaluation.category_scores?.find(c => c.category === 'accuracy');
         if (accCategory?.metrics) {
           allMetrics.push(...accCategory.metrics);
@@ -66,7 +91,9 @@ export default function AccuracyView({ response, data, onBack }) {
         }
       });
       metrics = allMetrics;
-      score = scoreCount > 0 ? totalScore / scoreCount : 0;
+      if (score === 0) {
+        score = scoreCount > 0 ? totalScore / scoreCount : 0;
+      }
     }
   }
 

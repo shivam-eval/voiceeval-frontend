@@ -6,13 +6,12 @@ import { ShieldCheck } from "lucide-react";
 ========================= */
 
 const humanizeMetricName = (name) => {
-  const map = {
-    task_completion_rate: "Task Completion Rate",
-    sequential_task_accuracy: "Sequential Task Accuracy",
-    step_validation_pass_rate: "Step Validation Pass Rate",
-    flow_path_coverage: "Flow Path Coverage",
-  };
-  return map[name] || name;
+  if (!name) return "Unknown Metric";
+  // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
+  if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
+  
+  // No hardcoded map - just transform the snake_case name to Title Case
+  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 /* =========================

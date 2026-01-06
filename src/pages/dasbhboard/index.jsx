@@ -1,5 +1,5 @@
-import DashboardCards from './Dashboardcards'
-import DashboardTable from './Dashboardtable'
+import DashboardCards from './DashboardCards'
+import DashboardTable from './DashboardTable'
 
 
 const Dashboard = () => {
@@ -29,7 +29,7 @@ const Dashboard = () => {
     return 'bg-orange-400'
   }
 
-  
+
 
   /* -------------------- RENDER -------------------- */
 
@@ -42,10 +42,10 @@ const Dashboard = () => {
       </div>
 
       {/* KPI Cards */}
-   <DashboardCards/>
+      <DashboardCards />
 
       {/* Table + Activity Feed */}
-     <DashboardTable/>
+      <DashboardTable />
 
       {/* Category Performance + Summary Statistics */}
       <div className="grid grid-cols-3 gap-6">

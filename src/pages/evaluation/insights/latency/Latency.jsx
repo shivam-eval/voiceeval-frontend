@@ -82,13 +82,13 @@ const LatencyOverview = ({ response, data, onBack }) => {
   const ttct = byName('time_to_complete_transcript')
   const total = byName('total_duration')
   const repetition = byName('repetition_count')
-  
+
   const passedCount = metrics.filter(m => m.status === "passed" || m.passed === true).length
   const totalCount = metrics.length || 1
   const passPct = Math.round((passedCount / totalCount) * 100)
   const isPassed = response?.passed ?? (passedCount === totalCount)
   const fmtNum = (n) => n?.toLocaleString?.('en-US') ?? String(n ?? '')
-  
+
   const handleTabChange = (key) => {
     const map = {
       accuracy: 'accuracy',
@@ -105,7 +105,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
     url.searchParams.set('preview', target)
     window.location.href = url.toString()
   }
-  
+
   const donut = () => {
     const r = 34
     const cx = 40
@@ -129,7 +129,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
       </svg>
     )
   }
-  
+
   const card = (m, title, unit = 'ms', isCount = false) => {
     if (!m) return null
     const passed = m.status === "passed" || m.passed === true
@@ -140,7 +140,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
     const exec = typeof m.execution_time_ms === 'number' ? Number(m.execution_time_ms.toFixed(2)) : 0
     const metricName = m.metric_name || m.name
     const valueLabel = isCount ? `${val}` : (metricName === 'total_duration' ? `${(valRaw / 1000).toFixed(1)}s` : `${val}${unit}`)
-    
+
     return (
       <div className="p-4 rounded-xl border" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
         <div className="flex items-start justify-between">
@@ -171,12 +171,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
           </div>
         </div>
         <div className="mt-4 grid grid-cols-2 gap-2 text-sm" style={{ color: COLORS.text }}>
-          {threshold !== null && (
-            <div>
-              Threshold
-              <div className="font-semibold" style={{ color: COLORS.white }}>{m.metric_name === 'total_duration' ? `${(threshold / 1000).toFixed(1)}s` : `${threshold}${unit}`}</div>
-            </div>
-          )}
+
           {m.details?.agent_turns_analyzed !== undefined && (
             <div>
               Turns Analyzed
@@ -235,7 +230,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
       </div>
     )
   }
-  
+
   const metricBars = () => {
     const labelMap = {
       response_latency: 'Response Latency',
@@ -331,7 +326,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
       </div>
     )
   }
-  
+
   const distributionTiles = () => {
     if (!rl?.details) return null
     const d = rl.details
@@ -365,7 +360,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
       </div>
     )
   }
-  
+
   return (
     <div className="space-y-6">
       {/* Back Button */}
@@ -380,7 +375,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
       )}
 
       {/* <InsightTabs active="latency" onChange={handleTabChange} categoryScores={DUMMY_CATEGORY_SCORES} /> */}
-      
+
       {/* Header Card */}
       <div className="rounded-xl border p-6" style={{ backgroundColor: '#0b1220', borderColor: '#1f2937' }}>
         <div className="flex items-center justify-between">
@@ -410,13 +405,13 @@ const LatencyOverview = ({ response, data, onBack }) => {
           </div>
         </div>
       </div>
-      
+
       {/* Latency Breakdown Chart */}
       {metricBars()}
-      
+
       {/* Distribution Tiles */}
       {distributionTiles()}
-      
+
       {/* Metric Cards */}
       <div className="grid grid-cols-2 gap-4">
         {card(rl, 'Response Latency')}

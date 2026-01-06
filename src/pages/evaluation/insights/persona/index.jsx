@@ -17,7 +17,7 @@ const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
   // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-  
+
   // No hardcoded map - just transform the snake_case name to Title Case
   return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
@@ -186,7 +186,7 @@ const PersonaOverview = ({ response, data, onBack }) => {
 
           // Filter and humanize details
           const details = Object.entries(metric.details || {})
-            .filter(([key]) => !['passed', 'execution_time_ms', 'error_message', 'reasoning'].includes(key));
+            .filter(([key]) => !['passed', 'execution_time_ms', 'error_message', 'threshold', 'value'].includes(key));
 
           return (
             <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>
@@ -205,7 +205,7 @@ const PersonaOverview = ({ response, data, onBack }) => {
               {details.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
                   {details.map(([key, value]) => (
-                    <div key={key} className="flex flex-col gap-1.5">
+                    <div key={key} className={`flex flex-col gap-1.5 ${key === 'reasoning' ? 'md:col-span-2' : ''}`}>
                       <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
                       <div className="text-sm">
                         {value === null ? (

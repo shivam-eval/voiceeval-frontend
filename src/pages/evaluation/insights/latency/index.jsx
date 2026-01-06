@@ -81,7 +81,7 @@ const LatencyOverview = ({ response, data, onBack }) => {
     if (!name) return "Unknown Metric";
     // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
     if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-    
+
     // No hardcoded map - just transform the snake_case name to Title Case
     return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
   };
@@ -145,9 +145,9 @@ const LatencyOverview = ({ response, data, onBack }) => {
           const isCount = mName === 'repetition_count';
           const unit = isCount ? '' : (mName === 'total_duration' ? 's' : 'ms');
           const valueDisplay = isCount ? valRaw : (mName === 'total_duration' ? `${(valRaw / 1000).toFixed(2)}${unit}` : `${Math.round(valRaw)}${unit}`);
-          
+
           const details = Object.entries(metric.details || {})
-            .filter(([key]) => !['passed', 'execution_time_ms', 'error_message', 'reasoning', 'agent_sentences', 'repetitions'].includes(key));
+            .filter(([key]) => !['passed', 'execution_time_ms', 'error_message', 'reasoning', 'agent_sentences', 'repetitions', 'threshold'].includes(key));
 
           return (
             <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>

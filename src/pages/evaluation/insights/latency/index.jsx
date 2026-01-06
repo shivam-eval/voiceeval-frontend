@@ -141,13 +141,19 @@ const LatencyOverview = ({ response, data, onBack }) => {
           const isPassed = metric.status === "passed" || metric.passed === true;
           const mName = metric.metric_name || metric.name;
           const label = humanizeMetricName(mName);
-          const valRaw = metric.value ?? metric.details?.average_ms ?? (metric.details?.repetition_count !== undefined ? metric.details.repetition_count : 0);
+          const valRaw =
+            metric.value ??
+            metric.details?.average_ms ??
+            metric.details?.duration_ms ??
+            (metric.details?.repetition_count !== undefined
+              ? metric.details.repetition_count
+              : 0);
           const isCount = mName === 'repetition_count';
           const unit = isCount ? '' : (mName === 'total_duration' ? 's' : 'ms');
           const valueDisplay = isCount ? valRaw : (mName === 'total_duration' ? `${(valRaw / 1000).toFixed(2)}${unit}` : `${Math.round(valRaw)}${unit}`);
 
           const details = Object.entries(metric.details || {})
-            .filter(([key]) => !['passed', 'execution_time_ms', 'error_message', 'reasoning', 'agent_sentences', 'repetitions', 'threshold'].includes(key));
+            .filter(([key]) => !['passed', 'value', 'execution_time_ms', 'error_message', 'reasoning', 'agent_sentences', 'repetitions', 'threshold'].includes(key));
 
           return (
             <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>

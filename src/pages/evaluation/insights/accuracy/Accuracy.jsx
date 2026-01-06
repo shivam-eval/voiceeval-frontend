@@ -28,25 +28,55 @@ const extractAccuracyData = (response, data) => {
   if (response) {
     metrics = response.metrics || [];
     score = response.score || 0;
-  } else if (data?.simulation_evaluation) {
+  } else if (data) {
     const simEval = data.simulation_evaluation;
+    if (simEval) {
+      if (Array.isArray(simEval.average_metric_results)) {
+        metrics = simEval.average_metric_results
+          .filter((m) => m.category === "accuracy")
+          .map((m) => ({
+            ...m,
+            score: m.average_score,
+            status: m.average_score >= 0.7 ? "passed" : "failed",
+          }));
+      }
 
-    if (Array.isArray(simEval.average_metric_results)) {
-      metrics = simEval.average_metric_results
-        .filter((m) => m.category === "accuracy")
-        .map((m) => ({
-          ...m,
-          score: m.average_score,
-          status: m.average_score >= 0.7 ? "passed" : "failed",
-        }));
+      if (
+        simEval.average_scores?.by_category?.accuracy !== undefined
+      ) {
+        score = simEval.average_scores.by_category.accuracy;
+      } else if (Array.isArray(simEval.average_category_scores)) {
+        const cat = simEval.average_category_scores.find(
+          (c) => c.category === "accuracy"
+        );
+        if (cat) score = cat.average_score || 0;
+      }
     }
 
-    score =
-      simEval.average_scores?.by_category?.accuracy ??
-      simEval.average_category_scores?.find(
+    if (
+      metrics.length === 0 &&
+      Array.isArray(data.evaluations) &&
+      data.evaluations.length > 0
+    ) {
+      metrics =
+        data.evaluations[0].metric_results?.filter(
+          (m) => m.category === "accuracy"
+        ) || [];
+      metrics = metrics.map((m) => ({
+        ...m,
+        status: m.status || (m.score >= 0.7 ? "passed" : "failed"),
+      }));
+    }
+
+    if (metrics.length === 0 && Array.isArray(data.category_scores)) {
+      const accCategory = data.category_scores.find(
         (c) => c.category === "accuracy"
-      )?.average_score ??
-      0;
+      );
+      if (accCategory) {
+        metrics = accCategory.metrics || [];
+        if (score === 0) score = accCategory.average_score || 0;
+      }
+    }
   }
 
   return { metrics, score };
@@ -147,8 +177,8 @@ const AccuracyOverview = ({ response, data, onBack }) => {
             <div
               key={idx}
               className={`rounded-xl p-6 border ${isPassed
-                  ? "bg-white/[0.02] border-white/[0.05]"
-                  : "bg-red-950/10 border-red-900/20"
+                ? "bg-white/[0.02] border-white/[0.05]"
+                : "bg-red-950/10 border-red-900/20"
                 }`}
             >
               {/* Header */}
@@ -166,8 +196,8 @@ const AccuracyOverview = ({ response, data, onBack }) => {
                 </div>
                 <div
                   className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase ${isPassed
-                      ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                      : "bg-red-500/10 text-red-400 border border-red-500/20"
+                    ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                    : "bg-red-500/10 text-red-400 border border-red-500/20"
                     }`}
                 >
                   {isPassed ? "✓ PASSED" : "✗ FAILED"}
@@ -208,8 +238,8 @@ const AccuracyOverview = ({ response, data, onBack }) => {
                         </span>
                         <span
                           className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${turn.passed
-                              ? "bg-green-500/20 text-green-400"
-                              : "bg-red-500/20 text-red-400"
+                            ? "bg-green-500/20 text-green-400"
+                            : "bg-red-500/20 text-red-400"
                             }`}
                         >
                           {turn.passed ? "Passed" : "Failed"}

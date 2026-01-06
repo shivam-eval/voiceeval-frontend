@@ -154,7 +154,9 @@ const ConversationOverview = ({ response, data, onBack }) => {
           .filter((m) => {
             const mName = m.name || m.metric_name;
             return (
-              mName === "not_early_termination" || mName === "talk_ratio"
+              mName === "not_early_termination" ||
+              mName === "talk_ratio" ||
+              mName === "hallucination"
             );
           })
           .map((metric, idx) => {
@@ -210,6 +212,38 @@ const ConversationOverview = ({ response, data, onBack }) => {
                     {isPassed ? "✓ PASSED" : "✗ FAILED"}
                   </div>
                 </div>
+
+                {/* Hallucinations List (Custom Rendering for Top Grid) */}
+                {metric.details?.hallucinations &&
+                  Array.isArray(metric.details.hallucinations) &&
+                  metric.details.hallucinations.length > 0 && (
+                    <div className="mb-6 pt-6 border-t border-gray-800/50 space-y-4">
+                      <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
+                        Hallucinations Detected
+                      </div>
+                      <div className="space-y-4">
+                        {metric.details.hallucinations.map((hallucination, i) => (
+                          <div
+                            key={i}
+                            className="rounded-xl p-5 border bg-red-950/20 border-red-900/40"
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <span className="text-sm text-red-300 font-medium">
+                                Issue #{i + 1}
+                              </span>
+                            </div>
+                            <div className="text-sm text-gray-300 leading-relaxed">
+                              {typeof hallucination === "object"
+                                ? hallucination.text ||
+                                hallucination.description ||
+                                JSON.stringify(hallucination)
+                                : String(hallucination)}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                 {details.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
@@ -278,7 +312,9 @@ const ConversationOverview = ({ response, data, onBack }) => {
           .filter((m) => {
             const mName = m.name || m.metric_name;
             return (
-              mName !== "not_early_termination" && mName !== "talk_ratio"
+              mName !== "not_early_termination" &&
+              mName !== "talk_ratio" &&
+              mName !== "hallucination"
             );
           })
           .map((metric, idx) => {

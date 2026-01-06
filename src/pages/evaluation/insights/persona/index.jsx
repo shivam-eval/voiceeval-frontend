@@ -6,8 +6,6 @@ import {
   ArrowLeft,
 } from "lucide-react";
 
-import PersonaDetailedMetrics from "./PersonaDetailedMetric";
-import PersonaAlignmentRadar from "./PersonaRadar";
 
 /* =========================
    Helpers

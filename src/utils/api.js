@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
  * API client for making HTTP requests to the backend.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api/v1';
 
 class ApiClient {
     constructor(baseURL = API_BASE_URL) {
@@ -13,7 +13,7 @@ class ApiClient {
 
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
-        
+
         // Don't set Content-Type if we're sending FormData
         const headers = { ...options.headers };
         if (!(options.body instanceof FormData)) {
@@ -91,98 +91,98 @@ export const apiClient = new ApiClient();
 
 // Agent API endpoints
 export const agentsApi = {
-    list: (params) => apiClient.get('/api/v1/agents', params),
-    get: (id) => apiClient.get(`/api/v1/agents/${id}`),
-    create: (data) => apiClient.post('/api/v1/agents', data),
-    update: (id, data) => apiClient.put(`/api/v1/agents/${id}`, data),
-    delete: (id) => apiClient.delete(`/api/v1/agents/${id}`),
-    test: (id) => apiClient.post(`/api/v1/agents/${id}/test`, {}),
-    clone: (id) => apiClient.post(`/api/v1/agents/${id}/clone`, {}),
+    list: (params) => apiClient.get('/agents', params),
+    get: (id) => apiClient.get(`/agents/${id}`),
+    create: (data) => apiClient.post('/agents', data),
+    update: (id, data) => apiClient.put(`/agents/${id}`, data),
+    delete: (id) => apiClient.delete(`/agents/${id}`),
+    test: (id) => apiClient.post(`/agents/${id}/test`, {}),
+    clone: (id) => apiClient.post(`/agents/${id}/clone`, {}),
 };
 
 // Test Suite API endpoints
 export const testSuitesApi = {
-    list: (params) => apiClient.get('/api/v1/test-suites', params),
-    get: (id) => apiClient.get(`/api/v1/test-suites/${id}`),
-    create: (data) => apiClient.post('/api/v1/test-suites', data),
-    update: (id, data) => apiClient.put(`/api/v1/test-suites/${id}`, data),
-    delete: (id) => apiClient.delete(`/api/v1/test-suites/${id}`),
-    clone: (id) => apiClient.post(`/api/v1/test-suites/${id}/clone`, {}),
-    addTestCase: (suiteId, testCase) => apiClient.post(`/api/v1/test-suites/${suiteId}/test-cases`, { test_case: testCase, order: 0 }),
+    list: (params) => apiClient.get('/test-suites', params),
+    get: (id) => apiClient.get(`/test-suites/${id}`),
+    create: (data) => apiClient.post('/test-suites', data),
+    update: (id, data) => apiClient.put(`/test-suites/${id}`, data),
+    delete: (id) => apiClient.delete(`/test-suites/${id}`),
+    clone: (id) => apiClient.post(`/test-suites/${id}/clone`, {}),
+    addTestCase: (suiteId, testCase) => apiClient.post(`/test-suites/${suiteId}/test-cases`, { test_case: testCase, order: 0 }),
 
     // New endpoints
-    export: (id, format = 'json') => apiClient.get(`/api/v1/test-suites/${id}/export`, { format }),
-    import: (fileContent, name, agentId) => apiClient.post('/api/v1/test-suites/import', { file_content: fileContent, name, agent_id: agentId }),
-    bulkUpdateTestCases: (suiteId, testCaseIds, updates) => apiClient.put(`/api/v1/test-suites/${suiteId}/test-cases/bulk`, { test_case_ids: testCaseIds, updates }),
-    getStatistics: (id) => apiClient.get(`/api/v1/test-suites/${id}/statistics`),
-    updateStatus: (id, status) => apiClient.post(`/api/v1/test-suites/${id}/status`, { status }),
+    export: (id, format = 'json') => apiClient.get(`/test-suites/${id}/export`, { format }),
+    import: (fileContent, name, agentId) => apiClient.post('/test-suites/import', { file_content: fileContent, name, agent_id: agentId }),
+    bulkUpdateTestCases: (suiteId, testCaseIds, updates) => apiClient.put(`/test-suites/${suiteId}/test-cases/bulk`, { test_case_ids: testCaseIds, updates }),
+    getStatistics: (id) => apiClient.get(`/test-suites/${id}/statistics`),
+    updateStatus: (id, status) => apiClient.post(`/test-suites/${id}/status`, { status }),
 };
 
 // Persona API endpoints
 export const personasApi = {
-    list: (params) => apiClient.get('/api/v1/personas', params),
-    get: (id) => apiClient.get(`/api/v1/personas/${id}`),
-    create: (data) => apiClient.post('/api/v1/personas', data),
-    update: (id, data) => apiClient.put(`/api/v1/personas/${id}`, data),
-    delete: (id) => apiClient.delete(`/api/v1/personas/${id}`),
+    list: (params) => apiClient.get('/personas', params),
+    get: (id) => apiClient.get(`/personas/${id}`),
+    create: (data) => apiClient.post('/personas', data),
+    update: (id, data) => apiClient.put(`/personas/${id}`, data),
+    delete: (id) => apiClient.delete(`/personas/${id}`),
 };
 
 // Personas Library API (from JSON files)
 export const personasLibraryApi = {
-    list: (params) => apiClient.get('/api/v1/personas/library', params),
-    get: (id) => apiClient.get(`/api/v1/personas/library/${id}`),
+    list: (params) => apiClient.get('/personas/library', params),
+    get: (id) => apiClient.get(`/personas/library/${id}`),
 };
 
 // Test Profile API endpoints
 export const testProfilesApi = {
-    list: (params) => apiClient.get('/api/v1/test-profiles', params),
-    get: (id) => apiClient.get(`/api/v1/test-profiles/${id}`),
-    create: (data) => apiClient.post('/api/v1/test-profiles', data),
-    update: (id, data) => apiClient.put(`/api/v1/test-profiles/${id}`, data),
-    delete: (id) => apiClient.delete(`/api/v1/test-profiles/${id}`),
+    list: (params) => apiClient.get('/test-profiles', params),
+    get: (id) => apiClient.get(`/test-profiles/${id}`),
+    create: (data) => apiClient.post('/test-profiles', data),
+    update: (id, data) => apiClient.put(`/test-profiles/${id}`, data),
+    delete: (id) => apiClient.delete(`/test-profiles/${id}`),
 };
 
 // Generation API endpoints
 export const generationApi = {
-    generateFlow: (data) => apiClient.post('/api/v1/generate/flow', data),
-    generateTestSuite: (data) => apiClient.post('/api/v1/generate/test-suite', data),
-    generateFromAudio: (data) => apiClient.post('/api/v1/generate/audio', data),
-    generateMermaid: (data) => apiClient.post('/api/v1/generate/flow_mermaid', data),
+    generateFlow: (data) => apiClient.post('/generate/flow', data),
+    generateTestSuite: (data) => apiClient.post('/generate/test-suite', data),
+    generateFromAudio: (data) => apiClient.post('/generate/audio', data),
+    generateMermaid: (data) => apiClient.post('/generate/flow_mermaid', data),
 };
 
 // Flow API endpoints
 export const flowsApi = {
-    list: (params) => apiClient.get('/api/v1/flows', params),
-    get: (id) => apiClient.get(`/api/v1/flows/${id}`),
-    listByAgent: (agentId) => apiClient.get(`/api/v1/flows/agent/${agentId}`),
-    getMermaid: (id) => apiClient.get(`/api/v1/flows/${id}/mermaid`),
-    delete: (id) => apiClient.delete(`/api/v1/flows/${id}`),
+    list: (params) => apiClient.get('/flows', params),
+    get: (id) => apiClient.get(`/flows/${id}`),
+    listByAgent: (agentId) => apiClient.get(`/flows/agent/${agentId}`),
+    getMermaid: (id) => apiClient.get(`/flows/${id}/mermaid`),
+    delete: (id) => apiClient.delete(`/flows/${id}`),
 };
 
 // Evaluations API endpoints
 export const evaluationsApi = {
-    list: (params) => apiClient.get('/api/v1/evaluate', params),
-    get: (id) => apiClient.get(`/api/v1/evaluate/${id}`),
-    getBySession: (sessionId) => apiClient.get('/api/v1/evaluate/session', { sessionId }),
-    getBySimulation: (simulationId) => apiClient.get('/api/v1/evaluate/simulation', { simulationId }),
+    list: (params) => apiClient.get('/evaluate', params),
+    get: (id) => apiClient.get(`/evaluate/${id}`),
+    getBySession: (sessionId) => apiClient.get('/evaluate/session', { sessionId }),
+    getBySimulation: (simulationId) => apiClient.get('/evaluate/simulation', { simulationId }),
 };
 
 // Calls API endpoints
 export const callsApi = {
-    list: (params) => apiClient.get('/api/v1/calls', params),
-    get: (id) => apiClient.get(`/api/v1/calls/${id}`),
-    evaluate: (id) => apiClient.post(`/api/v1/calls/${id}/evaluate`, {}),
-    evaluateAudio: (data) => apiClient.post('/api/v1/evaluate/audio', data),
+    list: (params) => apiClient.get('/calls', params),
+    get: (id) => apiClient.get(`/calls/${id}`),
+    evaluate: (id) => apiClient.post(`/calls/${id}/evaluate`, {}),
+    evaluateAudio: (data) => apiClient.post('/evaluate/audio', data),
     upload: (formData, category) => {
-        const endpoint = category 
-            ? `/api/v1/audio/bulk-upload?category=${encodeURIComponent(category)}`
-            : '/api/v1/audio/bulk-upload';
+        const endpoint = category
+            ? `/audio/bulk-upload?category=${encodeURIComponent(category)}`
+            : '/audio/bulk-upload';
         return apiClient.request(endpoint, {
             method: 'POST',
             body: formData,
         });
     },
-    categories: () => apiClient.get('/api/v1/calls/categories'),
+    categories: () => apiClient.get('/calls/categories'),
 };
 
 export default apiClient;

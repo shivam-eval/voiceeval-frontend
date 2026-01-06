@@ -149,7 +149,7 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
     const runEvaluation = async () => {
       try {
         const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/evaluate/batch`,
+          `${import.meta.env.VITE_API_BASE_URL}/evaluate/batch`,
           {
             method: "POST",
             headers: {

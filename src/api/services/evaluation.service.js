@@ -4,7 +4,7 @@ import { apiClient } from '../../utils/api';
  * Get a single evaluation by ID
  */
 export const getEvaluation = (evaluationId) =>
-  apiClient.get(`/api/v1/evaluate/${evaluationId}`);
+  apiClient.get(`/evaluate/${evaluationId}`);
 
 /**
  * List evaluations with filtering
@@ -20,26 +20,26 @@ export const getEvaluations = (filters = {}) => {
   if (filters.skip !== undefined) params.skip = filters.skip;
   if (filters.limit !== undefined) params.limit = filters.limit;
 
-  return apiClient.get('/api/v1/evaluate/', params);
+  return apiClient.get('/evaluate/', params);
 };
 
 /**
  * Get evaluations for a specific session
  */
 export const getSessionEvaluations = (sessionId) =>
-  apiClient.get('/api/v1/evaluate/session', { sessionId });
+  apiClient.get('/evaluate/session', { sessionId });
 
 /**
  * Get all evaluations for a specific simulation
  */
 export const getSimulationEvaluations = (simulationId) =>
-  apiClient.get('/api/v1/evaluate/simulation', { simulationId });
+  apiClient.get('/evaluate/simulation', { simulationId });
 
 /**
  * Evaluate a session
  */
 export const evaluateSession = (sessionId, configOverrides = {}) =>
-  apiClient.post('/api/v1/evaluate', {
+  apiClient.post('/evaluate', {
     session_id: sessionId,
     config_overrides: configOverrides
   });
@@ -49,7 +49,7 @@ export const evaluateSession = (sessionId, configOverrides = {}) =>
  * Returns task_id for polling or cached results immediately
  */
 export const batchEvaluateSimulation = (simulationId, configOverrides = {}) =>
-  apiClient.post('/api/v1/evaluate/batch', {
+  apiClient.post('/evaluate/batch', {
     simulation_id: simulationId,
     config_overrides: configOverrides
   });
@@ -58,7 +58,7 @@ export const batchEvaluateSimulation = (simulationId, configOverrides = {}) =>
  * Get status of batch evaluation task
  */
 export const getBatchEvaluationStatus = (taskId) =>
-  apiClient.get(`/api/v1/evaluate/batch/${taskId}/status`);
+  apiClient.get(`/evaluate/batch/${taskId}/status`);
 
 /**
  * Get formatted evaluation report for a simulation
@@ -66,7 +66,7 @@ export const getBatchEvaluationStatus = (taskId) =>
  * @param {string} format - 'json' (full) or 'summary' (overview)
  */
 export const getSimulationReport = (simulationId, format = 'json') =>
-  apiClient.get(`/api/v1/evaluate/simulation/${simulationId}/report`, { format });
+  apiClient.get(`/evaluate/simulation/${simulationId}/report`, { format });
 
 /**
  * Evaluate a transcript (existing)
@@ -74,7 +74,7 @@ export const getSimulationReport = (simulationId, format = 'json') =>
  * @returns {Promise} API response
  */
 export const evaluateTranscript = (payload) =>
-  apiClient.post('/api/v1/evaluate/transcript', payload);
+  apiClient.post('/evaluate/transcript', payload);
 
 /**
  * Get evaluation results for a simulation (existing)
@@ -82,7 +82,7 @@ export const evaluateTranscript = (payload) =>
  * @returns {Promise} API response
  */
 export const getEvaluationResults = (simulationId) =>
-  apiClient.get(`/api/v1/evaluate/results/${simulationId}`);
+  apiClient.get(`/evaluate/results/${simulationId}`);
 
 const evaluationService = {
   getEvaluation,

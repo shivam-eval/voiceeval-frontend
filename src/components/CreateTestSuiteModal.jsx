@@ -117,7 +117,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
             });
 
             const response = await fetch(
-                `${import.meta.env.VITE_API_URL}/api/v1/audio/bulk-upload?category=test_suites`,
+                `${import.meta.env.VITE_API_BASE_URL}/audio/bulk-upload?category=test_suites`,
                 {
                     method: 'POST',
                     body: uploadFormData,

@@ -80,7 +80,7 @@ const BulkUploadPage = () => {
                 formData.append('files', file);
             });
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/audio/bulk-upload?category=${category}`, {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/audio/bulk-upload?category=${category}`, {
                 method: 'POST',
                 body: formData,
             });

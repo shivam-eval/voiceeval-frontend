@@ -59,12 +59,7 @@ const EvaluationsPage = () => {
                 </span>
             );
         }
-        return (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-yellow-900/20 text-yellow-400 border border-yellow-500/30">
-                <AlertCircle className="w-3 h-3" />
-                Needs Improvement
-            </span>
-        );
+        return null;
     };
 
     const getScoreColor = (score) => {
@@ -210,15 +205,7 @@ const EvaluationsPage = () => {
                                             {simulation.progress?.percentage ? Math.round(simulation.progress.percentage) : 0}%
                                         </div>
                                     </div>
-                                    <div>
-                                        <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
-                                            <Calendar className="w-3 h-3" />
-                                            Started
-                                        </div>
-                                        <div className="text-sm font-semibold text-white">
-                                            {formatDate(simulation.timestamps?.started_at || simulation.timestamps?.created_at)}
-                                        </div>
-                                    </div>
+
                                     <div>
                                         <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
                                             <Clock className="w-3 h-3" />

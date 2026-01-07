@@ -94,6 +94,11 @@ const SimulationsListPage = () => {
     const formatDateTime = (dateString) => {
         if (!dateString) return '-';
         const date = new Date(dateString);
+        // Check if date is valid
+        if (isNaN(date.getTime())) return '-';
+        // Check for epoch (1970) or very old dates which usually indicate default/missing values
+        if (date.getFullYear() <= 1970) return '-';
+        
         return date.toLocaleString();
     };
 

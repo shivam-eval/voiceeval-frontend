@@ -21,6 +21,7 @@ import ConversationOverview from "./insights/conversation";
 import { useWorkflow } from "../../context/WorkFlowContext";
 import { getSessionTranscript } from "../../api/services/simulation.service";
 import { useSimulationReport } from "../../hooks/useEvaluations";
+import { useSimulation } from "../../hooks/useSimulations";
 
 const CATEGORY = {
   OVERVIEW: "",
@@ -64,6 +65,9 @@ const EvaluationDashboard = ({ onBack }) => {
     simulationId,
     'json'
   );
+
+  // Fetch simulation details to get audio_file from metadata
+  const { data: simulationDetails } = useSimulation(simulationId);
 
   // Try API data first, fall back to context data
   let fullResponse, simulationResult, evaluationResult;
@@ -292,8 +296,13 @@ const EvaluationDashboard = ({ onBack }) => {
       console.log('Transcript data:', json);
 
       // transcript_steps is directly an array in the API response
-      const steps = json.transcript_steps || [];
+      const steps = json.transcript_steps || json.transcript || [];
       console.log('Transcript steps count:', steps.length);
+
+      // Debug fullResponse availability
+      console.log('getTranscriptData simulationDetails:', simulationDetails);
+      console.log('getTranscriptData metadata:', simulationDetails?.metadata);
+      console.log('getTranscriptData audio_file:', simulationDetails?.metadata?.audio_file);
 
       if (steps.length === 0) {
         console.warn('No transcript steps found in response');
@@ -308,8 +317,13 @@ const EvaluationDashboard = ({ onBack }) => {
         speech_end_ms: step.timing?.speech_end_ms,
         duration_ms: step.timing?.duration_ms
       }));
+      // Construct full GCP storage URL for audio file
+      const audioFilePath = simulationDetails?.metadata?.audio_file;
+      const GCP_STORAGE_BASE_URL = 'https://storage.googleapis.com/voiceeval-public';
+      const audioUrl = audioFilePath ? `${GCP_STORAGE_BASE_URL}/${audioFilePath}` : null;
 
       const transcriptData = {
+        audio_url: audioUrl,
         steps: mappedSteps,
         metadata: {
           session_id: json.session_id,

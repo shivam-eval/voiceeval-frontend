@@ -65,12 +65,12 @@ const AgentsPage = () => {
         try {
             const result = await createAgent.mutateAsync({
                 provider: selectedPlatform,
-                api_key: apiKey,
-                provider_agent_id: agentId,
-                name: name,
-                direction: direction,
-                phone_number: phoneNumber,
-                metadata: selectedPlatform === 'custom' ? { system_prompt: customPrompt } : undefined
+                api_key: apiKey || undefined,
+                provider_agent_id: agentId || undefined,
+                name: name || undefined,
+                direction: direction || "both",
+                phone_number: phoneNumber || undefined,
+                custom_prompt: selectedPlatform === 'custom' ? customPrompt : undefined
             });
 
             // Store the agentId (assistant ID) in global context

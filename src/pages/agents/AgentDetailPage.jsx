@@ -187,10 +187,10 @@ const AgentDetailPage = () => {
                             </div>
                             <div>
                                 <h1 className="text-3xl font-bold text-white mb-1">
-                                    {agent.agent_name || agent.agent_id}
+                                    {agent.name}
                                 </h1>
                                 <div className="flex items-center gap-3 text-sm text-gray-400">
-                                    <span>Platform: {agent.platform}</span>
+                                    <span>{agent.provider}</span>
                                     <span>•</span>
                                     <span>
                                         Created {new Date(agent.created_at).toLocaleDateString()}

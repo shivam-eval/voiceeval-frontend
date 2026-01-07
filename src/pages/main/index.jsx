@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Sidebar from "./Sidebar";
+import TopBar from "../../components/TopBar";
 
 const DashboardLayout = ({
   children,
@@ -25,7 +26,10 @@ const DashboardLayout = ({
         className={`flex-1 overflow-hidden ${isSidebarOpen ? "ml-64" : "ml-20"
           } transition-all duration-300`}
       >
-        <div className="h-full overflow-y-auto">{children}</div>
+        <div className="h-full overflow-y-auto relative pt-10">
+          <TopBar />
+          {children}
+        </div>
       </div>
     </div>
   );

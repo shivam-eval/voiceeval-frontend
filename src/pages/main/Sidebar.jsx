@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWorkflow } from "../../context/WorkFlowContext";
+import { Home, Zap, FileText, Eye, Phone, LogOut, ChevronRight, X } from "lucide-react";
 
 const Sidebar = ({
   isSidebarOpen,
@@ -19,102 +20,38 @@ const Sidebar = ({
       id: "home",
       label: "Home",
       path: "/",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-      ),
+      icon: <Home className="w-5 h-5" />,
       standalone: true,
     },
     {
       id: "agents",
       label: "Agents",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-        </svg>
-      ),
+      icon: <Zap className="w-5 h-5" />,
       tabs: [
         { id: "my-agents", label: "My Agents", path: "/agents" },
       ],
     },
     {
       id: "test-cases",
-      label: "Test Cases",
+      label: "Simulations",
       path: "/testcase",
       enabled: !!workflow.setupResult,
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      ),
+      icon: <FileText className="w-5 h-5" />,
       tabs: [
         { id: "test-suites", label: "Test Suites", path: "/testing/suites" },
         { id: "personas", label: "Personas", path: "/testing/personas" },
-        { id: "scenarios", label: "Scenarios", path: "/testing/scenarios" },
-      ],
-    },
-    {
-      id: "simulations",
-      label: "Simulations",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      tabs: [
         { id: "run", label: "Run Simulation", path: "/simulations/run" },
         { id: "runs", label: "Simulation Runs", path: "/simulations/runs" },
-      ],
-    },
-    {
-      id: "evaluations",
-      label: "Evaluations",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-      ),
-      tabs: [
-        { id: "overview", label: "Overview", path: "/evaluations/overview" },
-        { id: "reports", label: "Reports", path: "/evaluations/reports" },
+        { id: "overview", label: "Evaluations", path: "/evaluations/overview" },
       ],
     },
     {
       id: "observability",
       label: "Observability",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-        </svg>
-      ),
+      icon: <Eye className="w-5 h-5" />,
       tabs: [
         { id: "calls", label: "Calls", path: "/observability/calls" },
-        { id: "analytics", label: "Analytics", path: "/observability/analytics" }
       ],
-    },
-  ];
-
-  const supportItems = [
-    {
-      id: "documentation",
-      label: "Documentation",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      ),
-    },
-    {
-      id: "get-started",
-      label: "Get Started",
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-        </svg>
-      ),
     },
   ];
 
@@ -205,20 +142,10 @@ const Sidebar = ({
                     )}
                   </div>
                   {isSidebarOpen && (
-                    <svg
+                    <ChevronRight
                       className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? "rotate-90" : ""
                         }`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    />
                   )}
                 </button>
 
@@ -246,66 +173,7 @@ const Sidebar = ({
             );
           })}
         </div>
-
-        {/* Support Section */}
-        <div className="px-3 mt-6">
-          {isSidebarOpen && (
-            <div className="px-3 mb-2">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Support
-              </h3>
-            </div>
-          )}
-          <div className="space-y-1 mt-2">
-            {supportItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => { }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 text-gray-400 hover:text-white hover:bg-dark-input"
-              >
-                {item.icon}
-                {isSidebarOpen && (
-                  <span className="text-sm font-medium">{item.label}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
-
-      {/* Reset Workflow Button */}
-      {isSidebarOpen && (
-        <div className="px-4 mb-4">
-          <button
-            onClick={() => {
-              if (
-                window.confirm(
-                  "Are you sure you want to reset the entire workflow? This will clear all progress."
-                )
-              ) {
-                resetWorkflow();
-                window.location.href = "/";
-              }
-            }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-400/10 border border-red-400/30 text-red-400 rounded-lg text-sm font-medium hover:bg-red-400/20 transition-all group"
-          >
-            <svg
-              className="w-4 h-4 group-hover:rotate-180 transition-transform duration-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-            Reset Workflow
-          </button>
-        </div>
-      )}
 
       {/* User Profile */}
       <div className="p-4 border-t border-gray-800/50 flex-shrink-0 bg-dark-panel">
@@ -328,19 +196,7 @@ const Sidebar = ({
             className="p-2 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
             title="Logout"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-              />
-            </svg>
+            <LogOut className="w-5 h-5" />
           </button>
         </div>
       </div>

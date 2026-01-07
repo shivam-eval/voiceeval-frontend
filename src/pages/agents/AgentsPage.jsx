@@ -63,7 +63,7 @@ const AgentsPage = () => {
     const handleConnect = async ({ apiKey, agentId, name, customPrompt, direction, phoneNumber }) => {
         // ... existing handleConnect logic ...
         try {
-            await createAgent.mutateAsync({
+            const result = await createAgent.mutateAsync({
                 provider: selectedPlatform,
                 api_key: apiKey,
                 provider_agent_id: agentId,
@@ -81,6 +81,17 @@ const AgentsPage = () => {
             setShowConnectModal(false);
             setSelectedPlatform(null);
             toast.success("Agent connected successfully!");
+
+            // Automatically trigger flow generation
+            if (result?.agent_id) {
+                try {
+                    const { generateFlow } = await import('../../api/services/generation.service');
+                    await generateFlow({ agent_id: result.agent_id });
+                } catch (flowError) {
+                    console.error("Auto flow generation failed:", flowError);
+                    toast.warning("Agent created but flow generation failed. You can generate it manually from the agent details page.");
+                }
+            }
         } catch (error) {
             // Error handled by global interceptor
         }
@@ -179,12 +190,12 @@ const AgentsPage = () => {
             ),
         },
         {
-            key: "name",
+            key: "agent_name",
             label: "Agent Name",
             sortable: true,
             render: (value, row) => (
                 <div>
-                    <div className="font-medium text-white">{value || "Unnamed Agent"}</div>
+                    <div className="font-medium text-white">{value || row.name || "Unnamed Agent"}</div>
                     <div className="text-xs text-gray-500">{row.agent_id}</div>
                 </div>
             ),

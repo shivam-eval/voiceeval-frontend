@@ -24,7 +24,6 @@ import SessionReportPage from "./pages/simulations/SessionReportPage";
 import EvaluationsPage from './pages/simulations/EvaluationsPage';
 import EvaluationDashboard from "./pages/evaluation";
 import EvaluationReportPage from "./pages/evaluation/EvaluationReportPage";
-import EvaluationReportsPage from "./pages/evaluations/EvaluationReportsPage";
 import AuthScreen from "./pages/auth/AuthScreen";
 import CallsPage from "./pages/observability/CallsPage";
 import LogsPage from "./pages/observability/LogsPage";
@@ -99,7 +98,6 @@ function App() {
 
     // Evaluations section
     if (path.startsWith("/evaluations")) {
-      if (path.includes("/reports")) return { section: "evaluations", tab: "reports" };
       return { section: "evaluations", tab: "overview" };
     }
 
@@ -144,7 +142,6 @@ function App() {
               <Route path="/testing/suites" element={<TestCasesPage />} />
               <Route path="/testing/suites/:suiteId" element={<TestSuiteDetailView />} />
               <Route path="/testing/personas" element={<PersonasPage />} />
-              <Route path="/testing/scenarios" element={<ScenariosPage />} />
 
               {/* Legacy routes - redirect to new structure */}
               <Route path="/test-cases" element={<TestCasesPage />} />
@@ -172,7 +169,6 @@ function App() {
               {/* New routes */}
               <Route path="/evaluations/overview" element={<EvaluationsPage />} />
               <Route path="/evaluations/metrics/:simulationId" element={<EvaluationDashboard />} />
-              <Route path="/evaluations/reports" element={<EvaluationReportsPage />} />
 
               {/* Legacy routes */}
               <Route path="/evaluations" element={<EvaluationsPage />} />
@@ -183,7 +179,6 @@ function App() {
               {/* === OBSERVABILITY SECTION === */}
               {/* New routes */}
               <Route path="/observability/calls" element={<CallsPage />} />
-              <Route path="/observability/analytics" element={<div className="p-8"><Dashboard /></div>} />
               <Route path="/observability/logs" element={<LogsPage />} />
 
               {/* Legacy routes */}

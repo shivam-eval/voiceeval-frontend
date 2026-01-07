@@ -26,7 +26,6 @@ const GenerateFlowModal = ({ isOpen, onClose, agentId, agentMongoId, onFlowGener
             });
             setFlowData(result);
             setGenerationStep(2);
-            toast.success("Flow generated successfully");
         } catch (error) {
             // Error handled by global interceptor
             setGenerationStep(0);

@@ -7,12 +7,6 @@ const PersonaCard = ({ persona, onClick }) => {
         return '👤';
     };
 
-    const getPatienceBadgeVariant = (level) => {
-        if (level === 'high') return 'success';
-        if (level === 'low') return 'danger';
-        return 'default';
-    };
-
     return (
         <div
             onClick={onClick}
@@ -36,8 +30,9 @@ const PersonaCard = ({ persona, onClick }) => {
                 {persona.description}
             </p>
 
-            {/* Demographics */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            {/* Demographics - The new structure only shows age_group in the header,
+                and removes native_language and occupation badges here. */}
+            {/* <div className="flex flex-wrap gap-2 mb-4">
                 <Badge variant="default" size="sm">
                     {persona.native_language}
                 </Badge>
@@ -62,16 +57,6 @@ const PersonaCard = ({ persona, onClick }) => {
                 <div className="text-xs text-gray-500">
                     Pace: {persona.voice_profile?.pace}x | Pitch: {persona.voice_profile?.pitch}
                 </div>
-            </div>
-
-            {/* Behavior Traits */}
-            <div className="flex items-center gap-2 mb-3">
-                <Badge variant={getPatienceBadgeVariant(persona.behavior_traits?.patience_level)} size="sm">
-                    {persona.behavior_traits?.patience_level} patience
-                </Badge>
-                <Badge variant="default" size="sm">
-                    💻 {persona.behavior_traits?.tech_savviness}
-                </Badge>
             </div>
 
             {/* Tags */}

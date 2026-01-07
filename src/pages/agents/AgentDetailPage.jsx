@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { BarChart3, Settings, FileText, Bot, ArrowLeft, Zap, TestTube, Plus } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 import { useAgent, useTestAgent, useDeleteAgent } from "../../hooks/useAgents";
@@ -121,10 +122,9 @@ const AgentDetailPage = () => {
     };
 
     const tabs = [
-        { id: "overview", label: "Overview", icon: "📊" },
-        { id: "configuration", label: "Configuration", icon: "⚙️" },
-        { id: "flows", label: "Flows", icon: "🔄" },
-        { id: "test-suites", label: "Test Suites", icon: "📋" },
+        { id: "overview", label: "Overview", icon: <BarChart3 className="w-4 h-4" /> },
+        { id: "configuration", label: "Configuration", icon: <Settings className="w-4 h-4" /> },
+        { id: "test-suites", label: "Test Suites", icon: <FileText className="w-4 h-4" /> },
     ];
 
     if (isLoading) {
@@ -182,8 +182,8 @@ const AgentDetailPage = () => {
 
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-4">
-                            <div className={`w-16 h-16 bg-gradient-to-br ${getPlatformColor(agent.platform)} rounded-xl flex items-center justify-center text-3xl`}>
-                                🤖
+                            <div className={`w-16 h-16 bg-gradient-to-br ${getPlatformColor(agent.platform)} rounded-xl flex items-center justify-center`}>
+                                <Bot className="w-8 h-8 text-white" />
                             </div>
                             <div>
                                 <h1 className="text-3xl font-bold text-white mb-1">
@@ -235,7 +235,7 @@ const AgentDetailPage = () => {
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`px-6 py-3 font-medium transition-all ${activeTab === tab.id
+                                className={`px-6 py-3 font-medium transition-all flex items-center gap-2 ${activeTab === tab.id
                                     ? 'text-teal-400 border-b-2 border-teal-400'
                                     : 'text-gray-400 hover:text-white'
                                     }`}
@@ -319,10 +319,6 @@ const AgentDetailPage = () => {
                                     <div className="text-white capitalize">{agent.direction || "Not specified"}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-gray-400 mb-1">Model Type</div>
-                                    <div className="text-white">{agent.model_type || "Not specified"}</div>
-                                </div>
-                                <div>
                                     <div className="text-sm text-gray-400 mb-1">Created</div>
                                     <div className="text-white">{new Date(agent.created_at).toLocaleString()}</div>
                                 </div>
@@ -367,6 +363,77 @@ const AgentDetailPage = () => {
                                     Create Test Suite
                                 </Button>
                             </div>
+                        </div>
+
+                        {/* Flows Section in Overview */}
+                        <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-white">Flows</h3>
+                                <Button size="sm" onClick={handleGenerateFlow}>
+                                    Generate New Flow
+                                </Button>
+                            </div>
+                            {flowsLoading ? (
+                                <div className="text-center py-8 text-gray-500">Loading flows...</div>
+                            ) : flows.length > 0 ? (
+                                <div className="space-y-4">
+                                    {flows.map((flow) => (
+                                        <div
+                                            key={flow.flow_id}
+                                            className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-teal-400/50 transition-all"
+                                        >
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className="flex-1">
+                                                    <h4 className="text-white font-semibold mb-1">{flow.name}</h4>
+                                                    {flow.description && (
+                                                        <p className="text-gray-400 text-sm mb-2">{flow.description}</p>
+                                                    )}
+                                                    <div className="flex items-center gap-4 text-sm">
+                                                        <span className="text-gray-400">{flow.node_count} nodes</span>
+                                                        <span className="text-gray-400">{flow.edge_count} edges</span>
+                                                        <span className="text-gray-500">
+                                                            {new Date(flow.created_at).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setSelectedFlowForDiagram(flow);
+                                                        setShowFlowDiagramModal(true);
+                                                    }}
+                                                >
+                                                    Preview
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleGenerateTestSuiteFromFlow(flow)}
+                                                >
+                                                    Generate Test Suite
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleDeleteFlow(flow.flow_id)}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-8">
+                                    <div className="text-gray-500 mb-2">No flows generated yet</div>
+                                    <Button size="sm" onClick={handleGenerateFlow}>
+                                        Generate Flow
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
@@ -459,97 +526,6 @@ const AgentDetailPage = () => {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {activeTab === "flows" && (
-                    <div className="space-y-6">
-                        {flowsLoading ? (
-                            <DashboardLoader message="Loading flows..." />
-                        ) : flows.length > 0 ? (
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-xl font-semibold text-white">Generated Flows</h3>
-                                    <Button size="sm" onClick={handleGenerateFlow}>
-                                        Generate New Flow
-                                    </Button>
-                                </div>
-                                {flows.map((flow) => (
-                                    <div
-                                        key={flow.flow_id}
-                                        className="bg-gray-900 rounded-xl p-6 border border-gray-800 hover:border-teal-400/50 transition-all"
-                                    >
-                                        <div className="flex items-start justify-between mb-4">
-                                            <div className="flex-1">
-                                                <h4 className="text-lg font-semibold text-white mb-2">{flow.name}</h4>
-                                                {flow.description && (
-                                                    <p className="text-gray-400 text-sm mb-3">{flow.description}</p>
-                                                )}
-                                                <div className="flex items-center gap-4 text-sm">
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                                                        <span className="text-gray-400">{flow.node_count} nodes</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                                                        <span className="text-gray-400">{flow.edge_count} edges</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-gray-500">Generated:</span>
-                                                        <span className="text-white">{new Date(flow.created_at).toLocaleDateString()}</span>
-                                                    </div>
-                                                </div>
-                                                {flow.summary && (
-                                                    <p className="text-gray-400 text-sm mt-3 line-clamp-2">{flow.summary}</p>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setSelectedFlowForDiagram(flow);
-                                                    setShowFlowDiagramModal(true);
-                                                }}
-                                            >
-                                                👁️ Preview
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => navigate(`/workspace?agent=${agentId}&flow=${flow.flow_id}`)}
-                                            >
-                                                📊 Full View
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleGenerateTestSuiteFromFlow(flow)}
-                                            >
-                                                Generate Test Suite
-                                            </Button>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleDeleteFlow(flow.flow_id)}
-                                            >
-                                                Delete
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12">
-                                <div className="text-6xl mb-4">🔄</div>
-                                <h3 className="text-xl font-semibold text-white mb-2">No Flows Generated</h3>
-                                <p className="text-gray-400 mb-6">
-                                    Generate a conversation flow from your agent configuration
-                                </p>
-                                <Button onClick={handleGenerateFlow}>Generate Flow</Button>
                             </div>
                         )}
                     </div>

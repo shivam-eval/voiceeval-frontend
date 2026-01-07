@@ -24,11 +24,11 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
     })
   }
 
-  const isFormValid = 
-    name.trim() && 
-    (platform === 'custom' 
-      ? customPrompt.trim() 
-      : (apiKey.trim() && agentId.trim())) && 
+  const isFormValid =
+    name.trim() &&
+    (platform === 'custom'
+      ? customPrompt.trim()
+      : (apiKey.trim() && agentId.trim())) &&
     ((direction === "inbound" || direction === "both") ? phoneNumber.trim() : true)
 
   // Get platform-specific labels
@@ -85,15 +85,15 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
           Connect your Voice Agent API
         </h3>
         <p className="text-gray-400 text-base">
-          {platform === 'custom' 
-            ? 'Enter your agent details and system prompt' 
+          {platform === 'custom'
+            ? 'Enter your agent details and system prompt'
             : `Enter your ${platform?.toUpperCase()} credentials to get started`}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
         <FormInput
-          label="Agent Name"
+          label="Agent Name *"
           value={name}
           onChange={(e) => setName(e.target.value)}
           onFocus={() => setFocusedField("name")}
@@ -117,18 +117,17 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
               placeholder="Enter your system prompt here..."
               disabled={isConnecting}
               rows={6}
-              className={`w-full px-5 py-4 bg-dark-input border rounded-xl text-white text-base placeholder-gray-500 focus:outline-none transition-all duration-300 ${
-                focusedField === "customPrompt" || customPrompt
-                  ? "border-teal-400 shadow-lg shadow-teal-400/30"
-                  : "border-gray-700 hover:border-gray-600"
-              }`}
+              className={`w-full px-5 py-4 bg-dark-input border rounded-xl text-white text-base placeholder-gray-500 focus:outline-none transition-all duration-300 ${focusedField === "customPrompt" || customPrompt
+                ? "border-teal-400 shadow-lg shadow-teal-400/30"
+                : "border-gray-700 hover:border-gray-600"
+                }`}
               required
             />
           </div>
         ) : (
           <>
             <FormInput
-              label={labels.apiKeyLabel}
+              label={labels.apiKeyLabel + " *"}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               onFocus={() => setFocusedField("apiKey")}
@@ -140,7 +139,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
             />
 
             <FormInput
-              label={labels.agentIdLabel}
+              label={labels.agentIdLabel + " *"}
               value={agentId}
               onChange={(e) => setAgentId(e.target.value)}
               onFocus={() => setFocusedField("agentId")}
@@ -169,7 +168,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
 
         {(direction === "inbound" || direction === "both") && (
           <FormInput
-            label="Agent Phone Number"
+            label="Agent Phone Number *"
             value={phoneNumber}
             onChange={(e) => setPhoneNumber(e.target.value)}
             onFocus={() => setFocusedField("phoneNumber")}
@@ -180,10 +179,6 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
             required
           />
         )}
-
-        <p className="text-gray-400 text-sm">
-          Your API key is encrypted and stored securely.
-        </p>
 
         <PrimaryButton
           loading={isConnecting}

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { X } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 
@@ -36,9 +37,7 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                             onClick={onClose}
                             className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
                         >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
 
@@ -49,8 +48,8 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
                                 className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === tab.id
-                                        ? 'bg-teal-400 text-gray-900'
-                                        : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                                    ? 'bg-teal-400 text-gray-900'
+                                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
                                     }`}
                             >
                                 {tab.icon} {tab.label}
@@ -95,19 +94,6 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                                     </div>
                                 </div>
                             </div>
-
-                            {persona.suitable_for_path_types && persona.suitable_for_path_types.length > 0 && (
-                                <div>
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Suitable for Path Types</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {persona.suitable_for_path_types.map((type, idx) => (
-                                            <Badge key={idx} variant="success" size="sm">
-                                                {type.replace('_', ' ')}
-                                            </Badge>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
 
                             {persona.tags && persona.tags.length > 0 && (
                                 <div>

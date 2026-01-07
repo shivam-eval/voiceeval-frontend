@@ -486,7 +486,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                     <div className="space-y-4">
                       {turnData.map((turn, tIdx) => {
                         const turnNumber =
-                          turn.turn_number || turn.turn_index + 1 || tIdx + 1;
+                          turn.step_number || turn.turn_index + 1 || tIdx + 1;
                         const turnStatus = turn.status;
 
                         let isIdeal = false;
@@ -528,7 +528,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                                 .filter(
                                   ([key]) =>
                                     ![
-                                      "turn_number",
+                                      "step_number",
                                       "turn_index",
                                       "status",
                                       "text",

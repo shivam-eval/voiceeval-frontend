@@ -189,10 +189,10 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
     },
     steps: [
       {
-        turn_number: 1,
+        step_number: 1,
         kind: "agent_speak",
         text: "Hello, I'm Riya calling on behalf of ABC Finance. This call is regarding an outstanding payment. May I confirm if I'm speaking with Rajesh?",
-        turn_id: "turn_001",
+        // turn_id (deprecated): "turn_001",
         turn_role: "agent",
         node_id: "start",
         speech_start_ms: 1766639021200,
@@ -200,10 +200,10 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
         duration_ms: 4000
       },
       {
-        turn_number: 2,
+        step_number: 2,
         kind: "user_speak",
         text: "Yes, this is Rajesh.",
-        turn_id: "turn_002",
+        // turn_id (deprecated): "turn_002",
         turn_role: "user",
         node_id: "identity_confirmed",
         speech_start_ms: 1766639027000,
@@ -211,10 +211,10 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
         duration_ms: 3000
       },
       {
-        turn_number: 3,
+        step_number: 3,
         kind: "agent_speak",
         text: "Thank you for confirming. There is an outstanding amount of ₹8,500 that was due on 10th December.",
-        turn_id: "turn_003",
+        // turn_id (deprecated): "turn_003",
         turn_role: "agent",
         node_id: "identity_confirmed",
         speech_start_ms: 1766639032000,
@@ -222,10 +222,10 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
         duration_ms: 5000
       },
       {
-        turn_number: 4,
+        step_number: 4,
         kind: "user_speak",
         text: "Okay, I can make the payment today.",
-        turn_id: "turn_004",
+        // turn_id (deprecated): "turn_004",
         turn_role: "user",
         node_id: "borrower_reaction",
         speech_start_ms: 1766639039000,
@@ -233,10 +233,10 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
         duration_ms: 4000
       },
       {
-        turn_number: 5,
+        step_number: 5,
         kind: "agent_speak",
         text: "Thank you. Would you like to pay now through a UPI link, or should I schedule a callback?",
-        turn_id: "turn_005",
+        // turn_id (deprecated): "turn_005",
         turn_role: "agent",
         node_id: "can_pay_today",
         speech_start_ms: 1766639045000,
@@ -264,42 +264,42 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
     },
     steps: [
       {
-        turn_number: 1,
+        step_number: 1,
         kind: "agent_speak",
         text: "Hello, I'm Riya calling on behalf of ABC Finance. May I confirm if I'm speaking with Neha?",
-        turn_id: "turn_001",
+        // turn_id (deprecated): "turn_001",
         turn_role: "agent",
         node_id: "start"
       },
       {
-        turn_number: 2,
+        step_number: 2,
         kind: "user_speak",
         text: "Yes, speaking.",
-        turn_id: "turn_002",
+        // turn_id (deprecated): "turn_002",
         turn_role: "user",
         node_id: "identity_confirmed"
       },
       {
-        turn_number: 3,
+        step_number: 3,
         kind: "agent_speak",
         text: "There is an outstanding amount of ₹12,000 due on 5th December.",
-        turn_id: "turn_003",
+        // turn_id (deprecated): "turn_003",
         turn_role: "agent",
         node_id: "identity_confirmed"
       },
       {
-        turn_number: 4,
+        step_number: 4,
         kind: "user_speak",
         text: "I need some time. I can pay next Friday.",
-        turn_id: "turn_004",
+        // turn_id (deprecated): "turn_004",
         turn_role: "user",
         node_id: "borrower_reaction"
       },
       {
-        turn_number: 5,
+        step_number: 5,
         kind: "agent_speak",
         text: "No problem. I've noted the repayment date and will send a reminder.",
-        turn_id: "turn_005",
+        // turn_id (deprecated): "turn_005",
         turn_role: "agent",
         node_id: "needs_time"
       }
@@ -324,42 +324,42 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
     },
     steps: [
       {
-        turn_number: 1,
+        step_number: 1,
         kind: "agent_speak",
         text: "Hello, I'm Riya calling regarding an outstanding payment. May I confirm who I'm speaking with?",
-        turn_id: "turn_001",
+        // turn_id (deprecated): "turn_001",
         turn_role: "agent",
         node_id: "start"
       },
       {
-        turn_number: 2,
+        step_number: 2,
         kind: "user_speak",
         text: "I don't want to confirm my identity.",
-        turn_id: "turn_002",
+        // turn_id (deprecated): "turn_002",
         turn_role: "user",
         node_id: "identity_refused"
       },
       {
-        turn_number: 3,
+        step_number: 3,
         kind: "agent_speak",
         text: "I understand. For security reasons, I cannot continue without confirmation. Thank you for your time.",
-        turn_id: "turn_003",
+        // turn_id (deprecated): "turn_003",
         turn_role: "agent",
         node_id: "identity_refused"
       },
       {
-        turn_number: 4,
+        step_number: 4,
         kind: "silence",
         text: "",
-        turn_id: "turn_004",
+        // turn_id (deprecated): "turn_004",
         turn_role: "system",
         node_id: null
       },
       {
-        turn_number: 5,
+        step_number: 5,
         kind: "end",
         text: "",
-        turn_id: "turn_005",
+        // turn_id (deprecated): "turn_005",
         turn_role: "system",
         node_id: "end_call"
       }
@@ -384,42 +384,42 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
     },
     steps: [
       {
-        turn_number: 1,
+        step_number: 1,
         kind: "agent_speak",
         text: "Hello, I'm Riya calling on behalf of ABC Finance.",
-        turn_id: "turn_001",
+        // turn_id (deprecated): "turn_001",
         turn_role: "agent",
         node_id: "start"
       },
       {
-        turn_number: 2,
+        step_number: 2,
         kind: "user_speak",
         text: "Yes, I am the borrower.",
-        turn_id: "turn_002",
+        // turn_id (deprecated): "turn_002",
         turn_role: "user",
         node_id: "identity_confirmed"
       },
       {
-        turn_number: 3,
+        step_number: 3,
         kind: "user_speak",
         text: "Why was this loan approved in the first place?",
-        turn_id: "turn_003",
+        // turn_id (deprecated): "turn_003",
         turn_role: "user",
         node_id: "borrower_reaction"
       },
       {
-        turn_number: 4,
+        step_number: 4,
         kind: "agent_speak",
         text: "I don't have that information right now, but I can connect you with a representative.",
-        turn_id: "turn_004",
+        // turn_id (deprecated): "turn_004",
         turn_role: "agent",
         node_id: "fallback"
       },
       {
-        turn_number: 5,
+        step_number: 5,
         kind: "agent_speak",
         text: "Thank you for your time. I'll update the system accordingly.",
-        turn_id: "turn_005",
+        // turn_id (deprecated): "turn_005",
         turn_role: "agent",
         node_id: "end_call"
       }
@@ -444,42 +444,42 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
     },
     steps: [
       {
-        turn_number: 1,
+        step_number: 1,
         kind: "user_speak",
         text: "Why do you keep calling me?",
-        turn_id: "turn_001",
+        // turn_id (deprecated): "turn_001",
         turn_role: "user",
         node_id: "borrower_reaction"
       },
       {
-        turn_number: 2,
+        step_number: 2,
         kind: "agent_speak",
         text: "I understand this can be frustrating. I'm here to help, not pressure you.",
-        turn_id: "turn_002",
+        // turn_id (deprecated): "turn_002",
         turn_role: "agent",
         node_id: "angry_user"
       },
       {
-        turn_number: 3,
+        step_number: 3,
         kind: "user_speak",
         text: "This feels like harassment.",
-        turn_id: "turn_003",
+        // turn_id (deprecated): "turn_003",
         turn_role: "user",
         node_id: "angry_user"
       },
       {
-        turn_number: 4,
+        step_number: 4,
         kind: "agent_speak",
         text: "We can take this step by step or I can end the call if you prefer.",
-        turn_id: "turn_004",
+        // turn_id (deprecated): "turn_004",
         turn_role: "agent",
         node_id: "angry_user"
       },
       {
-        turn_number: 5,
+        step_number: 5,
         kind: "end",
         text: "",
-        turn_id: "turn_005",
+        // turn_id (deprecated): "turn_005",
         turn_role: "system",
         node_id: "end_call"
       }
@@ -504,42 +504,42 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
     },
     steps: [
       {
-        turn_number: 1,
+        step_number: 1,
         kind: "agent_speak",
         text: "Hello, I'm Riya calling regarding an outstanding payment.",
-        turn_id: "turn_001",
+        // turn_id (deprecated): "turn_001",
         turn_role: "agent",
         node_id: "start"
       },
       {
-        turn_number: 2,
+        step_number: 2,
         kind: "user_speak",
         text: "Yes, but I am not going to pay.",
-        turn_id: "turn_002",
+        // turn_id (deprecated): "turn_002",
         turn_role: "user",
         node_id: "borrower_reaction"
       },
       {
-        turn_number: 3,
+        step_number: 3,
         kind: "agent_speak",
         text: "I understand your decision. I will note this outcome in our system.",
-        turn_id: "turn_003",
+        // turn_id (deprecated): "turn_003",
         turn_role: "agent",
         node_id: "refuse_payment"
       },
       {
-        turn_number: 4,
+        step_number: 4,
         kind: "agent_speak",
         text: "Thank you for your time.",
-        turn_id: "turn_004",
+        // turn_id (deprecated): "turn_004",
         turn_role: "agent",
         node_id: "end_call"
       },
       {
-        turn_number: 5,
+        step_number: 5,
         kind: "end",
         text: "",
-        turn_id: "turn_005",
+        // turn_id (deprecated): "turn_005",
         turn_role: "system",
         node_id: "end_call"
       }
@@ -941,3 +941,4 @@ export const darkTheme = {
     },
   },
 };
+

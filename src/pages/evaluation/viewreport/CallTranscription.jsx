@@ -232,7 +232,7 @@ const CallTranscriptPanel = ({ transcriptData }) => {
               
               return (
                 <div
-                  key={step.turn_id || step.id || index}
+                  key={step.step_number || step.id || index}
                   className="flex gap-3 group"
                 >
                   {/* Timestamp */}
@@ -263,7 +263,7 @@ const CallTranscriptPanel = ({ transcriptData }) => {
                       </span>
                       <span className="text-xs text-gray-600">•</span>
                       <span className="text-xs text-gray-500">
-                        Turn {step.turn_number || step.turn || index + 1}
+                        Step {step.step_number || index + 1}
                       </span>
                     </div>
                     

@@ -39,7 +39,7 @@ const TurnCard = ({ step, index }) => {
               {isAgent ? 'AGENT' : 'USER'}
             </span>
             <span className="text-gray-500 text-sm">
-              Turn #{index + 1} • {step.turn_id || `turn_${String(index + 1).padStart(3, '0')}`}
+              Step #{step.step_number || index + 1}
             </span>
           </div>
           <div className={`px-3 py-1 rounded text-xs font-medium flex items-center gap-1.5 ${isPassed

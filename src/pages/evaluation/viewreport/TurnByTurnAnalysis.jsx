@@ -19,8 +19,8 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
     });
   };
 
-  const getHealthStatus = (turnId) => {
-    const health = stepHealth[turnId];
+  const getHealthStatus = (stepNumber) => {
+    const health = stepHealth[stepNumber];
     if (!health) return null;
 
     if (!health.is_healthy && !health.is_tainted) {
@@ -62,12 +62,12 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
       <div className="space-y-4">
         {steps.map((step, index) => {
           const isUser = step.turn_role === 'user';
-          const healthStatus = getHealthStatus(step.turn_id);
+          const healthStatus = getHealthStatus(step.step_number);
           const HealthIcon = healthStatus?.icon;
 
           return (
             <div 
-              key={step.turn_id || index}
+              key={step.step_number || index}
               className={`relative pl-12 pb-6 ${
                 index !== steps.length - 1 ? 'border-l-2 border-gray-800/50 ml-6' : ''
               }`}
@@ -97,13 +97,7 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
                     </span>
                     
                     <span className="text-gray-500 font-mono text-xs">
-                      Turn #{step.turn_number}
-                    </span>
-
-                    <span className="text-gray-600 text-xs">•</span>
-
-                    <span className="text-gray-500 font-mono text-xs">
-                      {step.turn_id}
+                      Step #{step.step_number}
                     </span>
                   </div>
 
@@ -173,11 +167,11 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
                 </div>
 
                 {/* Failed Metrics (if any) */}
-                {stepHealth[step.turn_id]?.failed_metrics?.length > 0 && (
+                {stepHealth[step.step_number]?.failed_metrics?.length > 0 && (
                   <div className="mt-3 pt-3 border-t border-gray-800/50">
                     <p className="text-xs text-gray-500 mb-2">Failed Metrics:</p>
                     <div className="flex flex-wrap gap-2">
-                      {stepHealth[step.turn_id].failed_metrics.map((metric, i) => (
+                      {stepHealth[step.step_number].failed_metrics.map((metric, i) => (
                         <span 
                           key={i}
                           className="px-2 py-1 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-xs font-mono"
@@ -190,12 +184,12 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
                 )}
 
                 {/* Tainted By */}
-                {stepHealth[step.turn_id]?.tainted_by_turn_id && (
+                {stepHealth[step.step_number]?.tainted_by_step_number && (
                   <div className="mt-3 pt-3 border-t border-gray-800/50">
                     <p className="text-xs text-yellow-500">
-                      ⚠️ Tainted by failure in{' '}
+                      ⚠️ Tainted by failure in step{' '}
                       <span className="font-mono font-semibold">
-                        {stepHealth[step.turn_id].tainted_by_turn_id}
+                        #{stepHealth[step.step_number].tainted_by_step_number}
                       </span>
                     </p>
                   </div>

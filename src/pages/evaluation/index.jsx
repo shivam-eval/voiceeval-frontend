@@ -306,8 +306,7 @@ const EvaluationDashboard = ({ onBack }) => {
         turn_role: step.role === "agent" ? "agent" : "user",  // Map 'role' to 'turn_role'
         speech_start_ms: step.timing?.speech_start_ms,
         speech_end_ms: step.timing?.speech_end_ms,
-        duration_ms: step.timing?.duration_ms,
-        turn_number: step.step_number
+        duration_ms: step.timing?.duration_ms
       }));
 
       const transcriptData = {

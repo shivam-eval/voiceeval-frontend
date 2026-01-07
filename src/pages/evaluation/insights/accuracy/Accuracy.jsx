@@ -234,7 +234,7 @@ const AccuracyOverview = ({ response, data, onBack }) => {
                     >
                       <div className="flex justify-between mb-3">
                         <span className="text-sm text-gray-300">
-                          Turn #{turn.test_step_index + 1 || tIdx + 1}
+                          Step #{turn.test_step_number || turn.transcript_step_number || tIdx + 1}
                         </span>
                         <span
                           className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${turn.passed

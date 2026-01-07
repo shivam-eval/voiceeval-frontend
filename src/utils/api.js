@@ -169,9 +169,9 @@ export const evaluationsApi = {
 
 // Calls API endpoints
 export const callsApi = {
-    list: (params) => apiClient.get('/calls', params),
-    get: (id) => apiClient.get(`/calls/${id}`),
-    evaluate: (id) => apiClient.post(`/calls/${id}/evaluate`, {}),
+    list: (params) => apiClient.get('/calls/', params),
+    get: (id) => apiClient.get(`/calls/${id}/`),
+    evaluate: (id) => apiClient.post(`/calls/${id}/evaluate/`, {}),
     evaluateAudio: (data) => apiClient.post('/evaluate/audio', data),
     upload: (formData, category) => {
         const endpoint = category
@@ -182,7 +182,7 @@ export const callsApi = {
             body: formData,
         });
     },
-    categories: () => apiClient.get('/calls/categories'),
+    categories: () => apiClient.get('/calls/categories/'),
 };
 
 export default apiClient;

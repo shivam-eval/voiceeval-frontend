@@ -6,10 +6,8 @@ const FailurePropagationGraph = ({ stepHealth = {}, cascadingFailures = {} }) =>
   
   // Convert step_health object to array
   const steps = Object.values(stepHealth || {}).sort((a, b) => {
-    const aId = a.turn_id || '';
-    const bId = b.turn_id || '';
-    const aNum = parseInt(aId.replace('turn_', '')) || 0;
-    const bNum = parseInt(bId.replace('turn_', '')) || 0;
+    const aNum = a.step_number || 0;
+    const bNum = b.step_number || 0;
     return aNum - bNum;
   });
 
@@ -36,8 +34,8 @@ const FailurePropagationGraph = ({ stepHealth = {}, cascadingFailures = {} }) =>
 
     // Draw connections first (so they appear behind nodes)
     steps.forEach((step, index) => {
-      if (step.tainted_by_turn_id) {
-        const sourceIndex = steps.findIndex(s => s.turn_id === step.tainted_by_turn_id);
+      if (step.tainted_by_step_number) {
+        const sourceIndex = steps.findIndex(s => s.step_number === step.tainted_by_step_number);
         if (sourceIndex !== -1 && sourceIndex < index) {
           const x1 = padding + sourceIndex * nodeSpacing;
           const y1 = rect.height / 2;
@@ -106,7 +104,7 @@ const FailurePropagationGraph = ({ stepHealth = {}, cascadingFailures = {} }) =>
       ctx.font = 'bold 12px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText((step.turn_id || '').replace('turn_', ''), x, y);
+      ctx.fillText(step.step_number || '', x, y);
 
       // Label below
       ctx.fillStyle = '#9ca3af';

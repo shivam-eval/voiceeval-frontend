@@ -1,18 +1,9 @@
-import { useState } from "react";
-import { X } from "lucide-react";
+import { X, User, Briefcase, GraduationCap, TrendingUp, Tag, Gauge, Music } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 
 const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
-    const [activeTab, setActiveTab] = useState("about");
-
     if (!isOpen || !persona) return null;
-
-    const tabs = [
-        { id: "about", label: "About", icon: "📋" },
-        { id: "voice", label: "Voice Profile", icon: "🎤" },
-        { id: "behavior", label: "Behavior", icon: "🧠" },
-    ];
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -40,188 +31,112 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                             <X className="w-5 h-5" />
                         </button>
                     </div>
-
-                    {/* Tabs */}
-                    <div className="flex items-center gap-4 mt-6">
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`px-4 py-2 rounded-lg font-medium transition-all ${activeTab === tab.id
-                                    ? 'bg-teal-400 text-gray-900'
-                                    : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                                    }`}
-                            >
-                                {tab.icon} {tab.label}
-                            </button>
-                        ))}
-                    </div>
                 </div>
 
                 {/* Content */}
-                <div className="p-6 overflow-y-auto max-h-[calc(90vh-250px)]">
-                    {/* About Tab */}
-                    {activeTab === "about" && (
-                        <div className="space-y-6">
-                            <div>
-                                <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
-                                <p className="text-gray-300">{persona.description}</p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Age Group</h4>
-                                    <p className="text-white">{persona.age_group?.replace('_', ' ')}</p>
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Occupation</h4>
-                                    <p className="text-white">{persona.occupation?.replace('_', ' ')}</p>
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Education Level</h4>
-                                    <p className="text-white">{persona.education_level?.replace('_', ' ')}</p>
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Confidence Score</h4>
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex-1 bg-gray-800 rounded-full h-2">
-                                            <div
-                                                className="bg-teal-400 h-2 rounded-full"
-                                                style={{ width: `${(persona.confidence_score || 0) * 100}%` }}
-                                            />
-                                        </div>
-                                        <span className="text-white">{((persona.confidence_score || 0) * 100).toFixed(0)}%</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {persona.tags && persona.tags.length > 0 && (
-                                <div>
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Tags</h4>
-                                    <div className="flex flex-wrap gap-2">
-                                        {persona.tags.map((tag, idx) => (
-                                            <span key={idx} className="px-3 py-1 bg-teal-400/10 text-teal-400 rounded-full text-sm">
-                                                {tag}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+                    <div className="space-y-6">
+                        {/* Description */}
+                        <div>
+                            <h3 className="text-lg font-semibold text-white mb-2">Description</h3>
+                            <p className="text-gray-300">{persona.description}</p>
                         </div>
-                    )}
 
-                    {/* Voice Profile Tab */}
-                    {activeTab === "voice" && persona.voice_profile && (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Provider</h4>
-                                    <p className="text-white">{persona.voice_profile.provider}</p>
+                        {/* Personal Info */}
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="bg-gray-800 rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <User className="w-4 h-4 text-teal-400" />
+                                    <h4 className="text-sm font-semibold text-gray-400">Age Group</h4>
                                 </div>
-                                <div>
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Voice ID</h4>
-                                    <p className="text-white">{persona.voice_profile.voice_id}</p>
+                                <p className="text-white">{persona.age_group?.replace('_', ' ')}</p>
+                            </div>
+                            <div className="bg-gray-800 rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Briefcase className="w-4 h-4 text-teal-400" />
+                                    <h4 className="text-sm font-semibold text-gray-400">Occupation</h4>
                                 </div>
-                                <div>
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Language Code</h4>
-                                    <p className="text-white">{persona.voice_profile.language_code || 'N/A'}</p>
+                                <p className="text-white">{persona.occupation?.replace('_', ' ')}</p>
+                            </div>
+                            <div className="bg-gray-800 rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <GraduationCap className="w-4 h-4 text-teal-400" />
+                                    <h4 className="text-sm font-semibold text-gray-400">Education Level</h4>
                                 </div>
-                                <div>
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Accent Type</h4>
-                                    <p className="text-white">{persona.voice_profile.accent_type?.replace('_', ' ')}</p>
+                                <p className="text-white">{persona.education_level?.replace('_', ' ')}</p>
+                            </div>
+                            <div className="bg-gray-800 rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <TrendingUp className="w-4 h-4 text-teal-400" />
+                                    <h4 className="text-sm font-semibold text-gray-400">Confidence Score</h4>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 bg-gray-700 rounded-full h-2">
+                                        <div
+                                            className="bg-teal-400 h-2 rounded-full"
+                                            style={{ width: `${(persona.confidence_score || 0) * 100}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-white text-sm">{((persona.confidence_score || 0) * 100).toFixed(0)}%</span>
                                 </div>
                             </div>
+                        </div>
 
+                        {/* Voice Controls */}
+                        {persona.voice_profile && (
                             <div className="bg-gray-800 rounded-lg p-6">
-                                <h4 className="text-lg font-semibold text-white mb-4">Voice Controls</h4>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Music className="w-5 h-5 text-teal-400" />
+                                    <h4 className="text-lg font-semibold text-white">Voice Profile</h4>
+                                </div>
                                 <div className="space-y-4">
-                                    <div>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-gray-300">Pace</span>
-                                            <span className="text-teal-400 font-semibold">{persona.voice_profile.pace}x</span>
+                                    {persona.voice_profile.accent_type && (
+                                        <div className="flex items-center justify-between pb-3 border-b border-gray-700">
+                                            <span className="text-gray-300">Accent</span>
+                                            <span className="text-white font-medium">{persona.voice_profile.accent_type?.replace('_', ' ')}</span>
                                         </div>
-                                        <div className="bg-gray-700 rounded-full h-2">
-                                            <div
-                                                className="bg-teal-400 h-2 rounded-full"
-                                                style={{ width: `${(persona.voice_profile.pace / 2) * 100}%` }}
-                                            />
-                                        </div>
-                                    </div>
+                                    )}
 
-                                    <div>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-gray-300">Pitch</span>
-                                            <span className="text-teal-400 font-semibold">{persona.voice_profile.pitch}</span>
-                                        </div>
-                                        <div className="bg-gray-700 rounded-full h-2">
-                                            <div
-                                                className="bg-teal-400 h-2 rounded-full"
-                                                style={{ width: `${((persona.voice_profile.pitch + 1) / 2) * 100}%` }}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {persona.voice_profile.loudness && (
+                                    {persona.voice_profile.pace && (
                                         <div>
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="text-gray-300">Loudness</span>
-                                                <span className="text-teal-400 font-semibold">{persona.voice_profile.loudness}</span>
+                                                <span className="text-gray-300">Pace</span>
+                                                <span className="text-teal-400 font-semibold">{persona.voice_profile.pace}x</span>
                                             </div>
                                             <div className="bg-gray-700 rounded-full h-2">
                                                 <div
                                                     className="bg-teal-400 h-2 rounded-full"
-                                                    style={{ width: `${(persona.voice_profile.loudness / 2) * 100}%` }}
+                                                    style={{ width: `${(persona.voice_profile.pace / 2) * 100}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {persona.voice_profile.pitch !== undefined && (
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-gray-300">Pitch</span>
+                                                <span className="text-teal-400 font-semibold">{persona.voice_profile.pitch}</span>
+                                            </div>
+                                            <div className="bg-gray-700 rounded-full h-2">
+                                                <div
+                                                    className="bg-teal-400 h-2 rounded-full"
+                                                    style={{ width: `${((persona.voice_profile.pitch + 1) / 2) * 100}%` }}
                                                 />
                                             </div>
                                         </div>
                                     )}
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {/* Behavior Tab */}
-                    {activeTab === "behavior" && persona.behavior_traits && (
-                        <div className="space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
-                                <div className="bg-gray-800 rounded-lg p-4">
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Patience Level</h4>
-                                    <Badge
-                                        variant={
-                                            persona.behavior_traits.patience_level === 'high'
-                                                ? 'success'
-                                                : persona.behavior_traits.patience_level === 'low'
-                                                    ? 'danger'
-                                                    : 'default'
-                                        }
-                                    >
-                                        {persona.behavior_traits.patience_level}
-                                    </Badge>
-                                </div>
-
-                                <div className="bg-gray-800 rounded-lg p-4">
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Verbosity</h4>
-                                    <Badge variant="default">{persona.behavior_traits.verbosity}</Badge>
-                                </div>
-
-                                <div className="bg-gray-800 rounded-lg p-4">
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Tech Savviness</h4>
-                                    <Badge variant="info">{persona.behavior_traits.tech_savviness}</Badge>
-                                </div>
-
-                                <div className="bg-gray-800 rounded-lg p-4">
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Formality</h4>
-                                    <Badge variant="default">{persona.behavior_traits.formality}</Badge>
-                                </div>
-
-                                <div className="bg-gray-800 rounded-lg p-4">
-                                    <h4 className="text-sm font-semibold text-gray-400 mb-2">Communication Style</h4>
-                                    <Badge variant="default">{persona.behavior_traits.communication_style}</Badge>
-                                </div>
-                            </div>
-
+                        {/* Special Behaviors */}
+                        {persona.behavior_traits && (
                             <div className="bg-gray-800 rounded-lg p-6">
-                                <h4 className="text-lg font-semibold text-white mb-4">Special Behaviors</h4>
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Gauge className="w-5 h-5 text-teal-400" />
+                                    <h4 className="text-lg font-semibold text-white">Special Behaviors</h4>
+                                </div>
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <span className="text-gray-300">Interrupts Frequently</span>
@@ -249,8 +164,25 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+
+                        {/* Tags */}
+                        {persona.tags && persona.tags.length > 0 && (
+                            <div>
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Tag className="w-4 h-4 text-teal-400" />
+                                    <h4 className="text-sm font-semibold text-gray-400">Tags</h4>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {persona.tags.map((tag, idx) => (
+                                        <span key={idx} className="px-3 py-1 bg-teal-400/10 text-teal-400 rounded-full text-sm">
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Footer */}

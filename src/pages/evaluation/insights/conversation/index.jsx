@@ -148,15 +148,15 @@ const ConversationOverview = ({ response, data, onBack }) => {
         </div>
       </div>
 
-      {/* ================= TOP ROW: 2-COLUMN LAYOUT ================= */}
+
+      {/* ================= TOP ROW: TALK RATIO & NOT EARLY TERMINATION ================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {metrics
           .filter((m) => {
             const mName = m.name || m.metric_name;
             return (
               mName === "not_early_termination" ||
-              mName === "talk_ratio" ||
-              mName === "hallucination"
+              mName === "talk_ratio"
             );
           })
           .map((metric, idx) => {
@@ -212,38 +212,6 @@ const ConversationOverview = ({ response, data, onBack }) => {
                     {isPassed ? "✓ PASSED" : "✗ FAILED"}
                   </div>
                 </div>
-
-                {/* Hallucinations List (Custom Rendering for Top Grid) */}
-                {metric.details?.hallucinations &&
-                  Array.isArray(metric.details.hallucinations) &&
-                  metric.details.hallucinations.length > 0 && (
-                    <div className="mb-6 pt-6 border-t border-gray-800/50 space-y-4">
-                      <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
-                        Hallucinations Detected
-                      </div>
-                      <div className="space-y-4">
-                        {metric.details.hallucinations.map((hallucination, i) => (
-                          <div
-                            key={i}
-                            className="rounded-xl p-5 border bg-red-950/20 border-red-900/40"
-                          >
-                            <div className="flex items-center justify-between mb-4">
-                              <span className="text-sm text-red-300 font-medium">
-                                Issue #{i + 1}
-                              </span>
-                            </div>
-                            <div className="text-sm text-gray-300 leading-relaxed">
-                              {typeof hallucination === "object"
-                                ? hallucination.text ||
-                                hallucination.description ||
-                                JSON.stringify(hallucination)
-                                : String(hallucination)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                 {details.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
@@ -305,6 +273,160 @@ const ConversationOverview = ({ response, data, onBack }) => {
             );
           })}
       </div>
+
+      {/* ================= HALLUCINATION METRIC (FULL WIDTH) ================= */}
+      {metrics
+        .filter((m) => {
+          const mName = m.name || m.metric_name;
+          return mName === "hallucination";
+        })
+        .map((metric, idx) => {
+          const isPassed = metric.status === "passed";
+          const mName = metric.name || metric.metric_name;
+          const label =
+            mName
+              ?.replace(/_/g, " ")
+              .replace(/\b\w/g, (l) => l.toUpperCase()) || "Unknown Metric";
+          const metricScore =
+            typeof metric.score === "number"
+              ? Math.round(metric.score * 100)
+              : 0;
+
+          const details = Object.entries(metric.details || {}).filter(
+            ([key]) =>
+              ![
+                "passed",
+                "threshold",
+                "execution_time_ms",
+                "llm_usage",
+                "value",
+                "error_message",
+                "hallucinations",
+              ].includes(key)
+          );
+
+          return (
+            <div
+              key={idx}
+              className={`rounded-xl p-6 border ${isPassed
+                ? "bg-white/[0.02] border-white/[0.05]"
+                : "bg-red-950/10 border-red-900/20"
+                }`}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
+                    {label}
+                  </span>
+                  <span
+                    className={`text-2xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"
+                      }`}
+                  >
+                    {metricScore}%
+                  </span>
+                </div>
+                <div
+                  className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed
+                    ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                    : "bg-red-500/10 text-red-400 border border-red-500/20"
+                    }`}
+                >
+                  {isPassed ? "✓ PASSED" : "✗ FAILED"}
+                </div>
+              </div>
+
+              {/* Hallucinations List (Custom Rendering for Top Grid) */}
+              {metric.details?.hallucinations &&
+                Array.isArray(metric.details.hallucinations) &&
+                metric.details.hallucinations.length > 0 && (
+                  <div className="mb-6 pt-6 border-t border-gray-800/50 space-y-4">
+                    <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
+                      Hallucinations Detected
+                    </div>
+                    <div className="space-y-4">
+                      {metric.details.hallucinations.map((hallucination, i) => (
+                        <div
+                          key={i}
+                          className="rounded-xl p-5 border bg-red-950/20 border-red-900/40"
+                        >
+                          <div className="flex items-center justify-between mb-4">
+                            <span className="text-sm text-red-300 font-medium">
+                              Issue #{i + 1}
+                            </span>
+                          </div>
+                          <div className="text-sm text-gray-300 leading-relaxed">
+                            {typeof hallucination === "object"
+                              ? hallucination.text ||
+                              hallucination.description ||
+                              JSON.stringify(hallucination)
+                              : String(hallucination)}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+              {details.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
+                  {details.map(([key, value]) => (
+                    <div key={key} className={`flex flex-col gap-1.5 ${key === 'reasoning' ? 'md:col-span-2' : ''}`}>
+                      <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
+                        {formatKey(key)}
+                      </span>
+                      <div className="text-sm">
+                        {value === null ? (
+                          <span className="text-gray-600 italic">
+                            Not available
+                          </span>
+                        ) : typeof value === "object" &&
+                          !Array.isArray(value) ? (
+                          <div className="space-y-1">
+                            {Object.entries(value).map(
+                              ([subKey, subValue]) => (
+                                <div key={subKey} className="text-gray-300">
+                                  <span className="text-gray-500">
+                                    {formatKey(subKey)}:
+                                  </span>{" "}
+                                  {String(subValue)}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        ) : Array.isArray(value) ? (
+                          value.length === 0 ? (
+                            <span className="text-gray-500">None</span>
+                          ) : (
+                            <ul className="space-y-1.5">
+                              {value.map((item, i) => (
+                                <li
+                                  key={i}
+                                  className="text-gray-300 flex items-start gap-2"
+                                >
+                                  <div className="w-1 h-1 bg-teal-500/40 rounded-full mt-2 flex-shrink-0" />
+                                  <span>
+                                    {typeof item === "object"
+                                      ? JSON.stringify(item)
+                                      : String(item)}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          )
+                        ) : (
+                          <span className="text-gray-300 leading-relaxed">
+                            {formatValue(key, value)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
 
       {/* ================= OTHER METRICS: FULL-WIDTH CARDS ================= */}
       <div className="grid grid-cols-1 gap-6">

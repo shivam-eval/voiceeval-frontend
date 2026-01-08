@@ -27,13 +27,13 @@ export const getEvaluations = (filters = {}) => {
  * Get evaluations for a specific session
  */
 export const getSessionEvaluations = (sessionId) =>
-  apiClient.get('/evaluate/session', { sessionId });
+  apiClient.get('/evaluate/session', { session_id: sessionId });
 
 /**
  * Get all evaluations for a specific simulation
  */
 export const getSimulationEvaluations = (simulationId) =>
-  apiClient.get('/evaluate/simulation', { simulationId });
+  apiClient.get('/evaluate/simulation', { simulation_id: simulationId });
 
 /**
  * Evaluate a session
@@ -87,6 +87,7 @@ export const getEvaluationResults = (simulationId) =>
 const evaluationService = {
   getEvaluation,
   getEvaluations,
+  getSessionEvaluations,
   getSimulationEvaluations,
   evaluateSession,
   batchEvaluateSimulation,

@@ -37,7 +37,8 @@ const CallsPage = () => {
   const [evalAgentId, setEvalAgentId] = useState(workflow?.assistantId || '');
   const [evalDirectory, setEvalDirectory] = useState('');
   
-  const directory = searchParams.get('directory') || sessionStorage.getItem('last_directory') || '';
+  const directoryParam = searchParams.get('directory');
+  const directory = directoryParam !== null ? directoryParam : (sessionStorage.getItem('last_directory') || 'shoplabs');
   const viewMode = searchParams.get('view') || (directory ? 'calls' : 'directories');
 
   // Sync session storage with current directory
@@ -88,10 +89,15 @@ const CallsPage = () => {
   }, [categoriesData]);
 
   // Automatically select the first directory if none is selected
+  // Specifically prioritize 'shoplabs' as requested
   useEffect(() => {
     if (!isCategoriesLoading && filteredCategories.length > 0 && !directory && viewMode === 'directories') {
-      const firstDir = filteredCategories[0];
-      updateParams({ directory: firstDir, view: 'calls' }, true);
+      const shoplabsDir = filteredCategories.find(cat => 
+        cat.toLowerCase() === 'shoplabs' || 
+        cat.toLowerCase().includes('shoplabs')
+      );
+      const targetDir = shoplabsDir || filteredCategories[0];
+      updateParams({ directory: targetDir, view: 'calls' }, true);
     }
   }, [filteredCategories, isCategoriesLoading, directory, viewMode, updateParams]);
 
@@ -235,7 +241,7 @@ const CallsPage = () => {
       call.call_id;
     
     if (evaluationId) {
-      navigate(`/evaluations/${evaluationId}`);
+      navigate(`/evaluations/report/${evaluationId}`);
     } else if (sessionId) {
       // If we have a session ID but no evaluation ID yet, 
       // navigate to evaluation report page with sessionId filter

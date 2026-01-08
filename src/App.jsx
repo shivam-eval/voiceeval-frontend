@@ -166,15 +166,17 @@ function App() {
               <Route path="/simulation/evaluator" element={<SimulationsPage />} />
 
               {/* === EVALUATIONS SECTION === */}
-              {/* New routes */}
+              {/* New specific routes */}
               <Route path="/evaluations/overview" element={<EvaluationsPage />} />
               <Route path="/evaluations/metrics/:simulationId" element={<EvaluationDashboard />} />
-
-              {/* Legacy routes */}
-              <Route path="/evaluations" element={<EvaluationsPage />} />
-              <Route path="/evaluations/:simulationId" element={<EvaluationDashboard />} />
+              <Route path="/evaluations/report/:evaluationId" element={<EvaluationReportPage />} />
+              <Route path="/evaluations/session" element={<EvaluationReportPage />} />
               <Route path="/evaluations/results/:simulationId" element={<EvaluationDashboard />} />
-              <Route path="/evaluations/:evaluationId" element={<EvaluationReportPage />} />
+
+              {/* Catch-all/Legacy routes - placed after specific ones */}
+              <Route path="/evaluations" element={<EvaluationsPage />} />
+              <Route path="/evaluations/:id" element={<EvaluationDashboard />} />
+              <Route path="/evaluations/report-legacy/:evaluationId" element={<EvaluationReportPage />} />
 
               {/* === OBSERVABILITY SECTION === */}
               {/* New routes */}

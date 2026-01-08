@@ -40,8 +40,7 @@ const Sidebar = ({
       tabs: [
         { id: "test-suites", label: "Test Suites", path: "/testing/suites" },
         { id: "personas", label: "Personas", path: "/testing/personas" },
-        { id: "run", label: "Run Simulation", path: "/simulations/run" },
-        { id: "runs", label: "Simulation Runs", path: "/simulations/runs" },
+        { id: "sessions", label: "Sessions", path: "/simulations/runs" },
         { id: "overview", label: "Evaluations", path: "/evaluations/overview" },
       ],
     },

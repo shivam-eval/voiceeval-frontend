@@ -16,7 +16,6 @@ import TestCasesPage from "./pages/testCases/TestCasesPage";
 import TestSuiteDetailView from "./pages/testCases/TestSuiteDetailView";
 import PersonasPage from "./pages/personas/PersonasPage";
 import ScenariosPage from "./pages/testing/ScenariosPage";
-import SimulationsPage from "./pages/simulations/SimulationsPage";
 import SimulationsListPage from "./pages/simulations/SimulationsListPage";
 import SimulationDetailPage from "./pages/simulations/SimulationDetailPage";
 import SimulationEvaluationPage from "./pages/simulations/SimulationEvaluationPage";
@@ -153,17 +152,16 @@ function App() {
 
               {/* === SIMULATIONS SECTION === */}
               {/* New routes */}
-              <Route path="/simulations/run" element={<SimulationsPage />} />
               <Route path="/simulations/runs" element={<SimulationsListPage />} />
               <Route path="/simulations/runs/:simulationId" element={<SimulationDetailPage />} />
 
               {/* Legacy routes */}
-              <Route path="/simulations" element={<SimulationsPage />} />
+              <Route path="/simulations" element={<SimulationsListPage />} />
               <Route path="/simulation/runs" element={<SimulationsListPage />} />
               <Route path="/simulation/runs/:simulationId" element={<SimulationDetailPage />} />
               <Route path="/simulation/results/:simulationId" element={<SimulationEvaluationPage />} />
               <Route path="/simulation/results/:simulationId/session/:sessionId" element={<SessionReportPage />} />
-              <Route path="/simulation/evaluator" element={<SimulationsPage />} />
+              <Route path="/simulation/evaluator" element={<SimulationsListPage />} />
 
               {/* === EVALUATIONS SECTION === */}
               {/* New routes */}

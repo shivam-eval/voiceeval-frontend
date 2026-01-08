@@ -227,6 +227,10 @@ const CallsPage = () => {
   };
 
   const handleRowClick = (call) => {
+    // Check call status and processing stage
+    const status = (call.status || '').toLowerCase();
+    const processingStage = (call.processing_stage || '').toLowerCase();
+    
     // Priority: explicit evaluation_id from various possible paths
     const evaluationId = 
       call.evaluation?.evaluation_id || 
@@ -237,20 +241,46 @@ const CallsPage = () => {
     const sessionId = 
       call.session_id || 
       call.evaluation?.session_id || 
-      call.evaluation?.evaluation?.session_id || 
-      call.call_id;
+      call.evaluation?.evaluation?.session_id;
     
+    // Case 1: Evaluation complete - show report
     if (evaluationId) {
       navigate(`/evaluations/report/${evaluationId}`);
-    } else if (sessionId) {
-      // If we have a session ID but no evaluation ID yet, 
-      // navigate to evaluation report page with sessionId filter
-      navigate(`/evaluations/session?sessionId=${sessionId}`);
-    } else {
-      // Trigger evaluation if not started
-      toast.info('Evaluation not found. Triggering evaluation...');
-      handleEvaluate(call.call_id);
+      return;
     }
+    
+    // Case 2: Evaluation in progress - show message
+    if (status === 'processing' || processingStage === 'transcribing' || processingStage === 'evaluating') {
+      toast.info('🔄 Evaluation in progress. Please wait...', { autoClose: 3000 });
+      return;
+    }
+    
+    // Case 3: Has session but no evaluation yet - might still be processing
+    if (sessionId) {
+      navigate(`/evaluations/session?sessionId=${sessionId}`);
+      return;
+    }
+    
+    // Case 4: Evaluation failed - allow retry
+    if (status === 'failed') {
+      toast.warning('Previous evaluation failed. Retrying...', { autoClose: 2000 });
+      handleEvaluate(call.call_id);
+      return;
+    }
+    
+    // Case 5: No evaluation started yet (shouldn't happen with auto-eval, but handle it)
+    if (status === 'pending' || status === 'uploaded' || !call.agent_id) {
+      if (!call.agent_id) {
+        toast.error('No agent assigned to this call. Cannot evaluate.');
+        return;
+      }
+      toast.info('Starting evaluation...', { autoClose: 2000 });
+      handleEvaluate(call.call_id);
+      return;
+    }
+    
+    // Default: Try to navigate with call_id
+    toast.info('🔄 Loading evaluation status...', { autoClose: 2000 });
   };
 
   const evaluateCall = useEvaluateCall();
@@ -752,19 +782,38 @@ const CallsPage = () => {
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-2">
                           {(() => {
-                            const status = (call.evaluation?.status || call.evaluation_status || '').toLowerCase();
-                            const isProcessing = status && !['completed', 'failed', 'success', 'error', 'not_found'].includes(status);
-                            const val = getMetricValue(call, 'overall_score');
+                            const evalStatus = (call.evaluation?.status || call.evaluation_status || '').toLowerCase();
+                            const callStatus = (call.status || '').toLowerCase();
+                            const processingStage = (call.processing_stage || '').toLowerCase();
                             
-                            if (isProcessing || (call.evaluation_id && !call.evaluation)) {
+                            // Check if evaluation is in progress
+                            const isEvaluating = evalStatus && !['completed', 'failed', 'success', 'error', 'not_found'].includes(evalStatus);
+                            const isProcessing = callStatus === 'processing' || processingStage === 'transcribing' || processingStage === 'evaluating';
+                            const hasEvalIdButNoData = call.evaluation_id && !call.evaluation;
+                            
+                            if (isEvaluating || isProcessing || hasEvalIdButNoData) {
+                              const stageText = processingStage === 'transcribing' ? 'Transcribing...' : 
+                                              processingStage === 'evaluating' ? 'Evaluating...' : 
+                                              'Processing...';
                               return (
                                 <div className="flex items-center gap-2">
                                   <div className="w-3 h-3 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-                                  <span className="text-purple-400 text-xs font-medium">Evaluating...</span>
+                                  <span className="text-purple-400 text-xs font-medium">{stageText}</span>
+                                </div>
+                              );
+                            }
+                            
+                            // Check if evaluation failed
+                            if (callStatus === 'failed') {
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <AlertCircle className="w-4 h-4 text-red-500" />
+                                  <span className="text-red-400 text-xs font-medium">Failed</span>
                                 </div>
                               );
                             }
 
+                            const val = getMetricValue(call, 'overall_score');
                             if (val !== '--') {
                               return (
                                 <>

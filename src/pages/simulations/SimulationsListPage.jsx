@@ -138,8 +138,8 @@ const SimulationsListPage = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-4xl font-bold text-white mb-2">Simulation Runs</h1>
-                        <p className="text-gray-400">View and manage all simulation executions</p>
+                        <h1 className="text-4xl font-bold text-white mb-2">Sessions</h1>
+                        <p className="text-gray-400">View and manage all simulation sessions</p>
                     </div>
                     <Button
                         onClick={() => navigate('/simulation/evaluator')}

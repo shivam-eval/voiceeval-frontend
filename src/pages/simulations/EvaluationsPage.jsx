@@ -24,7 +24,12 @@ const EvaluationsPage = () => {
         const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             sim.simulation_id?.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const score = (sim.metrics?.overall_score || 0) * 100;
+        const scoreRaw = 
+            sim.metrics?.overall_score ?? 
+            sim.metrics?.average_score ?? 
+            sim.simulation_evaluation?.average_overall_score ?? 
+            0;
+        const score = scoreRaw * 100;
 
         const matchesStatus = statusFilter === 'all' ||
             (statusFilter === 'passed' && score >= 70) ||
@@ -34,7 +39,12 @@ const EvaluationsPage = () => {
     });
 
     const getStatusBadge = (simulation) => {
-        const score = (simulation.metrics?.overall_score || 0) * 100;
+        const scoreRaw = 
+            simulation.metrics?.overall_score ?? 
+            simulation.metrics?.average_score ?? 
+            simulation.simulation_evaluation?.average_overall_score ?? 
+            0;
+        const score = scoreRaw * 100;
         if (simulation.status === 'failed') {
             return (
                 <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-900/20 text-red-400 border border-red-500/30">
@@ -184,10 +194,22 @@ const EvaluationsPage = () => {
                                         </p>
                                     </div>
                                     <div className="text-right">
-                                        <div className={`text-3xl font-bold ${getScoreColor((simulation.metrics?.overall_score || 0) * 100)}`}>
-                                            {Math.round((simulation.metrics?.overall_score || 0) * 100)}%
-                                        </div>
-                                        <div className="text-xs text-gray-500">Overall Score</div>
+                                        {(() => {
+                                            const scoreRaw = 
+                                                simulation.metrics?.overall_score ?? 
+                                                simulation.metrics?.average_score ?? 
+                                                simulation.simulation_evaluation?.average_overall_score ?? 
+                                                0;
+                                            const score = scoreRaw * 100;
+                                            return (
+                                                <>
+                                                    <div className={`text-3xl font-bold ${getScoreColor(score)}`}>
+                                                        {Math.round(score)}%
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">Overall Score</div>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
 

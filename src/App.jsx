@@ -16,7 +16,6 @@ import TestCasesPage from "./pages/testCases/TestCasesPage";
 import TestSuiteDetailView from "./pages/testCases/TestSuiteDetailView";
 import PersonasPage from "./pages/personas/PersonasPage";
 import ScenariosPage from "./pages/testing/ScenariosPage";
-import SimulationsPage from "./pages/simulations/SimulationsPage";
 import SimulationsListPage from "./pages/simulations/SimulationsListPage";
 import SimulationDetailPage from "./pages/simulations/SimulationDetailPage";
 import SimulationEvaluationPage from "./pages/simulations/SimulationEvaluationPage";
@@ -153,28 +152,29 @@ function App() {
 
               {/* === SIMULATIONS SECTION === */}
               {/* New routes */}
-              <Route path="/simulations/run" element={<SimulationsPage />} />
               <Route path="/simulations/runs" element={<SimulationsListPage />} />
               <Route path="/simulations/runs/:simulationId" element={<SimulationDetailPage />} />
 
               {/* Legacy routes */}
-              <Route path="/simulations" element={<SimulationsPage />} />
+              <Route path="/simulations" element={<SimulationsListPage />} />
               <Route path="/simulation/runs" element={<SimulationsListPage />} />
               <Route path="/simulation/runs/:simulationId" element={<SimulationDetailPage />} />
               <Route path="/simulation/results/:simulationId" element={<SimulationEvaluationPage />} />
               <Route path="/simulation/results/:simulationId/session/:sessionId" element={<SessionReportPage />} />
-              <Route path="/simulation/evaluator" element={<SimulationsPage />} />
+              <Route path="/simulation/evaluator" element={<SimulationsListPage />} />
 
               {/* === EVALUATIONS SECTION === */}
-              {/* New routes */}
+              {/* New specific routes */}
               <Route path="/evaluations/overview" element={<EvaluationsPage />} />
               <Route path="/evaluations/metrics/:simulationId" element={<EvaluationDashboard />} />
-
-              {/* Legacy routes */}
-              <Route path="/evaluations" element={<EvaluationsPage />} />
-              <Route path="/evaluations/:simulationId" element={<EvaluationDashboard />} />
+              <Route path="/evaluations/report/:evaluationId" element={<EvaluationReportPage />} />
+              <Route path="/evaluations/session" element={<EvaluationReportPage />} />
               <Route path="/evaluations/results/:simulationId" element={<EvaluationDashboard />} />
-              <Route path="/evaluations/:evaluationId" element={<EvaluationReportPage />} />
+
+              {/* Catch-all/Legacy routes - placed after specific ones */}
+              <Route path="/evaluations" element={<EvaluationsPage />} />
+              <Route path="/evaluations/:id" element={<EvaluationDashboard />} />
+              <Route path="/evaluations/report-legacy/:evaluationId" element={<EvaluationReportPage />} />
 
               {/* === OBSERVABILITY SECTION === */}
               {/* New routes */}

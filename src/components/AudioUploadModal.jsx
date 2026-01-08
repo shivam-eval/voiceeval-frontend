@@ -2,11 +2,19 @@ import { useState, useCallback } from "react";
 import { toast } from "react-toastify";
 import Button from "./Button";
 import Badge from "./Badge";
-import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, X, CheckCircle, AlertCircle, User } from "lucide-react";
 
-const AudioUploadModal = ({ isOpen, onClose, onSubmit, isLoading, mode = "test_cases", initialDirectory = "shoplabs" }) => {
+const AudioUploadModal = ({ 
+    isOpen, 
+    onClose, 
+    onSubmit, 
+    isLoading, 
+    mode = "calls",
+    agents = [],
+    defaultAgentId = ""
+}) => {
     const [audioFiles, setAudioFiles] = useState([]);
-    const [directoryName, setDirectoryName] = useState(initialDirectory);
+    const [selectedAgentId, setSelectedAgentId] = useState(defaultAgentId);
     const [uploadResults, setUploadResults] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
@@ -56,14 +64,26 @@ const AudioUploadModal = ({ isOpen, onClose, onSubmit, isLoading, mode = "test_c
 
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
+        
+        if (!selectedAgentId) {
+            toast.error('Please select an agent');
+            return;
+        }
+        
+        if (audioFiles.length === 0) {
+            toast.error('Please add at least one audio file');
+            return;
+        }
+        
         setIsUploading(true);
         try {
             await onSubmit({ 
                 files: audioFiles.map(f => f.file), 
-                directory: directoryName 
+                agentId: selectedAgentId 
             });
             // Clear files after successful upload
             setAudioFiles([]);
+            setSelectedAgentId(defaultAgentId);
         } catch (error) {
             console.error('Upload error:', error);
             toast.error(error.message || 'Failed to upload audio files');
@@ -82,12 +102,10 @@ const AudioUploadModal = ({ isOpen, onClose, onSubmit, isLoading, mode = "test_c
                     <div className="flex items-center justify-between mb-4">
                         <div>
                             <h2 className="text-2xl font-bold text-white">
-                                {mode === "calls" ? "Upload Call Recordings" : "Upload Audio Files"}
+                                Upload Call Recordings
                             </h2>
                             <p className="text-sm text-gray-400 mt-1">
-                                {mode === "calls" 
-                                    ? "Upload call recordings for evaluation" 
-                                    : "Upload audio recordings to generate test cases"}
+                                Upload audio files and select an agent for evaluation
                             </p>
                         </div>
                         <button
@@ -102,37 +120,30 @@ const AudioUploadModal = ({ isOpen, onClose, onSubmit, isLoading, mode = "test_c
                 {/* Content */}
                 <div className="p-6 overflow-y-auto" style={{ maxHeight: 'calc(90vh - 200px)' }}>
                     <div className="space-y-6">
-                        {/* Configuration Part */}
+                        {/* Agent Selection - Required */}
                         <div className="bg-gray-800/50 rounded-xl p-6 border border-gray-700">
-                            <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4">
-                                Configuration
+                            <h3 className="text-sm font-semibold text-gray-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <User className="w-4 h-4" />
+                                Select Agent
+                                <span className="text-red-400">*</span>
                             </h3>
-                            <div className="grid grid-cols-1 gap-4">
-                                {mode === "calls" ? (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-400 mb-2">
-                                            Directory Name
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={directoryName}
-                                            onChange={(e) => setDirectoryName(e.target.value)}
-                                            placeholder="e.g., shoplabs, support_calls"
-                                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-teal-400 transition-colors"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-400 mb-2">
-                                            Assign Persona
-                                        </label>
-                                        <select className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400 transition-colors">
-                                            <option>Default Persona</option>
-                                            <option>Persona 1</option>
-                                            <option>Persona 2</option>
-                                        </select>
-                                    </div>
-                                )}
+                            <div>
+                                <select 
+                                    value={selectedAgentId}
+                                    onChange={(e) => setSelectedAgentId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400 transition-colors"
+                                    required
+                                >
+                                    <option value="">Select an agent...</option>
+                                    {agents.map((agent) => (
+                                        <option key={agent.value} value={agent.value}>
+                                            {agent.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <p className="mt-2 text-xs text-gray-500">
+                                    Calls will be uploaded to directory: <span className="text-teal-400 font-mono">{selectedAgentId || 'agent_id'}</span>
+                                </p>
                             </div>
                         </div>
 
@@ -217,7 +228,7 @@ const AudioUploadModal = ({ isOpen, onClose, onSubmit, isLoading, mode = "test_c
                         <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 flex gap-3">
                             <div className="text-blue-400 text-lg">💡</div>
                             <p className="text-sm text-blue-400 leading-relaxed">
-                                Bulk upload supported. Audio will be transcribed and analyzed {mode === "calls" ? "for evaluation" : "to create test cases"}.
+                                Bulk upload supported. Audio will be transcribed and automatically evaluated using the selected agent.
                             </p>
                         </div>
                     </div>
@@ -235,9 +246,9 @@ const AudioUploadModal = ({ isOpen, onClose, onSubmit, isLoading, mode = "test_c
                     <Button
                         onClick={handleSubmit}
                         loading={isLoading || isUploading}
-                        disabled={audioFiles.length === 0 || isLoading || isUploading}
+                        disabled={audioFiles.length === 0 || !selectedAgentId || isLoading || isUploading}
                     >
-                        {isUploading ? 'Uploading...' : (mode === "calls" ? 'Add to Calls' : 'Create Test Cases')}
+                        {isUploading ? 'Uploading...' : 'Upload & Evaluate'}
                     </Button>
                 </div>
             </div>

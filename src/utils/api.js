@@ -170,19 +170,17 @@ export const evaluationsApi = {
 // Calls API endpoints
 export const callsApi = {
     list: (params) => apiClient.get('/calls/', params),
-    get: (id) => apiClient.get(`/calls/${id}/`),
-    evaluate: (id) => apiClient.post(`/calls/${id}/evaluate/`, {}),
-    evaluateAudio: (data) => apiClient.post('/evaluate/audio', data),
-    upload: (formData, category) => {
-        const endpoint = category
-            ? `/audio/bulk-upload?category=${encodeURIComponent(category)}`
-            : '/audio/bulk-upload';
-        return apiClient.request(endpoint, {
+    get: (id) => apiClient.get(`/calls/${id}`),
+    evaluate: (id) => apiClient.post(`/calls/${id}/evaluate`, {}),
+    evaluateAudio: (data) => apiClient.post('/evaluation/audio', data),
+    upload: (formData, agentId) => {
+        // Use /calls/bulk-upload endpoint with agent_id in form data
+        return apiClient.request('/calls/bulk-upload', {
             method: 'POST',
             body: formData,
         });
     },
-    categories: () => apiClient.get('/calls/categories/'),
+    categories: () => apiClient.get('/calls/categories'),
 };
 
 export default apiClient;

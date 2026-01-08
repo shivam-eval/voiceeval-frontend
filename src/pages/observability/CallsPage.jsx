@@ -246,6 +246,10 @@ const CallsPage = () => {
       // If we have a session ID but no evaluation ID yet, 
       // navigate to evaluation report page with sessionId filter
       navigate(`/evaluations/session?sessionId=${sessionId}`);
+    } else {
+      // Trigger evaluation if not started
+      toast.info('Evaluation not found. Triggering evaluation...');
+      handleEvaluate(call.call_id);
     }
   };
 
@@ -296,26 +300,25 @@ const CallsPage = () => {
     }
   };
 
-  const handleModalSubmit = async ({ files, directory: uploadDirectory }) => {
+  const handleModalSubmit = async ({ files, agentId }) => {
     try {
       const formData = new FormData();
       files.forEach(file => {
         formData.append('files', file);
       });
-      // Use the directory provided in the modal, fallback to current directory
-      const category = uploadDirectory || directory;
+      formData.append('agent_id', agentId); // Add agent_id to form data
 
-      await uploadCalls.mutateAsync({ formData, category });
+      await uploadCalls.mutateAsync({ formData, agentId });
       
       // Force a refetch of calls and categories to ensure the UI updates
       refetch();
       
       // Update state to show the uploaded calls immediately
-      updateParams({ directory: category, view: 'calls' }, true);
+      updateParams({ directory: agentId, view: 'calls' }, true);
       setSearchTerm('');
       
       setIsModalOpen(false);
-      toast.success('Calls uploaded successfully!');
+      toast.success('Calls uploaded successfully! Auto-evaluation started.');
     } catch (error) {
       // Error handled by global interceptor
     }
@@ -893,7 +896,8 @@ const CallsPage = () => {
         onSubmit={handleModalSubmit}
         isLoading={uploadCalls.isPending}
         mode="calls"
-        initialDirectory={directory || 'shoplabs'}
+        agents={agentOptions}
+        defaultAgentId={workflow?.assistantId || ''}
       />
 
       {/* Evaluate Prompt Modal */}

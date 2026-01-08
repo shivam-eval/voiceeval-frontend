@@ -87,7 +87,7 @@ export const useUploadCalls = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ formData, category }) => callsApi.upload(formData, category),
+        mutationFn: ({ formData, agentId }) => callsApi.upload(formData, agentId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: callKeys.lists() });
             queryClient.invalidateQueries({ queryKey: callKeys.categories() });

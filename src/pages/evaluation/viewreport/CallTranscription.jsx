@@ -22,7 +22,7 @@ const CallTranscriptPanel = ({ transcriptData }) => {
   const steps = transcriptData?.steps || [];
   const metadata = transcriptData?.metadata || {};
   const audioFiles = metadata?.audio_files || [];
-  const recordingUrl = metadata?.recording_url || (audioFiles.length > 0 ? audioFiles[0] : null);
+  const recordingUrl = transcriptData?.audio_url || metadata?.recording_url || (audioFiles.length > 0 ? audioFiles[0] : null);
 
   useEffect(() => {
     if (audioRef.current) {

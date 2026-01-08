@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useEvaluation, useSessionEvaluations } from '../../hooks/useEvaluations';
+import { useSimulation } from '../../hooks/useSimulations';
 import ViewReport from './viewreport/ViewReport';
 import DashboardLoader from '../../components/DashboardLoader';
 import { ArrowLeft } from 'lucide-react';
@@ -45,6 +46,10 @@ const EvaluationReportPage = () => {
       
     return null;
   }, [evaluationById, evaluationsBySession]);
+
+  // Fetch simulation details to get the audio_file
+  const simulationId = evaluation?.simulation_id || evaluation?.simulation?.simulation_id;
+  const { data: simulationDetails } = useSimulation(simulationId);
 
   // Poll for evaluation if not found yet
   React.useEffect(() => {
@@ -122,7 +127,14 @@ const EvaluationReportPage = () => {
 
   // Transform evaluation for ViewReport component
   const report = transformSessionToReport(evaluation);
+  
+  // Construct audio URL if simulationDetails is available
   const transcriptData = getTranscriptData(evaluation, evaluation);
+  if (transcriptData && simulationDetails?.metadata?.audio_file) {
+    const baseUrl = 'https://storage.googleapis.com/voiceeval-public/';
+    const audioPath = simulationDetails.metadata.audio_file;
+    transcriptData.audio_url = audioPath.startsWith('http') ? audioPath : `${baseUrl}${audioPath}`;
+  }
 
   return (
     <div className="min-h-screen bg-dark-bg p-8">
@@ -137,3 +149,4 @@ const EvaluationReportPage = () => {
 };
 
 export default EvaluationReportPage;
+

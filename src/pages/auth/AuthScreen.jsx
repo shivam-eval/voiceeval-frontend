@@ -30,7 +30,26 @@ const AuthScreen = ({ onAuthSuccess }) => {
         setIsLogin(true);
       }
     } catch (err) {
-      // Error handled by global interceptor
+      // Show user-friendly error messages
+      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message;
+      
+      if (isLogin) {
+        if (err.response?.status === 401) {
+          toast.error("Invalid email or password. Please try again.");
+        } else if (err.response?.status === 404) {
+          toast.error("Account not found. Please check your email or sign up.");
+        } else {
+          toast.error(errorMessage || "Login failed. Please try again.");
+        }
+      } else {
+        if (err.response?.status === 400) {
+          toast.error(errorMessage || "Invalid signup data. Please check your inputs.");
+        } else if (err.response?.status === 409) {
+          toast.error("An account with this email already exists. Please login instead.");
+        } else {
+          toast.error(errorMessage || "Signup failed. Please try again.");
+        }
+      }
     } finally {
       setLoading(false);
     }

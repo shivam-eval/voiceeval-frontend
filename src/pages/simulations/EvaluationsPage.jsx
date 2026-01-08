@@ -79,13 +79,16 @@ const EvaluationsPage = () => {
         return 'text-red-400';
     };
 
-    const formatDate = (dateString) => {
+    const formatDateTime = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        return date.toLocaleString('en-US', {
             month: 'short',
             day: 'numeric',
-            year: 'numeric'
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
         });
     };
 
@@ -214,7 +217,7 @@ const EvaluationsPage = () => {
                                 </div>
 
                                 {/* Stats Grid */}
-                                <div className="grid grid-cols-4 gap-4 pt-4 border-t border-gray-800">
+                                <div className="grid grid-cols-5 gap-4 pt-4 border-t border-gray-800">
                                     <div>
                                         <div className="text-xs text-gray-500 mb-1">Test Cases</div>
                                         <div className="text-sm font-semibold text-white">
@@ -225,6 +228,26 @@ const EvaluationsPage = () => {
                                         <div className="text-xs text-gray-500 mb-1">Progress</div>
                                         <div className="text-sm font-semibold text-white">
                                             {simulation.progress?.percentage ? Math.round(simulation.progress.percentage) : 0}%
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                                            <Calendar className="w-3 h-3" />
+                                            Start Time
+                                        </div>
+                                        <div className="text-sm font-semibold text-white">
+                                            {formatDateTime(simulation.timestamps?.started_at || simulation.timestamps?.created_at || simulation.created_at)}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
+                                            <Calendar className="w-3 h-3" />
+                                            End Time
+                                        </div>
+                                        <div className="text-sm font-semibold text-white">
+                                            {formatDateTime(simulation.timestamps?.completed_at || simulation.timestamps?.ended_at || simulation.timestamps?.updated_at || simulation.updated_at)}
                                         </div>
                                     </div>
 

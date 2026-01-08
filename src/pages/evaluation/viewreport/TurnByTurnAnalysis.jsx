@@ -59,7 +59,7 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
         Turn-by-Turn Analysis
       </h3>
 
-      <div className="space-y-4">
+      <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
         {steps.map((step, index) => {
           const isUser = step.turn_role === 'user';
           const healthStatus = getHealthStatus(step.step_number);

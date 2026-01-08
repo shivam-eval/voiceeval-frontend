@@ -43,7 +43,7 @@ const Table = ({
         if (selectedRows.length === data.length) {
             onSelectionChange([]);
         } else {
-            onSelectionChange(data.map((row) => row.id || row._id));
+            onSelectionChange(data.map((row) => row[primaryKey] || row.id || row._id));
         }
     };
 
@@ -112,7 +112,7 @@ const Table = ({
                     </thead>
                     <tbody>
                         {sortedData.map((row, rowIndex) => {
-                            const rowId = row.id || row._id;
+                            const rowId = row[primaryKey] || row.id || row._id;
                             const isSelected = selectedRows.includes(rowId);
 
                             return (

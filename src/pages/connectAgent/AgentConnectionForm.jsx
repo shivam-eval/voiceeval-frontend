@@ -75,125 +75,129 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
   const labels = getPlatformLabels();
 
   return (
-    <div className="bg-dark-panel rounded-2xl p-8 border border-gray-800/50 shadow-xl relative">
-      {isConnecting && (
-        <div className="absolute inset-0 bg-teal-400/10 animate-pulse rounded-2xl" />
-      )}
+                <div className="bg-dark-panel rounded-xl p-4 border border-gray-800/50 shadow-xl relative">
+                  {isConnecting && (
+                    <div className="absolute inset-0 bg-teal-400/10 animate-pulse rounded-xl" />
+                  )}
 
-      <div className="mb-6 relative z-10">
-        <h3 className="text-2xl font-semibold text-white mb-2">
-          Connect your Voice Agent API
-        </h3>
-        <p className="text-gray-400 text-base">
-          {platform === 'custom'
-            ? 'Enter your agent details and system prompt'
-            : `Enter your ${platform?.toUpperCase()} credentials to get started`}
-        </p>
-      </div>
+                  <div className="mb-2.5 relative z-10 pl-1">
+                    <h3 className="text-lg font-semibold text-white mb-0.5">
+                      Agent Details
+                    </h3>
+                    <p className="text-gray-400 text-[11px]">
+                      {platform === 'custom'
+                        ? 'Enter agent details and system prompt'
+                        : `Enter your ${platform?.toUpperCase()} credentials`}
+                    </p>
+                  </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
-        <FormInput
-          label="Agent Name *"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          onFocus={() => setFocusedField("name")}
-          onBlur={() => setFocusedField(null)}
-          focused={focusedField === "name"}
-          placeholder="My Voice Agent"
-          disabled={isConnecting}
-          required
-        />
-
-        {platform === 'custom' ? (
-          <div>
-            <label className="block text-white text-base font-medium mb-3">
-              Custom Prompt
-            </label>
-            <textarea
-              value={customPrompt}
-              onChange={(e) => setCustomPrompt(e.target.value)}
-              onFocus={() => setFocusedField("customPrompt")}
-              onBlur={() => setFocusedField(null)}
-              placeholder="Enter your system prompt here..."
-              disabled={isConnecting}
-              rows={6}
-              className={`w-full px-5 py-4 bg-dark-input border rounded-xl text-white text-base placeholder-gray-500 focus:outline-none transition-all duration-300 ${focusedField === "customPrompt" || customPrompt
-                ? "border-teal-400 shadow-lg shadow-teal-400/30"
-                : "border-gray-700 hover:border-gray-600"
-                }`}
-              required
-            />
-          </div>
-        ) : (
-          <>
-            <FormInput
-              label={labels.apiKeyLabel + " *"}
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              onFocus={() => setFocusedField("apiKey")}
-              onBlur={() => setFocusedField(null)}
-              focused={focusedField === "apiKey"}
-              placeholder={labels.apiKeyPlaceholder}
-              type="password"
-              disabled={isConnecting}
-            />
-
-            <FormInput
-              label={labels.agentIdLabel + " *"}
-              value={agentId}
-              onChange={(e) => setAgentId(e.target.value)}
-              onFocus={() => setFocusedField("agentId")}
-              onBlur={() => setFocusedField(null)}
-              focused={focusedField === "agentId"}
-              placeholder={labels.agentIdPlaceholder}
-              type="password"
-              disabled={isConnecting}
-            />
-          </>
-        )}
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-300">Direction</label>
-          <select
-            value={direction}
-            onChange={(e) => setDirection(e.target.value)}
-            className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-400 transition-colors"
-            disabled={isConnecting}
-          >
-            <option value="both">Inbound & Outbound</option>
-            <option value="inbound">Inbound Only</option>
-            <option value="outbound">Outbound Only</option>
-          </select>
-        </div>
-
-        {(direction === "inbound" || direction === "both") && (
+      <div className="custom-scrollbar pr-1">
+        <div className="space-y-3 relative z-10">
           <FormInput
-            label="Agent Phone Number *"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            onFocus={() => setFocusedField("phoneNumber")}
+            label="Agent Name *"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onFocus={() => setFocusedField("name")}
             onBlur={() => setFocusedField(null)}
-            focused={focusedField === "phoneNumber"}
-            placeholder="+1234567890"
+            focused={focusedField === "name"}
+            placeholder="My Voice Agent"
             disabled={isConnecting}
             required
           />
-        )}
 
-        <PrimaryButton
-          loading={isConnecting}
-          disabled={!isFormValid}
-        />
-      </form>
+          {platform === 'custom' ? (
+            <div>
+              <label className="block text-white text-sm font-medium mb-2">
+                Custom Prompt
+              </label>
+              <textarea
+                value={customPrompt}
+                onChange={(e) => setCustomPrompt(e.target.value)}
+                onFocus={() => setFocusedField("customPrompt")}
+                onBlur={() => setFocusedField(null)}
+                placeholder="Enter system prompt..."
+                disabled={isConnecting}
+                rows={3}
+                className={`w-full px-4 py-2 bg-dark-input border rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none transition-all duration-300 ${focusedField === "customPrompt" || customPrompt
+                  ? "border-teal-400 shadow-sm shadow-teal-400/20"
+                  : "border-gray-700 hover:border-gray-600"
+                  }`}
+                required
+              />
+            </div>
+          ) : (
+            <>
+              <FormInput
+                label={labels.apiKeyLabel + " *"}
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                onFocus={() => setFocusedField("apiKey")}
+                onBlur={() => setFocusedField(null)}
+                focused={focusedField === "apiKey"}
+                placeholder={labels.apiKeyPlaceholder}
+                type="password"
+                disabled={isConnecting}
+              />
 
-      {isConnecting && (
-        <div className="mt-6 flex items-center justify-center gap-3 text-teal-400 animate-pulse relative z-10">
-          <div className="w-2.5 h-2.5 bg-teal-400 rounded-full animate-glow" />
-          <span className="text-base font-medium">
-            {platform === 'custom' ? 'Saving agent details...' : 'Establishing connection...'}
-          </span>
+              <FormInput
+                label={labels.agentIdLabel + " *"}
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                onFocus={() => setFocusedField("agentId")}
+                onBlur={() => setFocusedField(null)}
+                focused={focusedField === "agentId"}
+                placeholder={labels.agentIdPlaceholder}
+                type="password"
+                disabled={isConnecting}
+              />
+            </>
+          )}
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-gray-300 ml-1">Direction</label>
+            <select
+              value={direction}
+              onChange={(e) => setDirection(e.target.value)}
+              className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-teal-400 transition-colors"
+              disabled={isConnecting}
+            >
+              <option value="both">Inbound & Outbound</option>
+              <option value="inbound">Inbound Only</option>
+              <option value="outbound">Outbound Only</option>
+            </select>
+          </div>
+
+          {(direction === "inbound" || direction === "both") && (
+            <FormInput
+              label="Agent Phone Number *"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              onFocus={() => setFocusedField("phoneNumber")}
+              onBlur={() => setFocusedField(null)}
+              focused={focusedField === "phoneNumber"}
+              placeholder="+1234567890"
+              disabled={isConnecting}
+              required
+            />
+          )}
+
+          <PrimaryButton
+            onClick={handleSubmit}
+            loading={isConnecting}
+            disabled={!isFormValid}
+            className="py-2.5 text-sm"
+          />
         </div>
-      )}
+
+        {isConnecting && (
+          <div className="mt-3 flex items-center justify-center gap-2 text-teal-400 animate-pulse relative z-10">
+            <div className="w-2 h-2 bg-teal-400 rounded-full animate-glow" />
+            <span className="text-[11px] font-medium">
+              {platform === 'custom' ? 'Saving...' : 'Connecting...'}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

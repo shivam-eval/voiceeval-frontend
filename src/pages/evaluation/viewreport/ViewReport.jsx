@@ -81,7 +81,6 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
     { id: 'transcript', label: 'Transcript', icon: MessageSquare },
-    { id: 'metrics', label: 'Metrics', icon: BarChart3 },
     { id: 'propagation', label: 'Failure Analysis', icon: TrendingUp }
   ];
 
@@ -379,7 +378,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                 <XCircle className="w-5 h-5 text-red-400" />
                 Key Issues Found
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {evaluationData.issues.map((issue, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
                     <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -401,7 +400,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                 <TrendingUp className="w-5 h-5 text-yellow-400" />
                 Recommendations
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {evaluationData.recommendations.map((rec, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-3 bg-yellow-500/5 rounded-lg border border-yellow-500/10">
                     <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -568,125 +567,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
           )}
 
 
-          {activeTab === 'metrics' && (
-            <>
-              {/* All Metrics Table */}
-              <div className="bg-dark-panel border border-gray-800/50 rounded-xl overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-800/50">
-                  <h3 className="text-lg font-semibold text-white">Detailed Metrics</h3>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-gray-800/50 bg-dark-panel/30">
-                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Metric</th>
-                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Category</th>
-                        <th className="text-center px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Score</th>
-                        <th className="text-center px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Status</th>
-                        <th className="text-left px-6 py-3 text-xs font-semibold text-gray-400 uppercase">Details</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {evaluationData?.metrics.map((metric, idx) => (
-                        <tr key={idx} className="border-b border-gray-800/30 hover:bg-[#1e2433]">
-                          <td className="px-6 py-4 text-sm text-white font-medium">
-                            {(metric.name || metric.metric_name || 'Unknown Metric').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-400">
-                            {(metric.category || 'N/A').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            {metric.score !== null && metric.score !== undefined ? (
-                              <span className={`font-bold ${getScoreColor(Math.round(metric.score * 100))}`}>
-                                {Math.round(metric.score * 100)}%
-                              </span>
-                            ) : (
-                              <span className="text-gray-500">N/A</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-center">
-                            {metric.status === 'passed' ? (
-                              <CheckCircle className="w-4 h-4 text-green-400 mx-auto" />
-                            ) : metric.status === 'failed' ? (
-                              <XCircle className="w-4 h-4 text-red-400 mx-auto" />
-                            ) : (
-                              <span className="text-gray-500 text-xs">N/A</span>
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-400">
-                            {metric.details ? (
-                              <pre className="text-xs overflow-x-auto">
-                                {JSON.stringify(metric.details, null, 2).substring(0, 100)}...
-                              </pre>
-                            ) : (
-                              'No details'
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
 
-              {/* Latency Timeline */}
-              <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-6">
-                  Response Latency Timeline
-                </h3>
-                <div style={{ height: '300px' }}>
-                  <ResponsiveLine
-                    data={latencyData}
-                    margin={{ top: 20, right: 20, bottom: 50, left: 60 }}
-                    xScale={{ type: 'point' }}
-                    yScale={{ type: 'linear', min: 0, max: 'auto' }}
-                    axisBottom={{
-                      tickSize: 5,
-                      tickPadding: 5,
-                      tickRotation: 0,
-                      legend: 'Turn',
-                      legendOffset: 36,
-                      legendPosition: 'middle'
-                    }}
-                    axisLeft={{
-                      tickSize: 5,
-                      tickPadding: 5,
-                      tickRotation: 0,
-                      legend: 'Latency (s)',
-                      legendOffset: -50,
-                      legendPosition: 'middle'
-                    }}
-                    colors={{ scheme: 'nivo' }}
-                    pointSize={10}
-                    pointColor={{ theme: 'background' }}
-                    pointBorderWidth={2}
-                    pointBorderColor={{ from: 'serieColor' }}
-                    pointLabelYOffset={-12}
-                    useMesh={true}
-                    enableArea={true}
-                    areaOpacity={0.1}
-                    theme={{
-                      text: { fill: '#9ca3af', fontSize: 11 },
-                      grid: { line: { stroke: '#374151', strokeWidth: 1 } },
-                      axis: {
-                        legend: { text: { fill: '#9ca3af', fontSize: 12 } }
-                      },
-                      tooltip: {
-                        container: {
-                          background: '#1f2937',
-                          color: '#fff',
-                          fontSize: 12,
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
-                          padding: '8px 12px'
-                        }
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-            </>
-          )}
 
           {activeTab === 'propagation' && (
             <>

@@ -204,7 +204,7 @@ const FailurePropagationGraph = ({ stepHealth = {}, cascadingFailures = {} }) =>
           <h4 className="text-sm font-semibold text-red-400 mb-3">
             Cascading Failure Chains
           </h4>
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-[150px] overflow-y-auto pr-2 custom-scrollbar">
             {Object.entries(cascadingFailures).map(([source, affected]) => (
               <div key={source} className="text-sm">
                 <span className="text-gray-400">

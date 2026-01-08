@@ -13,11 +13,11 @@ const PlatformSelection = ({ onSelectPlatform }) => {
 
   return (
     <div className="w-full max-w-screen-2xl mx-auto">
-      <div className="space-y-8">
+      <div className="space-y-6">
           {/* Logo and Feature Tag */}
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-4xl font-bold text-white mb-2 tracking-tight">
+              <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">
                 Voice<span className="text-teal-400">Eval</span>
               </h1>
             </div>
@@ -25,22 +25,22 @@ const PlatformSelection = ({ onSelectPlatform }) => {
 
           {/* Main Heading */}
           <div>
-            <h2 className="text-5xl font-bold text-white mb-4 leading-tight">
+            <h2 className="text-3xl font-bold text-white mb-3 leading-tight">
               Evaluate Your Voice AI Agents
             </h2>
-            <p className="text-gray-300 text-lg leading-relaxed max-w-2xl">
-              Run automated call simulations, analyze performance metrics, and optimize your Voice AI agents with real-time insights.
+            <p className="text-gray-300 text-base leading-relaxed max-w-xl">
+              Run automated call simulations, analyze performance metrics, and optimize your Voice AI agents.
             </p>
           </div>
 
           {/* Platform Selection Panel */}
-          <div className="bg-dark-panel rounded-2xl p-8 border border-gray-800/50 shadow-xl">
-            <div className="mb-6">
-              <h3 className="text-2xl font-semibold text-white mb-2">
-                Choose your Voice Agent platform
+          <div className="bg-dark-panel rounded-2xl p-6 border border-gray-800/50 shadow-xl">
+            <div className="mb-5">
+              <h3 className="text-lg font-semibold text-white mb-0.5">
+                Choose Platform
               </h3>
-              <p className="text-gray-400 text-base">
-                Select the platform you want to connect
+              <p className="text-gray-400 text-xs">
+                Select a platform to connect
               </p>
             </div>
 
@@ -52,7 +52,7 @@ const PlatformSelection = ({ onSelectPlatform }) => {
                   onClick={() => onSelectPlatform(platform.id)}
                   onMouseEnter={() => setHoveredPlatform(platform.id)}
                   onMouseLeave={() => setHoveredPlatform(null)}
-                  className="group relative p-6 bg-dark-input border border-gray-700 hover:border-teal-400/50 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-teal-400/10"
+                  className="group relative p-3 bg-dark-input border border-gray-700 hover:border-teal-400/50 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-teal-400/10"
                   style={{
                     animationDelay: `${index * 0.1}s`,
                   }}
@@ -63,7 +63,7 @@ const PlatformSelection = ({ onSelectPlatform }) => {
                   />
 
                   {/* Platform Name */}
-                  <div className="relative z-10 text-white font-semibold text-lg group-hover:text-teal-400 transition-colors duration-300">
+                  <div className="relative z-10 text-white font-semibold text-sm group-hover:text-teal-400 transition-colors duration-300">
                     {platform.name}
                   </div>
 

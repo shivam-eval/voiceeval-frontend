@@ -194,8 +194,8 @@ function App() {
               <Route path="/evaluation" element={<Navigate to="/simulation/runs" replace />} />
 
 
-              {/* Catch all */}
-              <Route path="*" element={<Navigate to="/" replace />} />
+              {/* Catch all - Commented out to allow direct URL navigation */}
+              {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
             </Routes>
           </DashboardLayout>
         }

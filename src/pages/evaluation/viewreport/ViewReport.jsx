@@ -48,7 +48,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
     // Extract metric results for detailed view - ensure we get them from category_scores if flat array is missing
     let allMetrics = data.metrics || data.metric_results || [];
-    
+
     if (allMetrics.length === 0 && Array.isArray(data.category_scores)) {
       allMetrics = data.category_scores.flatMap(cat => cat.metrics || []);
     }
@@ -56,8 +56,8 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
     return {
       overall_score: normalizedScore,
       passed: data.passed,
-      issues_found: data.issues_found,
       issues: data.issues || [],
+      issues_found: data.issues_found || (data.issues?.length || 0),
       execution_time_ms: data.execution_time_ms,
       recommendations: data.recommendations || [],
 
@@ -218,7 +218,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         }
       });
     }
-    
+
     return map;
   }, [evaluationData]);
 

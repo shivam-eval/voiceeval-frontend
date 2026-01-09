@@ -12,7 +12,7 @@ const FormInput = ({
 }) => {
   return (
     <div>
-      <label className="block text-white text-base font-medium mb-3">
+      <label className="block text-white text-xs font-medium mb-1.5 ml-1">
         {label}
       </label>
 
@@ -26,9 +26,9 @@ const FormInput = ({
           onBlur={onBlur}
           placeholder={placeholder}
           disabled={disabled}
-          className={`w-full px-5 py-4 bg-dark-input border rounded-xl text-white text-base placeholder-gray-500 focus:outline-none transition-all duration-300 ${
+          className={`w-full px-4 py-2 bg-dark-input border rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none transition-all duration-300 ${
             focused || value
-              ? "border-teal-400 shadow-lg shadow-teal-400/30"
+              ? "border-teal-400 shadow-sm shadow-teal-400/20"
               : "border-gray-700 hover:border-gray-600"
           }`}
         />

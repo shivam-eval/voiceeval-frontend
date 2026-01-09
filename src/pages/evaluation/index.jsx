@@ -149,8 +149,13 @@ const EvaluationDashboard = ({ onBack }) => {
       failed_test_cases: failedCount,
     },
     timing: {
-      start_time_ms: Date.now() - totalExecutionTime,
-      end_time_ms: Date.now(),
+      start_time_ms: simulationDetails?.timestamps?.started_at ? new Date(simulationDetails.timestamps.started_at).getTime() : 
+                    (simulationDetails?.timestamps?.created_at ? new Date(simulationDetails.timestamps.created_at).getTime() : 
+                    (simulationDetails?.created_at ? new Date(simulationDetails.created_at).getTime() : Date.now() - totalExecutionTime)),
+      end_time_ms: simulationDetails?.timestamps?.completed_at ? new Date(simulationDetails.timestamps.completed_at).getTime() : 
+                  (simulationDetails?.timestamps?.ended_at ? new Date(simulationDetails.timestamps.ended_at).getTime() : 
+                  (simulationDetails?.timestamps?.updated_at ? new Date(simulationDetails.timestamps.updated_at).getTime() : 
+                  (simulationDetails?.updated_at ? new Date(simulationDetails.updated_at).getTime() : Date.now()))),
       duration_ms: totalExecutionTime,
       average_duration_ms: averageExecutionTime
     },
@@ -164,7 +169,7 @@ const EvaluationDashboard = ({ onBack }) => {
         ? Math.round(evaluation.overall_score * 100)
         : Math.round(parseFloat(evaluation.overall_score) * 100)
     })),
-    flow_tree_name: firstEvaluation?.path_id || "Real Estate Qualification",
+    flow_tree_name: firstEvaluation?.path_id || fullResponse?.test_suite_name || fullResponse?.agent_name || "Audio Evaluation",
     schema_version: "1.0"
   };
 
@@ -509,8 +514,7 @@ const EvaluationDashboard = ({ onBack }) => {
 
               <p className="text-gray-400">
                 Overall Score: {Math.round(overallScore * 100)}% |
-                Sessions: {simulationEvaluation.total_sessions || simulationEvaluation.evaluated_sessions || simulationEvaluation.total_sessions_evaluated || 0} |
-                {firstEvaluation?.passed ? "PASSED" : "NEEDS IMPROVEMENT"}
+                Sessions: {Math.max(simulationEvaluation.total_sessions || 0, simulationEvaluation.evaluated_sessions || 0, simulationEvaluation.total_sessions_evaluated || 0, evaluations.length)}
                 {simulationEvaluation.created_at && (
                   <>
                     {" | "}

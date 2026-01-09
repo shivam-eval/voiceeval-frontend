@@ -394,7 +394,7 @@ const AgentsPage = () => {
             {/* ... */}
             {showConnectModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-dark-bg rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-gray-800 relative">
+                    <div className="bg-dark-bg rounded-2xl max-w-2xl w-full border border-gray-800 relative overflow-hidden">
                         {/* Close Button */}
                         <button
                             onClick={handleCloseModal}
@@ -405,7 +405,7 @@ const AgentsPage = () => {
                             </svg>
                         </button>
 
-                        <div className="p-8">
+                        <div className="p-6">
                             {/* Modal Content */}
                             {!selectedPlatform ? (
                                 <PlatformSelection onSelectPlatform={handlePlatformSelect} />

@@ -46,7 +46,7 @@ const ImprovementsPanel = ({ improvements = [] }) => {
       </div>
 
       {/* List */}
-      <div className="divide-y divide-gray-800">
+      <div className="divide-y divide-gray-800 max-h-[500px] overflow-y-auto custom-scrollbar">
         {improvements.map((item, idx) => {
           const style = PRIORITY_STYLES[item.priority || "low"];
 

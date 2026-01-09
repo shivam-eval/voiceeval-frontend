@@ -222,7 +222,7 @@ const AccuracyOverview = ({ response, data, onBack }) => {
 
               {/* Turn-by-Turn */}
               {Array.isArray(turnData) && turnData.length > 0 && (
-                <div className="pt-6 border-t border-gray-800/50 space-y-4">
+                <div className="pt-6 border-t border-gray-800/50 space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                   <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">
                     Turn-by-Turn Analysis
                   </div>

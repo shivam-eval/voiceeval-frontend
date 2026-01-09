@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { X, Play, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Added import
 import { useAgents } from '../hooks/useAgents';
 import { useTestSuites } from '../hooks/useTestSuites';
 import { useRunSimulation } from '../hooks/useSimulations';
@@ -8,6 +9,7 @@ import Button from './Button';
 import Badge from './Badge';
 
 const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, preSelectedAgentId = null }) => {
+    const navigate = useNavigate();
     const [selectedAgentId, setSelectedAgentId] = useState(preSelectedAgentId || '');
     const [selectedTestSuiteId, setSelectedTestSuiteId] = useState(preSelectedTestSuiteId || '');
     const [phoneNumber, setPhoneNumber] = useState('');
@@ -33,7 +35,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
         }
     }, [selectedAgent]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
 
         if (!selectedTestSuiteId || !phoneNumber) {
@@ -41,25 +43,26 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
             return;
         }
 
-        try {
-            const result = await runSimulation.mutateAsync({
-                test_suite_id: selectedTestSuiteId,
-                phone_number: phoneNumber,
-                agent_id: selectedAgentId || undefined,
-                metadata: {
-                    agent_name: selectedAgent?.agent_name,
-                    test_suite_name: selectedTestSuite?.name,
-                    started_from: 'modal'
-                }
-            });
+        // Close modal immediately and show progress toast
+        onClose();
+        toast.info('Initiating simulation in background...');
 
-            // Close modal and navigate to simulation detail
-            onClose();
-            toast.success('Simulation started successfully!');
-            window.location.href = `/simulation/runs/${result.simulation_id}`;
-        } catch (error) {
-            // Error handled by global interceptor
-        }
+        runSimulation.mutate({
+            test_suite_id: selectedTestSuiteId,
+            phone_number: phoneNumber,
+            agent_id: selectedAgentId || undefined,
+            metadata: {
+                agent_name: selectedAgent?.name || selectedAgent?.agent_name || selectedAgent?.agent_id,
+                test_suite_name: selectedTestSuite?.name,
+                started_from: 'modal'
+            }
+        }, {
+            onSuccess: (result) => {
+                toast.success('Simulation started successfully!');
+                // Navigate to simulation detail
+                navigate(`/simulation/runs/${result.simulation_id}`);
+            }
+        });
     };
 
     if (!isOpen) return null;
@@ -99,7 +102,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                             <option value="">Choose an agent...</option>
                             {agents.map(agent => (
                                 <option key={agent.agent_id} value={agent.agent_id}>
-                                    {agent.agent_name || agent.agent_id} ({agent.platform})
+                                    { (agent.name || agent.agent_name) ? `${agent.name || agent.agent_name} (${agent.agent_id})` : agent.agent_id }
                                 </option>
                             ))}
                         </select>

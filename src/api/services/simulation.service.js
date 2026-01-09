@@ -69,6 +69,7 @@ export const getQueueStats = () =>
 
 /**
  * Poll simulation status until completion or timeout
+ * @deprecated Use useEvents subscription instead
  * @param {string} simulationId - ID of the simulation
  * @param {Function} onStatusUpdate - Callback for status updates
  * @param {number} interval - Polling interval in milliseconds
@@ -85,7 +86,7 @@ export const pollSimulationStatus = (
       try {
         const response = await getSimulationStatus(simulationId);
         const status = response?.status;
-        
+
         if (onStatusUpdate) {
           onStatusUpdate(status);
         }

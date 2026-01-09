@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { useWorkflow } from "../context/WorkFlowContext";
+import { useEvents } from "../context/EventsContext";
 import { getSimulationSummary } from "../api";
 
 const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
@@ -51,66 +52,73 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
   /* -------------------------------------------------
      1️⃣ Poll simulation summary
   -------------------------------------------------- */
+  /* -------------------------------------------------
+     1️⃣ SSE Event Listener for Simulation Updates
+  -------------------------------------------------- */
+  const { subscribe } = useEvents();
+
   useEffect(() => {
     if (!simulationId) return;
 
-    const pollSummary = async () => {
+    // Initial fetch to get current state
+    const fetchSummary = async () => {
       try {
         const res = await getSimulationSummary(simulationId);
-        const data = res.data;
-        console.log("📊 Simulation summary:", data);
-
-        setSummary(data);
-        setTotalSessions(data.total_sessions || 0);
-
-        // Combine all sessions (passed, failed, active)
-        const allSessions = [
-          ...(data.sessions?.passed || []).map(s => ({ ...s, status: 'passed' })),
-          ...(data.sessions?.failed || []).map(s => ({ ...s, status: 'failed' })),
-          ...(data.sessions?.active || []).map(s => ({ ...s, status: 'active' })),
-        ];
-
-        setSessions(allSessions);
-
-        // Calculate progress
-        const completed =
-          (data.sessions?.passed?.length || 0) +
-          (data.sessions?.failed?.length || 0);
-
-        const newProgress = data.total_sessions > 0
-          ? Math.round((completed / data.total_sessions) * 100)
-          : 0;
-
-        setProgress(newProgress);
-
-        // Check if all sessions are completed
-        if (completed === data.total_sessions && data.total_sessions > 0 && !isCompleted) {
-          console.log("✅ Simulation run completed!");
-
-          setIsCompleted(true);
-
-          // Save to context
-          setEvaluationResult(data);
-
-          // REMOVED: Don't auto-navigate to evaluation page
-          // Call onComplete callback if provided
-          onComplete?.(data);
-        }
+        updateState(res.data);
       } catch (err) {
-        console.error("Status polling failed:", err);
-        toast.error(`Status polling failed: ${err.message}`);
-        onError?.(err);
+        console.error("Failed to fetch summary:", err);
       }
     };
+    fetchSummary();
 
-    // Initial poll
-    pollSummary();
+    // Subscribe to events
+    const unsubscribe = subscribe('simulation_update', (eventData) => {
+      if (eventData.simulation_id === simulationId) {
+        // If we get a summary object directly
+        if (eventData.summary) {
+          updateState(eventData.summary);
+        } else {
+          // Otherwise re-fetch full summary (a bit safer for complex nested data)
+          fetchSummary();
+        }
+      }
+    });
 
-    // Poll every 2 seconds
-    const interval = setInterval(pollSummary, 2000);
+    return () => unsubscribe();
+  }, [simulationId, subscribe]);
 
-    return () => clearInterval(interval);
-  }, [simulationId, setEvaluationResult, onComplete, onError]);
+  const updateState = (data) => {
+    setSummary(data);
+    setTotalSessions(data.total_sessions || 0);
+
+    // Combine all sessions (passed, failed, active)
+    const allSessions = [
+      ...(data.sessions?.passed || []).map(s => ({ ...s, status: 'passed' })),
+      ...(data.sessions?.failed || []).map(s => ({ ...s, status: 'failed' })),
+      ...(data.sessions?.active || []).map(s => ({ ...s, status: 'active' })),
+    ];
+
+    setSessions(allSessions);
+
+    // Calculate progress
+    const completed =
+      (data.sessions?.passed?.length || 0) +
+      (data.sessions?.failed?.length || 0);
+
+    const newProgress = data.total_sessions > 0
+      ? Math.round((completed / data.total_sessions) * 100)
+      : 0;
+
+    setProgress(newProgress);
+
+    // Check if completed
+    if (completed === data.total_sessions && data.total_sessions > 0 && !isCompleted) {
+      console.log("✅ Simulation run completed!");
+      setIsCompleted(true);
+      setEvaluationResult(data);
+      onComplete?.(data);
+    }
+  };
 
   /* -------------------------------------------------
      UI - Test Case Grid

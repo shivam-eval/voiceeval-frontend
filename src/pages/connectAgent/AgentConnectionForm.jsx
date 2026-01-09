@@ -75,24 +75,24 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
   const labels = getPlatformLabels();
 
   return (
-                <div className="bg-dark-panel rounded-xl p-4 border border-gray-800/50 shadow-xl relative">
-                  {isConnecting && (
-                    <div className="absolute inset-0 bg-teal-400/10 animate-pulse rounded-xl" />
-                  )}
+    <div className="bg-gradient-to-br from-gray-900/95 to-gray-900/80 rounded-xl p-3 border border-gray-800/60 shadow-2xl relative backdrop-blur-sm">
+      {isConnecting && (
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-400/10 to-cyan-400/5 animate-pulse rounded-xl" />
+      )}
 
-                  <div className="mb-2.5 relative z-10 pl-1">
-                    <h3 className="text-lg font-semibold text-white mb-0.5">
-                      Agent Details
-                    </h3>
-                    <p className="text-gray-400 text-[11px]">
-                      {platform === 'custom'
-                        ? 'Enter agent details and system prompt'
-                        : `Enter your ${platform?.toUpperCase()} credentials`}
-                    </p>
-                  </div>
+      <div className="mb-2 relative z-10">
+        <h3 className="text-base font-bold text-white mb-0.5">
+          Agent Details
+        </h3>
+        <p className="text-gray-500 text-[10px]">
+          {platform === 'custom'
+            ? 'Enter agent details and system prompt'
+            : `Enter your ${platform?.toUpperCase()} credentials`}
+        </p>
+      </div>
 
-      <div className="custom-scrollbar pr-1">
-        <div className="space-y-3 relative z-10">
+      <div className="custom-scrollbar pr-0.5">
+        <div className="space-y-1.5 relative z-10">
           <FormInput
             label="Agent Name *"
             value={name}
@@ -107,8 +107,8 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
 
           {platform === 'custom' ? (
             <div>
-              <label className="block text-white text-sm font-medium mb-2">
-                Custom Prompt
+              <label className="block text-white text-xs font-medium mb-1">
+                Custom Prompt *
               </label>
               <textarea
                 value={customPrompt}
@@ -117,9 +117,9 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
                 onBlur={() => setFocusedField(null)}
                 placeholder="Enter system prompt..."
                 disabled={isConnecting}
-                rows={3}
-                className={`w-full px-4 py-2 bg-dark-input border rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none transition-all duration-300 ${focusedField === "customPrompt" || customPrompt
-                  ? "border-teal-400 shadow-sm shadow-teal-400/20"
+                rows={2}
+                className={`w-full px-3 py-1.5 bg-dark-input border rounded-lg text-white text-xs placeholder-gray-500 focus:outline-none transition-all duration-200 ${focusedField === "customPrompt" || customPrompt
+                  ? "border-teal-400 shadow-md shadow-teal-400/20 ring-1 ring-teal-400/30"
                   : "border-gray-700 hover:border-gray-600"
                   }`}
                 required
@@ -153,12 +153,12 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
             </>
           )}
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-gray-300 ml-1">Direction</label>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-gray-300">Direction</label>
             <select
               value={direction}
               onChange={(e) => setDirection(e.target.value)}
-              className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-teal-400 transition-colors"
+              className="w-full bg-dark-input border border-gray-700 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-teal-400 focus:ring-1 focus:ring-teal-400/30 transition-all"
               disabled={isConnecting}
             >
               <option value="both">Inbound & Outbound</option>
@@ -185,14 +185,14 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
             onClick={handleSubmit}
             loading={isConnecting}
             disabled={!isFormValid}
-            className="py-2.5 text-sm"
+            className="py-1.5 text-xs font-semibold mt-1"
           />
         </div>
 
         {isConnecting && (
-          <div className="mt-3 flex items-center justify-center gap-2 text-teal-400 animate-pulse relative z-10">
-            <div className="w-2 h-2 bg-teal-400 rounded-full animate-glow" />
-            <span className="text-[11px] font-medium">
+          <div className="mt-2 flex items-center justify-center gap-2 text-teal-400 animate-pulse relative z-10">
+            <div className="w-1.5 h-1.5 bg-teal-400 rounded-full shadow-lg shadow-teal-400/50 animate-glow" />
+            <span className="text-[10px] font-semibold">
               {platform === 'custom' ? 'Saving...' : 'Connecting...'}
             </span>
           </div>

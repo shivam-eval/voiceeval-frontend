@@ -172,7 +172,7 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
         </div>
 
         <div>
-          <h2 className="text-5xl font-bold text-white mb-4 leading-tight">
+          <h2 className="text-xl font-bold text-white mb-2 leading-tight">
             Evaluate Your Voice AI Agents
           </h2>
           <p className="text-gray-300 text-lg leading-relaxed max-w-2xl">
@@ -180,7 +180,7 @@ const ConnectionLoading = ({ extractedConfig, onComplete }) => {
           </p>
         </div>
 
-        <div className="bg-gray-900 rounded-2xl p-8 border border-gray-800/50 shadow-xl">
+        <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800/50 shadow-xl">
           <div className="mb-6">
             <h3 className="text-2xl font-semibold text-white mb-2">
               Setting up your workspace

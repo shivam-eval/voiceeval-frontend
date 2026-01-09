@@ -208,7 +208,7 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
         {/* Right */}
         <div className="flex items-center gap-6">
           <div className="flex flex-col items-end gap-1">
-            <span className="text-4xl font-bold text-teal-400">{score}%</span>
+            <span className="text-4xl font-bold text-teal-400">{score/100}%</span>
             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Overall Score</span>
           </div>
 

@@ -6,7 +6,7 @@ const TopBar = () => {
 
     const handleDocumentation = () => {
         // TODO: Add link to documentation when available
-        window.open('https://docs.voiceeval.com', '_blank');
+        window.open('https://voiceeval.com/docs', '_blank');
     };
 
     return (

@@ -164,11 +164,6 @@ const GenerateFlowModal = ({ isOpen, onClose, agentId, agentMongoId, onFlowGener
                                 </div>
                             )}
 
-                            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                                <p className="text-sm text-green-400">
-                                    ✅ Flow saved to database with ID: {flowData.flow_id}
-                                </p>
-                            </div>
                         </div>
                     )}
                 </div>

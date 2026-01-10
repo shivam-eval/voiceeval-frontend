@@ -8,6 +8,7 @@ import { testSuitesApi } from "../../utils/api";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 import TestCaseEditorModal from "../../components/TestCaseEditorModal";
+import RunSimulationModal from "../../components/RunSimulationModal";
 
 const TestSuiteDetailView = () => {
     const { suiteId } = useParams();
@@ -22,6 +23,7 @@ const TestSuiteDetailView = () => {
     const [expandedRows, setExpandedRows] = useState(new Set());
     const [showTestCaseModal, setShowTestCaseModal] = useState(false);
     const [editingTestCase, setEditingTestCase] = useState(null);
+    const [showRunSimulationModal, setShowRunSimulationModal] = useState(false);
 
     // Fetch data
     const { data: suite, isLoading, error } = useTestSuite(suiteId);
@@ -254,7 +256,7 @@ const TestSuiteDetailView = () => {
                     <div className="flex items-center gap-3 mt-6">
                         <Button
                             size="sm"
-                            onClick={() => navigate(`/simulation/evaluator?test_suite_id=${suiteId}`)}
+                            onClick={() => setShowRunSimulationModal(true)}
                             className="bg-teal-500 hover:bg-teal-600"
                         >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -506,6 +508,13 @@ const TestSuiteDetailView = () => {
                 testCase={editingTestCase}
                 personas={personasData?.personas || []}
                 profiles={profilesData?.test_profiles || []}
+            />
+
+            {/* Run Simulation Modal */}
+            <RunSimulationModal
+                isOpen={showRunSimulationModal}
+                onClose={() => setShowRunSimulationModal(false)}
+                preSelectedTestSuiteId={suiteId}
             />
         </div>
     );

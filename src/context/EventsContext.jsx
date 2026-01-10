@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { toast } from 'react-toastify';
 
 const EventsContext = createContext(null);
@@ -15,13 +15,31 @@ export const EventsProvider = ({ children }) => {
     const [queueStats, setQueueStats] = useState(null);
     const [isConnected, setIsConnected] = useState(false);
 
-    // Event listeners
-    const [listeners, setListeners] = useState({});
+    // Use ref to store listeners to avoid re-creating subscribe function
+    const listenersRef = useRef({});
 
     useEffect(() => {
         const eventsUrl = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"}/events/stream`;
         let eventSource = null;
         let retryTimeout = null;
+
+        const handleEvent = (message) => {
+            const { event, data } = message;
+            const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
+
+            // Global handlers
+            if (event === 'queue_update') {
+                setQueueStats(parsedData);
+            }
+
+            // Dispatch to registered listeners
+            if (listenersRef.current[event]) {
+                listenersRef.current[event].forEach(callback => callback(parsedData));
+            }
+
+            // Dispatch generic for debug
+            console.debug(`Event received: ${event}`, parsedData);
+        };
 
         const connect = () => {
             eventSource = new EventSource(eventsUrl);
@@ -54,45 +72,29 @@ export const EventsProvider = ({ children }) => {
             };
         };
 
-        const handleEvent = (message) => {
-            const { event, data } = message;
-            const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-
-            // Global handlers
-            if (event === 'queue_update') {
-                setQueueStats(parsedData);
-            }
-
-            // Dispatch to registered listeners
-            if (listeners[event]) {
-                listeners[event].forEach(callback => callback(parsedData));
-            }
-
-            // Dispatch generic for debug
-            console.debug(`Event received: ${event}`, parsedData);
-        };
-
         connect();
 
         return () => {
             if (eventSource) eventSource.close();
             if (retryTimeout) clearTimeout(retryTimeout);
         };
-    }, [listeners]); // Re-bind if listeners change (optimization: use ref for listeners if frequent updates)
+    }, []); // Empty dependency array - only run once
 
-    const subscribe = (event, callback) => {
-        setListeners(prev => ({
-            ...prev,
-            [event]: [...(prev[event] || []), callback]
-        }));
-
-        return () => {
-            setListeners(prev => ({
-                ...prev,
-                [event]: (prev[event] || []).filter(cb => cb !== callback)
-            }));
+    const subscribe = useCallback((event, callback) => {
+        // Add listener
+        listenersRef.current = {
+            ...listenersRef.current,
+            [event]: [...(listenersRef.current[event] || []), callback]
         };
-    };
+
+        // Return unsubscribe function
+        return () => {
+            listenersRef.current = {
+                ...listenersRef.current,
+                [event]: (listenersRef.current[event] || []).filter(cb => cb !== callback)
+            };
+        };
+    }, []); // Empty dependency array - function never changes
 
     return (
         <EventsContext.Provider value={{

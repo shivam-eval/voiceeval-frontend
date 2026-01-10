@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useSimulationWithLiveUpdates, useSimulationSessions, useCancelSimulation, useRerunSimulation, useDeleteSimulation } from '../../hooks/useSimulations';
 import { useBatchEvaluateSimulation, useBatchEvaluationStatus } from '../../hooks/useEvaluations';
+import { useEvents } from '../../context/EventsContext';
 import Badge from '../../components/Badge';
 import Button from '../../components/Button';
 import { getEvaluationResults } from '../../api';
@@ -22,6 +23,11 @@ const SimulationDetailPage = () => {
     const [evaluationTaskId, setEvaluationTaskId] = useState(null);
     const [evaluationProgress, setEvaluationProgress] = useState(null);
     const { setSimulationResult } = useWorkflow();
+    const hasNavigatedRef = useRef(false);
+
+    // Real-time simulation progress from SSE
+    const [simulationProgress, setSimulationProgress] = useState(null);
+    const { subscribe } = useEvents();
 
     // Fetch simulation with live updates (auto-polls if running)
     const { data: simulation, isLoading, error } = useSimulationWithLiveUpdates(simulationId);
@@ -33,7 +39,51 @@ const SimulationDetailPage = () => {
     const rerunSimulation = useRerunSimulation();
     const deleteSimulation = useDeleteSimulation();
     const batchEvaluate = useBatchEvaluateSimulation();
-    
+
+    // Listen to real-time simulation updates
+    useEffect(() => {
+        if (!simulationId) return;
+
+        const unsubscribe = subscribe('simulation_update', (data) => {
+            if (data.simulation_id === simulationId) {
+                console.log('📡 Real-time Simulation Update:', data);
+
+                switch (data.status) {
+                    case 'started':
+                        setSimulationProgress({
+                            status: 'running',
+                            total: data.total_test_cases,
+                            completed: data.completed_test_cases || 0
+                        });
+                        toast.info(`Simulation started: ${data.total_test_cases} test cases`);
+                        break;
+
+                    case 'completed':
+                        setSimulationProgress({
+                            status: 'completed',
+                            total: data.summary?.total_tests || 0,
+                            completed: data.summary?.total_tests || 0
+                        });
+                        toast.success('Simulation completed successfully!');
+                        // Clear progress after a delay
+                        setTimeout(() => setSimulationProgress(null), 5000);
+                        break;
+
+                    case 'failed':
+                        setSimulationProgress({
+                            status: 'failed',
+                            error: data.error
+                        });
+                        toast.error(`Simulation failed: ${data.error}`);
+                        setTimeout(() => setSimulationProgress(null), 10000);
+                        break;
+                }
+            }
+        });
+
+        return () => unsubscribe();
+    }, [simulationId, subscribe]);
+
     // Poll task status if evaluating
     const { data: taskStatus } = useBatchEvaluationStatus(evaluationTaskId, {
         enabled: !!evaluationTaskId
@@ -41,20 +91,55 @@ const SimulationDetailPage = () => {
 
     // Handle task completion
     useEffect(() => {
-        if (taskStatus?.status === 'completed') {
+        if (!taskStatus) return;
+
+        console.log('📊 Batch Evaluation Status Update:', taskStatus);
+
+        if (taskStatus.status === 'completed' && !hasNavigatedRef.current) {
+            hasNavigatedRef.current = true;
+            console.log('✅ Batch evaluation completed! Navigating to results page...');
             setIsEvaluating(false);
             setEvaluationTaskId(null);
             setEvaluationProgress(null);
+            toast.success('Evaluation completed! Redirecting to results...');
             navigate(`/evaluations/results/${simulationId}`);
-        } else if (taskStatus?.status === 'failed') {
+        } else if (taskStatus.status === 'failed') {
+            console.error('❌ Batch evaluation failed:', taskStatus.error);
             setIsEvaluating(false);
             setEvaluationTaskId(null);
             setEvaluationProgress(null);
             toast.error('Evaluation failed: ' + (taskStatus.error || 'Unknown error'));
-        } else if (taskStatus?.progress) {
+        } else if (taskStatus.progress) {
+            console.log('⏳ Evaluation progress:', taskStatus.progress);
             setEvaluationProgress(taskStatus.progress);
         }
-    }, [taskStatus, simulationId, navigate]);
+    }, [taskStatus, simulationId]);
+
+    // Fallback: Check if evaluation exists periodically (in case task status polling fails)
+    useEffect(() => {
+        if (!isEvaluating || hasNavigatedRef.current) return;
+
+        const checkInterval = setInterval(async () => {
+            try {
+                console.log('🔍 Checking if evaluation exists...');
+                const existingEvaluation = await getEvaluationResults(simulationId);
+                if (existingEvaluation.data && existingEvaluation.data.evaluations?.length > 0) {
+                    console.log('✅ Evaluation found! Redirecting...');
+                    hasNavigatedRef.current = true;
+                    setIsEvaluating(false);
+                    setEvaluationTaskId(null);
+                    setEvaluationProgress(null);
+                    toast.success('Evaluation completed! Redirecting to results...');
+                    navigate(`/evaluations/results/${simulationId}`);
+                }
+            } catch (error) {
+                // Evaluation doesn't exist yet, continue waiting
+                console.log('⏳ Evaluation not ready yet...');
+            }
+        }, 3000); // Check every 3 seconds
+
+        return () => clearInterval(checkInterval);
+    }, [isEvaluating, simulationId]);
 
     const toggleSession = (sessionId) => {
         setExpandedSessions(prev =>
@@ -102,7 +187,7 @@ const SimulationDetailPage = () => {
     const handleViewEvaluation = async () => {
         setIsEvaluating(true);
         setEvaluationProgress(null);
-        
+
         try {
             // First, check if evaluation already exists
             try {
@@ -120,9 +205,9 @@ const SimulationDetailPage = () => {
             }
 
             // No existing evaluation, call batch evaluate API
-            const result = await batchEvaluate.mutateAsync({ 
-                simulationId, 
-                configOverrides: {} 
+            const result = await batchEvaluate.mutateAsync({
+                simulationId,
+                configOverrides: {}
             });
 
             // Check if cached results returned immediately
@@ -198,7 +283,7 @@ const SimulationDetailPage = () => {
     if (isEvaluating) {
         const progress = evaluationProgress || { total: 0, evaluated: 0, failed: 0 };
         const percentage = progress.total > 0 ? Math.round((progress.evaluated / progress.total) * 100) : 0;
-        
+
         return (
             <div className="p-8">
                 <div className="flex items-center justify-center h-screen">
@@ -218,8 +303,8 @@ const SimulationDetailPage = () => {
                                         <span>{percentage}%</span>
                                     </div>
                                     <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                                        <div 
-                                            className="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-300" 
+                                        <div
+                                            className="h-full bg-gradient-to-r from-teal-400 to-green-400 transition-all duration-300"
                                             style={{ width: `${percentage}%` }}
                                         ></div>
                                     </div>
@@ -242,6 +327,22 @@ const SimulationDetailPage = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* Manual navigation button */}
+                            <div className="mt-8 pt-6 border-t border-gray-800">
+                                <button
+                                    onClick={() => {
+                                        setIsEvaluating(false);
+                                        navigate(`/evaluations/results/${simulationId}`);
+                                    }}
+                                    className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
+                                >
+                                    View Results Now
+                                </button>
+                                <p className="text-xs text-gray-500 mt-2">
+                                    Click if evaluation is complete or taking too long
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -254,6 +355,57 @@ const SimulationDetailPage = () => {
     return (
         <div className="p-8">
             <div className="w-full max-w-screen-2xl mx-auto">
+                {/* Real-time Progress Banner */}
+                {simulationProgress && (
+                    <div className={`mb-6 rounded-xl p-4 border ${simulationProgress.status === 'running'
+                        ? 'bg-blue-900/20 border-blue-500/50'
+                        : simulationProgress.status === 'completed'
+                            ? 'bg-green-900/20 border-green-500/50'
+                            : 'bg-red-900/20 border-red-500/50'
+                        }`}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                {simulationProgress.status === 'running' && (
+                                    <>
+                                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-400"></div>
+                                        <span className="text-blue-400 font-semibold">
+                                            Running Simulation: {simulationProgress.completed} / {simulationProgress.total} test cases
+                                        </span>
+                                    </>
+                                )}
+                                {simulationProgress.status === 'completed' && (
+                                    <>
+                                        <CheckCircle className="w-5 h-5 text-green-400" />
+                                        <span className="text-green-400 font-semibold">
+                                            Simulation Completed: {simulationProgress.total} test cases
+                                        </span>
+                                    </>
+                                )}
+                                {simulationProgress.status === 'failed' && (
+                                    <>
+                                        <XCircle className="w-5 h-5 text-red-400" />
+                                        <span className="text-red-400 font-semibold">
+                                            Simulation Failed: {simulationProgress.error}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
+                            {simulationProgress.status === 'running' && (
+                                <div className="w-48">
+                                    <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-blue-400 to-teal-400 transition-all duration-500"
+                                            style={{
+                                                width: `${(simulationProgress.completed / simulationProgress.total) * 100}%`
+                                            }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
                 {/* Header */}
                 <div className="mb-8">
                     <button
@@ -400,14 +552,20 @@ const SimulationDetailPage = () => {
                                 <CheckCircle className="w-4 h-4 text-green-400" />
                                 <span className="text-xs text-gray-400">Passed</span>
                             </div>
-                            <div className="text-2xl font-bold text-green-400">{simulation.progress?.completed || 0}</div>
+                            <div className="text-2xl font-bold text-green-400">
+                                {(simulation.progress?.completed && simulation.progress.completed > 0)
+                                    ? simulation.progress.completed
+                                    : sessions.filter(s => s.status === 'completed').length || 0}
+                            </div>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-red-500/20">
                             <div className="flex items-center gap-2 mb-1">
                                 <XCircle className="w-4 h-4 text-red-400" />
                                 <span className="text-xs text-gray-400">Failed</span>
                             </div>
-                            <div className="text-2xl font-bold text-red-400">{simulation.progress?.failed || 0}</div>
+                            <div className="text-2xl font-bold text-red-400">
+                                {Math.max(0, simulation.progress?.failed || sessions.filter(s => s.status === 'failed').length || 0)}
+                            </div>
                         </div>
                         <div className="bg-gray-900 rounded-lg p-4 border border-gray-800/50">
                             <div className="flex items-center gap-2 mb-1">

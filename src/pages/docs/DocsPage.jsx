@@ -5,6 +5,7 @@ import VAPIIntegrationSection from "./sections/VAPIIntegration";
 import ElevenLabsIntegrationSection from "./sections/ElevenLabsIntegration";
 import CartesiaIntegrationSection from "./sections/CartesiaIntegration";
 import QuickStartSection from "./sections/QuickStart";
+import LiveKitIntegrationSection from "./sections/LiveKitIntegration";
 
 const DocsPage = () => {
   const [activeSection, setActiveSection] = useState("introduction");
@@ -98,7 +99,7 @@ const DocsPage = () => {
               Voice<span className="text-teal-400">Eval</span> Documentation
             </h1>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <Link to="/">
               <button className="px-4 py-2 bg-[#b61249] hover:bg-[#c91d5a] text-white rounded-lg text-sm font-medium transition-colors">
@@ -125,11 +126,10 @@ const DocsPage = () => {
                       <li key={item.id}>
                         <button
                           onClick={() => setActiveSection(item.id)}
-                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${
-                            activeSection === item.id
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${activeSection === item.id
                               ? "bg-teal-400/20 text-teal-400 font-medium border border-teal-400/50"
                               : "text-gray-400 hover:text-white hover:bg-dark-input"
-                          }`}
+                            }`}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
                           <span className="whitespace-nowrap">{item.label}</span>
@@ -339,7 +339,7 @@ const TechCard = ({ title, items }) => (
 const AgentsSection = () => <PlaceholderSection title="Voice Agents" />;
 const TestSuitesSection = () => <PlaceholderSection title="Test Suites" />;
 const EvaluationSection = () => <PlaceholderSection title="Evaluation" />;
-const LiveKitIntegrationSection = () => <PlaceholderSection title="LiveKit Integration" />;
+
 const ExtractionAPISection = () => <PlaceholderSection title="Extraction API" />;
 const GenerationAPISection = () => <PlaceholderSection title="Generation API" />;
 const SimulationAPISection = () => <PlaceholderSection title="Simulation API" />;

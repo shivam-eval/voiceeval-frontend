@@ -141,17 +141,34 @@ export const useDeleteSimulation = () => {
  * Hook with auto-refresh for running simulations
  * Polls every 5 seconds if simulation is running
  */
+import { useEffect } from 'react';
+import { useEvents } from '../context/EventsContext';
+
+/**
+ * Hook with auto-refresh for running simulations using SSE
+ */
 export const useSimulationWithLiveUpdates = (simulationId) => {
-    const queryResult = useSimulation(simulationId);
+    const queryClient = useQueryClient();
+    const { subscribe } = useEvents();
 
-    // Enable auto-refresh if simulation is running
-    const isRunning = queryResult.data?.status === 'running';
+    useEffect(() => {
+        if (!simulationId) return;
 
-    return useQuery({
-        queryKey: simulationKeys.detail(simulationId),
-        queryFn: () => simulationsApi.getSimulation(simulationId),
-        enabled: !!simulationId,
-        refetchInterval: isRunning ? 5000 : false, // Poll every 5s if running
-        refetchIntervalInBackground: false,
-    });
+        // Subscribe to simulation updates
+        const unsubscribe = subscribe('simulation_update', (data) => {
+            if (data.simulation_id === simulationId) {
+                console.log(`📡 Simulation Update [${simulationId}]:`, data);
+
+                // Invalidate query to refetch fresh data
+                queryClient.invalidateQueries({ queryKey: simulationKeys.detail(simulationId) });
+
+                // Also invalidate sessions list as they might have changed
+                queryClient.invalidateQueries({ queryKey: ['simulations', 'detail', simulationId, 'sessions'] });
+            }
+        });
+
+        return () => unsubscribe();
+    }, [simulationId, subscribe, queryClient]);
+
+    return useSimulation(simulationId);
 };

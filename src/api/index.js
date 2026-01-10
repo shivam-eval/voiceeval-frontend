@@ -204,6 +204,9 @@ export const apiCallWrapper = async (apiCall) => {
   }
 };
 
+/**
+ * @deprecated Use useEvents subscription instead
+ */
 export const pollSimulationStatus = async (
   simulationId,
   onStatusUpdate = null,

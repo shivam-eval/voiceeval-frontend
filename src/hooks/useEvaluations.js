@@ -90,7 +90,7 @@ export const useBatchEvaluateSimulation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ simulationId, configOverrides }) => 
+        mutationFn: ({ simulationId, configOverrides }) =>
             evaluationService.batchEvaluateSimulation(simulationId, configOverrides),
         onSuccess: (data, variables) => {
             const { simulationId } = variables;
@@ -103,20 +103,36 @@ export const useBatchEvaluateSimulation = () => {
 /**
  * Hook to poll batch evaluation task status
  */
+import { useEffect } from 'react';
+import { useEvents } from '../context/EventsContext';
+
+/**
+ * Hook to poll batch evaluation task status via SSE
+ */
 export const useBatchEvaluationStatus = (taskId, options = {}) => {
+    const queryClient = useQueryClient();
+    const { subscribe } = useEvents();
+
+    useEffect(() => {
+        if (!taskId) return;
+
+        const unsubscribe = subscribe('task_update', (data) => {
+            if (data.task_id === taskId) {
+                console.log(`📡 Evaluation Task Update [${taskId}]:`, data);
+                queryClient.invalidateQueries({
+                    queryKey: ['evaluation', 'batch', 'status', taskId]
+                });
+            }
+        });
+
+        return () => unsubscribe();
+    }, [taskId, subscribe, queryClient]);
+
     return useQuery({
         queryKey: ['evaluation', 'batch', 'status', taskId],
         queryFn: () => evaluationService.getBatchEvaluationStatus(taskId),
         enabled: !!taskId && options.enabled !== false,
-        refetchInterval: (data) => {
-            // Stop polling if completed or failed
-            if (!data || data.status === 'completed' || data.status === 'failed') {
-                return false;
-            }
-            // Poll every 2 seconds while running
-            return 2000;
-        },
-        staleTime: 0, // Always fetch fresh data
+        staleTime: Infinity, // Rely on SSE invalidation
     });
 };
 

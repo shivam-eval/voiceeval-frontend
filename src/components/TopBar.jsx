@@ -1,9 +1,11 @@
 import { BookOpen } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const TopBar = () => {
+    const navigate = useNavigate();
+
     const handleDocumentation = () => {
-        // TODO: Add link to documentation when available
-        window.open('https://docs.voiceeval.com', '_blank');
+        navigate('/docs');
     };
 
     return (

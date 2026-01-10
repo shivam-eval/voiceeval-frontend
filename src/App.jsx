@@ -28,6 +28,7 @@ import CallsPage from "./pages/observability/CallsPage";
 import LogsPage from "./pages/observability/LogsPage";
 import Dashboard from "./pages/dasbhboard";
 import WorkspaceLoader from "./pages/workspace/WorkspaceLoader";
+import DocsPage from "./pages/docs";
 
 import { useWorkflow } from "./context/WorkFlowContext";
 import { EventsProvider } from "./context/EventsContext";
@@ -119,6 +120,10 @@ function App() {
   return (
     <EventsProvider>
       <Routes>
+        {/* Documentation - standalone layout */}
+        <Route path="/docs" element={<DocsPage />} />
+
+        {/* Main app - with DashboardLayout wrapper */}
         <Route
           path="/*"
           element={
@@ -206,3 +211,4 @@ function App() {
 }
 
 export default App;
+

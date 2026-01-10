@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { 
-  Search, 
-  Plus, 
-  Filter, 
-  Download, 
-  Copy, 
-  MoreVertical, 
-  X, 
+import {
+  Search,
+  Plus,
+  Filter,
+  Download,
+  Copy,
+  MoreVertical,
+  X,
   Upload,
   CheckCircle2,
   ChevronLeft,
@@ -36,7 +36,7 @@ const CallsPage = () => {
   const [isEvaluateModalOpen, setIsEvaluateModalOpen] = useState(false);
   const [evalAgentId, setEvalAgentId] = useState(workflow?.assistantId || '');
   const [evalDirectory, setEvalDirectory] = useState('');
-  
+
   const directoryParam = searchParams.get('directory');
   const directory = directoryParam !== null ? directoryParam : (sessionStorage.getItem('last_directory') || 'shoplabs');
   const viewMode = searchParams.get('view') || (directory ? 'calls' : 'directories');
@@ -65,7 +65,7 @@ const CallsPage = () => {
   // Use all categories from backend
   const filteredCategories = useMemo(() => {
     if (!categoriesData) return [];
-    
+
     // Handle various response formats: [ ], { categories: [] }, { data: [] }, { items: [] }
     let raw = [];
     if (Array.isArray(categoriesData)) {
@@ -77,7 +77,7 @@ const CallsPage = () => {
     } else if (categoriesData?.items && Array.isArray(categoriesData.items)) {
       raw = categoriesData.items;
     }
-    
+
     // Normalize to strings
     return raw.map(cat => {
       if (typeof cat === 'string') return cat;
@@ -92,8 +92,8 @@ const CallsPage = () => {
   // Specifically prioritize 'shoplabs' as requested
   useEffect(() => {
     if (!isCategoriesLoading && filteredCategories.length > 0 && !directory && viewMode === 'directories') {
-      const shoplabsDir = filteredCategories.find(cat => 
-        cat.toLowerCase() === 'shoplabs' || 
+      const shoplabsDir = filteredCategories.find(cat =>
+        cat.toLowerCase() === 'shoplabs' ||
         cat.toLowerCase().includes('shoplabs')
       );
       const targetDir = shoplabsDir || filteredCategories[0];
@@ -132,7 +132,7 @@ const CallsPage = () => {
   }, [flowsData]);
 
   // Fetch calls from the backend with directory filter
-  const { data, isLoading: isCallsLoading, error, refetch } = useCalls({ 
+  const { data, isLoading: isCallsLoading, error, refetch } = useCalls({
     category: directory,
     directory: directory,
     search: searchTerm,
@@ -141,7 +141,7 @@ const CallsPage = () => {
 
   const calls = useMemo(() => {
     if (!data) return [];
-    
+
     // Handle various response formats: [ ], { calls: [] }, { data: [] }, { items: [] }, { results: [] }
     let rawCalls = [];
     if (Array.isArray(data)) {
@@ -162,7 +162,7 @@ const CallsPage = () => {
     } else if (data?.results && Array.isArray(data.results)) {
       rawCalls = data.results;
     }
-    
+
     // Filter out any null/undefined entries that might cause crashes
     return rawCalls.filter(call => !!call);
   }, [data]);
@@ -171,22 +171,22 @@ const CallsPage = () => {
   const hasPendingEvaluations = useMemo(() => {
     // Only poll if we are in the calls view (not directories)
     if (viewMode !== 'calls') return false;
-    
+
     // If no calls found yet, we might still want to poll for a short while after an upload
     // but for now let's stick to polling when we have calls
     if (!calls || calls.length === 0) return false;
-    
+
     return calls.some(call => {
       if (!call) return false;
       // Case 1: No evaluation or evaluation ID at all
       if (!call.evaluation && !call.evaluation_id) return true;
-      
+
       // Case 2: Has evaluation object but status is not completed/failed
       const status = call.evaluation?.status || call.evaluation_status;
       if (status && !['completed', 'failed', 'success', 'error'].includes(status.toLowerCase())) {
         return true;
       }
-      
+
       // Case 3: Has evaluation ID but no evaluation object yet
       if (call.evaluation_id && !call.evaluation) return true;
 
@@ -230,44 +230,44 @@ const CallsPage = () => {
     // Check call status and processing stage
     const status = (call.status || '').toLowerCase();
     const processingStage = (call.processing_stage || '').toLowerCase();
-    
+
     // Priority: explicit evaluation_id from various possible paths
-    const evaluationId = 
-      call.evaluation?.evaluation_id || 
-      call.evaluation?.evaluation?.evaluation_id || 
-      call.evaluation_id || 
+    const evaluationId =
+      call.evaluation?.evaluation_id ||
+      call.evaluation?.evaluation?.evaluation_id ||
+      call.evaluation_id ||
       (Array.isArray(call.evaluations) && call.evaluations[0]?.evaluation_id);
-      
-    const sessionId = 
-      call.session_id || 
-      call.evaluation?.session_id || 
+
+    const sessionId =
+      call.session_id ||
+      call.evaluation?.session_id ||
       call.evaluation?.evaluation?.session_id;
-    
+
     // Case 1: Evaluation complete - show report
     if (evaluationId) {
       navigate(`/evaluations/report/${evaluationId}`);
       return;
     }
-    
+
     // Case 2: Evaluation in progress - show message
     if (status === 'processing' || processingStage === 'transcribing' || processingStage === 'evaluating') {
       toast.info('🔄 Evaluation in progress. Please wait...', { autoClose: 3000 });
       return;
     }
-    
+
     // Case 3: Has session but no evaluation yet - might still be processing
     if (sessionId) {
       navigate(`/evaluations/session?sessionId=${sessionId}`);
       return;
     }
-    
+
     // Case 4: Evaluation failed - allow retry
     if (status === 'failed') {
       toast.warning('Previous evaluation failed. Retrying...', { autoClose: 2000 });
       handleEvaluate(call.call_id);
       return;
     }
-    
+
     // Case 5: No evaluation started yet (shouldn't happen with auto-eval, but handle it)
     if (status === 'pending' || status === 'uploaded' || !call.agent_id) {
       if (!call.agent_id) {
@@ -278,7 +278,7 @@ const CallsPage = () => {
       handleEvaluate(call.call_id);
       return;
     }
-    
+
     // Default: Try to navigate with call_id
     toast.info('🔄 Loading evaluation status...', { autoClose: 2000 });
   };
@@ -339,14 +339,14 @@ const CallsPage = () => {
       formData.append('agent_id', agentId); // Add agent_id to form data
 
       await uploadCalls.mutateAsync({ formData, agentId });
-      
+
       // Force a refetch of calls and categories to ensure the UI updates
       refetch();
-      
+
       // Update state to show the uploaded calls immediately
       updateParams({ directory: agentId, view: 'calls' }, true);
       setSearchTerm('');
-      
+
       setIsModalOpen(false);
       toast.success('Calls uploaded successfully! Auto-evaluation started.');
     } catch (error) {
@@ -376,14 +376,14 @@ const CallsPage = () => {
 
   const getMetricValue = (call, metricName) => {
     if (!call) return '--';
-    
+
     const isLatency = metricName === 'avg_latency';
     const isSentiment = metricName === 'sentiment_score';
     const isIssues = metricName === 'issues_found';
 
     const formatScore = (score) => {
       if (score === undefined || score === null) return null;
-      
+
       // If score is a string that looks like a number, convert it
       let numScore = typeof score === 'number' ? score : parseFloat(score);
       if (isNaN(numScore)) return null;
@@ -419,7 +419,7 @@ const CallsPage = () => {
 
     // Common mappings/aliases
     const mapping = {
-      'overall_score': ['overall', 'overall_score', 'total_score', 'sequential_task_accuracy', 'score'],
+      'overall_score': ['overall', 'overall_score', 'total_score', 'score'],
       'semantic_accuracy': ['accuracy', 'semantic_accuracy', 'transcription_accuracy', 'semantic'],
       'task_completion_rate': ['task_completion', 'completion', 'success_rate', 'sequential_task_accuracy', 'flow_path_coverage', 'task_completion_rate'],
       'audio_quality': ['audio', 'audio_quality', 'signal_to_noise', 'audio_quality_score'],
@@ -431,14 +431,19 @@ const CallsPage = () => {
     const aliases = mapping[metricName] || [metricName];
     const normalizedAliases = aliases.map(a => a.toLowerCase().replace(/_/g, ' '));
 
-    // 1. Try to find in evaluation.category_scores -> metrics (New API Format)
     // The structure can be call.evaluation.category_scores OR call.evaluation.evaluation.category_scores
     const evalObj = call.evaluation?.evaluation || call.evaluation || (Array.isArray(call.evaluations) ? call.evaluations[0] : null);
-    
+
+    // 1. For overall_score, check the direct field FIRST before searching category metrics
+    if (metricName === 'overall_score' && evalObj?.overall_score !== undefined && evalObj?.overall_score !== null) {
+      return formatScore(evalObj.overall_score);
+    }
+
+    // 2. Try to find in evaluation.category_scores -> metrics (New API Format)
     if (evalObj?.category_scores) {
       for (const cat of evalObj.category_scores) {
         if (!cat) continue;
-        
+
         // Check category name itself against aliases
         const catName = (cat.category || '').toLowerCase().replace(/_/g, ' ');
         if (normalizedAliases.includes(catName)) {
@@ -457,7 +462,7 @@ const CallsPage = () => {
         }
       }
     }
-    
+
     // 2. Try various paths for each alias
     for (const alias of aliases) {
       // Check in the extracted evalObj
@@ -475,7 +480,7 @@ const CallsPage = () => {
       if (call[alias] !== undefined && call[alias] !== null && typeof call[alias] !== 'object') {
         return formatScore(call[alias]);
       }
-      
+
       // Check in top level metrics of call
       if (call.metrics && call.metrics[alias] !== undefined && call.metrics[alias] !== null) {
         return formatScore(call.metrics[alias]);
@@ -489,7 +494,7 @@ const CallsPage = () => {
   const currentOptions = useMemo(() => {
     // Use filtered categories (frontend only)
     const backendCategories = filteredCategories;
-    
+
     // Create options from backend categories, ensuring we only process strings
     const options = backendCategories
       .filter(cat => typeof cat === 'string')
@@ -520,7 +525,7 @@ const CallsPage = () => {
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Calls Observability</h1>
         <div className="flex items-center gap-2 text-gray-400 text-sm">
-          <span 
+          <span
             className={`cursor-pointer hover:text-teal-400 transition-colors ${viewMode === 'directories' ? 'text-teal-400 font-semibold' : ''}`}
             onClick={handleBackToDirectories}
           >
@@ -541,7 +546,7 @@ const CallsPage = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div className="flex items-center gap-3 w-full md:w-auto">
           {viewMode === 'calls' && (
-            <button 
+            <button
               onClick={handleBackToDirectories}
               className="p-3 bg-dark-panel border border-gray-800 rounded-lg hover:bg-gray-800 transition-colors text-gray-400 hover:text-white shadow-lg"
               title="Back to Directories"
@@ -576,7 +581,7 @@ const CallsPage = () => {
 
         <div className="flex items-center gap-3">
           {viewMode === 'calls' && (
-            <button 
+            <button
               onClick={() => handleEvaluateAll(directory)}
               disabled={evaluateAudio.isPending || evaluateCall.isPending}
               className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-purple-500/20 transition-colors shadow-[0_0_15px_rgba(168,85,247,0.1)] disabled:opacity-50"
@@ -585,7 +590,7 @@ const CallsPage = () => {
               Evaluate All
             </button>
           )}
-          <button 
+          <button
             onClick={handleAddCalls}
             className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.1)]"
           >
@@ -628,7 +633,7 @@ const CallsPage = () => {
                           <Folder className="w-8 h-8 text-gray-500" />
                         </div>
                         <p className="text-gray-400 text-lg font-medium">No calls uploaded yet</p>
-                        <button 
+                        <button
                           onClick={handleAddCalls}
                           className="mt-2 flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors"
                         >
@@ -639,45 +644,45 @@ const CallsPage = () => {
                     </td>
                   </tr>
                 ) : filteredCategories
-                    .filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase()))
-                    .map(cat => (
-                  <tr key={cat} className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors cursor-pointer group" onClick={() => handleDirectoryClick(cat)}>
-                    <td className="px-6 py-6">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="p-2 bg-teal-500/5 rounded-lg border border-teal-500/10 group-hover:border-teal-500/30 transition-colors">
-                            <Folder className="w-6 h-6 text-teal-400" />
+                  .filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase()))
+                  .map(cat => (
+                    <tr key={cat} className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors cursor-pointer group" onClick={() => handleDirectoryClick(cat)}>
+                      <td className="px-6 py-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="p-2 bg-teal-500/5 rounded-lg border border-teal-500/10 group-hover:border-teal-500/30 transition-colors">
+                              <Folder className="w-6 h-6 text-teal-400" />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-white font-bold text-lg">
+                                {cat.replace(/[_-]/g, ' ')}
+                              </span>
+                              <span className="text-gray-500 text-sm font-mono">{cat}</span>
+                            </div>
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-white font-bold text-lg">
-                              {cat.replace(/[_-]/g, ' ')}
-                            </span>
-                            <span className="text-gray-500 text-sm font-mono">{cat}</span>
-                          </div>
+
+                          {/* Evaluate All button right next to the directory name */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEvaluateAll(cat);
+                            }}
+                            disabled={evaluateAudio.isPending || evaluateCall.isPending}
+                            className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-400 px-4 py-2 rounded-lg text-sm font-bold hover:bg-purple-500/20 transition-colors shadow-[0_0_15px_rgba(168,85,247,0.1)] disabled:opacity-50"
+                          >
+                            <Brain className="w-4 h-4" />
+                            Evaluate All
+                          </button>
                         </div>
-                        
-                        {/* Evaluate All button right next to the directory name */}
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEvaluateAll(cat);
-                          }}
-                          disabled={evaluateAudio.isPending || evaluateCall.isPending}
-                          className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-400 px-4 py-2 rounded-lg text-sm font-bold hover:bg-purple-500/20 transition-colors shadow-[0_0_15px_rgba(168,85,247,0.1)] disabled:opacity-50"
-                        >
-                          <Brain className="w-4 h-4" />
-                          Evaluate All
-                        </button>
-                      </div>
-                    </td>
-                    <td className="px-6 py-6">
-                      <div className="flex items-center gap-2 text-gray-400 group-hover:text-teal-400 transition-colors">
-                        <span className="text-sm font-medium">View Calls</span>
-                        <ChevronRight className="w-4 h-4" />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-6 py-6">
+                        <div className="flex items-center gap-2 text-gray-400 group-hover:text-teal-400 transition-colors">
+                          <span className="text-sm font-medium">View Calls</span>
+                          <ChevronRight className="w-4 h-4" />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           ) : (
@@ -727,7 +732,7 @@ const CallsPage = () => {
                           <p className="text-gray-400 text-lg font-medium">No calls found in this directory</p>
                           <p className="text-gray-500 text-sm">Upload recordings to start evaluating your voice flows</p>
                         </div>
-                        <button 
+                        <button
                           onClick={handleAddCalls}
                           className="mt-2 flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.1)]"
                         >
@@ -739,8 +744,8 @@ const CallsPage = () => {
                   </tr>
                 ) : (
                   calls.map((call, index) => (
-                    <tr 
-                      key={call.call_id || index} 
+                    <tr
+                      key={call.call_id || index}
                       onClick={() => handleRowClick(call)}
                       className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors group cursor-pointer"
                     >
@@ -756,7 +761,7 @@ const CallsPage = () => {
                       </td>
                       <td className="px-6 py-6">
                         <div className="flex items-center gap-2">
-                          <button 
+                          <button
                             onClick={(e) => { e.stopPropagation(); handleEvaluate(call.call_id); }}
                             disabled={evaluateAudio.isPending || evaluateCall.isPending}
                             className="p-2 bg-teal-500/10 text-teal-400 rounded-lg hover:bg-teal-500/20 transition-colors disabled:opacity-50"
@@ -764,7 +769,7 @@ const CallsPage = () => {
                           >
                             <Brain className="w-4 h-4" />
                           </button>
-                          <button 
+                          <button
                             onClick={(e) => e.stopPropagation()}
                             className="p-2 bg-gray-800 text-gray-400 rounded-lg hover:bg-gray-700 transition-colors"
                           >
@@ -785,16 +790,16 @@ const CallsPage = () => {
                             const evalStatus = (call.evaluation?.status || call.evaluation_status || '').toLowerCase();
                             const callStatus = (call.status || '').toLowerCase();
                             const processingStage = (call.processing_stage || '').toLowerCase();
-                            
+
                             // Check if evaluation is in progress
                             const isEvaluating = evalStatus && !['completed', 'failed', 'success', 'error', 'not_found'].includes(evalStatus);
                             const isProcessing = callStatus === 'processing' || processingStage === 'transcribing' || processingStage === 'evaluating';
                             const hasEvalIdButNoData = call.evaluation_id && !call.evaluation;
-                            
+
                             if (isEvaluating || isProcessing || hasEvalIdButNoData) {
-                              const stageText = processingStage === 'transcribing' ? 'Transcribing...' : 
-                                              processingStage === 'evaluating' ? 'Evaluating...' : 
-                                              'Processing...';
+                              const stageText = processingStage === 'transcribing' ? 'Transcribing...' :
+                                processingStage === 'evaluating' ? 'Evaluating...' :
+                                  'Processing...';
                               return (
                                 <div className="flex items-center gap-2">
                                   <div className="w-3 h-3 border-2 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
@@ -802,7 +807,7 @@ const CallsPage = () => {
                                 </div>
                               );
                             }
-                            
+
                             // Check if evaluation failed
                             if (callStatus === 'failed') {
                               return (
@@ -817,10 +822,9 @@ const CallsPage = () => {
                             if (val !== '--') {
                               return (
                                 <>
-                                  <div className={`w-3 h-3 rounded-full ${
-                                    parseFloat(val) >= 80 ? 'bg-green-500' : 
-                                    parseFloat(val) >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-                                  }`}></div>
+                                  <div className={`w-3 h-3 rounded-full ${parseFloat(val) >= 80 ? 'bg-green-500' :
+                                      parseFloat(val) >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                                    }`}></div>
                                   <span className="text-white font-bold">{val}</span>
                                 </>
                               );
@@ -853,14 +857,14 @@ const CallsPage = () => {
                           const status = (call.evaluation?.status || call.evaluation_status || '').toLowerCase();
                           const isProcessing = status && !['completed', 'failed', 'success', 'error', 'not_found'].includes(status);
                           if (isProcessing || (call.evaluation_id && !call.evaluation)) return '--';
-                          
+
                           const val = getMetricValue(call, 'task_completion_rate');
                           const numVal = parseFloat(val);
-                          
+
                           return (
                             <div className="flex items-center gap-4">
                               <div className="flex-1 h-1.5 bg-gray-700 rounded-full overflow-hidden min-w-[60px]">
-                                <div 
+                                <div
                                   className="h-full bg-blue-500 rounded-full"
                                   style={{ width: val !== '--' ? `${Math.min(100, numVal || 0)}%` : '0%' }}
                                 />
@@ -903,9 +907,8 @@ const CallsPage = () => {
                         </div>
                       </td>
                       <td className="px-6 py-6">
-                        <span className={`px-2 py-1 rounded text-xs font-bold ${
-                          (parseInt(getMetricValue(call, 'issues_found')) || 0) > 0 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-bold ${(parseInt(getMetricValue(call, 'issues_found')) || 0) > 0 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'
+                          }`}>
                           {getMetricValue(call, 'issues_found')} issues
                         </span>
                       </td>
@@ -935,11 +938,11 @@ const CallsPage = () => {
           </div>
         </div>
       )}
-              
+
 
 
       {/* Create Call Modal */}
-      <AudioUploadModal 
+      <AudioUploadModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleModalSubmit}

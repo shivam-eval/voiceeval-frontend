@@ -315,19 +315,21 @@ const CallsPage = () => {
     setIsEvaluateModalOpen(true);
   };
 
-  const submitEvaluate = async () => {
-    try {
-      await evaluateAudio.mutateAsync({
-        gcp_folder_path: `audio/${evalDirectory}`,
-        flow_id: flowId || undefined,
-        agent_id: evalAgentId || undefined,
-        skip_failures: true
-      });
-      toast.success(`Evaluation started for all calls in: audio/${evalDirectory}`);
-      setIsEvaluateModalOpen(false);
-    } catch (error) {
-      // Error handled by global interceptor
-    }
+  const submitEvaluate = () => {
+    // Close modal immediately
+    setIsEvaluateModalOpen(false);
+    toast.info(`Initiating evaluation for calls in: audio/${evalDirectory}...`);
+
+    evaluateAudio.mutate({
+      gcp_folder_path: `audio/${evalDirectory}`,
+      flow_id: flowId || undefined,
+      agent_id: evalAgentId || undefined,
+      skip_failures: true
+    }, {
+      onSuccess: () => {
+        toast.success(`Evaluation started successfully for: audio/${evalDirectory}`);
+      }
+    });
   };
 
   const handleModalSubmit = async ({ files, agentId }) => {

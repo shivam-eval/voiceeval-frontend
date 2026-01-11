@@ -96,42 +96,48 @@ const TestSuiteDetailView = () => {
         setShowTestCaseModal(true);
     };
 
-    const handleSaveTestCase = async (testCaseData) => {
-        try {
-            // Pack fields into metadata for V2 compliance
-            const v2TestCaseData = {
-                ...testCaseData,
-                metadata: {
-                    ...(testCaseData.metadata || {}),
-                    priority: testCaseData.priority,
-                    metrics: testCaseData.metrics,
-                    success_criteria: testCaseData.success_criteria,
-                    tags: testCaseData.tags,
-                    extra_instructions: testCaseData.extra_instructions,
-                }
-            };
+    const handleSaveTestCase = (testCaseData) => {
+        // Close modal immediately and show progress toast
+        setShowTestCaseModal(false);
+        const isEditing = !!editingTestCase;
+        const currentEditingCase = editingTestCase; // Store for the mutation
+        setEditingTestCase(null);
+        toast.info(isEditing ? "Updating test case..." : "Adding test case...");
 
-            if (editingTestCase) {
-                // Update existing test case
-                const updatedTestCases = testCases.map(tc =>
-                    (tc.test_case_id === editingTestCase.test_case_id) ? { ...tc, ...v2TestCaseData } : tc
-                );
-                await updateSuite.mutateAsync({
-                    id: suiteId,
-                    data: { test_cases: updatedTestCases },
-                });
-            } else {
-                // Add new test case
-                await addTestCase.mutateAsync({
-                    suiteId,
-                    testCase: v2TestCaseData,
-                });
+        // Pack fields into metadata for V2 compliance
+        const v2TestCaseData = {
+            ...testCaseData,
+            metadata: {
+                ...(testCaseData.metadata || {}),
+                priority: testCaseData.priority,
+                metrics: testCaseData.metrics,
+                success_criteria: testCaseData.success_criteria,
+                tags: testCaseData.tags,
+                extra_instructions: testCaseData.extra_instructions,
             }
-            setShowTestCaseModal(false);
-            setEditingTestCase(null);
-            toast.success(editingTestCase ? "Test case updated" : "Test case added");
-        } catch (error) {
-            // Error handled by global interceptor
+        };
+
+        if (isEditing) {
+            // Update existing test case
+            const updatedTestCases = testCases.map(tc =>
+                (tc.test_case_id === currentEditingCase.test_case_id) ? { ...tc, ...v2TestCaseData } : tc
+            );
+            updateSuite.mutate({
+                id: suiteId,
+                data: { test_cases: updatedTestCases },
+            }, {
+                onSuccess: () => toast.success("Test case updated"),
+                onError: () => toast.error("Failed to update test case")
+            });
+        } else {
+            // Add new test case
+            addTestCase.mutate({
+                suiteId,
+                testCase: v2TestCaseData,
+            }, {
+                onSuccess: () => toast.success("Test case added"),
+                onError: () => toast.error("Failed to add test case")
+            });
         }
     };
 

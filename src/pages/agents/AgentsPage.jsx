@@ -431,7 +431,6 @@ const AgentsPage = () => {
                 }}
                 agentId={selectedAgentForFlow}
                 onFlowGenerated={(flowData) => {
-                    console.log("Flow generated:", flowData);
                 }}
             />
 

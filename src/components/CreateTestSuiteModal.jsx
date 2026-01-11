@@ -168,6 +168,10 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Close modal immediately and show progress toast
+        onClose();
+        toast.info('Processing test suite creation in background...');
+
         // If audio type, upload files first
         if (formData.testCaseType === 'audio' && formData.audioFiles.length > 0) {
             try {
@@ -334,7 +338,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                     <option value="">Select an agent...</option>
                                     {agents?.map((agent) => (
                                         <option key={agent.agent_id} value={agent.agent_id}>
-                                            {agent.agent_name || agent.agent_id} ({agent.platform})
+                                            { (agent.name || agent.agent_name) ? `${agent.name || agent.agent_name} (${agent.agent_id})` : agent.agent_id }
                                         </option>
                                     ))}
                                 </select>

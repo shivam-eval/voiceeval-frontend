@@ -1,4 +1,4 @@
-import { X, User, Briefcase, GraduationCap, TrendingUp, Tag, Gauge, Music } from "lucide-react";
+import { X, User, Tag, Gauge, Music } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 
@@ -43,42 +43,13 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                         </div>
 
                         {/* Personal Info */}
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-6">
                             <div className="bg-gray-800 rounded-lg p-4">
                                 <div className="flex items-center gap-2 mb-2">
                                     <User className="w-4 h-4 text-teal-400" />
                                     <h4 className="text-sm font-semibold text-gray-400">Age Group</h4>
                                 </div>
                                 <p className="text-white">{persona.age_group?.replace('_', ' ')}</p>
-                            </div>
-                            <div className="bg-gray-800 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Briefcase className="w-4 h-4 text-teal-400" />
-                                    <h4 className="text-sm font-semibold text-gray-400">Occupation</h4>
-                                </div>
-                                <p className="text-white">{persona.occupation?.replace('_', ' ')}</p>
-                            </div>
-                            <div className="bg-gray-800 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <GraduationCap className="w-4 h-4 text-teal-400" />
-                                    <h4 className="text-sm font-semibold text-gray-400">Education Level</h4>
-                                </div>
-                                <p className="text-white">{persona.education_level?.replace('_', ' ')}</p>
-                            </div>
-                            <div className="bg-gray-800 rounded-lg p-4">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <TrendingUp className="w-4 h-4 text-teal-400" />
-                                    <h4 className="text-sm font-semibold text-gray-400">Confidence Score</h4>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex-1 bg-gray-700 rounded-full h-2">
-                                        <div
-                                            className="bg-teal-400 h-2 rounded-full"
-                                            style={{ width: `${(persona.confidence_score || 0) * 100}%` }}
-                                        />
-                                    </div>
-                                    <span className="text-white text-sm">{((persona.confidence_score || 0) * 100).toFixed(0)}%</span>
-                                </div>
                             </div>
                         </div>
 

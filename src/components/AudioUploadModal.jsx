@@ -62,34 +62,34 @@ const AudioUploadModal = ({
         setAudioFiles(prev => prev.filter(f => f.id !== fileId));
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         if (e) e.preventDefault();
-        
+
         if (!selectedAgentId) {
             toast.error('Please select an agent');
             return;
         }
-        
+
         if (audioFiles.length === 0) {
             toast.error('Please add at least one audio file');
             return;
         }
-        
+
+        // Close modal immediately and show progress toast
+        onClose();
+        toast.info("Uploading calls in background...");
+
         setIsUploading(true);
-        try {
-            await onSubmit({ 
-                files: audioFiles.map(f => f.file), 
-                agentId: selectedAgentId 
-            });
-            // Clear files after successful upload
-            setAudioFiles([]);
-            setSelectedAgentId(defaultAgentId);
-        } catch (error) {
+        // Trigger background processing
+        Promise.resolve(onSubmit({
+            files: audioFiles.map(f => f.file),
+            agentId: selectedAgentId
+        })).catch(error => {
             console.error('Upload error:', error);
-            toast.error(error.message || 'Failed to upload audio files');
-        } finally {
+            // Error typically handled by global interceptor
+        }).finally(() => {
             setIsUploading(false);
-        }
+        });
     };
 
     if (!isOpen) return null;

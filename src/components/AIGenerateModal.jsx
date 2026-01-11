@@ -33,7 +33,7 @@ const AIGenerateModal = ({ isOpen, onClose, onGenerate, agent, isLoading }) => {
                             Based on Agent Configuration
                         </label>
                         <div className="p-4 bg-gray-800 rounded-lg border border-gray-700">
-                            <div className="text-white font-medium">{agent?.agent_name || agent?.agent_id}</div>
+                            <div className="text-white font-medium">{ (agent?.name || agent?.agent_name) ? `${agent?.name || agent?.agent_name} (${agent?.agent_id})` : agent?.agent_id }</div>
                             <div className="text-gray-400 text-sm mt-1">
                                 Platform: {agent?.platform} | {agent?.metadata?.configuration?.tools?.length || 0} tools configured
                             </div>

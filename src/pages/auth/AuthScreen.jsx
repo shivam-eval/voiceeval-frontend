@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { loginUser, signupUser } from "../../api";
+import { loginUser } from "../../api";
 
 const AuthScreen = ({ onAuthSuccess }) => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -12,43 +11,23 @@ const AuthScreen = ({ onAuthSuccess }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) {
-        // LOGIN LOGIC: Stays the same
-        const res = await loginUser({ email, password });
-        localStorage.setItem("authToken", res.data.access_token); // Changed from "token" to "authToken"
-        localStorage.setItem("userEmail", email);
-        onAuthSuccess();
-      } else {
-        // SIGNUP LOGIC: Changed
-        await signupUser({ email, password });
-        toast.success(
-          "Account created successfully! Please log in with your credentials."
-        );
-
-        // Clear password and toggle to login view
-        setPassword("");
-        setIsLogin(true);
-      }
+      const res = await loginUser({ email, password });
+      localStorage.setItem("authToken", res.data.access_token);
+      localStorage.setItem("userEmail", email);
+      onAuthSuccess();
     } catch (err) {
       // Show user-friendly error messages
-      const errorMessage = err.response?.data?.detail || err.response?.data?.message || err.message;
-      
-      if (isLogin) {
-        if (err.response?.status === 401) {
-          toast.error("Invalid email or password. Please try again.");
-        } else if (err.response?.status === 404) {
-          toast.error("Account not found. Please check your email or sign up.");
-        } else {
-          toast.error(errorMessage || "Login failed. Please try again.");
-        }
+      const errorMessage =
+        err.response?.data?.detail ||
+        err.response?.data?.message ||
+        err.message;
+
+      if (err.response?.status === 401) {
+        toast.error("Invalid email or password. Please try again.");
+      } else if (err.response?.status === 404) {
+        toast.error("Account not found. Please check your email.");
       } else {
-        if (err.response?.status === 400) {
-          toast.error(errorMessage || "Invalid signup data. Please check your inputs.");
-        } else if (err.response?.status === 409) {
-          toast.error("An account with this email already exists. Please login instead.");
-        } else {
-          toast.error(errorMessage || "Signup failed. Please try again.");
-        }
+        toast.error(errorMessage || "Login failed. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -59,7 +38,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
         <h2 className="text-3xl font-bold text-white mb-6 text-center">
-          {isLogin ? "Welcome Back" : "Create Account"}
+          Welcome Back
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -82,18 +61,9 @@ const AuthScreen = ({ onAuthSuccess }) => {
             disabled={loading}
             className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors"
           >
-            {loading ? "Processing..." : isLogin ? "Login" : "Sign Up"}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
-        <p className="mt-6 text-gray-400 text-center">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="ml-2 text-teal-400 hover:underline focus:outline-none"
-          >
-            {isLogin ? "Sign Up" : "Login"}
-          </button>
-        </p>
       </div>
     </div>
   );

@@ -13,6 +13,7 @@ import GenerateFlowModal from "../../components/GenerateFlowModal";
 import GenerateTestSuiteModal from "../../components/GenerateTestSuiteModal";
 import CreateTestSuiteModal from "../../components/CreateTestSuiteModal";
 import FlowDiagramModal from "../../components/FlowDiagramModal";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import { useCreateTestSuite } from "../../hooks/useTestSuites";
 
 const AgentDetailPage = () => {
@@ -25,6 +26,9 @@ const AgentDetailPage = () => {
     const [selectedFlowForTestGen, setSelectedFlowForTestGen] = useState(null);
     const [showFlowDiagramModal, setShowFlowDiagramModal] = useState(false);
     const [selectedFlowForDiagram, setSelectedFlowForDiagram] = useState(null);
+    const [showReExtractConfirm, setShowReExtractConfirm] = useState(false);
+    const [showDeleteFlowConfirm, setShowDeleteFlowConfirm] = useState(false);
+    const [flowToDelete, setFlowToDelete] = useState(null);
 
     // Fetch agent data
     const { data: agent, isLoading, error, refetch } = useAgent(agentId);
@@ -60,36 +64,22 @@ const AgentDetailPage = () => {
         }
     };
 
-    const handleReExtract = async () => {
-        if (confirm("Re-extract agent configuration? This will fetch the latest configuration from the platform.")) {
-            try {
-                // Use stored values from the agent
-                // Platform might be stored as 'provider' or 'platform'
-                const platform = agent.platform || agent.provider || 'vapi';
+    const handleReExtract = () => {
+        console.log("Re-extract button clicked");
+        setShowReExtractConfirm(true);
+    };
 
-                const reExtractData = {
-                    platform: platform.toLowerCase(),
-                    agent_id: agent.agent_id,
-                };
-
-                // Add api_key - check multiple possible locations
-                const apiKey = agent.api_key ||
-                    agent.metadata?.api_key ||
-                    agent.credentials?.api_key;
-
-                if (apiKey) {
-                    reExtractData.api_key = apiKey;
-                }
-
-                await reExtractAgent.mutateAsync(reExtractData);
-
-                toast.success("Agent configuration re-extracted successfully!");
-
-                // Refetch agent data to show updated config
-                await refetch();
-            } catch (error) {
-                // Error handled by global interceptor
-            }
+    const confirmReExtract = async () => {
+        console.log("Re-extract confirmed");
+        try {
+            await deleteAgent.mutateAsync(agentId);
+            toast.success("Agent deleted. Please reconnect to re-extract.");
+            navigate("/agents");
+        } catch (error) {
+            console.error("Re-extract failed:", error);
+            // Error handled by global interceptor
+        } finally {
+            setShowReExtractConfirm(false);
         }
     };
 
@@ -119,15 +109,22 @@ const AgentDetailPage = () => {
         }, 500);
     };
 
-    const handleDeleteFlow = async (flowId) => {
-        if (confirm("Are you sure you want to delete this flow?")) {
-            try {
-                await deleteFlow.mutateAsync(flowId);
-                toast.success("Flow deleted successfully");
-                await refetchFlows();
-            } catch (error) {
-                // Error handled by global interceptor
-            }
+    const handleDeleteFlow = (flowId) => {
+        setFlowToDelete(flowId);
+        setShowDeleteFlowConfirm(true);
+    };
+
+    const confirmDeleteFlow = async () => {
+        if (!flowToDelete) return;
+        try {
+            await deleteFlow.mutateAsync(flowToDelete);
+            toast.success("Flow deleted successfully");
+            await refetchFlows();
+        } catch (error) {
+            // Error handled by global interceptor
+        } finally {
+            setShowDeleteFlowConfirm(false);
+            setFlowToDelete(null);
         }
     };
 
@@ -277,10 +274,11 @@ const AgentDetailPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                                 <div className="text-sm text-gray-400 mb-2">Platform</div>
-                                <div className="text-2xl font-bold text-white mb-2 capitalize">{agent.platform}</div>
-                                <Badge variant={getStatusBadge(agent.status)} size="sm">
-                                    {agent.status === "active" ? "Connected" : agent.status}
-                                </Badge>
+                                <div className="flex items-center mb-2">
+                                    <span className="text-2xl font-bold text-white capitalize">
+                                        {agent.provider || agent.platform}
+                                    </span>
+                                </div>
                                 <div className="text-xs text-gray-500 mt-2">
                                     Last sync: {new Date(agent.updated_at).toLocaleString()}
                                 </div>
@@ -293,7 +291,14 @@ const AgentDetailPage = () => {
                                 </div>
                                 <div className="text-sm text-gray-500">{tools.length} tools found</div>
                                 {!metadata.system_prompt && (
-                                    <Button variant="outline" size="sm" className="mt-2 w-full">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="mt-2 w-full"
+                                        onClick={handleReExtract}
+                                        disabled={agent.provider?.toLowerCase() === "custom"}
+                                        title={agent.provider?.toLowerCase() === "custom" ? "Re-extraction not available for custom platform" : ""}
+                                    >
                                         Extract Now
                                     </Button>
                                 )}
@@ -317,12 +322,6 @@ const AgentDetailPage = () => {
                                 <div className="text-2xl font-bold text-purple-400 mb-2">
                                     {flowsLoading ? "..." : flows.length}
                                 </div>
-                                <button
-                                    onClick={() => setActiveTab("flows")}
-                                    className="text-sm text-gray-500 hover:text-teal-400 transition-colors"
-                                >
-                                    View all →
-                                </button>
                             </div>
                         </div>
 
@@ -369,7 +368,8 @@ const AgentDetailPage = () => {
                                     variant="outline"
                                     className="w-full"
                                     onClick={handleReExtract}
-                                    disabled={reExtractAgent.isPending}
+                                    disabled={agent.provider?.toLowerCase() === "custom"}
+                                    title={agent.provider?.toLowerCase() === "custom" ? "Re-extraction not available for custom platform" : ""}
                                 >
                                     {reExtractAgent.isPending ? "Re-extracting..." : "Re-extract Config"}
                                 </Button>
@@ -453,11 +453,8 @@ const AgentDetailPage = () => {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-8">
-                                    <div className="text-gray-500 mb-2">No flows generated yet</div>
-                                    <Button size="sm" onClick={handleGenerateFlow}>
-                                        Generate Flow
-                                    </Button>
+                                <div className="text-center py-12">
+                                    <div className="text-gray-500">No flows generated yet</div>
                                 </div>
                             )}
                         </div>
@@ -664,6 +661,33 @@ const AgentDetailPage = () => {
                     flowName={selectedFlowForDiagram.name}
                 />
             )}
+
+            {/* Confirmation Modals */}
+            <ConfirmationModal
+                isOpen={showReExtractConfirm}
+                onClose={() => setShowReExtractConfirm(false)}
+                onConfirm={confirmReExtract}
+                title="Re-extract Agent Configuration"
+                message="Re-extract agent configuration? This will overwrite existing data."
+                confirmText="OK"
+                cancelText="Cancel"
+                isLoading={deleteAgent.isPending}
+            />
+
+            <ConfirmationModal
+                isOpen={showDeleteFlowConfirm}
+                onClose={() => {
+                    setShowDeleteFlowConfirm(false);
+                    setFlowToDelete(null);
+                }}
+                onConfirm={confirmDeleteFlow}
+                title="Delete Flow"
+                message="Are you sure you want to delete this flow?"
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+                isLoading={deleteFlow.isPending}
+            />
         </div>
     );
 };

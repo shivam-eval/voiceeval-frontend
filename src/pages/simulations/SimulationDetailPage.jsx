@@ -7,10 +7,11 @@ import {
     ChevronRight, ChevronDown, Eye, BarChart3, Hash, Activity, Star
 } from 'lucide-react';
 import { useSimulationWithLiveUpdates, useSimulationSessions, useCancelSimulation, useRerunSimulation, useDeleteSimulation } from '../../hooks/useSimulations';
-import { useBatchEvaluateSimulation, useBatchEvaluationStatus } from '../../hooks/useEvaluations';
+import { useBatchEvaluateSimulation } from '../../hooks/useEvaluations';
 import { useEvents } from '../../context/EventsContext';
 import Badge from '../../components/Badge';
 import Button from '../../components/Button';
+import { MetricCard, StatCard } from '../../components/SimulationCards';
 import { getEvaluationResults } from '../../api';
 import { useWorkflow } from '../../context/WorkFlowContext';
 
@@ -84,62 +85,102 @@ const SimulationDetailPage = () => {
         return () => unsubscribe();
     }, [simulationId, subscribe]);
 
-    // Poll task status if evaluating
-    const { data: taskStatus } = useBatchEvaluationStatus(evaluationTaskId, {
-        enabled: !!evaluationTaskId
-    });
-
-    // Handle task completion
+    // ✅ SSE Listener for Evaluation Updates
     useEffect(() => {
-        if (!taskStatus) return;
-
-        console.log('📊 Batch Evaluation Status Update:', taskStatus);
-
-        if (taskStatus.status === 'completed' && !hasNavigatedRef.current) {
-            hasNavigatedRef.current = true;
-            console.log('✅ Batch evaluation completed! Navigating to results page...');
-            setIsEvaluating(false);
-            setEvaluationTaskId(null);
-            setEvaluationProgress(null);
-            toast.success('Evaluation completed! Redirecting to results...');
-            navigate(`/evaluations/results/${simulationId}`);
-        } else if (taskStatus.status === 'failed') {
-            console.error('❌ Batch evaluation failed:', taskStatus.error);
-            setIsEvaluating(false);
-            setEvaluationTaskId(null);
-            setEvaluationProgress(null);
-            toast.error('Evaluation failed: ' + (taskStatus.error || 'Unknown error'));
-        } else if (taskStatus.progress) {
-            console.log('⏳ Evaluation progress:', taskStatus.progress);
-            setEvaluationProgress(taskStatus.progress);
+        if (!evaluationTaskId) {
+            console.log('⚠️  No evaluationTaskId set, skipping SSE subscription');
+            return;
         }
-    }, [taskStatus, simulationId]);
 
-    // Fallback: Check if evaluation exists periodically (in case task status polling fails)
-    useEffect(() => {
-        if (!isEvaluating || hasNavigatedRef.current) return;
+        console.log('🎧 Subscribed to evaluation_update for task:', evaluationTaskId);
+        console.log('🔍 Current hasNavigatedRef:', hasNavigatedRef.current);
 
-        const checkInterval = setInterval(async () => {
-            try {
-                console.log('🔍 Checking if evaluation exists...');
-                const existingEvaluation = await getEvaluationResults(simulationId);
-                if (existingEvaluation.data && existingEvaluation.data.evaluations?.length > 0) {
-                    console.log('✅ Evaluation found! Redirecting...');
+        const unsubscribe = subscribe('evaluation_update', (data) => {
+            console.log('🔔 RECEIVED evaluation_update event:', data);
+            console.log('   - Event task_id:', data.task_id);
+            console.log('   - Expected task_id:', evaluationTaskId);
+            console.log('   - Match:', data.task_id === evaluationTaskId);
+
+            // Only process events for this specific task
+            if (data.task_id !== evaluationTaskId) {
+                console.log('⏭️  Ignoring event for different task:', data.task_id);
+                return;
+            }
+
+            console.log('✅ Processing evaluation_update for our task');
+            console.log('📊 Evaluation Update:', data.status, data);
+
+            switch (data.status) {
+                case 'started':
+                    console.log('▶️  Evaluation started');
+                    toast.info('Batch evaluation started');
+                    setEvaluationProgress({
+                        total: data.total,
+                        evaluated: data.evaluated || 0,
+                        failed: 0
+                    });
+                    break;
+
+                case 'in_progress':
+                    console.log('⏳ In progress:', data.evaluated, '/', data.total);
+                    setEvaluationProgress({
+                        total: data.total,
+                        evaluated: data.evaluated,
+                        failed: data.failed || 0,
+                        current_session_id: data.current_session_id
+                    });
+                    break;
+
+                case 'completed':
+                    console.log('✅ Completed event received, hasNavigated:', hasNavigatedRef.current);
+
+                    if (hasNavigatedRef.current) {
+                        console.log('⏭️  Already navigated, ignoring');
+                        return;
+                    }
+
                     hasNavigatedRef.current = true;
+                    console.log('🎉 Evaluation completed! Preparing to redirect...');
+
+                    toast.success('Evaluation completed!');
+
+                    // Store simulationId before any async operations
+                    const currentSimId = simulationId;
+
+                    // Important: navigate FIRST
+                    console.log('🚀 Navigating to results page');
+                    navigate(`/evaluations/results/${currentSimId}`);
+
+                    // Then cleanup after navigation
+                    setTimeout(() => {
+                        console.log('🧹 Cleaning up state');
+                        setIsEvaluating(false);
+                        setEvaluationProgress(null);
+                        setEvaluationTaskId(null);
+                    }, 0);
+                    break;
+
+                case 'failed':
+                    console.error('❌ Evaluation failed:', data.error);
+                    toast.error(`Evaluation failed: ${data.error}`);
                     setIsEvaluating(false);
                     setEvaluationTaskId(null);
                     setEvaluationProgress(null);
-                    toast.success('Evaluation completed! Redirecting to results...');
-                    navigate(`/evaluations/results/${simulationId}`);
-                }
-            } catch (error) {
-                // Evaluation doesn't exist yet, continue waiting
-                console.log('⏳ Evaluation not ready yet...');
-            }
-        }, 3000); // Check every 3 seconds
+                    hasNavigatedRef.current = false;
+                    break;
 
-        return () => clearInterval(checkInterval);
-    }, [isEvaluating, simulationId]);
+                default:
+                    console.warn('⚠️  Unknown evaluation status:', data.status);
+            }
+        });
+
+        return () => {
+            if(evaluationTaskId){
+
+                unsubscribe();
+            }
+        };
+    }, [evaluationTaskId]);
 
     const toggleSession = (sessionId) => {
         setExpandedSessions(prev =>
@@ -185,8 +226,27 @@ const SimulationDetailPage = () => {
     };
 
     const handleViewEvaluation = async () => {
+        // Check if simulation is still running or has running sessions
+        if (simulation.status === 'running') {
+            toast.warning('Cannot evaluate - simulation is still running. Please wait for it to complete.');
+            return;
+        }
+
+        const runningSessions = sessions.filter(s => s.status === 'running');
+        if (runningSessions.length > 0) {
+            toast.warning(`Cannot evaluate - ${runningSessions.length} session(s) still running. Please wait for completion.`);
+            return;
+        }
+
+        const completedSessions = sessions.filter(s => s.status === 'completed');
+        if (completedSessions.length === 0) {
+            toast.info('No completed sessions to evaluate');
+            return;
+        }
+
         setIsEvaluating(true);
         setEvaluationProgress(null);
+        hasNavigatedRef.current = false;
 
         try {
             // First, check if evaluation already exists
@@ -204,22 +264,39 @@ const SimulationDetailPage = () => {
                 console.log('No existing evaluation found, creating new one');
             }
 
-            // No existing evaluation, call batch evaluate API
+            console.log('🚀 Starting batch evaluation...');
+            console.log(`   - Completed sessions: ${completedSessions.length}`);
+
+            // Call batch evaluate API
             const result = await batchEvaluate.mutateAsync({
                 simulationId,
                 configOverrides: {}
             });
 
+            console.log('📋 Batch evaluate response:', result);
+
             // Check if cached results returned immediately
             if (result.cached || result.status === 'completed') {
+                console.log('✅ Evaluation already completed (cached)');
                 setIsEvaluating(false);
-                navigate(`/evaluations/results/${simulationId}`);
+
+                // If 0 sessions were evaluated, show message instead of navigating
+                if (result.total === 0) {
+                    toast.info('No sessions were evaluated');
+                } else {
+                    navigate(`/evaluations/results/${simulationId}`);
+                }
             } else {
-                // Start polling with task_id
+                const timestamp = new Date().toISOString();
+                console.log(`⏳ [${timestamp}] Setting evaluation task ID:`, result.task_id);
+                console.log('   This will trigger SSE subscription in useEffect');
+
+                // Set task_id - this will trigger the useEffect to subscribe to SSE events
                 setEvaluationTaskId(result.task_id);
             }
         } catch (error) {
             // Error handled by global interceptor
+            console.error('❌ Evaluation failed:', error);
             setIsEvaluating(false);
         }
     };
@@ -478,52 +555,52 @@ const SimulationDetailPage = () => {
 
                 {/* Metrics Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800/50">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-lg bg-teal-400/20 flex items-center justify-center">
-                                <Hash className="w-5 h-5 text-teal-400" />
-                            </div>
-                            <div className="text-sm text-gray-400">Simulation ID</div>
-                        </div>
+                    <MetricCard
+                        icon={Hash}
+                        iconColor="text-teal-400"
+                        iconBgColor="bg-teal-400/20"
+                        label="Simulation ID"
+                    >
                         <code className="text-xs text-teal-400 bg-gray-800 px-2 py-1 rounded block mt-2">
                             {simulation.simulation_id}
                         </code>
-                    </div>
+                    </MetricCard>
 
-                    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800/50">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-lg bg-blue-400/20 flex items-center justify-center">
-                                <Activity className="w-5 h-5 text-blue-400" />
-                            </div>
-                            <div className="text-sm text-gray-400">Status</div>
-                        </div>
+                    <MetricCard
+                        icon={Activity}
+                        iconColor="text-blue-400"
+                        iconBgColor="bg-blue-400/20"
+                        label="Status"
+                    >
                         <div className="mt-2">
                             <Badge variant={getStatusBadgeVariant(simulation.status)} className="text-base">
                                 {simulation.status}
                             </Badge>
                         </div>
-                    </div>
+                    </MetricCard>
 
-                    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800/50">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-lg bg-purple-400/20 flex items-center justify-center">
-                                <Clock className="w-5 h-5 text-purple-400" />
-                            </div>
-                            <div className="text-sm text-gray-400">Started</div>
+                    <MetricCard
+                        icon={Clock}
+                        iconColor="text-purple-400"
+                        iconBgColor="bg-purple-400/20"
+                        label="Started"
+                    >
+                        <div className="text-sm text-white mt-2">
+                            {formatDateTime(simulation.timestamps?.started_at || simulation.timestamps?.created_at)}
                         </div>
-                        <div className="text-sm text-white mt-2">{formatDateTime(simulation.timestamps?.started_at || simulation.timestamps?.created_at)}</div>
                         {simulation.metrics?.total_duration_ms && (
-                            <div className="text-xs text-gray-400 mt-1">Duration: {formatDuration(simulation.metrics.total_duration_ms)}</div>
-                        )}
-                    </div>
-
-                    <div className="bg-gray-900 rounded-xl p-6 border border-gray-800/50">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-lg bg-yellow-400/20 flex items-center justify-center">
-                                <Star className="w-5 h-5 text-yellow-400" />
+                            <div className="text-xs text-gray-400 mt-1">
+                                Duration: {formatDuration(simulation.metrics.total_duration_ms)}
                             </div>
-                            <div className="text-sm text-gray-400">Overall Score</div>
-                        </div>
+                        )}
+                    </MetricCard>
+
+                    <MetricCard
+                        icon={Star}
+                        iconColor="text-yellow-400"
+                        iconBgColor="bg-yellow-400/20"
+                        label="Overall Score"
+                    >
                         {simulation.metrics?.overall_score !== null && simulation.metrics?.overall_score !== undefined ? (
                             <div className={`text-3xl font-bold mt-2 ${simulation.metrics.overall_score >= 0.9 ? 'text-green-400' :
                                 simulation.metrics.overall_score >= 0.7 ? 'text-yellow-400' :
@@ -534,53 +611,53 @@ const SimulationDetailPage = () => {
                         ) : (
                             <div className="text-2xl text-gray-500 mt-2">-</div>
                         )}
-                    </div>
+                    </MetricCard>
                 </div>
 
                 {/* Quick Stats */}
                 {simulation.status === 'completed' && (
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-                        <div className="bg-gray-900 rounded-lg p-4 border border-gray-800/50">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Users className="w-4 h-4 text-gray-400" />
-                                <span className="text-xs text-gray-400">Total Sessions</span>
-                            </div>
-                            <div className="text-2xl font-bold text-white">{simulation.progress?.total_sessions || 0}</div>
-                        </div>
-                        <div className="bg-gray-900 rounded-lg p-4 border border-green-500/20">
-                            <div className="flex items-center gap-2 mb-1">
-                                <CheckCircle className="w-4 h-4 text-green-400" />
-                                <span className="text-xs text-gray-400">Passed</span>
-                            </div>
-                            <div className="text-2xl font-bold text-green-400">
-                                {(simulation.progress?.completed && simulation.progress.completed > 0)
-                                    ? simulation.progress.completed
-                                    : sessions.filter(s => s.status === 'completed').length || 0}
-                            </div>
-                        </div>
-                        <div className="bg-gray-900 rounded-lg p-4 border border-red-500/20">
-                            <div className="flex items-center gap-2 mb-1">
-                                <XCircle className="w-4 h-4 text-red-400" />
-                                <span className="text-xs text-gray-400">Failed</span>
-                            </div>
-                            <div className="text-2xl font-bold text-red-400">
-                                {Math.max(0, simulation.progress?.failed || sessions.filter(s => s.status === 'failed').length || 0)}
-                            </div>
-                        </div>
-                        <div className="bg-gray-900 rounded-lg p-4 border border-gray-800/50">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Zap className="w-4 h-4 text-yellow-400" />
-                                <span className="text-xs text-gray-400">Avg Latency</span>
-                            </div>
-                            <div className="text-2xl font-bold text-white">-</div>
-                        </div>
-                        <div className="bg-gray-900 rounded-lg p-4 border border-orange-500/20">
-                            <div className="flex items-center gap-2 mb-1">
-                                <AlertTriangle className="w-4 h-4 text-orange-400" />
-                                <span className="text-xs text-gray-400">Issues</span>
-                            </div>
-                            <div className="text-2xl font-bold text-orange-400">-</div>
-                        </div>
+                        <StatCard
+                            icon={Users}
+                            label="Total Sessions"
+                            value={simulation.progress?.total_sessions || 0}
+                        />
+
+                        <StatCard
+                            icon={CheckCircle}
+                            iconColor="text-green-400"
+                            label="Passed"
+                            value={(simulation.progress?.completed && simulation.progress.completed > 0)
+                                ? simulation.progress.completed
+                                : sessions.filter(s => s.status === 'completed').length || 0}
+                            valueColor="text-green-400"
+                            borderColor="border-green-500/20"
+                        />
+
+                        <StatCard
+                            icon={XCircle}
+                            iconColor="text-red-400"
+                            label="Failed"
+                            value={Math.max(0, simulation.progress?.failed || sessions.filter(s => s.status === 'failed').length || 0)}
+                            valueColor="text-red-400"
+                            borderColor="border-red-500/20"
+                        />
+
+                        <StatCard
+                            icon={Zap}
+                            iconColor="text-yellow-400"
+                            label="Avg Latency"
+                            value="-"
+                        />
+
+                        <StatCard
+                            icon={AlertTriangle}
+                            iconColor="text-orange-400"
+                            label="Issues"
+                            value="-"
+                            valueColor="text-orange-400"
+                            borderColor="border-orange-500/20"
+                        />
                     </div>
                 )}
 

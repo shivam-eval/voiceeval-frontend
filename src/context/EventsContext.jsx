@@ -1,73 +1,92 @@
-import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
-import { toast } from 'react-toastify';
+import React, {
+    createContext,
+    useContext,
+    useEffect,
+    useState,
+    useRef,
+    useCallback
+} from 'react';
 
 const EventsContext = createContext(null);
 
 export const useEvents = () => {
-    const context = useContext(EventsContext);
-    if (!context) {
+    const ctx = useContext(EventsContext);
+    if (!ctx) {
         throw new Error('useEvents must be used within an EventsProvider');
     }
-    return context;
+    return ctx;
 };
 
 export const EventsProvider = ({ children }) => {
     const [queueStats, setQueueStats] = useState(null);
     const [isConnected, setIsConnected] = useState(false);
 
-    // Use ref to store listeners to avoid re-creating subscribe function
+    // eventName -> [callbacks]
     const listenersRef = useRef({});
 
     useEffect(() => {
-        const eventsUrl = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1"}/events/stream`;
-        let eventSource = null;
-        let retryTimeout = null;
+        const eventsUrl =
+            `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api/v1'}/events/stream`;
 
-        const handleEvent = (message) => {
-            const { event, data } = message;
-            const parsedData = typeof data === 'string' ? JSON.parse(data) : data;
-
-            // Global handlers
-            if (event === 'queue_update') {
-                setQueueStats(parsedData);
-            }
-
-            // Dispatch to registered listeners
-            if (listenersRef.current[event]) {
-                listenersRef.current[event].forEach(callback => callback(parsedData));
-            }
-
-            // Dispatch generic for debug
-            console.debug(`Event received: ${event}`, parsedData);
-        };
+        let eventSource;
+        let retryTimeout;
 
         const connect = () => {
+            const connectionId = `sse_${Date.now()}`;
+            console.log(`🔌 [${connectionId}] Connecting to SSE`, eventsUrl);
+
             eventSource = new EventSource(eventsUrl);
 
             eventSource.onopen = () => {
-                console.log('📡 SSE Connected');
+                console.log(`📡 [${connectionId}] SSE connected`);
                 setIsConnected(true);
             };
 
-            eventSource.onmessage = (event) => {
+            const dispatch = (eventName) => (e) => {
                 try {
-                    const parsed = JSON.parse(event.data);
+                    const payload = JSON.parse(e.data);
 
-                    // Handle Internal Keep-alive/Comments
-                    if (parsed.comment) return;
+                    console.log(`📨 SSE [${eventName}]`, payload);
+                    const listeners = listenersRef.current[eventName] || [];
 
-                    handleEvent(parsed);
+                    if (eventName === 'queue_update') {
+                        setQueueStats(payload);
+                    }
+
+                    listeners.forEach((cb, idx) => {
+                        try {
+                            cb(payload);
+                        } catch (err) {
+                            console.error(
+                                `❌ Error in ${eventName} listener #${idx + 1}`,
+                                err
+                            );
+                        }
+                    });
                 } catch (err) {
-                    console.warn('Failed to parse SSE message:', event.data);
+                    console.error('❌ Failed to parse SSE payload:', e.data, err);
                 }
             };
 
+            // ✅ Proper SSE event routing
+            eventSource.addEventListener(
+                'evaluation_update',
+                dispatch('evaluation_update')
+            );
+            eventSource.addEventListener(
+                'simulation_update',
+                dispatch('simulation_update')
+            );
+            eventSource.addEventListener(
+                'queue_update',
+                dispatch('queue_update')
+            );
+
             eventSource.onerror = (err) => {
-                console.error('SSE Error:', err);
+                console.error(`❌ [${connectionId}] SSE error`, err);
                 setIsConnected(false);
                 eventSource.close();
 
-                // Retry connection
                 retryTimeout = setTimeout(connect, 3000);
             };
         };
@@ -78,30 +97,38 @@ export const EventsProvider = ({ children }) => {
             if (eventSource) eventSource.close();
             if (retryTimeout) clearTimeout(retryTimeout);
         };
-    }, []); // Empty dependency array - only run once
+    }, []);
 
-    const subscribe = useCallback((event, callback) => {
-        // Add listener
-        listenersRef.current = {
-            ...listenersRef.current,
-            [event]: [...(listenersRef.current[event] || []), callback]
-        };
+    const subscribe = useCallback((eventName, callback) => {
+        listenersRef.current[eventName] = [
+            ...(listenersRef.current[eventName] || []),
+            callback
+        ];
 
-        // Return unsubscribe function
+        console.log(
+            `➕ Subscribed to '${eventName}' (${listenersRef.current[eventName].length})`
+        );
+
         return () => {
-            listenersRef.current = {
-                ...listenersRef.current,
-                [event]: (listenersRef.current[event] || []).filter(cb => cb !== callback)
-            };
+            listenersRef.current[eventName] =
+                (listenersRef.current[eventName] || []).filter(
+                    (cb) => cb !== callback
+                );
+
+            console.log(
+                `➖ Unsubscribed from '${eventName}' (${listenersRef.current[eventName].length})`
+            );
         };
-    }, []); // Empty dependency array - function never changes
+    }, []);
 
     return (
-        <EventsContext.Provider value={{
-            isConnected,
-            queueStats,
-            subscribe
-        }}>
+        <EventsContext.Provider
+            value={{
+                isConnected,
+                queueStats,
+                subscribe
+            }}
+        >
             {children}
         </EventsContext.Provider>
     );

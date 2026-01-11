@@ -80,24 +80,7 @@ const GenerateFlowModal = ({ isOpen, onClose, agentId, agentMongoId, onFlowGener
                     {/* Step 0: Configuration */}
                     {generationStep === 0 && (
                         <div className="space-y-6">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Select Agent <span className="text-red-400">*</span>
-                                </label>
-                                <select
-                                    value={selectedAgentId}
-                                    onChange={(e) => setSelectedAgentId(e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                                    disabled={!!agentId}
-                                >
-                                    <option value="">Select an agent...</option>
-                                    {agentsData?.agents?.map((agent) => (
-                                        <option key={agent.agent_id} value={agent.agent_id}>
-                                            {agent.agent_name || agent.agent_id} ({agent.platform})
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
+                            
 
                             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
                                 <p className="text-sm text-blue-400">

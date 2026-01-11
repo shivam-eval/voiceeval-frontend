@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { BarChart3, Settings, FileText, Bot, ArrowLeft, Zap, TestTube, Plus } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
-import { useAgent, useTestAgent, useDeleteAgent } from "../../hooks/useAgents";
+import { useAgent, useTestAgent, useDeleteAgent, useReExtractAgent } from "../../hooks/useAgents";
 import { useTestSuites } from "../../hooks/useTestSuites";
 import { useAgentFlows, useDeleteFlow } from "../../hooks/useFlows";
 import { useGenerateFlow } from "../../hooks/useGeneration";
@@ -43,6 +43,8 @@ const AgentDetailPage = () => {
     const generateFlow = useGenerateFlow();
     const deleteFlow = useDeleteFlow();
     const createTestSuite = useCreateTestSuite();
+    const reExtractAgent = useReExtractAgent();
+
 
     // Handler functions
     const handleTestConnection = async () => {
@@ -59,16 +61,38 @@ const AgentDetailPage = () => {
     };
 
     const handleReExtract = async () => {
-        if (confirm("Re-extract agent configuration? This will overwrite existing data.")) {
+        if (confirm("Re-extract agent configuration? This will fetch the latest configuration from the platform.")) {
             try {
-                await deleteAgent.mutateAsync(agentId);
-                toast.success("Agent deleted. Please reconnect to re-extract.");
-                navigate("/agents");
+                // Use stored values from the agent
+                // Platform might be stored as 'provider' or 'platform'
+                const platform = agent.platform || agent.provider || 'vapi';
+
+                const reExtractData = {
+                    platform: platform.toLowerCase(),
+                    agent_id: agent.agent_id,
+                };
+
+                // Add api_key - check multiple possible locations
+                const apiKey = agent.api_key ||
+                    agent.metadata?.api_key ||
+                    agent.credentials?.api_key;
+
+                if (apiKey) {
+                    reExtractData.api_key = apiKey;
+                }
+
+                await reExtractAgent.mutateAsync(reExtractData);
+
+                toast.success("Agent configuration re-extracted successfully!");
+
+                // Refetch agent data to show updated config
+                await refetch();
             } catch (error) {
                 // Error handled by global interceptor
             }
         }
     };
+
 
     const handleGenerateFlow = () => {
         setShowGenerateFlowModal(true);
@@ -345,9 +369,11 @@ const AgentDetailPage = () => {
                                     variant="outline"
                                     className="w-full"
                                     onClick={handleReExtract}
+                                    disabled={reExtractAgent.isPending}
                                 >
-                                    Re-extract Config
+                                    {reExtractAgent.isPending ? "Re-extracting..." : "Re-extract Config"}
                                 </Button>
+
                                 <Button
                                     variant="outline"
                                     className="w-full"

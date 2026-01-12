@@ -242,17 +242,62 @@ const CanonicalFlowDiagram = ({ mermaidCode }) => {
   };
 
   const handleDownload = () => {
-    if (svgRef.current) {
-      const svgData = new XMLSerializer().serializeToString(svgRef.current);
-      const blob = new Blob([svgData], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'flow-diagram.svg';
-      link.click();
-      URL.revokeObjectURL(url);
+    if (!svgRef.current) {
+      console.error("SVG not found");
+      return;
     }
+
+    const svg = svgRef.current;
+
+    // Clone SVG so we don’t mutate original
+    const clonedSvg = svg.cloneNode(true);
+
+    // Ensure SVG namespace
+    clonedSvg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+
+    const viewBox = svg.viewBox.baseVal;
+    const width = viewBox.width || svg.getBoundingClientRect().width;
+    const height = viewBox.height || svg.getBoundingClientRect().height;
+
+    // Create canvas
+    const canvas = document.createElement("canvas");
+    const scale = 2; // retina quality
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+
+    const ctx = canvas.getContext("2d");
+    ctx.scale(scale, scale);
+
+    // Dark background (match Mermaid theme)
+    ctx.fillStyle = "#111827";
+    ctx.fillRect(0, 0, width, height);
+
+    // Convert SVG → Image via DATA URL (important!)
+    const svgString = new XMLSerializer().serializeToString(clonedSvg);
+    const encoded = encodeURIComponent(svgString);
+    const dataUrl = `data:image/svg+xml;charset=utf-8,${encoded}`;
+
+    const img = new Image();
+    img.onload = () => {
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const pngUrl = canvas.toDataURL("image/png");
+
+      const link = document.createElement("a");
+      link.href = pngUrl;
+      link.download = "flow-diagram.png";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    img.onerror = (e) => {
+      console.error("PNG export failed", e);
+    };
+
+    img.src = dataUrl;
   };
+
 
   return (
     <div className="relative bg-gradient-to-br from-gray-900 to-gray-950 rounded-2xl border border-gray-800/50 h-full flex flex-col">

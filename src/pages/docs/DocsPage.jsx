@@ -114,7 +114,7 @@ const DocsPage = () => {
 
       <div className="max-w-screen-2xl mx-auto flex">
         {/* Sidebar Navigation */}
-        <aside className="w-64 border-r border-gray-800/50 h-[calc(100vh-73px)] sticky top-[73px] overflow-y-auto">
+        <aside className="w-72 border-r border-gray-800/50 h-[calc(100vh-73px)] sticky top-[73px] overflow-y-auto">
           <nav className="p-6 space-y-6">
             {navigation.map((section) => (
               <div key={section.title}>

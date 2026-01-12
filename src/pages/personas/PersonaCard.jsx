@@ -30,21 +30,6 @@ const PersonaCard = ({ persona, onClick }) => {
                 {persona.description}
             </p>
 
-            {/* Demographics - The new structure only shows age_group in the header,
-                and removes native_language and occupation badges here. */}
-            {/* <div className="flex flex-wrap gap-2 mb-4">
-                <Badge variant="default" size="sm">
-                    {persona.native_language}
-                </Badge>
-                <Badge variant="default" size="sm">
-                    {persona.age_group?.replace('_', ' ')}
-                </Badge>
-                {persona.occupation && (
-                    <Badge variant="default" size="sm">
-                        {persona.occupation.replace('_', ' ')}
-                    </Badge>
-                )}
-            </div>
 
             {/* Voice Profile */}
             <div className="bg-gray-800 rounded-lg p-3 mb-4">

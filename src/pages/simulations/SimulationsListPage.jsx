@@ -5,10 +5,12 @@ import { toast } from 'react-toastify';
 import { useSimulations, useDeleteSimulation, useRerunSimulation, useCancelSimulation } from '../../hooks/useSimulations';
 import Badge from '../../components/Badge';
 import Button from '../../components/Button';
+import RunSimulationModal from '../../components/RunSimulationModal';
 
 const SimulationsListPage = () => {
     const navigate = useNavigate();
     const [selectedSimulations, setSelectedSimulations] = useState([]);
+    const [showRunModal, setShowRunModal] = useState(false);
     const [filters, setFilters] = useState({
         search: '',
         status: '',
@@ -142,11 +144,11 @@ const SimulationsListPage = () => {
                         <p className="text-gray-400">View and manage all simulation sessions</p>
                     </div>
                     <Button
-                        onClick={() => navigate('/simulation/evaluator')}
+                        onClick={() => setShowRunModal(true)}
                         className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
                     >
                         <Play className="w-5 h-5" />
-                        Run New Simulation
+                        Create New Session
                     </Button>
                 </div>
 
@@ -197,8 +199,8 @@ const SimulationsListPage = () => {
                             <Play className="w-16 h-16 mx-auto text-gray-600 mb-4" />
                             <h3 className="text-xl font-semibold text-white mb-2">No simulations yet</h3>
                             <p className="text-gray-400 mb-6">Run your first simulation to see results here</p>
-                            <Button onClick={() => navigate('/simulation/evaluator')}>
-                                Run New Simulation
+                            <Button onClick={() => setShowRunModal(true)}>
+                                Create New Session
                             </Button>
                         </div>
                     ) : (
@@ -378,6 +380,11 @@ const SimulationsListPage = () => {
                     )}
                 </div>
             </div>
+
+            <RunSimulationModal
+                isOpen={showRunModal}
+                onClose={() => setShowRunModal(false)}
+            />
         </div>
     );
 };

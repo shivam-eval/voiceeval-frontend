@@ -7,7 +7,6 @@ import Table from "../../components/Table";
 import Badge from "../../components/Badge";
 import Button from "../../components/Button";
 import CreateTestSuiteModal from "../../components/CreateTestSuiteModal";
-import ImportTestSuiteModal from "../../components/ImportTestSuiteModal";
 
 const TestCasesPage = () => {
     const navigate = useNavigate();
@@ -20,7 +19,6 @@ const TestCasesPage = () => {
 
     // Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [showImportModal, setShowImportModal] = useState(false);
 
     // Fetch test suites
     const { data, isLoading, error } = useTestSuites({
@@ -37,14 +35,16 @@ const TestCasesPage = () => {
     const cloneTestSuite = useCloneTestSuite();
     const createTestSuite = useCreateTestSuite();
 
-    const handleCreateSuite = async (formData) => {
-        try {
-            await createTestSuite.mutateAsync(formData);
-            setShowCreateModal(false);
-            toast.success("Test suite created successfully");
-        } catch (error) {
-            // Error handled by global interceptor
-        }
+    const handleCreateSuite = (formData) => {
+        // Close modal immediately
+        setShowCreateModal(false);
+        toast.info("Creating test suite in background...");
+
+        createTestSuite.mutate(formData, {
+            onSuccess: () => {
+                toast.success("Test suite created successfully");
+            }
+        });
     };
 
 
@@ -148,21 +148,10 @@ const TestCasesPage = () => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-4xl font-bold text-white mb-2">Test Sets</h1>
+                        <h1 className="text-4xl font-bold text-white mb-2">Test Suites</h1>
                         <p className="text-gray-400">Create and manage test suites for your agents</p>
                     </div>
                     <div className="flex gap-3">
-                        <Button
-                            variant="outline"
-                            onClick={() => setShowImportModal(true)}
-                            icon={
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                                </svg>
-                            }
-                        >
-                            Import Test Suite
-                        </Button>
                         <Button
                             onClick={() => setShowCreateModal(true)}
                             icon={
@@ -200,7 +189,7 @@ const TestCasesPage = () => {
                             <option value="">All Agents</option>
                             {agentsData?.agents?.map((agent) => (
                                 <option key={agent.agent_id} value={agent.agent_id}>
-                                    {agent.agent_name || agent.agent_id}
+                                    { (agent?.name || agent?.agent_name) ? `${agent?.name || agent?.agent_name} (${agent?.agent_id})` : agent?.agent_id }
                                 </option>
                             ))}
                         </select>
@@ -299,12 +288,6 @@ const TestCasesPage = () => {
                 agents={agentsData?.agents || []}
             />
 
-            {/* Import Test Suite Modal */}
-            <ImportTestSuiteModal
-                isOpen={showImportModal}
-                onClose={() => setShowImportModal(false)}
-                onSuccess={() => setShowImportModal(false)}
-            />
         </div>
     );
 };

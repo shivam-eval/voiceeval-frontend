@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { BarChart3, Settings, FileText, Bot, ArrowLeft, Zap, TestTube, Plus } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
-import { useAgent, useTestAgent, useDeleteAgent } from "../../hooks/useAgents";
+import { useAgent, useTestAgent, useDeleteAgent, useReExtractAgent } from "../../hooks/useAgents";
 import { useTestSuites } from "../../hooks/useTestSuites";
 import { useAgentFlows, useDeleteFlow } from "../../hooks/useFlows";
 import { useGenerateFlow } from "../../hooks/useGeneration";
@@ -13,6 +13,7 @@ import GenerateFlowModal from "../../components/GenerateFlowModal";
 import GenerateTestSuiteModal from "../../components/GenerateTestSuiteModal";
 import CreateTestSuiteModal from "../../components/CreateTestSuiteModal";
 import FlowDiagramModal from "../../components/FlowDiagramModal";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import { useCreateTestSuite } from "../../hooks/useTestSuites";
 
 const AgentDetailPage = () => {
@@ -25,6 +26,9 @@ const AgentDetailPage = () => {
     const [selectedFlowForTestGen, setSelectedFlowForTestGen] = useState(null);
     const [showFlowDiagramModal, setShowFlowDiagramModal] = useState(false);
     const [selectedFlowForDiagram, setSelectedFlowForDiagram] = useState(null);
+    const [showReExtractConfirm, setShowReExtractConfirm] = useState(false);
+    const [showDeleteFlowConfirm, setShowDeleteFlowConfirm] = useState(false);
+    const [flowToDelete, setFlowToDelete] = useState(null);
 
     // Fetch agent data
     const { data: agent, isLoading, error, refetch } = useAgent(agentId);
@@ -43,6 +47,8 @@ const AgentDetailPage = () => {
     const generateFlow = useGenerateFlow();
     const deleteFlow = useDeleteFlow();
     const createTestSuite = useCreateTestSuite();
+    const reExtractAgent = useReExtractAgent();
+
 
     // Handler functions
     const handleTestConnection = async () => {
@@ -58,17 +64,25 @@ const AgentDetailPage = () => {
         }
     };
 
-    const handleReExtract = async () => {
-        if (confirm("Re-extract agent configuration? This will overwrite existing data.")) {
-            try {
-                await deleteAgent.mutateAsync(agentId);
-                toast.success("Agent deleted. Please reconnect to re-extract.");
-                navigate("/agents");
-            } catch (error) {
-                // Error handled by global interceptor
-            }
+    const handleReExtract = () => {
+        console.log("Re-extract button clicked");
+        setShowReExtractConfirm(true);
+    };
+
+    const confirmReExtract = async () => {
+        console.log("Re-extract confirmed");
+        try {
+            await deleteAgent.mutateAsync(agentId);
+            toast.success("Agent deleted. Please reconnect to re-extract.");
+            navigate("/agents");
+        } catch (error) {
+            console.error("Re-extract failed:", error);
+            // Error handled by global interceptor
+        } finally {
+            setShowReExtractConfirm(false);
         }
     };
+
 
     const handleGenerateFlow = () => {
         setShowGenerateFlowModal(true);
@@ -95,15 +109,22 @@ const AgentDetailPage = () => {
         }, 500);
     };
 
-    const handleDeleteFlow = async (flowId) => {
-        if (confirm("Are you sure you want to delete this flow?")) {
-            try {
-                await deleteFlow.mutateAsync(flowId);
-                toast.success("Flow deleted successfully");
-                await refetchFlows();
-            } catch (error) {
-                // Error handled by global interceptor
-            }
+    const handleDeleteFlow = (flowId) => {
+        setFlowToDelete(flowId);
+        setShowDeleteFlowConfirm(true);
+    };
+
+    const confirmDeleteFlow = async () => {
+        if (!flowToDelete) return;
+        try {
+            await deleteFlow.mutateAsync(flowToDelete);
+            toast.success("Flow deleted successfully");
+            await refetchFlows();
+        } catch (error) {
+            // Error handled by global interceptor
+        } finally {
+            setShowDeleteFlowConfirm(false);
+            setFlowToDelete(null);
         }
     };
 
@@ -253,10 +274,11 @@ const AgentDetailPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                                 <div className="text-sm text-gray-400 mb-2">Platform</div>
-                                <div className="text-2xl font-bold text-white mb-2 capitalize">{agent.platform}</div>
-                                <Badge variant={getStatusBadge(agent.status)} size="sm">
-                                    {agent.status === "active" ? "Connected" : agent.status}
-                                </Badge>
+                                <div className="flex items-center mb-2">
+                                    <span className="text-2xl font-bold text-white capitalize">
+                                        {agent.provider || agent.platform}
+                                    </span>
+                                </div>
                                 <div className="text-xs text-gray-500 mt-2">
                                     Last sync: {new Date(agent.updated_at).toLocaleString()}
                                 </div>
@@ -269,7 +291,14 @@ const AgentDetailPage = () => {
                                 </div>
                                 <div className="text-sm text-gray-500">{tools.length} tools found</div>
                                 {!metadata.system_prompt && (
-                                    <Button variant="outline" size="sm" className="mt-2 w-full">
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="mt-2 w-full"
+                                        onClick={handleReExtract}
+                                        disabled={agent.provider?.toLowerCase() === "custom"}
+                                        title={agent.provider?.toLowerCase() === "custom" ? "Re-extraction not available for custom platform" : ""}
+                                    >
                                         Extract Now
                                     </Button>
                                 )}
@@ -293,12 +322,6 @@ const AgentDetailPage = () => {
                                 <div className="text-2xl font-bold text-purple-400 mb-2">
                                     {flowsLoading ? "..." : flows.length}
                                 </div>
-                                <button
-                                    onClick={() => setActiveTab("flows")}
-                                    className="text-sm text-gray-500 hover:text-teal-400 transition-colors"
-                                >
-                                    View all →
-                                </button>
                             </div>
                         </div>
 
@@ -345,9 +368,12 @@ const AgentDetailPage = () => {
                                     variant="outline"
                                     className="w-full"
                                     onClick={handleReExtract}
+                                    disabled={agent.provider?.toLowerCase() === "custom"}
+                                    title={agent.provider?.toLowerCase() === "custom" ? "Re-extraction not available for custom platform" : ""}
                                 >
-                                    Re-extract Config
+                                    {reExtractAgent.isPending ? "Re-extracting..." : "Re-extract Config"}
                                 </Button>
+
                                 <Button
                                     variant="outline"
                                     className="w-full"
@@ -427,11 +453,8 @@ const AgentDetailPage = () => {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="text-center py-8">
-                                    <div className="text-gray-500 mb-2">No flows generated yet</div>
-                                    <Button size="sm" onClick={handleGenerateFlow}>
-                                        Generate Flow
-                                    </Button>
+                                <div className="text-center py-12">
+                                    <div className="text-gray-500">No flows generated yet</div>
                                 </div>
                             )}
                         </div>
@@ -638,6 +661,33 @@ const AgentDetailPage = () => {
                     flowName={selectedFlowForDiagram.name}
                 />
             )}
+
+            {/* Confirmation Modals */}
+            <ConfirmationModal
+                isOpen={showReExtractConfirm}
+                onClose={() => setShowReExtractConfirm(false)}
+                onConfirm={confirmReExtract}
+                title="Re-extract Agent Configuration"
+                message="Re-extract agent configuration? This will overwrite existing data."
+                confirmText="OK"
+                cancelText="Cancel"
+                isLoading={deleteAgent.isPending}
+            />
+
+            <ConfirmationModal
+                isOpen={showDeleteFlowConfirm}
+                onClose={() => {
+                    setShowDeleteFlowConfirm(false);
+                    setFlowToDelete(null);
+                }}
+                onConfirm={confirmDeleteFlow}
+                title="Delete Flow"
+                message="Are you sure you want to delete this flow?"
+                confirmText="Delete"
+                cancelText="Cancel"
+                variant="danger"
+                isLoading={deleteFlow.isPending}
+            />
         </div>
     );
 };

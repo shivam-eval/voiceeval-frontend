@@ -28,7 +28,7 @@ uv add voiceeval-sdk`}
 
 client = Client(
     api_key="your_api_key_here",
-    # base_url="https://api.voiceeval.com/v1/traces"
+    project_name="my_livekit_agent"  # Required: identifies your project
 )`}
         </CodeBlock>
 
@@ -37,10 +37,10 @@ client = Client(
             <p className="text-gray-400 text-sm mb-4">You can also provide configuration via environment variables:</p>
             <ul className="list-disc list-inside space-y-2 text-sm text-gray-300 ml-2 mb-4">
                 <li><code className="text-teal-400">VOICE_EVAL_API_KEY</code>: Your API key.</li>
-                <li><code className="text-teal-400">VOICE_EVAL_BASE_URL</code>: Trace collector URL (default: <code>https://api.voiceeval.com/v1/traces</code>).</li>
+                <li><code className="text-teal-400">VOICE_EVAL_PROJECT_NAME</code>: Your project identifier.</li>
             </ul>
-            <p className="text-gray-400 text-sm mb-2">If environment variables are set, you can initialize the client without arguments:</p>
-            <CodeBlock language="python">{`client = Client()`}</CodeBlock>
+            <p className="text-gray-400 text-sm mb-2">If environment variables are set, you can initialize the client with minimal arguments:</p>
+            <CodeBlock language="python">{`client = Client(project_name="my_livekit_agent")`}</CodeBlock>
         </div>
 
 
@@ -76,19 +76,27 @@ response = client_openai.chat.completions.create(
         <p className="text-gray-300 mb-4">
             For functions that do not directly call LLMs but contain important logic (such as RAG retrieval or preprocessing), you can use the <code>@observe</code> decorator.
         </p>
+        <p className="text-gray-300 mb-4">
+            The <code>name_override</code> parameter accepts a string that can represent any method, task, or logical operation you want to track. Use descriptive names like <code>"document_retrieval"</code>, <code>"preprocessing"</code>, or <code>"context_building"</code> to identify different stages in your pipeline.
+        </p>
         <CodeBlock language="python">
             {`from voiceeval import observe
 
-@observe(name_override="document_retrieval")
+@observe(name_override="document_retrieval")  # Descriptive name for this operation
 def retrieve_documents(query: str):
     # Logic to retrieve documents
-    return ["doc1", "doc2"]`}
+    return ["doc1", "doc2"]
+
+@observe(name_override="context_building")
+def build_context(docs: list):
+    # Process and combine documents into context
+    return " ".join(docs)`}
         </CodeBlock>
 
         {/* Configuration Reference */}
         <h2 className="text-2xl font-bold mt-12 mb-4 text-white">Configuration Reference</h2>
         <div className="bg-dark-panel border border-gray-800/50 rounded-lg p-6">
-            <p className="text-gray-300 mb-4">The <code>Client</code> accepts the following optional arguments:</p>
+            <p className="text-gray-300 mb-4">The <code>Client</code> accepts the following arguments:</p>
             <ul className="space-y-3 text-gray-300 text-sm">
                 <li className="flex gap-2">
                     <span className="font-mono text-[#b61249]">api_key</span>
@@ -96,14 +104,9 @@ def retrieve_documents(query: str):
                     <span>Authentication key for the VoiceEval service.</span>
                 </li>
                 <li className="flex gap-2">
-                    <span className="font-mono text-[#b61249]">base_url</span>
-                    <span className="text-gray-500">(str)</span>:
-                    <span>Endpoint URL for trace ingestion.</span>
-                </li>
-                <li className="flex gap-2">
                     <span className="font-mono text-[#b61249]">project_name</span>
-                    <span className="text-gray-500">(str)</span>:
-                    <span>Optional project identifier for grouping traces.</span>
+                    <span className="text-gray-500">(str, required)</span>:
+                    <span>Project identifier for grouping traces. This is mandatory.</span>
                 </li>
             </ul>
         </div>

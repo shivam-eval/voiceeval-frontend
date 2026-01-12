@@ -1,28 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { X, Play, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // Added import
 import { useAgents } from '../hooks/useAgents';
 import { useTestSuites } from '../hooks/useTestSuites';
 import { useRunSimulation } from '../hooks/useSimulations';
-import { useBatchEvaluateSimulation } from '../hooks/useEvaluations';
-import useBatchEvaluationMonitor from '../hooks/useBatchEvaluationMonitor';
 import Button from './Button';
 import Badge from './Badge';
-import BatchEvaluationProgressModal from './BatchEvaluationProgressModal';
 
 const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, preSelectedAgentId = null }) => {
+    const navigate = useNavigate();
     const [selectedAgentId, setSelectedAgentId] = useState(preSelectedAgentId || '');
     const [selectedTestSuiteId, setSelectedTestSuiteId] = useState(preSelectedTestSuiteId || '');
     const [phoneNumber, setPhoneNumber] = useState('');
-
-    // Batch evaluation state
-    const [evaluationTaskId, setEvaluationTaskId] = useState(null);
-    const [currentSimulationId, setCurrentSimulationId] = useState(null);
-    const [showEvaluationProgress, setShowEvaluationProgress] = useState(false);
-
-    // Hooks
-    const navigate = useNavigate();
 
     // Fetch agents and test suites
     const { data: agentsData, isLoading: agentsLoading } = useAgents();
@@ -31,18 +21,6 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
     });
 
     const runSimulation = useRunSimulation();
-    const batchEvaluate = useBatchEvaluateSimulation();
-
-    // Monitor batch evaluation progress
-    const { status, progress, result, error } = useBatchEvaluationMonitor(
-        evaluationTaskId,
-        currentSimulationId,
-        {
-            autoRedirect: true,
-            showToasts: true
-        }
-    );
-
     const agents = agentsData?.agents || [];
     const testSuites = testSuitesData?.test_suites || [];
 
@@ -57,7 +35,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
         }
     }, [selectedAgent]);
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
 
         if (!selectedTestSuiteId || !phoneNumber) {
@@ -65,34 +43,26 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
             return;
         }
 
-        try {
-            // Start the simulation
-            const simulationResult = await runSimulation.mutateAsync({
-                test_suite_id: selectedTestSuiteId,
-                phone_number: phoneNumber,
-                agent_id: selectedAgentId || undefined,
-                metadata: {
-                    agent_name: selectedAgent?.agent_name,
-                    test_suite_name: selectedTestSuite?.name,
-                    started_from: 'modal'
-                }
-            });
+        // Close modal immediately and show progress toast
+        onClose();
+        toast.info('Initiating simulation in background...');
 
-            const simulationId = simulationResult.simulation_id;
-
-            toast.success('Simulation started successfully!');
-            console.log('🚀 Simulation started:', simulationId);
-
-            // Close the modal
-            onClose();
-
-            // Navigate to simulation detail page
-            navigate(`/simulation/runs/${simulationId}`);
-
-        } catch (error) {
-            console.error('Error starting simulation:', error);
-            // Error handled by global interceptor
-        }
+        runSimulation.mutate({
+            test_suite_id: selectedTestSuiteId,
+            phone_number: phoneNumber,
+            agent_id: selectedAgentId || undefined,
+            metadata: {
+                agent_name: selectedAgent?.name || selectedAgent?.agent_name || selectedAgent?.agent_id,
+                test_suite_name: selectedTestSuite?.name,
+                started_from: 'modal'
+            }
+        }, {
+            onSuccess: (result) => {
+                toast.success('Simulation started successfully!');
+                // Navigate to simulation detail
+                navigate(`/simulation/runs/${result.simulation_id}`);
+            }
+        });
     };
 
     if (!isOpen) return null;
@@ -132,7 +102,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                             <option value="">Choose an agent...</option>
                             {agents.map(agent => (
                                 <option key={agent.agent_id} value={agent.agent_id}>
-                                    {agent.agent_name || agent.agent_id} ({agent.platform})
+                                    { (agent.name || agent.agent_name) ? `${agent.name || agent.agent_name} (${agent.agent_id})` : agent.agent_id }
                                 </option>
                             ))}
                         </select>
@@ -254,17 +224,6 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                     </div>
                 </form>
             </div>
-
-            {/* Batch Evaluation Progress Modal */}
-            <BatchEvaluationProgressModal
-                isOpen={showEvaluationProgress}
-                onClose={() => setShowEvaluationProgress(false)}
-                status={status}
-                progress={progress}
-                result={result}
-                error={error}
-                simulationId={currentSimulationId}
-            />
         </div>
     );
 };

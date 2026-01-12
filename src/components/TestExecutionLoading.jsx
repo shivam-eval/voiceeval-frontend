@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
 import { useWorkflow } from "../context/WorkFlowContext";
 import { useEvents } from "../context/EventsContext";
 import { getSimulationSummary } from "../api";
@@ -49,9 +48,7 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
     checkExistingEvaluation();
   }, [simulationId, setEvaluationResult]);
 
-  /* -------------------------------------------------
-     1️⃣ Poll simulation summary
-  -------------------------------------------------- */
+
   /* -------------------------------------------------
      1️⃣ SSE Event Listener for Simulation Updates
   -------------------------------------------------- */
@@ -67,20 +64,32 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
         updateState(res.data);
       } catch (err) {
         console.error("Failed to fetch summary:", err);
+        toast.error("Failed to load simulation data");
+        onError?.(err);
       }
     };
     fetchSummary();
 
-    // Subscribe to events
+    // Subscribe to SSE events for real-time updates
     const unsubscribe = subscribe('simulation_update', (eventData) => {
       if (eventData.simulation_id === simulationId) {
-        // If we get a summary object directly
-        if (eventData.summary) {
-          updateState(eventData.summary);
-        } else {
-          // Otherwise re-fetch full summary (a bit safer for complex nested data)
-          fetchSummary();
+        console.log('📡 Real-time Simulation Update:', eventData);
+
+        // Show toast notifications based on status
+        switch (eventData.status) {
+          case 'started':
+            toast.info(`Simulation started: ${eventData.total_test_cases} test cases`);
+            break;
+          case 'completed':
+            toast.success('Simulation completed successfully!');
+            break;
+          case 'failed':
+            toast.error(`Simulation failed: ${eventData.error || 'Unknown error'}`);
+            break;
         }
+
+        // Refetch full summary to get updated sessions
+        fetchSummary();
       }
     });
 
@@ -121,88 +130,15 @@ const TestExecutionLoading = ({ simulationId, onComplete, onError }) => {
   };
 
   /* -------------------------------------------------
-     UI - Test Case Grid
+     Helper function to get session by index
   -------------------------------------------------- */
-  useEffect(() => {
-    if (currentStep < totalCompleted) {
-      const t = setTimeout(() => {
-        setCurrentStep((v) => v + 1);
-      }, 600);
-      return () => clearTimeout(t);
-    }
-  }, [currentStep, totalCompleted]);
-
-  /* -------------------------------------------------
-     3️⃣ Smooth progress bar
-  -------------------------------------------------- */
-  useEffect(() => {
-    const total = totalActive + totalCompleted;
-    if (!total) return;
-
-    const target = Math.round((currentStep / total) * 100);
-    if (progress < target) {
-      const t = setTimeout(() => {
-        setProgress((p) => p + 1);
-      }, 30);
-      return () => clearTimeout(t);
-    }
-  }, [currentStep, totalActive, totalCompleted, progress]);
-
-  /* -------------------------------------------------
-     4️⃣ Run batch evaluation & navigate to results
-  -------------------------------------------------- */
-  useEffect(() => {
-    if (!executionFinished) return;
-
-    const runEvaluation = async () => {
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/evaluate/batch`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              accept: "application/json",
-            },
-            body: JSON.stringify({
-              simulation_id: simulationId,
-            }),
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error(`Evaluation failed with status ${res.status}`);
-        }
-
-        const evaluationResult = await res.json();
-        console.log("✅ Evaluation Result:", evaluationResult);
-
-        setEvaluationResult(evaluationResult);
-        onComplete?.(evaluationResult);
-
-        // Navigate to evaluation page with results
-        navigate("/evaluation", {
-          state: { evaluationResult, simulationId }
-        });
-      } catch (err) {
-        console.error("Evaluation failed:", err);
-        toast.error(`Evaluation failed: ${err.message}`);
-        onError?.(err);
-
-        // Navigate to evaluation page even on error (with fallback UI)
-        navigate("/evaluation", {
-          state: { error: err.message, simulationId }
-        });
-      }
-    };
-
-    runEvaluation();
-  }, [executionFinished, simulationId, onComplete, onError, navigate, setEvaluationResult]);
+  const getSessionByIndex = (index) => {
+    return sessions[index] || null;
+  };
 
   /* -------------------------------------------------
      UI
   -------------------------------------------------- */
-  const total = totalActive + totalCompleted;
 
   return (
     <div className="w-full max-w-screen-2xl mx-auto px-8 py-8">

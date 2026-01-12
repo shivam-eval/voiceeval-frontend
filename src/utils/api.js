@@ -117,7 +117,7 @@ export const testSuitesApi = {
     import: (fileContent, name, agentId) => apiClient.post('/test-suites/import', { file_content: fileContent, name, agent_id: agentId }),
     bulkUpdateTestCases: (suiteId, testCaseIds, updates) => apiClient.put(`/test-suites/${suiteId}/test-cases/bulk`, { test_case_ids: testCaseIds, updates }),
     getStatistics: (id) => apiClient.get(`/test-suites/${id}/statistics`),
-    updateStatus: (id, status) => apiClient.post(`/test-suites/${id}/status`, { status }),
+    getSimulationSummary: (id) => apiClient.get(`/test-suites/${id}/simulation-summary`),
 };
 
 // Persona API endpoints

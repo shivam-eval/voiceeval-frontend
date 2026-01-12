@@ -155,16 +155,14 @@ export const useTestSuiteStatistics = (id) => {
 };
 
 /**
- * Hook to update test suite status
+ * Hook to get test suite simulation summary (replaces manual status)
  */
-export const useUpdateTestSuiteStatus = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: ({ id, status }) => testSuitesApi.updateStatus(id, status),
-        onSuccess: (data, variables) => {
-            queryClient.invalidateQueries({ queryKey: testSuiteKeys.lists() });
-            queryClient.invalidateQueries({ queryKey: testSuiteKeys.detail(variables.id) });
-        },
+export const useTestSuiteSimulationSummary = (id) => {
+    return useQuery({
+        queryKey: [...testSuiteKeys.detail(id), 'simulation-summary'],
+        queryFn: () => testSuitesApi.getSimulationSummary(id),
+        enabled: !!id,
+        staleTime: 30000, // 30 seconds
+        refetchInterval: 60000, // Refetch every 60 seconds
     });
 };

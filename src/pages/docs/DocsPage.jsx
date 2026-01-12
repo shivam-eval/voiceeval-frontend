@@ -5,6 +5,7 @@ import VAPIIntegrationSection from "./sections/VAPIIntegration";
 import ElevenLabsIntegrationSection from "./sections/ElevenLabsIntegration";
 import CartesiaIntegrationSection from "./sections/CartesiaIntegration";
 import QuickStartSection from "./sections/QuickStart";
+import LiveKitIntegrationSection from "./sections/LiveKitIntegration";
 
 const DocsPage = () => {
   const [activeSection, setActiveSection] = useState("introduction");
@@ -32,7 +33,7 @@ const DocsPage = () => {
         { id: "vapi", label: "VAPI Integration", icon: Phone },
         { id: "elevenlabs", label: "ElevenLabs Integration", icon: Mic },
         { id: "cartesia", label: "Cartesia Line Integration", icon: Headphones },
-        { id: "livekit", label: "LiveKit Integration", icon: Phone },
+        { id: "livekit", label: "LiveKit/Pipecat Integration", icon: Phone },
       ],
     },
     // {
@@ -349,7 +350,6 @@ const TechCard = ({ title, items }) => (
 const AgentsSection = () => <PlaceholderSection title="Voice Agents" />;
 const TestSuitesSection = () => <PlaceholderSection title="Test Suites" />;
 const EvaluationSection = () => <PlaceholderSection title="Evaluation" />;
-const LiveKitIntegrationSection = () => <PlaceholderSection title="LiveKit Integration" />;
 const ExtractionAPISection = () => <PlaceholderSection title="Extraction API" />;
 const GenerationAPISection = () => <PlaceholderSection title="Generation API" />;
 const SimulationAPISection = () => <PlaceholderSection title="Simulation API" />;

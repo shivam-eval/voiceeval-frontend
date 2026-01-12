@@ -125,22 +125,22 @@ const PersonasPage = () => {
                             )}
                             {regionFilter && (
                                 <span className="px-3 py-1 bg-teal-400/20 text-teal-400 rounded-full text-sm">
-                                    Region: {regionFilter}
+                                    Region: {regionFilter.replace(/_/g, ' ')}
                                 </span>
                             )}
                             {languageFilter && (
                                 <span className="px-3 py-1 bg-teal-400/20 text-teal-400 rounded-full text-sm">
-                                    Language: {languageFilter}
+                                    Language: {languageFilter.replace(/_/g, ' ')}
                                 </span>
                             )}
                             {ageGroupFilter && (
                                 <span className="px-3 py-1 bg-teal-400/20 text-teal-400 rounded-full text-sm">
-                                    Age Group: {ageGroupFilter.replace('_', ' ')}
+                                    Age Group: {ageGroupFilter.replace(/_/g, ' ')}
                                 </span>
                             )}
                             {genderFilter && (
                                 <span className="px-3 py-1 bg-teal-400/20 text-teal-400 rounded-full text-sm">
-                                    Gender: {genderFilter}
+                                    Gender: {genderFilter.replace(/_/g, ' ')}
                                 </span>
                             )}
                             <button

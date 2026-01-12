@@ -7,7 +7,6 @@ import Badge from "../../components/Badge";
 import Button from "../../components/Button";
 import PlatformSelection from "../platformSelection/PlatformSelection";
 import ConnectionForm from "../connectAgent";
-import GenerateFlowModal from "../../components/GenerateFlowModal";
 import { useWorkflow } from "../../context/WorkFlowContext";
 
 import ConfirmationModal from "../../components/ConfirmationModal";
@@ -27,8 +26,6 @@ const AgentsPage = () => {
     // Modal state
     const [showConnectModal, setShowConnectModal] = useState(false);
     const [selectedPlatform, setSelectedPlatform] = useState(null);
-    const [showGenerateFlowModal, setShowGenerateFlowModal] = useState(false);
-    const [selectedAgentForFlow, setSelectedAgentForFlow] = useState(null);
 
     // Confirmation Modal State
     const [confirmationModal, setConfirmationModal] = useState({
@@ -128,20 +125,6 @@ const AgentsPage = () => {
                 }
             }
         });
-    };
-
-    const handleTest = async (id) => {
-        // ... existing handleTest logic ...
-        try {
-            const result = await testAgent.mutateAsync(id);
-            if (result.success) {
-                toast.success("Connection successful!");
-            } else {
-                toast.error(`Connection failed: ${result.message}`);
-            }
-        } catch (error) {
-            // Error handled by global interceptor
-        }
     };
 
     const handleClone = async (id) => {
@@ -338,32 +321,6 @@ const AgentsPage = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    setSelectedAgentForFlow(row.agent_id);
-                                    setShowGenerateFlowModal(true);
-                                }}
-                                className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-teal-400 transition-colors"
-                                title="Generate Flow"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleTest(row.agent_id);
-                                }}
-                                className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
-                                title="Test Connection"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
                                     handleClone(row.agent_id);
                                 }}
                                 className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
@@ -421,18 +378,6 @@ const AgentsPage = () => {
                     </div>
                 </div>
             )}
-
-            {/* Generate Flow Modal */}
-            <GenerateFlowModal
-                isOpen={showGenerateFlowModal}
-                onClose={() => {
-                    setShowGenerateFlowModal(false);
-                    setSelectedAgentForFlow(null);
-                }}
-                agentId={selectedAgentForFlow}
-                onFlowGenerated={(flowData) => {
-                }}
-            />
 
             {/* Confirmation Modal */}
             <ConfirmationModal

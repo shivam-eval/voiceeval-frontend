@@ -14,7 +14,6 @@ const TestCasesPage = () => {
     // Filters and search
     const [searchQuery, setSearchQuery] = useState("");
     const [agentFilter, setAgentFilter] = useState(null);
-    const [statusFilter, setStatusFilter] = useState(null);
     const [selectedRows, setSelectedRows] = useState([]);
 
     // Modal state
@@ -24,7 +23,6 @@ const TestCasesPage = () => {
     const { data, isLoading, error } = useTestSuites({
         search: searchQuery,
         agent_id: agentFilter,
-        status: statusFilter,
     });
 
     // Fetch agents for filter dropdown
@@ -112,20 +110,36 @@ const TestCasesPage = () => {
             ),
         },
         {
-            key: "status",
-            label: "Status",
-            sortable: true,
+            key: "simulation_summary",
+            label: "Last Run",
+            sortable: false,
             render: (value) => {
-                const variantMap = {
-                    draft: "default",
-                    ready: "success",
-                    archived: "warning",
-                };
-                return (
-                    <Badge variant={variantMap[value] || "default"} size="sm">
-                        {value}
-                    </Badge>
-                );
+                if (!value) {
+                    return <Badge variant="default" size="sm">Not Tested</Badge>;
+                }
+                if (value.has_active) {
+                    return (
+                        <Badge variant="warning" size="sm">
+                            <span className="flex items-center gap-1">
+                                <span className="animate-pulse">●</span> Running
+                            </span>
+                        </Badge>
+                    );
+                }
+                if (value.last_status === 'completed') {
+                    const passed = value.completed || 0;
+                    const total = value.total_sessions || 0;
+                    const allPassed = value.failed === 0;
+                    return (
+                        <Badge variant={allPassed ? "success" : "warning"} size="sm">
+                            {passed}/{total} Passed
+                        </Badge>
+                    );
+                }
+                if (value.last_status === 'failed') {
+                    return <Badge variant="danger" size="sm">Failed</Badge>;
+                }
+                return <Badge variant="default" size="sm">{value.last_status || 'Unknown'}</Badge>;
             },
         },
         {
@@ -189,20 +203,9 @@ const TestCasesPage = () => {
                             <option value="">All Agents</option>
                             {agentsData?.agents?.map((agent) => (
                                 <option key={agent.agent_id} value={agent.agent_id}>
-                                    { (agent?.name || agent?.agent_name) ? `${agent?.name || agent?.agent_name} (${agent?.agent_id})` : agent?.agent_id }
+                                    {(agent?.name || agent?.agent_name) ? `${agent?.name || agent?.agent_name} (${agent?.agent_id})` : agent?.agent_id}
                                 </option>
                             ))}
-                        </select>
-
-                        <select
-                            value={statusFilter || ""}
-                            onChange={(e) => setStatusFilter(e.target.value || null)}
-                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400"
-                        >
-                            <option value="">All Status</option>
-                            <option value="draft">Draft</option>
-                            <option value="ready">Ready</option>
-                            <option value="archived">Archived</option>
                         </select>
                     </div>
                 </div>

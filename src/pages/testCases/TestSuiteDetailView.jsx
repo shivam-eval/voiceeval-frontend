@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useTestSuite, useUpdateTestSuite, useDeleteTestSuite, useAddTestCase, useCloneTestSuite, useUpdateTestSuiteStatus } from "../../hooks/useTestSuites";
+import { useTestSuite, useUpdateTestSuite, useDeleteTestSuite, useAddTestCase, useCloneTestSuite, useTestSuiteSimulationSummary } from "../../hooks/useTestSuites";
 import { usePersonas } from "../../hooks/usePersonas";
 import { useTestProfiles } from "../../hooks/useTestProfiles";
 import { testSuitesApi } from "../../utils/api";
@@ -242,7 +242,7 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                     <div className="text-gray-500">No persona assigned</div>
                 )}
             </div>
-          
+
         </div>
 
         {/* Extra Instructions */}
@@ -321,16 +321,10 @@ const TestSuiteDetailView = () => {
     const deleteSuite = useDeleteTestSuite();
     const cloneSuite = useCloneTestSuite();
     const addTestCase = useAddTestCase();
-    const updateStatus = useUpdateTestSuiteStatus();
 
-    const handleStatusChange = async (newStatus) => {
-        try {
-            await updateStatus.mutateAsync({ id: suiteId, status: newStatus });
-            toast.success(`Status updated to ${newStatus}`);
-        } catch (error) {
-            // Error handled by global interceptor
-        }
-    };
+    // Simulation summary for status display
+    const { data: simulationSummary } = useTestSuiteSimulationSummary(suiteId);
+
 
     const handleInlineEdit = async (field, value) => {
         try {
@@ -488,19 +482,38 @@ const TestSuiteDetailView = () => {
                         />
 
 
+                        {/* Simulation Status Badge */}
                         <div className="flex items-center gap-3">
-                            <Badge variant={suite.status === 'ready' ? 'success' : 'default'} size="md">
-                                {suite.status}
-                            </Badge>
-                            <select
-                                value={suite.status}
-                                onChange={(e) => handleStatusChange(e.target.value)}
-                                className="px-3 py-1 bg-gray-800 border border-gray-700 rounded-lg text-sm text-gray-300 focus:outline-none focus:border-teal-400"
-                            >
-                                <option value="draft">Draft</option>
-                                <option value="ready">Ready</option>
-                                <option value="archived">Archived</option>
-                            </select>
+                            {simulationSummary ? (
+                                simulationSummary.total_runs === 0 ? (
+                                    <Badge variant="default" size="md">Not Tested</Badge>
+                                ) : simulationSummary.has_active_simulation ? (
+                                    <Badge variant="warning" size="md">
+                                        <span className="flex items-center gap-1">
+                                            <span className="animate-pulse">●</span> Running...
+                                        </span>
+                                    </Badge>
+                                ) : simulationSummary.last_run?.status === 'completed' ? (
+                                    <Badge
+                                        variant={simulationSummary.last_run.failed === 0 ? 'success' : 'warning'}
+                                        size="md"
+                                    >
+                                        {simulationSummary.last_run.completed}/{simulationSummary.last_run.total_sessions} Passed
+                                        {simulationSummary.last_run.overall_score && ` (${Math.round(simulationSummary.last_run.overall_score)}%)`}
+                                    </Badge>
+                                ) : simulationSummary.last_run?.status === 'failed' ? (
+                                    <Badge variant="danger" size="md">Last Run Failed</Badge>
+                                ) : (
+                                    <Badge variant="default" size="md">{simulationSummary.last_run?.status || 'Unknown'}</Badge>
+                                )
+                            ) : (
+                                <Badge variant="default" size="md">Loading...</Badge>
+                            )}
+                            {simulationSummary?.total_runs > 0 && (
+                                <span className="text-xs text-gray-500">
+                                    {simulationSummary.total_runs} run{simulationSummary.total_runs > 1 ? 's' : ''}
+                                </span>
+                            )}
                         </div>
                     </div>
 
@@ -644,9 +657,27 @@ const TestSuiteDetailView = () => {
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <Badge variant={testCase.status === 'ready' ? 'success' : 'default'} size="sm">
-                                                        {testCase.status || 'draft'}
-                                                    </Badge>
+                                                    {testCase.session_status ? (
+                                                        testCase.session_status.status === 'completed' ? (
+                                                            <Badge variant="success" size="sm">Passed</Badge>
+                                                        ) : testCase.session_status.status === 'failed' ? (
+                                                            <Badge variant="danger" size="sm">Failed</Badge>
+                                                        ) : testCase.session_status.status === 'running' ? (
+                                                            <Badge variant="warning" size="sm">
+                                                                <span className="flex items-center gap-1">
+                                                                    <span className="animate-pulse">●</span> Running
+                                                                </span>
+                                                            </Badge>
+                                                        ) : testCase.session_status.status === 'queued' ? (
+                                                            <Badge variant="info" size="sm">Queued</Badge>
+                                                        ) : testCase.session_status.status === 'timeout' ? (
+                                                            <Badge variant="danger" size="sm">Timeout</Badge>
+                                                        ) : (
+                                                            <Badge variant="default" size="sm">{testCase.session_status.status}</Badge>
+                                                        )
+                                                    ) : (
+                                                        <Badge variant="default" size="sm">Not Tested</Badge>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <ActionButtons

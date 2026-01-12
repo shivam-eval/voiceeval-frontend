@@ -47,7 +47,7 @@ const PersonasPage = () => {
 
                 {/* Filters Bar */}
                 <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800/50 mb-8">
-                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
                         {/* Search */}
                         <div className="md:col-span-2 relative">
                             <svg className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,6 +90,18 @@ const PersonasPage = () => {
                             ))}
                         </select>
 
+                        {/* Age Group Filter */}
+                        <select
+                            value={ageGroupFilter || ""}
+                            onChange={(e) => setAgeGroupFilter(e.target.value || null)}
+                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400"
+                        >
+                            <option value="">All Age Groups</option>
+                            <option value="young_adult">Young Adult</option>
+                            <option value="middle_aged">Middle Aged</option>
+                            <option value="senior">Senior</option>
+                        </select>
+
                         {/* Gender Filter */}
                         <select
                             value={genderFilter || ""}
@@ -119,6 +131,16 @@ const PersonasPage = () => {
                             {languageFilter && (
                                 <span className="px-3 py-1 bg-teal-400/20 text-teal-400 rounded-full text-sm">
                                     Language: {languageFilter}
+                                </span>
+                            )}
+                            {ageGroupFilter && (
+                                <span className="px-3 py-1 bg-teal-400/20 text-teal-400 rounded-full text-sm">
+                                    Age Group: {ageGroupFilter.replace('_', ' ')}
+                                </span>
+                            )}
+                            {genderFilter && (
+                                <span className="px-3 py-1 bg-teal-400/20 text-teal-400 rounded-full text-sm">
+                                    Gender: {genderFilter}
                                 </span>
                             )}
                             <button

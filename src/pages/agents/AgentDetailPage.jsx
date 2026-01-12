@@ -72,9 +72,24 @@ const AgentDetailPage = () => {
     const confirmReExtract = async () => {
         console.log("Re-extract confirmed");
         try {
-            await deleteAgent.mutateAsync(agentId);
-            toast.success("Agent deleted. Please reconnect to re-extract.");
-            navigate("/agents");
+            // Prepare the re-extraction payload
+            const payload = {
+                platform: agent.platform,
+                agent_id: agent.agent_id,
+            };
+
+            // Add api_key if available (from agent metadata or environment)
+            if (agent.api_key) {
+                payload.api_key = agent.api_key;
+            }
+
+            console.log("Re-extraction payload:", payload);
+
+            await reExtractAgent.mutateAsync(payload);
+            toast.success("Agent configuration re-extracted successfully!");
+
+            // Refetch agent data to show updated configuration
+            await refetch();
         } catch (error) {
             console.error("Re-extract failed:", error);
             // Error handled by global interceptor
@@ -291,9 +306,9 @@ const AgentDetailPage = () => {
                                 </div>
                                 <div className="text-sm text-gray-500">{tools.length} tools found</div>
                                 {!metadata.system_prompt && (
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
                                         className="mt-2 w-full"
                                         onClick={handleReExtract}
                                         disabled={agent.provider?.toLowerCase() === "custom"}
@@ -671,7 +686,7 @@ const AgentDetailPage = () => {
                 message="Re-extract agent configuration? This will overwrite existing data."
                 confirmText="OK"
                 cancelText="Cancel"
-                isLoading={deleteAgent.isPending}
+                isLoading={reExtractAgent.isPending}
             />
 
             <ConfirmationModal

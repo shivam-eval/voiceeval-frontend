@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 import { BarChart3, Settings, FileText, Bot, ArrowLeft, Zap, TestTube, Plus } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
-import { useAgent, useTestAgent, useDeleteAgent } from "../../hooks/useAgents";
+import { useAgent, useTestAgent, useDeleteAgent, useReExtractAgent } from "../../hooks/useAgents";
 import { useTestSuites } from "../../hooks/useTestSuites";
 import { useAgentFlows, useDeleteFlow } from "../../hooks/useFlows";
 import { useGenerateFlow } from "../../hooks/useGeneration";
@@ -47,6 +47,8 @@ const AgentDetailPage = () => {
     const generateFlow = useGenerateFlow();
     const deleteFlow = useDeleteFlow();
     const createTestSuite = useCreateTestSuite();
+    const reExtractAgent = useReExtractAgent();
+
 
     // Handler functions
     const handleTestConnection = async () => {
@@ -80,6 +82,7 @@ const AgentDetailPage = () => {
             setShowReExtractConfirm(false);
         }
     };
+
 
     const handleGenerateFlow = () => {
         setShowGenerateFlowModal(true);
@@ -368,8 +371,9 @@ const AgentDetailPage = () => {
                                     disabled={agent.provider?.toLowerCase() === "custom"}
                                     title={agent.provider?.toLowerCase() === "custom" ? "Re-extraction not available for custom platform" : ""}
                                 >
-                                    Re-extract Config
+                                    {reExtractAgent.isPending ? "Re-extracting..." : "Re-extract Config"}
                                 </Button>
+
                                 <Button
                                     variant="outline"
                                     className="w-full"

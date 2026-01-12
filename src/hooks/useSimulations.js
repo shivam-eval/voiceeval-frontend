@@ -20,17 +20,20 @@ export const simulationKeys = {
 
 /**
  * Hook to fetch list of simulations with filters
+ * Note: Refetches on mount and after mutations (create, delete, etc.)
  */
 export const useSimulations = (filters = {}) => {
     return useQuery({
         queryKey: simulationKeys.list(filters),
         queryFn: () => simulationsApi.getSimulations(filters),
-        staleTime: 10000, // Refresh every 10 seconds for live updates
+        staleTime: Infinity, // No auto-refresh
+        refetchOnWindowFocus: false,
     });
 };
 
 /**
  * Hook to fetch single simulation detail
+ * Note: Uses SSE for updates via useSimulationWithLiveUpdates, no polling
  */
 export const useSimulation = (simulationId) => {
     return useQuery({
@@ -38,19 +41,22 @@ export const useSimulation = (simulationId) => {
         queryFn: () => simulationsApi.getSimulation(simulationId),
         enabled: !!simulationId,
         retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-        staleTime: 5000, //  Refresh faster for running simulations
+        staleTime: Infinity, // No auto-refresh, rely on SSE events to invalidate
+        refetchOnWindowFocus: false, // Disable refetch on window focus
     });
 };
 
 /**
  * Hook to fetch simulation sessions
+ * Note: Sessions are refetched when SSE events invalidate the query
  */
 export const useSimulationSessions = (simulationId, filters = {}) => {
     return useQuery({
         queryKey: simulationKeys.sessionsList(simulationId, filters),
         queryFn: () => simulationsApi.getSimulationSessions(simulationId, filters),
         enabled: !!simulationId,
-        staleTime: 5000,
+        staleTime: Infinity, // No auto-refresh, rely on SSE events
+        refetchOnWindowFocus: false,
     });
 };
 

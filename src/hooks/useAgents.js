@@ -112,3 +112,21 @@ export const useCloneAgent = () => {
         },
     });
 };
+
+/**
+ * Hook to re-extract agent configuration
+ */
+export const useReExtractAgent = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (data) => agentsApi.reExtract(data),
+        onSuccess: (data, variables) => {
+            // Invalidate both list and detail to refresh agent data
+            queryClient.invalidateQueries({ queryKey: agentKeys.lists() });
+            // We don't have the MongoDB ID in the response, so invalidate all details
+            queryClient.invalidateQueries({ queryKey: agentKeys.details() });
+        },
+    });
+};
+

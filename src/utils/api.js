@@ -98,7 +98,9 @@ export const agentsApi = {
     delete: (id) => apiClient.delete(`/agents/${id}`),
     test: (id) => apiClient.post(`/agents/${id}/test`, {}),
     clone: (id) => apiClient.post(`/agents/${id}/clone`, {}),
+    reExtract: (data) => apiClient.post('/extract/re-extract', data),
 };
+
 
 // Test Suite API endpoints
 export const testSuitesApi = {

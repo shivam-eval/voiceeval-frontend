@@ -332,6 +332,11 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                             <div className="flex items-center gap-2 mb-1">
                                 <Badge variant="info" size="sm">Step {step.step_number}</Badge>
                                 <Badge variant="default" size="sm">{formatLabel(step.type)}</Badge>
+                                {step.max_wait_ms != null && (
+                                    <Badge variant="info" size="sm">
+                                        Add Interruption
+                                    </Badge>
+                                )}
                             </div>
                             {step.utterance && (
                                 <div className="text-sm text-gray-300 mt-2">

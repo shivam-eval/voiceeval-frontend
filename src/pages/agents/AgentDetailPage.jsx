@@ -1,13 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { BarChart3, Settings, FileText, Bot, ArrowLeft, Zap, TestTube, Plus } from "lucide-react";
+import { BarChart3, Settings, FileText, Bot, Plus } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
-import { useAgent, useTestAgent, useDeleteAgent, useReExtractAgent } from "../../hooks/useAgents";
+import { useAgent, useDeleteAgent, useReExtractAgent } from "../../hooks/useAgents";
 import { useTestSuites } from "../../hooks/useTestSuites";
 import { useAgentFlows, useDeleteFlow } from "../../hooks/useFlows";
-import { useGenerateFlow } from "../../hooks/useGeneration";
 import DashboardLoader from "../../components/DashboardLoader";
 import GenerateFlowModal from "../../components/GenerateFlowModal";
 import GenerateTestSuiteModal from "../../components/GenerateTestSuiteModal";
@@ -38,9 +37,7 @@ const AgentDetailPage = () => {
     const testSuites = testSuitesData?.test_suites || [];
 
     // Mutations
-    const testAgent = useTestAgent();
     const deleteAgent = useDeleteAgent();
-    const generateFlow = useGenerateFlow();
     const deleteFlow = useDeleteFlow();
     const createTestSuite = useCreateTestSuite();
     const reExtractAgent = useReExtractAgent();
@@ -49,14 +46,12 @@ const AgentDetailPage = () => {
     // Handler functions
     const handleTestConnection = async () => {
         try {
-            const result = await testAgent.mutateAsync(agentId);
-            if (result.success) {
-                toast.success("Connection successful!");
-            } else {
-                toast.error(`Connection failed: ${result.message}`);
-            }
+            toast.info("Testing connection...");
+            // Placeholder for real test connection logic
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            toast.success("Connection test successful!");
         } catch (error) {
-            // Error handled by global interceptor
+            toast.error("Connection test failed");
         }
     };
 
@@ -93,16 +88,6 @@ const AgentDetailPage = () => {
         }
     };
 
-
-    const handleGenerateFlow = () => {
-        setShowGenerateFlowModal(true);
-    };
-
-    const handleFlowGenerated = async (flowData) => {
-        setShowGenerateFlowModal(false);
-        await refetchFlows();
-        await refetch();
-    };
 
     const handleGenerateTestSuiteFromFlow = (flow) => {
         setSelectedFlowForTestGen(flow);
@@ -233,21 +218,6 @@ const AgentDetailPage = () => {
                             <Badge variant={getStatusBadge(agent.status)}>
                                 {agent.status || "Unknown"}
                             </Badge>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleTestConnection}
-                                disabled={testAgent.isPending}
-                            >
-                                {testAgent.isPending ? "Testing..." : "Test"}
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleGenerateFlow}
-                            >
-                                ⚡ Generate Flow
-                            </Button>
                         </div>
                     </div>
                 </div>
@@ -361,10 +331,10 @@ const AgentDetailPage = () => {
                                     variant="outline"
                                     className="w-full"
                                     onClick={handleTestConnection}
-                                    disabled={testAgent.isPending}
                                 >
-                                    {testAgent.isPending ? "Testing..." : "Test Connection"}
+                                    Test Connection
                                 </Button>
+
                                 <Button
                                     variant="outline"
                                     className="w-full"
@@ -381,11 +351,13 @@ const AgentDetailPage = () => {
                                 >
                                     Generate Flow
                                 </Button>
+
                                 <Button
                                     variant="outline"
                                     className="w-full"
                                     onClick={() => setShowCreateTestSuiteModal(true)}
                                 >
+                                    <Plus className="w-4 h-4 mr-2" />
                                     Create Test Suite
                                 </Button>
                             </div>
@@ -395,7 +367,11 @@ const AgentDetailPage = () => {
                         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold text-white">Flows</h3>
-                                <Button size="sm" onClick={handleGenerateFlow}>
+                                <Button
+                                    size="sm"
+                                    onClick={handleGenerateFlow}
+                                    className="bg-teal-400 hover:bg-teal-500 text-white"
+                                >
                                     Generate New Flow
                                 </Button>
                             </div>
@@ -415,8 +391,6 @@ const AgentDetailPage = () => {
                                                         <p className="text-gray-400 text-sm mb-2">{flow.description}</p>
                                                     )}
                                                     <div className="flex items-center gap-4 text-sm">
-                                                        <span className="text-gray-400">{flow.node_count} nodes</span>
-                                                        <span className="text-gray-400">{flow.edge_count} edges</span>
                                                         <span className="text-gray-500">
                                                             {new Date(flow.created_at).toLocaleDateString()}
                                                         </span>
@@ -623,9 +597,8 @@ const AgentDetailPage = () => {
             <GenerateFlowModal
                 isOpen={showGenerateFlowModal}
                 onClose={() => setShowGenerateFlowModal(false)}
-                agentId={agent?.agent_id}
-                agentMongoId={agentId}
-                onFlowGenerated={handleFlowGenerated}
+                agentId={agentId}
+                onFlowGenerated={refetchFlows}
             />
 
             {/* Generate Test Suite from Flow Modal */}

@@ -40,7 +40,7 @@ const PersonaCard = ({ persona, onClick }) => {
                     <span className="text-gray-300 font-medium">{persona.voice_profile?.voice_id}</span>
                 </div>
                 <div className="text-xs text-gray-500">
-                    Pace: {persona.voice_profile?.pace}x | Pitch: {persona.voice_profile?.pitch}
+                    Pace: {persona.voice_profile?.pace}x | Pitch: {persona.voice_profile?.pitch} | Loudness: {persona.voice_profile?.loudness ?? 0}
                 </div>
             </div>
 

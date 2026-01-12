@@ -71,13 +71,16 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                                     {persona.voice_profile.pace && (
                                         <div>
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="text-gray-300">Pace</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-gray-300">Pace</span>
+                                                    <span className="text-xs text-gray-500">0.3 (slowest) to 3.0 (fastest)</span>
+                                                </div>
                                                 <span className="text-teal-400 font-semibold">{persona.voice_profile.pace}x</span>
                                             </div>
-                                            <div className="bg-gray-700 rounded-full h-2">
+                                            <div className="bg-gray-700 rounded-full h-2 overflow-hidden">
                                                 <div
                                                     className="bg-teal-400 h-2 rounded-full"
-                                                    style={{ width: `${(persona.voice_profile.pace / 2) * 100}%` }}
+                                                    style={{ width: `${Math.max(0, Math.min(100, ((persona.voice_profile.pace - 0.3) / 2.7) * 100))}%` }}
                                                 />
                                             </div>
                                         </div>
@@ -86,13 +89,34 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                                     {persona.voice_profile.pitch !== undefined && (
                                         <div>
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="text-gray-300">Pitch</span>
+                                                <div className="flex flex-col">
+                                                    <span className="text-gray-300">Pitch</span>
+                                                    <span className="text-xs text-gray-500">-0.75 (deeper voice) to 0.75 (sharper voice)</span>
+                                                </div>
                                                 <span className="text-teal-400 font-semibold">{persona.voice_profile.pitch}</span>
                                             </div>
-                                            <div className="bg-gray-700 rounded-full h-2">
+                                            <div className="bg-gray-700 rounded-full h-2 overflow-hidden">
                                                 <div
                                                     className="bg-teal-400 h-2 rounded-full"
-                                                    style={{ width: `${((persona.voice_profile.pitch + 1) / 2) * 100}%` }}
+                                                    style={{ width: `${Math.max(0, Math.min(100, ((persona.voice_profile.pitch + 0.75) / 1.5) * 100))}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {persona.voice_profile.loudness !== undefined && (
+                                        <div>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <div className="flex flex-col">
+                                                    <span className="text-gray-300">Loudness</span>
+                                                    <span className="text-xs text-gray-500">0.1 (quietest) to 3.0 (loudest)</span>
+                                                </div>
+                                                <span className="text-teal-400 font-semibold">{persona.voice_profile.loudness}</span>
+                                            </div>
+                                            <div className="bg-gray-700 rounded-full h-2 overflow-hidden">
+                                                <div
+                                                    className="bg-teal-400 h-2 rounded-full"
+                                                    style={{ width: `${Math.max(0, Math.min(100, ((persona.voice_profile.loudness - 0.1) / 2.9) * 100))}%` }}
                                                 />
                                             </div>
                                         </div>
@@ -113,12 +137,6 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                                         <span className="text-gray-300">Interrupts Frequently</span>
                                         <span className={persona.behavior_traits.interrupts_frequently ? 'text-red-400' : 'text-green-400'}>
                                             {persona.behavior_traits.interrupts_frequently ? 'Yes' : 'No'}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-gray-300">Provides Incomplete Info</span>
-                                        <span className={persona.behavior_traits.provides_incomplete_info ? 'text-red-400' : 'text-green-400'}>
-                                            {persona.behavior_traits.provides_incomplete_info ? 'Yes' : 'No'}
                                         </span>
                                     </div>
                                     <div className="flex items-center justify-between">

@@ -1,9 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { loginUser, signupUser } from "../../api";
+import { loginUser } from "../../api";
 
 const AuthScreen = ({ onAuthSuccess }) => {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -12,31 +10,19 @@ const AuthScreen = ({ onAuthSuccess }) => {
     e.preventDefault();
     setLoading(true);
     try {
-      if (isLogin) {
-        // Temporary Bypass for Backend Issues
-        if (email === "admin@voiceeval.com" && password === "Voiceeval@1234") {
-          console.log("Using bypass credentials");
-          localStorage.setItem("token", "bypass-token-for-admin");
-          localStorage.setItem("userEmail", email);
-          onAuthSuccess();
-          return;
-        }
-
-        const res = await loginUser({ email, password });
-        localStorage.setItem("token", res.data.access_token);
+      // Temporary Bypass for Backend Issues
+      if (email === "admin@voiceeval.com" && password === "Voiceeval@1234") {
+        console.log("Using bypass credentials");
+        localStorage.setItem("token", "bypass-token-for-admin");
         localStorage.setItem("userEmail", email);
         onAuthSuccess();
-      } else {
-        // SIGNUP LOGIC: Changed
-        await signupUser({ email, password });
-        alert(
-          "Account created successfully! Please log in with your credentials."
-        );
-
-        // Clear password and toggle to login view
-        setPassword("");
-        setIsLogin(true);
+        return;
       }
+
+      const res = await loginUser({ email, password });
+      localStorage.setItem("token", res.data.access_token);
+      localStorage.setItem("userEmail", email);
+      onAuthSuccess();
     } catch (err) {
       alert(err.response?.data?.detail || "Authentication failed");
     } finally {
@@ -59,7 +45,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
 
       <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl relative">
         <h2 className="text-2xl font-bold text-white mb-6 text-center">
-          {isLogin ? "Welcome Back" : "Create Account"}
+          Welcome Back
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -94,34 +80,10 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 Processing...
               </>
             ) : (
-              isLogin ? "Login" : "Sign Up"
+              "Login"
             )}
           </button>
         </form>
-        <p className="mt-6 text-gray-400 text-center text-sm">
-          {isLogin ? "Don't have an account?" : "Already have an account?"}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="ml-2 text-teal-400 hover:underline focus:outline-none font-medium"
-          >
-            {isLogin ? "Sign Up" : "Login"}
-          </button>
-        </p>
-      </div>
-
-      {/* Public Links */}
-      <div className="mt-8 flex items-center gap-6">
-        <Link to="/docs" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
-          Documentation
-        </Link>
-        <span className="w-1 h-1 rounded-full bg-gray-700" />
-        <a href="#" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
-          Support
-        </a >
-        <span className="w-1 h-1 rounded-full bg-gray-700" />
-        <a href="#" className="text-gray-500 hover:text-gray-300 text-sm transition-colors">
-          Terms
-        </a >
       </div>
     </div>
   );

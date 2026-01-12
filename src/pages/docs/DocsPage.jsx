@@ -81,6 +81,8 @@ const DocsPage = () => {
     }
   };
 
+  const hasOnThisPage = !!OnThisPageData[activeSection];
+
   return (
     <div className="min-h-screen bg-dark-bg text-gray-100">
       {/* Header */}
@@ -149,17 +151,25 @@ const DocsPage = () => {
         </main>
 
         {/* Right Sidebar - On This Page */}
-        <aside className="w-64 border-l border-gray-800/50 h-[calc(100vh-73px)] sticky top-[73px] overflow-y-auto">
-          <div className="p-6">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
-              On this page
-            </h3>
-            <OnThisPage section={activeSection} />
-          </div>
-        </aside>
+        {hasOnThisPage && (
+          <aside className="w-64 border-l border-gray-800/50 h-[calc(100vh-73px)] sticky top-[73px] overflow-y-auto">
+            <div className="p-6">
+              <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                On this page
+              </h3>
+              <OnThisPage section={activeSection} />
+            </div>
+          </aside>
+        )}
       </div>
     </div>
   );
+};
+
+const OnThisPageData = {
+  introduction: ["What is VoiceEval?", "The Problem We Solve", "Our Solution", "Key Features"],
+  "quick-start": ["Connect Your Agent", "Extract Configuration", "Generate Test Suite", "Run Simulation", "View Results"],
+  architecture: ["Pipeline Overview", "Technology Stack"],
 };
 
 // Introduction Section
@@ -359,13 +369,7 @@ const PlaceholderSection = ({ title }) => (
 
 // On This Page Component
 const OnThisPage = ({ section }) => {
-  const sections = {
-    introduction: ["What is VoiceEval?", "The Problem We Solve", "Our Solution", "Key Features"],
-    "quick-start": ["Connect Your Agent", "Extract Configuration", "Generate Test Suite", "Run Simulation", "View Results"],
-    architecture: ["Pipeline Overview", "Technology Stack"],
-  };
-
-  const items = sections[section] || [];
+  const items = OnThisPageData[section] || [];
 
   return (
     <ul className="space-y-2 text-sm">

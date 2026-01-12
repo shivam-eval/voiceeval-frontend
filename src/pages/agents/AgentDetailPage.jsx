@@ -89,6 +89,10 @@ const AgentDetailPage = () => {
     };
 
 
+    const handleGenerateFlow = () => {
+        setShowGenerateFlowModal(true);
+    };
+
     const handleGenerateTestSuiteFromFlow = (flow) => {
         setSelectedFlowForTestGen(flow);
         setShowGenerateTestSuiteModal(true);

@@ -14,6 +14,9 @@ const AuthScreen = ({ onAuthSuccess }) => {
       const res = await loginUser({ email, password });
       localStorage.setItem("authToken", res.data.access_token);
       localStorage.setItem("userEmail", email);
+      if (res.data.user_name) {
+        localStorage.setItem("userName", res.data.user_name);
+      }
       onAuthSuccess();
     } catch (err) {
       // Show user-friendly error messages

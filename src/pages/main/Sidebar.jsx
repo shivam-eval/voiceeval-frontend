@@ -67,7 +67,8 @@ const Sidebar = ({
   };
 
   const userEmail = localStorage.getItem("userEmail") || "user@voiceeval.com";
-  const userInitial = userEmail.charAt(0).toUpperCase();
+  const userName = localStorage.getItem("userName") || "User";
+  const userInitial = userName.charAt(0).toUpperCase();
 
   return (
     <div
@@ -183,7 +184,7 @@ const Sidebar = ({
             </div>
             {isSidebarOpen && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">User</p>
+                <p className="text-sm font-medium text-white truncate">{userName}</p>
                 <p className="text-xs text-gray-400 truncate">{userEmail}</p>
               </div>
             )}

@@ -666,7 +666,7 @@ const TestSuiteDetailView = () => {
                                 <thead className="bg-gray-800/50">
                                     <tr>
                                         <th className="w-8 px-4 py-3"></th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">ID / Name</th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Name / ID</th>
                                         <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
                                         <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">Actions</th>
                                     </tr>
@@ -690,8 +690,8 @@ const TestSuiteDetailView = () => {
                                                     </svg>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <div className="font-medium text-white">{truncate(testCase.test_case_id || `TC-${index + 1}`, 12)}</div>
-                                                    <div className="text-sm text-gray-500">{testCase.name || 'Untitled Case'}</div>
+                                                    <div className="font-medium text-white">{testCase.name || 'Untitled Case'}</div>
+                                                    <div className="text-sm text-gray-500">{truncate(testCase.test_case_id || `TC-${index + 1}`, 12)}</div>
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     {testCase.session_status ? (

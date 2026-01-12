@@ -129,6 +129,16 @@ const formatPersonaField = (value) => {
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 };
+// utils/formatters.js
+export const formatLabel = (value) => {
+  if (!value) return '-';
+
+  return value
+    .toString()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase());
+};
+
 
 const TestCaseExpandedDetails = ({ testCase }) => (
     <div className="space-y-6">
@@ -201,7 +211,7 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                     <div className="flex flex-wrap gap-2">
                         {testCase.node_sequence.map((node, idx) => (
                             <div key={idx} className="flex items-center gap-1">
-                                <Badge variant="info" size="sm">{node}</Badge>
+                                <Badge variant="info" size="sm">{formatLabel(node)}</Badge>
                                 {idx < testCase.node_sequence.length - 1 && (
                                     <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -227,14 +237,43 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                                 <div className="text-sm text-gray-400 mt-1">
                                     {formatPersonaField(persona.region)} • {formatPersonaField(persona.age_group)} • {formatPersonaField(persona.gender)}
                                 </div>
-                                {persona.language && (
+                                {persona.native_language && (
                                     <div className="text-xs text-gray-500 mt-1">
-                                        Language: {formatPersonaField(persona.language)}
+                                        Language: {formatPersonaField(persona.native_language)}
                                     </div>
                                 )}
-                                <div className="text-xs text-gray-500 mt-1">
-                                    Match: {(persona.confidence_score * 100).toFixed(0)}%
-                                </div>
+                                {persona.voice_profile && (
+                                    <div className="mt-3 pt-3 border-t border-gray-800">
+                                        <div className="text-xs font-semibold text-gray-400 mb-2">Voice Settings</div>
+                                        <div className="flex items-center gap-3 flex-wrap">
+
+                                            {persona.voice_profile.pitch !== undefined && (
+                                                <div className="px-2 py-1 bg-gray-800 rounded text-xs">
+                                                    <span className="text-gray-500">Pitch:</span>{' '}
+                                                    <span className="text-white font-medium">{persona.voice_profile.pitch}</span>
+                                                </div>
+                                            )}
+                                            {persona.voice_profile.pace !== undefined && (
+                                                <div className="px-2 py-1 bg-gray-800 rounded text-xs">
+                                                    <span className="text-gray-500">Pace:</span>{' '}
+                                                    <span className="text-white font-medium">{persona.voice_profile.pace}x</span>
+                                                </div>
+                                            )}
+                                            {persona.voice_profile.loudness !== undefined && (
+                                                <div className="px-2 py-1 bg-gray-800 rounded text-xs">
+                                                    <span className="text-gray-500">Loudness:</span>{' '}
+                                                    <span className="text-white font-medium">{persona.voice_profile.loudness}</span>
+                                                </div>
+                                            )}
+                                            <div className="px-2 py-1 bg-gray-800 rounded text-xs">
+                                                <span className="text-gray-500">Interruption:</span>{' '}
+                                                <span className={`${persona.behavior_traits?.interrupts_frequently ? 'text-teal-400' : 'text-white'} font-medium`}>
+                                                    {persona.behavior_traits?.interrupts_frequently ? 'Yes' : 'No'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -269,7 +308,7 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                         <div key={idx} className="border-l-2 border-teal-500 pl-4 py-2">
                             <div className="flex items-center gap-2 mb-1">
                                 <Badge variant="info" size="sm">Step {step.step_number}</Badge>
-                                <Badge variant="default" size="sm">{step.type}</Badge>
+                                <Badge variant="default" size="sm">{formatLabel(step.type)}</Badge>
                             </div>
                             {step.utterance && (
                                 <div className="text-sm text-gray-300 mt-2">
@@ -278,12 +317,12 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                             )}
                             {step.expected_response && (
                                 <div className="text-sm text-gray-400 mt-1">
-                                    <span className="text-gray-500">Expected:</span> {step.expected_response}
+                                    <span className="text-gray-500">Expected Response:</span> {step.expected_response}
                                 </div>
                             )}
                             {step.expected_action && (
                                 <div className="text-sm text-teal-400 mt-1">
-                                    <span className="text-gray-500">Action:</span> {step.expected_action}
+                                    <span className="text-gray-500">Expected Action:</span> {step.expected_action}
                                 </div>
                             )}
                         </div>
@@ -730,6 +769,7 @@ const TestSuiteDetailView = () => {
                 isOpen={showRunSimulationModal}
                 onClose={() => setShowRunSimulationModal(false)}
                 preSelectedTestSuiteId={suiteId}
+                preSelectedAgentId={suite?.agent_id}
             />
         </div>
     );

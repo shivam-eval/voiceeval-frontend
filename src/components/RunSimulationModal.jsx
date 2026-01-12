@@ -28,6 +28,14 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
     const selectedAgent = agents.find(a => a.agent_id === selectedAgentId);
     const selectedTestSuite = testSuites.find(ts => ts.test_suite_id === selectedTestSuiteId);
 
+    // Update state when preSelected props change (when modal opens with new values)
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedAgentId(preSelectedAgentId || '');
+            setSelectedTestSuiteId(preSelectedTestSuiteId || '');
+        }
+    }, [isOpen, preSelectedAgentId, preSelectedTestSuiteId]);
+
     // Auto-fill phone number from selected agent
     useEffect(() => {
         if (selectedAgent?.phoneNumber) {
@@ -91,32 +99,53 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                     {/* Agent Selection */}
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Select Agent
+                            {preSelectedAgentId ? 'Agent' : 'Select Agent'}
                         </label>
-                        <select
-                            value={selectedAgentId}
-                            onChange={(e) => setSelectedAgentId(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                            disabled={agentsLoading}
-                        >
-                            <option value="">Choose an agent...</option>
-                            {agents.map(agent => (
-                                <option key={agent.agent_id} value={agent.agent_id}>
-                                    { (agent.name || agent.agent_name) ? `${agent.name || agent.agent_name} (${agent.agent_id})` : agent.agent_id }
-                                </option>
-                            ))}
-                        </select>
-                        {selectedAgent && (
-                            <div className="mt-2 p-3 bg-gray-800/50 rounded-lg">
-                                <div className="flex items-center gap-2 text-sm">
-                                    <Badge variant="info">{selectedAgent.platform}</Badge>
-                                    {selectedAgent.phoneNumber && (
-                                        <span className="text-gray-400">
-                                            {selectedAgent.phoneNumber}
-                                        </span>
-                                    )}
+                        {preSelectedAgentId ? (
+                            // Read-only agent display when pre-selected
+                            selectedAgent ? (
+                                <div className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg">
+                                    <div className="text-white font-medium">
+                                        {selectedAgent.name || selectedAgent.agent_name || selectedAgent.agent_id}
+                                    </div>
+                                    <div className="text-sm text-gray-400 mt-1">
+                                        {selectedAgent.agent_id}
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg text-gray-400">
+                                    Loading agent
+                                </div>
+                            )
+                        ) : (
+                            // Dropdown when no agent is pre-selected
+                            <>
+                                <select
+                                    value={selectedAgentId}
+                                    onChange={(e) => setSelectedAgentId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
+                                    disabled={agentsLoading}
+                                >
+                                    <option value="">Choose an agent...</option>
+                                    {agents.map(agent => (
+                                        <option key={agent.agent_id} value={agent.agent_id}>
+                                            {(agent.name || agent.agent_name) ? `${agent.name || agent.agent_name} (${agent.agent_id})` : agent.agent_id}
+                                        </option>
+                                    ))}
+                                </select>
+                                {selectedAgent && (
+                                    <div className="mt-2 p-3 bg-gray-800/50 rounded-lg">
+                                        <div className="flex items-center gap-2 text-sm">
+                                            <Badge variant="info">{selectedAgent.platform}</Badge>
+                                            {selectedAgent.phoneNumber && (
+                                                <span className="text-gray-400">
+                                                    {selectedAgent.phoneNumber}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
 

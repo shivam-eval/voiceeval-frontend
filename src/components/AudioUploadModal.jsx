@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { toast } from "react-toastify";
 import Button from "./Button";
 import Badge from "./Badge";
@@ -17,6 +17,13 @@ const AudioUploadModal = ({
     const [selectedAgentId, setSelectedAgentId] = useState(defaultAgentId);
     const [uploadResults, setUploadResults] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
+
+    // Auto-select first agent if none selected
+    useEffect(() => {
+        if (!selectedAgentId && agents.length > 0) {
+            setSelectedAgentId(agents[0].value);
+        }
+    }, [agents, selectedAgentId]);
 
     const formatFileSize = (bytes) => {
         if (bytes < 1024) return bytes + ' B';
@@ -134,7 +141,6 @@ const AudioUploadModal = ({
                                     className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400 transition-colors"
                                     required
                                 >
-                                    <option value="">Select an agent...</option>
                                     {agents.map((agent) => (
                                         <option key={agent.value} value={agent.value}>
                                             {agent.label}

@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useTestSuites, useDeleteTestSuite, useCloneTestSuite, useCreateTestSuite } from "../../hooks/useTestSuites";
+import { useTestSuites, useDeleteTestSuite, useCreateTestSuite } from "../../hooks/useTestSuites";
 import { useAgents } from "../../hooks/useAgents";
 import Table from "../../components/Table";
 import Badge from "../../components/Badge";
 import Button from "../../components/Button";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import CreateTestSuiteModal from "../../components/CreateTestSuiteModal";
 
 const TestCasesPage = () => {
@@ -18,6 +19,14 @@ const TestCasesPage = () => {
 
     // Modal state
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        variant: 'danger',
+        confirmText: 'Confirm'
+    });
 
     // Fetch test suites
     const { data, isLoading, error } = useTestSuites({
@@ -30,7 +39,6 @@ const TestCasesPage = () => {
 
     // Mutations
     const deleteTestSuite = useDeleteTestSuite();
-    const cloneTestSuite = useCloneTestSuite();
     const createTestSuite = useCreateTestSuite();
 
     const handleCreateSuite = (formData) => {
@@ -47,35 +55,42 @@ const TestCasesPage = () => {
 
 
     const handleDelete = async (id) => {
-        if (confirm("Are you sure you want to delete this test suite?")) {
-            try {
-                await deleteTestSuite.mutateAsync(id);
-                toast.success("Test suite deleted successfully");
-            } catch (error) {
-                // Error handled by global interceptor
+        setConfirmModal({
+            isOpen: true,
+            title: "Delete Test Suite",
+            message: "Are you sure you want to delete this test suite?",
+            confirmText: "Delete",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    await deleteTestSuite.mutateAsync(id);
+                    toast.success("Test suite deleted successfully");
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                } catch (error) {
+                    // Error handled by global interceptor
+                }
             }
-        }
-    };
-
-    const handleClone = async (id) => {
-        try {
-            await cloneTestSuite.mutateAsync(id);
-            toast.success("Test suite cloned successfully");
-        } catch (error) {
-            // Error handled by global interceptor
-        }
+        });
     };
 
     const handleBulkDelete = async () => {
-        if (confirm(`Are you sure you want to delete ${selectedRows.length} test suites?`)) {
-            try {
-                await Promise.all(selectedRows.map(id => deleteTestSuite.mutateAsync(id)));
-                setSelectedRows([]);
-                toast.success(`${selectedRows.length} test suites deleted successfully`);
-            } catch (error) {
-                // Error handled by global interceptor
+        setConfirmModal({
+            isOpen: true,
+            title: "Bulk Delete",
+            message: `Are you sure you want to delete ${selectedRows.length} test suites?`,
+            confirmText: "Delete",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    await Promise.all(selectedRows.map(id => deleteTestSuite.mutateAsync(id)));
+                    setSelectedRows([]);
+                    toast.success(`${selectedRows.length} test suites deleted successfully`);
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                } catch (error) {
+                    // Error handled by global interceptor
+                }
             }
-        }
+        });
     };
 
     // Table columns
@@ -256,18 +271,6 @@ const TestCasesPage = () => {
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    handleClone(row.test_suite_id);
-                                }}
-                                className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
-                                title="Clone Test Suite"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
                                     handleDelete(row.test_suite_id);
                                 }}
                                 className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-red-400 transition-colors"
@@ -291,6 +294,16 @@ const TestCasesPage = () => {
                 agents={agentsData?.agents || []}
             />
 
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.confirmText}
+                variant={confirmModal.variant}
+                isLoading={deleteTestSuite.isPending}
+            />
         </div>
     );
 };

@@ -106,24 +106,14 @@ const CallsPage = () => {
   const agentOptions = useMemo(() => {
     const agents = agentsData?.agents || [];
     const options = [
-      { label: 'Select an existing agent...', value: '' },
       ...agents.map(agent => ({
         label: `${agent.name} (${agent.provider_agent_id || agent.agent_id})`,
         value: agent.provider_agent_id || agent.agent_id
       }))
     ];
 
-    // Add the stored assistant ID if it's not already in the list
-    const storedAssistantId = workflow?.assistantId;
-    if (storedAssistantId && !options.find(opt => opt.value === storedAssistantId)) {
-      options.splice(1, 0, {
-        label: `Last Connected Agent (${storedAssistantId})`,
-        value: storedAssistantId
-      });
-    }
-
     return options;
-  }, [agentsData, workflow?.assistantId]);
+  }, [agentsData]);
 
   // Fetch flows to get a dynamic flow_id if needed
   const { data: flowsData } = useFlows();
@@ -598,10 +588,6 @@ const CallsPage = () => {
           >
             <Plus className="w-5 h-5" />
             Add Calls
-          </button>
-          <button className="flex items-center gap-2 bg-dark-panel border border-gray-800 text-white px-6 py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition-colors shadow-lg">
-            <Filter className="w-5 h-5" />
-            Filters
           </button>
         </div>
       </div>

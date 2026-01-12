@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useTestSuite, useUpdateTestSuite, useDeleteTestSuite, useAddTestCase, useCloneTestSuite, useTestSuiteSimulationSummary } from "../../hooks/useTestSuites";
+import { useTestSuite, useUpdateTestSuite, useDeleteTestSuite, useTestSuiteSimulationSummary } from "../../hooks/useTestSuites";
 import { usePersonas } from "../../hooks/usePersonas";
 import { useTestProfiles } from "../../hooks/useTestProfiles";
-import { testSuitesApi } from "../../utils/api";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
+import ConfirmationModal from "../../components/ConfirmationModal";
 import TestCaseEditorModal from "../../components/TestCaseEditorModal";
 import RunSimulationModal from "../../components/RunSimulationModal";
 
@@ -38,19 +38,46 @@ const MetricCard = ({ label, value, valueClassName = 'text-3xl font-bold text-wh
     );
 };
 
-const EditableField = ({ value, isEditing, onEdit, onSave, placeholder, multiline = false }) => {
+const EditableField = ({ value, isEditing, onEdit, onSave, onCancel, placeholder, multiline = false }) => {
+    const [tempValue, setTempValue] = useState(value);
+
+    useEffect(() => {
+        if (isEditing) {
+            setTempValue(value);
+        }
+    }, [isEditing, value]);
+
     if (isEditing) {
         const Component = multiline ? 'textarea' : 'input';
         return (
-            <Component
-                type={multiline ? undefined : "text"}
-                defaultValue={value}
-                onBlur={(e) => onSave(e.target.value)}
-                onKeyPress={(e) => !multiline && e.key === 'Enter' && onSave(e.target.value)}
-                autoFocus
-                rows={multiline ? 2 : undefined}
-                className={`${multiline ? 'w-full resize-none' : 'text-4xl font-bold'} text-white bg-gray-800 border border-teal-400 rounded px-3 py-${multiline ? '2' : '1'} focus:outline-none`}
-            />
+            <div className={`flex flex-col gap-2 ${multiline ? 'w-full' : ''}`}>
+                <Component
+                    type={multiline ? undefined : "text"}
+                    value={tempValue}
+                    onChange={(e) => setTempValue(e.target.value)}
+                    onKeyPress={(e) => !multiline && e.key === 'Enter' && onSave(tempValue)}
+                    autoFocus
+                    rows={multiline ? 3 : undefined}
+                    className={`${multiline ? 'w-full resize-none' : 'text-4xl font-bold'} text-white bg-gray-800 border border-teal-400 rounded px-3 py-${multiline ? '2' : '1'} focus:outline-none`}
+                />
+                <div className="flex gap-2">
+                    <Button 
+                        size="sm" 
+                        onClick={() => onSave(tempValue)}
+                        className="h-8 py-0"
+                    >
+                        Save
+                    </Button>
+                    <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={onCancel}
+                        className="h-8 py-0"
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            </div>
         );
     }
 
@@ -84,15 +111,11 @@ const ErrorState = ({ message, onBack }) => (
     </div>
 );
 
-const EmptyState = ({ onAddTestCase }) => (
+const EmptyState = () => (
     <div className="p-12 text-center">
         <div className="text-6xl mb-4">📝</div>
         <h3 className="text-xl font-semibold text-gray-300 mb-2">No test cases yet</h3>
-        <p className="text-gray-500 mb-6">Get started by adding test cases or generating them from your agent</p>
-        <div className="flex items-center justify-center gap-4">
-            <Button onClick={onAddTestCase}>Add Test Case</Button>
-            <Button variant="outline" onClick={onAddTestCase}>Generate from Agent</Button>
-        </div>
+        <p className="text-gray-500 mb-6">Test cases will appear here once they are generated from your agent</p>
     </div>
 );
 
@@ -129,6 +152,16 @@ const formatPersonaField = (value) => {
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 };
+// utils/formatters.js
+export const formatLabel = (value) => {
+  if (!value) return '-';
+
+  return value
+    .toString()
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, char => char.toUpperCase());
+};
+
 
 const TestCaseExpandedDetails = ({ testCase }) => (
     <div className="space-y-6">
@@ -201,7 +234,7 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                     <div className="flex flex-wrap gap-2">
                         {testCase.node_sequence.map((node, idx) => (
                             <div key={idx} className="flex items-center gap-1">
-                                <Badge variant="info" size="sm">{node}</Badge>
+                                <Badge variant="info" size="sm">{formatLabel(node)}</Badge>
                                 {idx < testCase.node_sequence.length - 1 && (
                                     <svg className="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -227,14 +260,43 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                                 <div className="text-sm text-gray-400 mt-1">
                                     {formatPersonaField(persona.region)} • {formatPersonaField(persona.age_group)} • {formatPersonaField(persona.gender)}
                                 </div>
-                                {persona.language && (
+                                {persona.native_language && (
                                     <div className="text-xs text-gray-500 mt-1">
-                                        Language: {formatPersonaField(persona.language)}
+                                        Language: {formatPersonaField(persona.native_language)}
                                     </div>
                                 )}
-                                <div className="text-xs text-gray-500 mt-1">
-                                    Match: {(persona.confidence_score * 100).toFixed(0)}%
-                                </div>
+                                {persona.voice_profile && (
+                                    <div className="mt-3 pt-3 border-t border-gray-800">
+                                        <div className="text-xs font-semibold text-gray-400 mb-2">Voice Settings</div>
+                                        <div className="flex items-center gap-3 flex-wrap">
+
+                                            {persona.voice_profile.pitch !== undefined && (
+                                                <div className="px-2 py-1 bg-gray-800 rounded text-xs">
+                                                    <span className="text-gray-500">Pitch:</span>{' '}
+                                                    <span className="text-white font-medium">{persona.voice_profile.pitch}</span>
+                                                </div>
+                                            )}
+                                            {persona.voice_profile.pace !== undefined && (
+                                                <div className="px-2 py-1 bg-gray-800 rounded text-xs">
+                                                    <span className="text-gray-500">Pace:</span>{' '}
+                                                    <span className="text-white font-medium">{persona.voice_profile.pace}x</span>
+                                                </div>
+                                            )}
+                                            {persona.voice_profile.loudness !== undefined && (
+                                                <div className="px-2 py-1 bg-gray-800 rounded text-xs">
+                                                    <span className="text-gray-500">Loudness:</span>{' '}
+                                                    <span className="text-white font-medium">{persona.voice_profile.loudness}</span>
+                                                </div>
+                                            )}
+                                            <div className="px-2 py-1 bg-gray-800 rounded text-xs">
+                                                <span className="text-gray-500">Interruption:</span>{' '}
+                                                <span className={`${persona.behavior_traits?.interrupts_frequently ? 'text-teal-400' : 'text-white'} font-medium`}>
+                                                    {persona.behavior_traits?.interrupts_frequently ? 'Yes' : 'No'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -269,7 +331,12 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                         <div key={idx} className="border-l-2 border-teal-500 pl-4 py-2">
                             <div className="flex items-center gap-2 mb-1">
                                 <Badge variant="info" size="sm">Step {step.step_number}</Badge>
-                                <Badge variant="default" size="sm">{step.type}</Badge>
+                                <Badge variant="default" size="sm">{formatLabel(step.type)}</Badge>
+                                {step.max_wait_ms != null && (
+                                    <Badge variant="info" size="sm">
+                                        Add Interruption
+                                    </Badge>
+                                )}
                             </div>
                             {step.utterance && (
                                 <div className="text-sm text-gray-300 mt-2">
@@ -278,12 +345,12 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                             )}
                             {step.expected_response && (
                                 <div className="text-sm text-gray-400 mt-1">
-                                    <span className="text-gray-500">Expected:</span> {step.expected_response}
+                                    <span className="text-gray-500">Expected Response:</span> {step.expected_response}
                                 </div>
                             )}
                             {step.expected_action && (
                                 <div className="text-sm text-teal-400 mt-1">
-                                    <span className="text-gray-500">Action:</span> {step.expected_action}
+                                    <span className="text-gray-500">Expected Action:</span> {step.expected_action}
                                 </div>
                             )}
                         </div>
@@ -310,6 +377,14 @@ const TestSuiteDetailView = () => {
     const [showTestCaseModal, setShowTestCaseModal] = useState(false);
     const [editingTestCase, setEditingTestCase] = useState(null);
     const [showRunSimulationModal, setShowRunSimulationModal] = useState(false);
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        variant: 'danger',
+        confirmText: 'Confirm'
+    });
 
     // Fetch data
     const { data: suite, isLoading, error } = useTestSuite(suiteId);
@@ -319,8 +394,6 @@ const TestSuiteDetailView = () => {
     // Mutations
     const updateSuite = useUpdateTestSuite();
     const deleteSuite = useDeleteTestSuite();
-    const cloneSuite = useCloneTestSuite();
-    const addTestCase = useAddTestCase();
 
     // Simulation summary for status display
     const { data: simulationSummary } = useTestSuiteSimulationSummary(suiteId);
@@ -340,29 +413,23 @@ const TestSuiteDetailView = () => {
     };
 
     const handleDelete = async () => {
-        if (confirm("Are you sure you want to delete this test suite?")) {
-            try {
-                await deleteSuite.mutateAsync(suiteId);
-                toast.success("Test suite deleted successfully");
-                navigate("/test-cases");
-            } catch (error) {
-                // Error handled by global interceptor
+        setConfirmModal({
+            isOpen: true,
+            title: "Delete Test Suite",
+            message: "Are you sure you want to delete this test suite?",
+            confirmText: "Delete",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    await deleteSuite.mutateAsync(suiteId);
+                    toast.success("Test suite deleted successfully");
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    navigate("/test-cases");
+                } catch (error) {
+                    // Error handled by global interceptor
+                }
             }
-        }
-    };
-
-    const handleClone = async () => {
-        try {
-            await cloneSuite.mutateAsync(suiteId);
-            toast.success("Test suite cloned successfully");
-        } catch (error) {
-            // Error handled by global interceptor
-        }
-    };
-
-    const handleAddTestCase = () => {
-        setEditingTestCase(null);
-        setShowTestCaseModal(true);
+        });
     };
 
     const handleEditTestCase = (testCase) => {
@@ -382,7 +449,9 @@ const TestSuiteDetailView = () => {
         const isEditing = !!editingTestCase;
         const currentEditingCase = editingTestCase; // Store for the mutation
         setEditingTestCase(null);
-        toast.info(isEditing ? "Updating test case..." : "Adding test case...");
+        if (isEditing) {
+            toast.info("Updating test case...");
+        }
 
         // Pack fields into metadata for V2 compliance
         const v2TestCaseData = {
@@ -409,31 +478,30 @@ const TestSuiteDetailView = () => {
                 onSuccess: () => toast.success("Test case updated"),
                 onError: () => toast.error("Failed to update test case")
             });
-        } else {
-            // Add new test case
-            addTestCase.mutate({
-                suiteId,
-                testCase: v2TestCaseData,
-            }, {
-                onSuccess: () => toast.success("Test case added"),
-                onError: () => toast.error("Failed to add test case")
-            });
         }
     };
 
     const handleDeleteTestCase = async (testCaseId) => {
-        if (confirm("Are you sure you want to delete this test case?")) {
-            try {
-                const updatedTestCases = testCases.filter(tc => (tc.test_case_id || tc.id) !== testCaseId);
-                await updateSuite.mutateAsync({
-                    id: suiteId,
-                    data: { test_cases: updatedTestCases },
-                });
-                toast.success("Test case deleted");
-            } catch (error) {
-                // Error handled by global interceptor
+        setConfirmModal({
+            isOpen: true,
+            title: "Delete Test Case",
+            message: "Are you sure you want to delete this test case?",
+            confirmText: "Delete",
+            variant: "danger",
+            onConfirm: async () => {
+                try {
+                    const updatedTestCases = testCases.filter(tc => (tc.test_case_id || tc.id) !== testCaseId);
+                    await updateSuite.mutateAsync({
+                        id: suiteId,
+                        data: { test_cases: updatedTestCases },
+                    });
+                    toast.success("Test case deleted");
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                } catch (error) {
+                    // Error handled by global interceptor
+                }
             }
-        }
+        });
     };
 
     const toggleRow = (rowId) => {
@@ -478,6 +546,7 @@ const TestSuiteDetailView = () => {
                             isEditing={editingName}
                             onEdit={() => setEditingName(true)}
                             onSave={(value) => handleInlineEdit('name', value)}
+                            onCancel={() => setEditingName(false)}
                             placeholder="Test Suite Name"
                         />
 
@@ -522,6 +591,7 @@ const TestSuiteDetailView = () => {
                         isEditing={editingDescription}
                         onEdit={() => setEditingDescription(true)}
                         onSave={(value) => handleInlineEdit('description', value)}
+                        onCancel={() => setEditingDescription(false)}
                         placeholder="Click to add description..."
                         multiline
                     />
@@ -540,12 +610,6 @@ const TestSuiteDetailView = () => {
                             </svg>
                             Run Simulation
                         </Button>
-                        <Button size="sm" variant="outline" onClick={handleAddTestCase}>
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                            Add Test Case
-                        </Button>
                         <Button
                             size="sm"
                             variant="outline"
@@ -555,12 +619,6 @@ const TestSuiteDetailView = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             Export
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={handleClone}>
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                            </svg>
-                            Clone
                         </Button>
                         <Button size="sm" variant="danger" onClick={handleDelete}>
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -597,24 +655,18 @@ const TestSuiteDetailView = () => {
                     <div className="p-6 border-b border-gray-800">
                         <div className="flex items-center justify-between">
                             <h2 className="text-2xl font-bold text-white">Test Cases</h2>
-                            <Button size="sm" onClick={handleAddTestCase}>
-                                Generate from Agent
-                            </Button>
                         </div>
                     </div>
 
                     {testCases.length === 0 ? (
-                        <EmptyState onAddTestCase={handleAddTestCase} />
+                        <EmptyState />
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-gray-800/50">
                                     <tr>
                                         <th className="w-8 px-4 py-3"></th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">ID / Name</th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Type</th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Input</th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Expected Output</th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Name / ID</th>
                                         <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
                                         <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">Actions</th>
                                     </tr>
@@ -638,23 +690,8 @@ const TestSuiteDetailView = () => {
                                                     </svg>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <div className="font-medium text-white">{truncate(testCase.test_case_id || `TC-${index + 1}`, 12)}</div>
-                                                    {testCase.name && (
-                                                        <div className="text-sm text-gray-500">{testCase.name}</div>
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-4">
-                                                    <Badge variant="info" size="sm">{testCase.type || 'scenario'}</Badge>
-                                                </td>
-                                                <td className="px-4 py-4">
-                                                    <div className="text-gray-300 truncate max-w-xs">
-                                                        {testCase.input || '-'}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-4">
-                                                    <div className="text-gray-300 truncate max-w-xs">
-                                                        {testCase.expected_output || '-'}
-                                                    </div>
+                                                    <div className="font-medium text-white">{testCase.name || 'Untitled Case'}</div>
+                                                    <div className="text-sm text-gray-500">{truncate(testCase.test_case_id || `TC-${index + 1}`, 12)}</div>
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     {testCase.session_status ? (
@@ -697,7 +734,7 @@ const TestSuiteDetailView = () => {
                                             {/* Expanded Row */}
                                             {expandedRows.has(testCase.test_case_id || index) && (
                                                 <tr className="border-t border-gray-800 bg-gray-800/20">
-                                                    <td colSpan="7" className="px-4 py-6">
+                                                    <td colSpan="4" className="px-4 py-6">
                                                         <TestCaseExpandedDetails testCase={testCase} />
                                                     </td>
                                                 </tr>
@@ -730,6 +767,18 @@ const TestSuiteDetailView = () => {
                 isOpen={showRunSimulationModal}
                 onClose={() => setShowRunSimulationModal(false)}
                 preSelectedTestSuiteId={suiteId}
+                preSelectedAgentId={suite?.agent_id}
+            />
+
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.confirmText}
+                variant={confirmModal.variant}
+                isLoading={updateSuite.isPending || deleteSuite.isPending}
             />
         </div>
     );

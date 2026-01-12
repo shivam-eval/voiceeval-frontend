@@ -6,11 +6,20 @@ import { useSimulations, useDeleteSimulation, useRerunSimulation, useCancelSimul
 import Badge from '../../components/Badge';
 import Button from '../../components/Button';
 import RunSimulationModal from '../../components/RunSimulationModal';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const SimulationsListPage = () => {
     const navigate = useNavigate();
     const [selectedSimulations, setSelectedSimulations] = useState([]);
     const [showRunModal, setShowRunModal] = useState(false);
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => { },
+        variant: 'danger',
+        confirmText: 'Confirm'
+    });
     const [filters, setFilters] = useState({
         search: '',
         status: '',
@@ -43,39 +52,63 @@ const SimulationsListPage = () => {
 
     const handleDelete = async (e, simulationId) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to delete this simulation? This action cannot be undone.')) {
-            try {
-                await deleteSimulation.mutateAsync(simulationId);
-                toast.success('Simulation deleted successfully');
-            } catch (error) {
-                // Error handled by global interceptor
+        setConfirmModal({
+            isOpen: true,
+            title: 'Delete Simulation',
+            message: 'Are you sure you want to delete this simulation? This action cannot be undone.',
+            confirmText: 'Delete',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    await deleteSimulation.mutateAsync(simulationId);
+                    toast.success('Simulation deleted successfully');
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                } catch (error) {
+                    // Error handled by global interceptor
+                }
             }
-        }
+        });
     };
 
     const handleRerun = async (e, simulationId) => {
         e.stopPropagation();
-        if (window.confirm('This will create a new simulation with the same parameters. Continue?')) {
-            try {
-                const result = await rerunSimulation.mutateAsync(simulationId);
-                toast.success(`Simulation rerun initiated!`);
-                navigate(`/simulation/runs/${result.new_simulation_id}`);
-            } catch (error) {
-                // Error handled by global interceptor
+        setConfirmModal({
+            isOpen: true,
+            title: 'Rerun Simulation',
+            message: 'This will create a new simulation with the same parameters. Continue?',
+            confirmText: 'Rerun',
+            variant: 'teal',
+            onConfirm: async () => {
+                try {
+                    const result = await rerunSimulation.mutateAsync(simulationId);
+                    toast.success(`Simulation rerun initiated!`);
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                    navigate(`/simulation/runs/${result.new_simulation_id}`);
+                } catch (error) {
+                    // Error handled by global interceptor
+                }
             }
-        }
+        });
     };
 
     const handleCancel = async (e, simulationId) => {
         e.stopPropagation();
-        if (window.confirm('Are you sure you want to cancel this running simulation?')) {
-            try {
-                await cancelSimulation.mutateAsync(simulationId);
-                toast.success('Simulation cancelled successfully');
-            } catch (error) {
-                // Error handled by global interceptor
+        setConfirmModal({
+            isOpen: true,
+            title: 'Cancel Simulation',
+            message: 'Are you sure you want to cancel this running simulation?',
+            confirmText: 'Cancel Simulation',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    await cancelSimulation.mutateAsync(simulationId);
+                    toast.success('Simulation cancelled successfully');
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                } catch (error) {
+                    // Error handled by global interceptor
+                }
             }
-        }
+        });
     };
 
     const getStatusBadgeVariant = (status) => {
@@ -384,6 +417,17 @@ const SimulationsListPage = () => {
             <RunSimulationModal
                 isOpen={showRunModal}
                 onClose={() => setShowRunModal(false)}
+            />
+
+            <ConfirmationModal
+                isOpen={confirmModal.isOpen}
+                onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmModal.onConfirm}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmText={confirmModal.confirmText}
+                variant={confirmModal.variant}
+                isLoading={deleteSimulation.isLoading || rerunSimulation.isLoading || cancelSimulation.isLoading}
             />
         </div>
     );

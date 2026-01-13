@@ -81,6 +81,10 @@ export const EventsProvider = ({ children }) => {
                 'queue_update',
                 dispatch('queue_update')
             );
+            eventSource.addEventListener(
+                'call_evaluation_update',
+                dispatch('call_evaluation_update')
+            );
 
             eventSource.onerror = (err) => {
                 console.error(`❌ [${connectionId}] SSE error`, err);

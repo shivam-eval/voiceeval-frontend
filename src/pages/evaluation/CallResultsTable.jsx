@@ -1,7 +1,67 @@
-import React from 'react';
-import { Eye, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Eye, CheckCircle, XCircle, AlertTriangle, Clock, Loader2 } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { useEvents } from '../../context/EventsContext';
 
 const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData = [], simulationId = '' }) => {
+  // Track call evaluation progress
+  const [callProgress, setCallProgress] = useState({});
+  const { subscribe } = useEvents();
+
+  // Subscribe to call evaluation updates
+  useEffect(() => {
+    const unsubscribe = subscribe('call_evaluation_update', (data) => {
+      console.log('📡 Call evaluation update received:', data);
+
+      const { call_id, status, stage, message, error, overall_score, session_id, evaluation_id } = data;
+
+      if (call_id) {
+        setCallProgress(prev => ({
+          ...prev,
+          [call_id]: {
+            status,
+            stage,
+            message,
+            error,
+            overall_score,
+            session_id,
+            evaluation_id,
+            timestamp: Date.now()
+          }
+        }));
+
+        // Show toast notifications on completion or failure
+        if (status === 'completed') {
+          const scoreText = overall_score !== undefined ? ` (Score: ${Math.round(overall_score * 100)}%)` : '';
+          toast.success(`✅ Evaluation completed for ${call_id}${scoreText}`, {
+            autoClose: 4000,
+            position: 'bottom-right'
+          });
+        } else if (status === 'failed') {
+          toast.error(`❌ Evaluation failed for ${call_id}: ${error || 'Unknown error'}`, {
+            autoClose: 5000,
+            position: 'bottom-right'
+          });
+        }
+
+        // If completed or failed, remove from progress after 3 seconds
+        if (status === 'completed' || status === 'failed') {
+          setTimeout(() => {
+            setCallProgress(prev => {
+              const updated = { ...prev };
+              delete updated[call_id];
+              return updated;
+            });
+          }, 3000);
+        }
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [subscribe]);
+
   const getStatusIcon = (status) => {
     switch (status?.toLowerCase()) {
       case 'completed':
@@ -26,7 +86,7 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
 
   const getStatusBadge = (status) => {
     const statusLower = status?.toLowerCase();
-    
+
     if (statusLower === 'completed' || statusLower === 'success') {
       return (
         <span className="px-2 py-1 bg-green-500/10 border border-green-500/20 rounded text-green-400 text-xs font-medium">
@@ -34,7 +94,7 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
         </span>
       );
     }
-    
+
     if (statusLower === 'failed' || statusLower === 'error') {
       return (
         <span className="px-2 py-1 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-xs font-medium">
@@ -42,11 +102,54 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
         </span>
       );
     }
-    
+
     return (
       <span className="px-2 py-1 bg-gray-500/10 border border-gray-500/20 rounded text-gray-400 text-xs font-medium">
         {status}
       </span>
+    );
+  };
+
+  const renderProgressIndicator = (callId) => {
+    const progress = callProgress[callId];
+    if (!progress) return null;
+
+    const { stage, message, status } = progress;
+
+    const stageLabels = {
+      'initialization': 'Initializing...',
+      'transcribing': 'Transcribing Audio...',
+      'generating_test_suite': 'Generating Test Suite...',
+      'evaluating': 'Running Evaluation...',
+      'completed': 'Completed!',
+      'failed': 'Failed'
+    };
+
+    const stageLabel = stageLabels[stage] || message || 'Processing...';
+
+    if (status === 'completed') {
+      return (
+        <div className="flex items-center gap-2 text-green-400 text-xs animate-fade-in">
+          <CheckCircle className="w-3.5 h-3.5" />
+          <span>{stageLabel}</span>
+        </div>
+      );
+    }
+
+    if (status === 'failed') {
+      return (
+        <div className="flex items-center gap-2 text-red-400 text-xs animate-fade-in">
+          <XCircle className="w-3.5 h-3.5" />
+          <span>{progress.error || stageLabel}</span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2 text-teal-400 text-xs animate-pulse">
+        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        <span>{stageLabel}</span>
+      </div>
     );
   };
 
@@ -96,12 +199,12 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
               const transcriptResultId = metadata.transcript_result_id || result.transcript_result_id || 'N/A';
               const sessionId = result.session_id || metadata.session_id || 'N/A';
               const status = result.status || 'Unknown';
-              
+
               // Use actual score from result data (handle different possible structures)
               const actualScore = result.overall_score || result.metrics?.overall_score || 0;
-              
+
               return (
-                <tr 
+                <tr
                   key={transcriptResultId || index}
                   className="border-b border-gray-800/30 hover:bg-[#1e2433] transition-colors group"
                 >
@@ -109,13 +212,15 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
                       {getStatusIcon(status)}
-                      <div>
+                      <div className="flex-1">
                         <p className="text-white font-medium text-sm">
                           {testId.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                         </p>
                         <p className="text-gray-500 text-xs mt-0.5">
                           Test Case #{index + 1}
                         </p>
+                        {/* Real-time progress indicator */}
+                        {result.call_id && renderProgressIndicator(result.call_id)}
                       </div>
                     </div>
                   </td>
@@ -134,12 +239,11 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
                         {actualScore}%
                       </span>
                       <div className="w-16 h-1.5 bg-gray-800 rounded-full mt-1 overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full ${
-                            actualScore >= 90 ? 'bg-green-400' :
+                        <div
+                          className={`h-full rounded-full ${actualScore >= 90 ? 'bg-green-400' :
                             actualScore >= 75 ? 'bg-yellow-400' :
-                            actualScore >= 60 ? 'bg-orange-400' : 'bg-red-400'
-                          }`}
+                              actualScore >= 60 ? 'bg-orange-400' : 'bg-red-400'
+                            }`}
                           style={{ width: `${actualScore}%` }}
                         />
                       </div>

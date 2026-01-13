@@ -26,16 +26,22 @@ import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvalua
 import { useFlows } from '../../hooks/useFlows';
 import { useAgents } from '../../hooks/useAgents';
 import { useWorkflow } from '../../context/WorkFlowContext';
+import { useEvents } from '../../context/EventsContext';
 
 const CallsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { workflow } = useWorkflow();
+  const { subscribe } = useEvents();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEvaluateModalOpen, setIsEvaluateModalOpen] = useState(false);
   const [evalAgentId, setEvalAgentId] = useState(workflow?.assistantId || '');
   const [evalDirectory, setEvalDirectory] = useState('');
+  const [agentsPage, setAgentsPage] = useState(1);
+  const agentsPerPage = 10;
+  const [callsPage, setCallsPage] = useState(1);
+  const callsPerPage = 10;
 
   const directoryParam = searchParams.get('directory');
   const directory = directoryParam !== null ? directoryParam : (sessionStorage.getItem('last_directory') || 'shoplabs');
@@ -157,33 +163,6 @@ const CallsPage = () => {
     return rawCalls.filter(call => !!call);
   }, [data]);
 
-  // Check if any visible calls are missing evaluations or are still processing to trigger polling
-  const hasPendingEvaluations = useMemo(() => {
-    // Only poll if we are in the calls view (not directories)
-    if (viewMode !== 'calls') return false;
-
-    // If no calls found yet, we might still want to poll for a short while after an upload
-    // but for now let's stick to polling when we have calls
-    if (!calls || calls.length === 0) return false;
-
-    return calls.some(call => {
-      if (!call) return false;
-      // Case 1: No evaluation or evaluation ID at all
-      if (!call.evaluation && !call.evaluation_id) return true;
-
-      // Case 2: Has evaluation object but status is not completed/failed
-      const status = call.evaluation?.status || call.evaluation_status;
-      if (status && !['completed', 'failed', 'success', 'error'].includes(status.toLowerCase())) {
-        return true;
-      }
-
-      // Case 3: Has evaluation ID but no evaluation object yet
-      if (call.evaluation_id && !call.evaluation) return true;
-
-      return false;
-    });
-  }, [calls, viewMode]);
-
   // Force refetch when view mode changes to calls
   useEffect(() => {
     if (viewMode === 'calls' && directory) {
@@ -191,18 +170,42 @@ const CallsPage = () => {
     }
   }, [viewMode, directory, refetch]);
 
-  // Poll for updates if evaluations are pending
+  // Subscribe to SSE events for real-time call evaluation updates (replaces polling)
   useEffect(() => {
-    let interval;
-    if (hasPendingEvaluations) {
-      interval = setInterval(() => {
+    const unsubscribe = subscribe('call_evaluation_update', (data) => {
+      console.log('📡 Call evaluation update received:', data);
+
+      const { status, call_id, error, overall_score } = data;
+
+      // Show toast notifications and refetch on completion or failure
+      if (status === 'completed') {
+        const scoreText = overall_score !== undefined ? ` (Score: ${Math.round(overall_score * 100)}%)` : '';
+        toast.success(`✅ Evaluation completed for ${call_id}${scoreText}`, {
+          autoClose: 4000,
+          position: 'bottom-right'
+        });
+        console.log(`✅ Call ${call_id} evaluation completed, refetching calls...`);
         refetch();
-      }, 5000);
-    }
+      } else if (status === 'failed') {
+        toast.error(`❌ Evaluation failed for ${call_id}: ${error || 'Unknown error'}`, {
+          autoClose: 5000,
+          position: 'bottom-right'
+        });
+        console.log(`❌ Call ${call_id} evaluation failed, refetching calls...`);
+        refetch();
+      }
+    });
+
     return () => {
-      if (interval) clearInterval(interval);
+      unsubscribe();
     };
-  }, [hasPendingEvaluations, refetch]);
+  }, [subscribe, refetch]);
+
+  // Reset pagination when view mode or directory changes
+  useEffect(() => {
+    setAgentsPage(1);
+    setCallsPage(1);
+  }, [viewMode, directory]);
 
   // Handle directory selection
   const handleDirectoryClick = (dir) => {
@@ -521,7 +524,7 @@ const CallsPage = () => {
             className={`cursor-pointer hover:text-teal-400 transition-colors ${viewMode === 'directories' ? 'text-teal-400 font-semibold' : ''}`}
             onClick={handleBackToDirectories}
           >
-            Directories
+            Agents
           </span>
           {viewMode === 'calls' && (
             <>
@@ -541,7 +544,7 @@ const CallsPage = () => {
             <button
               onClick={handleBackToDirectories}
               className="p-3 bg-dark-panel border border-gray-800 rounded-lg hover:bg-gray-800 transition-colors text-gray-400 hover:text-white shadow-lg"
-              title="Back to Directories"
+              title="Back to Agents"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -549,7 +552,7 @@ const CallsPage = () => {
           <div className="relative flex-1 md:w-64">
             <input
               type="text"
-              placeholder={viewMode === 'directories' ? "Search directories..." : "Search calls..."}
+              placeholder={viewMode === 'directories' ? "Search agents..." : "Search calls..."}
               className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 px-5 pl-5 text-base focus:outline-none focus:border-teal-500 transition-colors text-white placeholder-gray-500"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -557,7 +560,7 @@ const CallsPage = () => {
           </div>
           {viewMode === 'calls' && (
             <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 min-w-[200px]">
-              <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Directory:</span>
+              <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Agent:</span>
               <GenericDropdown
                 options={currentOptions}
                 value={directory}
@@ -596,31 +599,31 @@ const CallsPage = () => {
       <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
         <div className="overflow-x-auto custom-scrollbar">
           {viewMode === 'directories' ? (
-            <table className="w-full text-left border-collapse min-w-[1400px]">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-900/50 text-gray-400 text-sm font-semibold border-b border-gray-800/50">
-                  <th className="px-6 py-5">Directory Name</th>
-                  <th className="px-6 py-5">Actions</th>
+                <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
+                  <th className="px-4 py-3">Agent Name</th>
+                  <th className="px-4 py-3 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="text-base text-gray-300">
+              <tbody className="text-sm text-gray-300">
                 {isCategoriesLoading ? (
                   <tr>
-                    <td colSpan="2" className="px-6 py-10 text-center text-gray-500">
+                    <td colSpan="2" className="px-4 py-8 text-center text-gray-500">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                        Loading directories...
+                        Loading agents...
                       </div>
                     </td>
                   </tr>
                 ) : filteredCategories.length === 0 ? (
                   <tr>
-                    <td colSpan="2" className="px-6 py-20 text-center">
+                    <td colSpan="2" className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <div className="p-4 bg-gray-800/30 rounded-full border border-gray-700/50">
                           <Folder className="w-8 h-8 text-gray-500" />
                         </div>
-                        <p className="text-gray-400 text-lg font-medium">No calls uploaded yet</p>
+                        <p className="text-gray-400 text-lg font-medium">No agents found</p>
                         <button
                           onClick={handleAddCalls}
                           className="mt-2 flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors"
@@ -631,69 +634,75 @@ const CallsPage = () => {
                       </div>
                     </td>
                   </tr>
-                ) : filteredCategories
-                  .filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase()))
-                  .map(cat => (
-                    <tr key={cat} className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors cursor-pointer group" onClick={() => handleDirectoryClick(cat)}>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 bg-teal-500/5 rounded-lg border border-teal-500/10 group-hover:border-teal-500/30 transition-colors">
-                              <Folder className="w-6 h-6 text-teal-400" />
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-white font-bold text-lg">
-                                {cat.replace(/[_-]/g, ' ')}
-                              </span>
-                              <span className="text-gray-500 text-sm font-mono">{cat}</span>
-                            </div>
-                          </div>
+                ) : (() => {
+                  const filtered = filteredCategories.filter(cat =>
+                    typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())
+                  );
+                  const totalPages = Math.ceil(filtered.length / agentsPerPage);
+                  const startIdx = (agentsPage - 1) * agentsPerPage;
+                  const endIdx = startIdx + agentsPerPage;
+                  const paginatedAgents = filtered.slice(startIdx, endIdx);
 
-                          {/* Evaluate All button right next to the directory name */}
+                  return paginatedAgents.map(cat => (
+                    <tr key={cat} className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors cursor-pointer group" onClick={() => handleDirectoryClick(cat)}>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="p-1.5 bg-teal-500/5 rounded border border-teal-500/10 group-hover:border-teal-500/30 transition-colors">
+                            <Folder className="w-4 h-4 text-teal-400" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-white font-semibold text-sm">
+                              Agent {cat.substring(0, 8)}
+                            </span>
+                            <span className="text-gray-500 text-xs font-mono">{cat}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleEvaluateAll(cat);
                             }}
                             disabled={evaluateAudio.isPending || evaluateCall.isPending}
-                            className="flex items-center gap-2 bg-purple-500/10 border border-purple-500/30 text-purple-400 px-4 py-2 rounded-lg text-sm font-bold hover:bg-purple-500/20 transition-colors shadow-[0_0_15px_rgba(168,85,247,0.1)] disabled:opacity-50"
+                            className="flex items-center gap-1.5 bg-purple-500/10 border border-purple-500/30 text-purple-400 px-3 py-1.5 rounded text-xs font-semibold hover:bg-purple-500/20 transition-colors disabled:opacity-50"
                           >
-                            <Brain className="w-4 h-4" />
+                            <Brain className="w-3.5 h-3.5" />
                             Evaluate All
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDirectoryClick(cat);
+                            }}
+                            className="flex items-center gap-1.5 text-gray-400 hover:text-teal-400 transition-colors px-2 py-1.5"
+                          >
+                            <span className="text-xs font-medium">View Calls</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2 text-gray-400 group-hover:text-teal-400 transition-colors">
-                          <span className="text-sm font-medium">View Calls</span>
-                          <ChevronRight className="w-4 h-4" />
-                        </div>
-                      </td>
                     </tr>
-                  ))}
+                  ));
+                })()}
               </tbody>
             </table>
           ) : (
-            <table className="w-full text-left border-collapse min-w-[1400px]">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-900/50 text-gray-400 text-sm font-semibold border-b border-gray-800/50">
-                  <th className="px-6 py-5 sticky left-0 bg-[#0b1220] z-20 border-r border-gray-800/50 shadow-[4px_0_10px_rgba(0,0,0,0.3)]">Call ID</th>
-                  <th className="px-6 py-5">Actions</th>
-                  <th className="px-6 py-5">Timestamp</th>
-                  <th className="px-6 py-5">Overall Score</th>
-                  <th className="px-6 py-5">Semantic Accuracy</th>
-                  <th className="px-6 py-5">Task Completion</th>
-                  <th className="px-6 py-5">Avg Latency</th>
-                  <th className="px-6 py-5">Sentiment</th>
-                  <th className="px-6 py-5">Audio Quality</th>
-                  <th className="px-6 py-5">Persona/Tone</th>
-                  <th className="px-6 py-5">Issues</th>
+                <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
+                  <th className="px-4 py-3">Call ID</th>
+                  <th className="px-4 py-3 text-center">Actions</th>
+                  <th className="px-4 py-3">Timestamp</th>
+                  <th className="px-4 py-3 text-center">Overall Score</th>
+                  <th className="px-4 py-3 text-center">Issues</th>
                 </tr>
               </thead>
-              <tbody className="text-base text-gray-300">
+              <tbody className="text-sm text-gray-300">
                 {isCallsLoading ? (
                   <tr>
-                    <td colSpan="11" className="px-6 py-10 text-center text-gray-500">
+                    <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
                         Loading calls...
@@ -702,7 +711,7 @@ const CallsPage = () => {
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan="11" className="px-6 py-10 text-center text-red-400">
+                    <td colSpan="5" className="px-4 py-8 text-center text-red-400">
                       <div className="flex flex-col items-center gap-3">
                         <AlertCircle className="w-8 h-8" />
                         Error loading calls: {error.message}
@@ -711,7 +720,7 @@ const CallsPage = () => {
                   </tr>
                 ) : calls.length === 0 ? (
                   <tr>
-                    <td colSpan="11" className="px-6 py-20 text-center">
+                    <td colSpan="5" className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <div className="p-4 bg-gray-800/30 rounded-full border border-gray-700/50">
                           <Upload className="w-8 h-8 text-gray-500" />
@@ -730,50 +739,53 @@ const CallsPage = () => {
                       </div>
                     </td>
                   </tr>
-                ) : (
-                  calls.map((call, index) => (
+                ) : (() => {
+                  const startIdx = (callsPage - 1) * callsPerPage;
+                  const endIdx = startIdx + callsPerPage;
+                  const paginatedCalls = calls.slice(startIdx, endIdx);
+
+                  return paginatedCalls.map((call, index) => (
                     <tr
                       key={call.call_id || index}
                       onClick={() => handleRowClick(call)}
                       className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors group cursor-pointer"
                     >
-                      <td className="px-6 py-6 sticky left-0 bg-[#0b1220] group-hover:bg-[#151c2c] z-10 border-r border-gray-800/50 shadow-[4px_0_10px_rgba(0,0,0,0.3)]">
+                      <td className="px-4 py-3">
                         <div className="flex flex-col">
-                          <span className="text-white font-bold font-mono text-sm truncate w-40" title={call.call_id}>
+                          <span className="text-white font-semibold font-mono text-xs truncate max-w-[180px]" title={call.call_id}>
                             {call.call_id || 'N/A'}
                           </span>
-                          <span className="text-gray-500 text-xs truncate w-40">
+                          <span className="text-gray-500 text-xs truncate max-w-[180px]">
                             {call.filename || 'manual_upload.mp3'}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={(e) => { e.stopPropagation(); handleEvaluate(call.call_id); }}
                             disabled={evaluateAudio.isPending || evaluateCall.isPending}
-                            className="p-2 bg-teal-500/10 text-teal-400 rounded-lg hover:bg-teal-500/20 transition-colors disabled:opacity-50"
+                            className="p-1.5 bg-teal-500/10 text-teal-400 rounded hover:bg-teal-500/20 transition-colors disabled:opacity-50"
                             title="Evaluate"
                           >
-                            <Brain className="w-4 h-4" />
+                            <Brain className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={(e) => e.stopPropagation()}
-                            className="p-2 bg-gray-800 text-gray-400 rounded-lg hover:bg-gray-700 transition-colors"
+                            className="p-1.5 bg-gray-800 text-gray-400 rounded hover:bg-gray-700 transition-colors"
+                            title="Download"
                           >
-                            <Download className="w-4 h-4" />
+                            <Download className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
-                      <td className="px-6 py-6">
-                        <div className="flex flex-col">
-                          <span className="text-gray-300 text-sm whitespace-nowrap">
-                            {formatDate(call.created_at)}
-                          </span>
-                        </div>
+                      <td className="px-4 py-3">
+                        <span className="text-gray-300 text-xs whitespace-nowrap">
+                          {formatDate(call.created_at)}
+                        </span>
                       </td>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-2">
                           {(() => {
                             const evalStatus = (call.evaluation?.status || call.evaluation_status || '').toLowerCase();
                             const callStatus = (call.status || '').toLowerCase();
@@ -810,117 +822,90 @@ const CallsPage = () => {
                             if (val !== '--') {
                               return (
                                 <>
-                                  <div className={`w-3 h-3 rounded-full ${parseFloat(val) >= 80 ? 'bg-green-500' :
-                                      parseFloat(val) >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                                  <div className={`w-2.5 h-2.5 rounded-full ${parseFloat(val) >= 80 ? 'bg-green-500' :
+                                    parseFloat(val) >= 50 ? 'bg-yellow-500' : 'bg-red-500'
                                     }`}></div>
-                                  <span className="text-white font-bold">{val}</span>
+                                  <span className="text-white font-semibold text-sm">{val}</span>
                                 </>
                               );
                             }
 
                             return (
                               <>
-                                <div className="w-3 h-3 rounded-full bg-gray-600"></div>
-                                <span className="text-white font-bold">--</span>
+                                <div className="w-2.5 h-2.5 rounded-full bg-gray-600"></div>
+                                <span className="text-white font-semibold text-sm">--</span>
                               </>
                             );
                           })()}
                         </div>
                       </td>
-                      <td className="px-6 py-6 text-gray-300">
-                        {(() => {
-                          const status = (call.evaluation?.status || call.evaluation_status || '').toLowerCase();
-                          const isProcessing = status && !['completed', 'failed', 'success', 'error', 'not_found'].includes(status);
-                          if (isProcessing || (call.evaluation_id && !call.evaluation)) return '--';
-                          return (
-                            <div className="flex items-center gap-2">
-                              <Brain className="w-4 h-4 text-teal-400" />
-                              <span>{getMetricValue(call, 'semantic_accuracy')}</span>
-                            </div>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-6 py-6 text-gray-300">
-                        {(() => {
-                          const status = (call.evaluation?.status || call.evaluation_status || '').toLowerCase();
-                          const isProcessing = status && !['completed', 'failed', 'success', 'error', 'not_found'].includes(status);
-                          if (isProcessing || (call.evaluation_id && !call.evaluation)) return '--';
 
-                          const val = getMetricValue(call, 'task_completion_rate');
-                          const numVal = parseFloat(val);
 
-                          return (
-                            <div className="flex items-center gap-4">
-                              <div className="flex-1 h-1.5 bg-gray-700 rounded-full overflow-hidden min-w-[60px]">
-                                <div
-                                  className="h-full bg-blue-500 rounded-full"
-                                  style={{ width: val !== '--' ? `${Math.min(100, numVal || 0)}%` : '0%' }}
-                                />
-                              </div>
-                              <span className="text-xs font-medium w-8">{val}</span>
-                            </div>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-blue-400" />
-                          <span className="text-gray-300">
-                            {getMetricValue(call, 'avg_latency')}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4 text-pink-400" />
-                          <span className="text-gray-300">
-                            {getMetricValue(call, 'sentiment_score')}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <BarChart3 className="w-4 h-4 text-orange-400" />
-                          <span className="text-gray-300">
-                            {getMetricValue(call, 'audio_quality')}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6">
-                        <div className="flex items-center gap-2">
-                          <Filter className="w-4 h-4 text-purple-400" />
-                          <span className="text-gray-300">
-                            {getMetricValue(call, 'persona_score') || getMetricValue(call, 'tone_score')}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-6">
+                      <td className="px-4 py-3 text-center">
                         <span className={`px-2 py-1 rounded text-xs font-bold ${(parseInt(getMetricValue(call, 'issues_found')) || 0) > 0 ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-green-500/10 text-green-400 border border-green-500/20'
                           }`}>
                           {getMetricValue(call, 'issues_found')} issues
                         </span>
                       </td>
                     </tr>
-                  ))
-                )}
+                  ));
+                })()}
               </tbody>
             </table>
           )}
         </div>
       </div>
 
-      {/* Pagination */}
+      {/* Pagination for Agents */}
+      {viewMode === 'directories' && filteredCategories.length > 0 && (
+        <div className="mt-8 flex items-center justify-between">
+          <p className="text-gray-500 text-sm">
+            Showing {Math.min(filteredCategories.filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())).length, agentsPerPage)} of {filteredCategories.filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())).length} {filteredCategories.filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())).length === 1 ? 'agent' : 'agents'}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setAgentsPage(p => Math.max(1, p - 1))}
+              disabled={agentsPage === 1}
+              className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="px-4 py-2 text-sm text-gray-400">
+              Page {agentsPage} of {Math.max(1, Math.ceil(filteredCategories.filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())).length / agentsPerPage))}
+            </span>
+            <button
+              onClick={() => setAgentsPage(p => p + 1)}
+              disabled={agentsPage >= Math.ceil(filteredCategories.filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())).length / agentsPerPage)}
+              className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination for Calls */}
       {viewMode === 'calls' && calls.length > 0 && (
         <div className="mt-8 flex items-center justify-between">
           <p className="text-gray-500 text-sm">
-            Showing {calls.length} {calls.length === 1 ? 'call' : 'calls'}
+            Showing {Math.min(calls.length, callsPerPage)} of {calls.length} {calls.length === 1 ? 'call' : 'calls'}
           </p>
           <div className="flex items-center gap-2">
-            <button className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30" disabled>
+            <button
+              onClick={() => setCallsPage(p => Math.max(1, p - 1))}
+              disabled={callsPage === 1}
+              className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="px-4 py-2 text-sm text-gray-400">Page 1 of 1</span>
-            <button className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30" disabled>
+            <span className="px-4 py-2 text-sm text-gray-400">
+              Page {callsPage} of {Math.max(1, Math.ceil(calls.length / callsPerPage))}
+            </span>
+            <button
+              onClick={() => setCallsPage(p => p + 1)}
+              disabled={callsPage >= Math.ceil(calls.length / callsPerPage)}
+              className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>

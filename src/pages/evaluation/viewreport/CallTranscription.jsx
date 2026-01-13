@@ -75,7 +75,7 @@ const MiniAudioPlayer = ({ audioUrl }) => {
 };
 
 
-const CallTranscriptPanel = ({ transcriptData }) => {
+const CallTranscriptPanel = ({ transcriptData, callRecordingUrl }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -86,17 +86,16 @@ const CallTranscriptPanel = ({ transcriptData }) => {
   // Debug logging
   useEffect(() => {
     console.log('CallTranscriptPanel received transcriptData:', transcriptData);
+    console.log('CallTranscriptPanel received callRecordingUrl:', callRecordingUrl);
     if (transcriptData) {
       console.log('Steps:', transcriptData.steps);
       console.log('Metadata:', transcriptData.metadata);
     }
-  }, [transcriptData]);
+  }, [transcriptData, callRecordingUrl]);
 
   const steps = transcriptData?.steps || [];
   const metadata = transcriptData?.metadata || {};
   const audioFiles = metadata?.audio_files || [];
-  // Hardcoded URL for testing
-  const callRecordingUrl = "https://storage.googleapis.com/voiceeval-public/recordings/sess_2d5d869bb8fe4ec6b662607ebae2c0a5/call_recording.wav";
 
   // Create a map of step numbers to audio URLs
   const stepAudioMap = {};
@@ -257,7 +256,7 @@ const CallTranscriptPanel = ({ transcriptData }) => {
         </div>
 
         {/* Audio Player */}
-        {callRecordingUrl ? (
+        {callRecordingUrl && (
           <div className="bg-dark-input/50 border border-gray-700/50 rounded-lg p-3 flex items-center gap-4">
             <audio
               ref={audioRef}
@@ -304,10 +303,6 @@ const CallTranscriptPanel = ({ transcriptData }) => {
                 className="w-16 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"
               />
             </div>
-          </div>
-        ) : (
-          <div className="bg-dark-input/30 border border-gray-800/50 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 italic">No recording available for this session</p>
           </div>
         )}
       </div>

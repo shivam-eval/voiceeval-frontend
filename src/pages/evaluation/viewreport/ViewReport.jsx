@@ -550,13 +550,10 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
           {activeTab === 'transcript' && (
             <>
               {transcriptData ? (
-                <>
-                  <CallTranscriptPanel transcriptData={transcriptData} />
-                  <TurnByTurnAnalysis
-                    steps={transcriptData?.steps || []}
-                    stepHealth={evaluationData?.failure_propagation?.step_health || {}}
-                  />
-                </>
+                <CallTranscriptPanel
+                  transcriptData={transcriptData}
+                  callRecordingUrl={transcriptData?.audio_url || report?.call_recording}
+                />
               ) : (
                 <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
                   <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-3" />

@@ -149,13 +149,13 @@ const EvaluationDashboard = ({ onBack }) => {
       failed_test_cases: failedCount,
     },
     timing: {
-      start_time_ms: simulationDetails?.timestamps?.started_at ? new Date(simulationDetails.timestamps.started_at).getTime() : 
-                    (simulationDetails?.timestamps?.created_at ? new Date(simulationDetails.timestamps.created_at).getTime() : 
-                    (simulationDetails?.created_at ? new Date(simulationDetails.created_at).getTime() : Date.now() - totalExecutionTime)),
-      end_time_ms: simulationDetails?.timestamps?.completed_at ? new Date(simulationDetails.timestamps.completed_at).getTime() : 
-                  (simulationDetails?.timestamps?.ended_at ? new Date(simulationDetails.timestamps.ended_at).getTime() : 
-                  (simulationDetails?.timestamps?.updated_at ? new Date(simulationDetails.timestamps.updated_at).getTime() : 
-                  (simulationDetails?.updated_at ? new Date(simulationDetails.updated_at).getTime() : Date.now()))),
+      start_time_ms: simulationDetails?.timestamps?.started_at ? new Date(simulationDetails.timestamps.started_at).getTime() :
+        (simulationDetails?.timestamps?.created_at ? new Date(simulationDetails.timestamps.created_at).getTime() :
+          (simulationDetails?.created_at ? new Date(simulationDetails.created_at).getTime() : Date.now() - totalExecutionTime)),
+      end_time_ms: simulationDetails?.timestamps?.completed_at ? new Date(simulationDetails.timestamps.completed_at).getTime() :
+        (simulationDetails?.timestamps?.ended_at ? new Date(simulationDetails.timestamps.ended_at).getTime() :
+          (simulationDetails?.timestamps?.updated_at ? new Date(simulationDetails.timestamps.updated_at).getTime() :
+            (simulationDetails?.updated_at ? new Date(simulationDetails.updated_at).getTime() : Date.now()))),
       duration_ms: totalExecutionTime,
       average_duration_ms: averageExecutionTime
     },
@@ -322,10 +322,20 @@ const EvaluationDashboard = ({ onBack }) => {
         speech_end_ms: step.timing?.speech_end_ms,
         duration_ms: step.timing?.duration_ms
       }));
-      // Construct full GCP storage URL for audio file
-      const audioFilePath = simulationDetails?.metadata?.audio_file;
-      const GCP_STORAGE_BASE_URL = 'https://storage.googleapis.com/voiceeval-public';
-      const audioUrl = audioFilePath ? `${GCP_STORAGE_BASE_URL}/${audioFilePath}` : null;
+
+      // Prioritize call_recording from fullResponse
+      let audioUrl = null;
+
+      // Check if call_recording property exists in the response
+      if (fullResponse && 'call_recording' in fullResponse) {
+        // If call_recording exists (even if null), use it (null means no recording)
+        audioUrl = fullResponse.call_recording;
+      } else {
+        // Only fall back to metadata if call_recording is not in the response at all
+        const audioFilePath = simulationDetails?.metadata?.audio_file;
+        const GCP_STORAGE_BASE_URL = 'https://storage.googleapis.com/voiceeval-public';
+        audioUrl = audioFilePath ? `${GCP_STORAGE_BASE_URL}/${audioFilePath}` : null;
+      }
 
       const transcriptData = {
         audio_url: audioUrl,
@@ -360,7 +370,13 @@ const EvaluationDashboard = ({ onBack }) => {
         return;
       }
 
-      setSelectedReport(report);
+      // Only include call_recording if it exists in the response
+      const enrichedReport = {
+        ...report,
+        ...(fullResponse?.call_recording && { call_recording: fullResponse.call_recording })
+      };
+
+      setSelectedReport(enrichedReport);
       setSelectedEvaluation(evaluation);
 
       const transcript = await getTranscriptData(report.session_id);

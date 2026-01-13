@@ -1,4 +1,6 @@
-import { ExternalLink } from "lucide-react";
+import React from 'react';
+import { CheckCircle, ExternalLink } from "lucide-react";
+import { toast } from "react-toastify";
 
 const LiveKitIntegrationSection = () => (
     <div className="prose prose-invert max-w-none">
@@ -113,21 +115,28 @@ def build_context(docs: list):
     </div>
 );
 
-const CodeBlock = ({ language, children }) => (
-    <div className="bg-dark-input border border-gray-800/50 rounded-lg overflow-hidden my-4 group">
-        <div className="flex items-center justify-between px-4 py-2 bg-dark-panel border-b border-gray-800/50">
-            <span className="text-xs text-gray-500 font-mono">{language}</span>
-            <button
-                className="text-xs text-gray-400 hover:text-[#b61249] transition-colors"
-                onClick={() => navigator.clipboard.writeText(children.trim())}
-            >
-                Copy
-            </button>
+const CodeBlock = ({ language, children }) => {
+    const handleCopy = () => {
+        navigator.clipboard.writeText(children.trim());
+        toast.success("Code copied to clipboard");
+    };
+
+    return (
+        <div className="bg-dark-input border border-gray-800/50 rounded-lg overflow-hidden my-6 group">
+            <div className="flex items-center justify-between px-4 py-2 bg-dark-panel border-b border-gray-800/50">
+                <span className="text-xs text-gray-500 font-mono">{language}</span>
+                <button
+                    className="text-xs text-gray-400 hover:text-[#b61249] transition-colors"
+                    onClick={handleCopy}
+                >
+                    Copy
+                </button>
+            </div>
+            <pre className="p-4 overflow-x-auto">
+                <code className="text-sm text-gray-300 font-mono whitespace-pre">{children.trim()}</code>
+            </pre>
         </div>
-        <pre className="p-4 overflow-x-auto">
-            <code className="text-sm text-gray-300 font-mono whitespace-pre">{children.trim()}</code>
-        </pre>
-    </div>
-);
+    );
+};
 
 export default LiveKitIntegrationSection;

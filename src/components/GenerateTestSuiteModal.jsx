@@ -238,12 +238,6 @@ const GenerateTestSuiteModal = ({ isOpen, onClose, flowId, agentId, onTestSuiteG
                                     </div>
                                 )}
                             </div>
-
-                            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                                <p className="text-sm text-green-400">
-                                    ✅ Test suite saved with ID: {testSuiteData.test_suite_id}
-                                </p>
-                            </div>
                         </div>
                     )}
                 </div>

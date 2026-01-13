@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
  * API client for making HTTP requests to the backend.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 class ApiClient {
     constructor(baseURL = API_BASE_URL) {
@@ -133,6 +133,12 @@ export const personasApi = {
 export const personasLibraryApi = {
     list: (params) => apiClient.get('/personas/library', params),
     get: (id) => apiClient.get(`/personas/library/${id}`),
+};
+
+// Noise Profiles API endpoints
+export const noiseProfilesApi = {
+    list: (params) => apiClient.get('/noise-profiles', params),
+    get: (id) => apiClient.get(`/noise-profiles/${id}`),
 };
 
 // Test Profile API endpoints

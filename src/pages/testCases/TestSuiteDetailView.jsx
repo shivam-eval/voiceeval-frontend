@@ -9,6 +9,7 @@ import Badge from "../../components/Badge";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import TestCaseEditorModal from "../../components/TestCaseEditorModal";
 import RunSimulationModal from "../../components/RunSimulationModal";
+import { extractNoiseFromSessionId, getNoiseProfileBadgeVariant } from "../../utils/noiseUtils";
 
 // ============ Helper Components ============
 
@@ -163,39 +164,79 @@ export const formatLabel = (value) => {
 };
 
 
-const TestCaseExpandedDetails = ({ testCase }) => (
-    <div className="space-y-6">
-        {/* Goal and Description */}
-        {(testCase.goal || testCase.description) && (
-            <div className="grid grid-cols-1 gap-4">
-                {testCase.goal && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-teal-400 mb-2 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Goal
-                        </h4>
-                        <div className="bg-gray-900 rounded p-4 text-gray-300 text-sm">
-                            {testCase.goal}
+const TestCaseExpandedDetails = ({ testCase }) => {
+    // Extract noise info from session_id if available
+    const noiseInfo = testCase.session_status?.session_id 
+        ? extractNoiseFromSessionId(testCase.session_status.session_id)
+        : null;
+
+    return (
+        <div className="space-y-6">
+            {/* Session Info - Show noise and session ID if test was run */}
+            {testCase.session_status && (
+                <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-800">
+                    <h4 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                        Simulation Session
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <div className="text-xs text-gray-500 mb-1">Session ID</div>
+                            <div className="text-sm text-white font-mono">{testCase.session_status.session_id}</div>
                         </div>
+                        {noiseInfo && noiseInfo.profile_id !== 'none' && (
+                            <div>
+                                <div className="text-xs text-gray-500 mb-1">Noise Environment</div>
+                                <Badge 
+                                    variant={getNoiseProfileBadgeVariant(noiseInfo.profile_id)} 
+                                    size="sm"
+                                >
+                                    <span className="flex items-center gap-1">
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m0 0a5 5 0 007.072 0" />
+                                        </svg>
+                                        {noiseInfo.displayName}
+                                    </span>
+                                </Badge>
+                            </div>
+                        )}
                     </div>
-                )}
-                {testCase.description && (
-                    <div>
-                        <h4 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-                            </svg>
-                            Description
-                        </h4>
-                        <div className="bg-gray-900 rounded p-4 text-gray-300 text-sm">
-                            {testCase.description}
+                </div>
+            )}
+
+            {/* Goal and Description */}
+            {(testCase.goal || testCase.description) && (
+                <div className="grid grid-cols-1 gap-4">
+                    {testCase.goal && (
+                        <div>
+                            <h4 className="text-sm font-semibold text-teal-400 mb-2 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Goal
+                            </h4>
+                            <div className="bg-gray-900 rounded p-4 text-gray-300 text-sm">
+                                {testCase.goal}
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
-        )}
+                    )}
+                    {testCase.description && (
+                        <div>
+                            <h4 className="text-sm font-semibold text-gray-400 mb-2 flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+                                </svg>
+                                Description
+                            </h4>
+                            <div className="bg-gray-900 rounded p-4 text-gray-300 text-sm">
+                                {testCase.description}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
         {/* Path Type and Steps Count */}
         <div className="grid grid-cols-3 gap-4">
@@ -297,6 +338,19 @@ const TestCaseExpandedDetails = ({ testCase }) => (
                                         </div>
                                     </div>
                                 )}
+                                {/* Background Noise Profiles */}
+                                {persona.background_noises && persona.background_noises.length > 0 && (
+                                    <div className="mt-3 pt-3 border-t border-gray-800">
+                                        <div className="text-xs font-semibold text-gray-400 mb-2">Background Noise</div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {persona.background_noises.map((noise, nIdx) => (
+                                                <Badge key={nIdx} variant="info" size="sm">
+                                                    {noise.profile_id} ({noise.snr_db}dB)
+                                                </Badge>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -359,7 +413,8 @@ const TestCaseExpandedDetails = ({ testCase }) => (
             </div>
         )}
     </div>
-);
+    );
+};
 
 // ============ Main Component ============
 
@@ -613,7 +668,7 @@ const TestSuiteDetailView = () => {
                         <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.open(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api/v1'}/test-suites/${suiteId}/export?format=json`, '_blank')}
+                            onClick={() => window.open(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}/test-suites/${suiteId}/export?format=json`, '_blank')}
                         >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -666,7 +721,7 @@ const TestSuiteDetailView = () => {
                                 <thead className="bg-gray-800/50">
                                     <tr>
                                         <th className="w-8 px-4 py-3"></th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">ID / Name</th>
+                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Name / ID</th>
                                         <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
                                         <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">Actions</th>
                                     </tr>
@@ -690,31 +745,51 @@ const TestSuiteDetailView = () => {
                                                     </svg>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    <div className="font-medium text-white">{truncate(testCase.test_case_id || `TC-${index + 1}`, 12)}</div>
-                                                    <div className="text-sm text-gray-500">{testCase.name || 'Untitled Case'}</div>
+                                                    <div className="font-medium text-white">{testCase.name || 'Untitled Case'}</div>
+                                                    <div className="text-sm text-gray-500">{truncate(testCase.test_case_id || `TC-${index + 1}`, 12)}</div>
                                                 </td>
                                                 <td className="px-4 py-4">
-                                                    {testCase.session_status ? (
-                                                        testCase.session_status.status === 'completed' ? (
-                                                            <Badge variant="success" size="sm">Passed</Badge>
-                                                        ) : testCase.session_status.status === 'failed' ? (
-                                                            <Badge variant="danger" size="sm">Failed</Badge>
-                                                        ) : testCase.session_status.status === 'running' ? (
-                                                            <Badge variant="warning" size="sm">
-                                                                <span className="flex items-center gap-1">
-                                                                    <span className="animate-pulse">●</span> Running
-                                                                </span>
-                                                            </Badge>
-                                                        ) : testCase.session_status.status === 'queued' ? (
-                                                            <Badge variant="info" size="sm">Queued</Badge>
-                                                        ) : testCase.session_status.status === 'timeout' ? (
-                                                            <Badge variant="danger" size="sm">Timeout</Badge>
+                                                    <div className="flex flex-col gap-1">
+                                                        {testCase.session_status ? (
+                                                            testCase.session_status.status === 'completed' ? (
+                                                                <Badge variant="success" size="sm">Passed</Badge>
+                                                            ) : testCase.session_status.status === 'failed' ? (
+                                                                <Badge variant="danger" size="sm">Failed</Badge>
+                                                            ) : testCase.session_status.status === 'running' ? (
+                                                                <Badge variant="warning" size="sm">
+                                                                    <span className="flex items-center gap-1">
+                                                                        <span className="animate-pulse">●</span> Running
+                                                                    </span>
+                                                                </Badge>
+                                                            ) : testCase.session_status.status === 'queued' ? (
+                                                                <Badge variant="info" size="sm">Queued</Badge>
+                                                            ) : testCase.session_status.status === 'timeout' ? (
+                                                                <Badge variant="danger" size="sm">Timeout</Badge>
+                                                            ) : (
+                                                                <Badge variant="default" size="sm">{testCase.session_status.status}</Badge>
+                                                            )
                                                         ) : (
-                                                            <Badge variant="default" size="sm">{testCase.session_status.status}</Badge>
-                                                        )
-                                                    ) : (
-                                                        <Badge variant="default" size="sm">Not Tested</Badge>
-                                                    )}
+                                                            <Badge variant="default" size="sm">Not Tested</Badge>
+                                                        )}
+                                                        {/* Display noise profile if present in session_id */}
+                                                        {testCase.session_status?.session_id && (() => {
+                                                            const noiseInfo = extractNoiseFromSessionId(testCase.session_status.session_id);
+                                                            return noiseInfo && noiseInfo.profile_id !== 'none' ? (
+                                                                <Badge 
+                                                                    variant={getNoiseProfileBadgeVariant(noiseInfo.profile_id)} 
+                                                                    size="sm"
+                                                                    className="text-xs"
+                                                                >
+                                                                    <span className="flex items-center gap-1">
+                                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m0 0a5 5 0 007.072 0" />
+                                                                        </svg>
+                                                                        {noiseInfo.displayName}
+                                                                    </span>
+                                                                </Badge>
+                                                            ) : null;
+                                                        })()}
+                                                    </div>
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <ActionButtons

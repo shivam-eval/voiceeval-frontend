@@ -2,7 +2,7 @@ import { ExternalLink } from "lucide-react";
 
 const LiveKitIntegrationSection = () => (
     <div className="prose prose-invert max-w-none">
-        <h1 className="text-4xl font-bold mb-4 text-white">LiveKit Integration</h1>
+        <h1 className="text-4xl font-bold mb-4 text-white">LiveKit / Pipecat Integration</h1>
         <p className="text-lg text-gray-400 mb-8">
             Integrate your LiveKit voice agent with VoiceEval using our Python SDK.
             This allows you to simulate, evaluate, and monitor your agent's performance.

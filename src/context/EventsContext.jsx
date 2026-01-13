@@ -26,7 +26,7 @@ export const EventsProvider = ({ children }) => {
 
     useEffect(() => {
         const eventsUrl =
-            `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api/v1'}/events/stream`;
+            `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}/events/stream`;
 
         let eventSource;
         let retryTimeout;

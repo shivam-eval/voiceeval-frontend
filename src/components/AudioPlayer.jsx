@@ -19,42 +19,67 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
     const audioRef = useRef(null);
 
     // Construct full URL if audioUrl is relative
-    const fullAudioUrl = audioUrl?.startsWith('http') 
-        ? audioUrl 
+    const fullAudioUrl = audioUrl?.startsWith('http')
+        ? audioUrl
         : `${API_BASE_URL.replace('/api/v1', '')}${audioUrl}`;
 
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        const handleLoadedMetadata = () => {
-            setDuration(audio.duration);
+        const onPlay = () => {
+            setIsPlaying(true);
             setIsLoading(false);
         };
 
-        const handleTimeUpdate = () => {
+        const onPause = () => {
+            setIsPlaying(false);
+            setIsLoading(false);
+        };
+
+        const onWaiting = () => {
+            // Only show loading if we are trying to play
+            if (audio.paused === false) {
+                setIsLoading(true);
+            }
+        };
+
+        const onCanPlay = () => {
+            setIsLoading(false);
+        };
+
+        const onEnded = () => {
+            setIsPlaying(false);
+            setCurrentTime(0);
+            setIsLoading(false);
+        };
+
+        const onTimeUpdate = () => {
             setCurrentTime(audio.currentTime);
         };
 
-        const handleEnded = () => {
-            setIsPlaying(false);
-            setCurrentTime(0);
+        const onLoadedMetadata = () => {
+            setDuration(audio.duration);
         };
 
-        const handleCanPlay = () => {
-            setIsLoading(false);
-        };
-
-        audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-        audio.addEventListener('timeupdate', handleTimeUpdate);
-        audio.addEventListener('ended', handleEnded);
-        audio.addEventListener('canplay', handleCanPlay);
+        audio.addEventListener('play', onPlay);
+        audio.addEventListener('playing', onPlay);
+        audio.addEventListener('pause', onPause);
+        audio.addEventListener('waiting', onWaiting);
+        audio.addEventListener('canplay', onCanPlay);
+        audio.addEventListener('ended', onEnded);
+        audio.addEventListener('timeupdate', onTimeUpdate);
+        audio.addEventListener('loadedmetadata', onLoadedMetadata);
 
         return () => {
-            audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-            audio.removeEventListener('timeupdate', handleTimeUpdate);
-            audio.removeEventListener('ended', handleEnded);
-            audio.removeEventListener('canplay', handleCanPlay);
+            audio.removeEventListener('play', onPlay);
+            audio.removeEventListener('playing', onPlay);
+            audio.removeEventListener('pause', onPause);
+            audio.removeEventListener('waiting', onWaiting);
+            audio.removeEventListener('canplay', onCanPlay);
+            audio.removeEventListener('ended', onEnded);
+            audio.removeEventListener('timeupdate', onTimeUpdate);
+            audio.removeEventListener('loadedmetadata', onLoadedMetadata);
         };
     }, []);
 
@@ -62,16 +87,16 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        if (isPlaying) {
-            audio.pause();
-        } else {
+        if (audio.paused) {
             setIsLoading(true);
             audio.play().catch(err => {
                 console.error('Error playing audio:', err);
                 setIsLoading(false);
+                setIsPlaying(false);
             });
+        } else {
+            audio.pause();
         }
-        setIsPlaying(!isPlaying);
     };
 
     const formatTime = (seconds) => {
@@ -109,7 +134,7 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
     return (
         <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
             <audio ref={audioRef} src={fullAudioUrl} preload="metadata" />
-            
+
             <div className="flex items-center gap-4">
                 {/* Play/Pause Button */}
                 <button
@@ -133,15 +158,15 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
                         <Volume2 className="w-4 h-4 text-gray-400" />
                         {label && <span className="text-sm text-gray-300">{label}</span>}
                     </div>
-                    
+
                     {/* Progress Bar */}
                     <div className="relative h-2 bg-gray-800 rounded-full overflow-hidden">
-                        <div 
+                        <div
                             className="absolute inset-y-0 left-0 bg-teal-500 transition-all duration-100"
                             style={{ width: `${progress}%` }}
                         />
                     </div>
-                    
+
                     {/* Time Display */}
                     <div className="flex items-center justify-between mt-1 text-xs text-gray-500">
                         <span>{formatTime(currentTime)}</span>

@@ -42,8 +42,8 @@ const NoiseProfilesSection = ({ noises = [], compact = false, noiseProfiles = nu
                 {noises.map((noise, idx) => {
                     const isEnabled = noise.enabled !== false;
                     return (
-                        <Badge 
-                            key={idx} 
+                        <Badge
+                            key={idx}
                             variant={isEnabled ? "info" : "secondary"}
                             size="sm"
                         >
@@ -76,15 +76,14 @@ const NoiseProfilesSection = ({ noises = [], compact = false, noiseProfiles = nu
                     const isEnabled = noise.enabled !== false;
                     const profileName = getProfileName(noise.profile_id);
                     const audioUrl = getAudioUrl(noise.profile_id);
-                    
+
                     return (
-                        <div 
-                            key={idx} 
-                            className={`p-3 rounded transition-colors space-y-3 ${
-                                isEnabled 
-                                    ? 'bg-gray-900 border border-gray-700' 
+                        <div
+                            key={idx}
+                            className={`p-3 rounded transition-colors space-y-3 ${isEnabled
+                                    ? 'bg-gray-900 border border-gray-700'
                                     : 'bg-gray-900/50 border border-gray-800'
-                            }`}
+                                }`}
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -112,26 +111,24 @@ const NoiseProfilesSection = ({ noises = [], compact = false, noiseProfiles = nu
                                         </div>
                                     )}
                                     <div>
-                                        <span 
-                                            className={`text-xs px-2 py-1 rounded ${
-                                                isEnabled 
-                                                    ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20' 
+                                        <span
+                                            className={`text-xs px-2 py-1 rounded ${isEnabled
+                                                    ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
                                                     : 'bg-gray-800 text-gray-500 border border-gray-700'
-                                            }`}
+                                                }`}
                                         >
                                             {isEnabled ? '✓ Enabled' : '✗ Disabled'}
                                         </span>
                                     </div>
                                 </div>
                             </div>
-                            
+
                             {/* Audio Player */}
                             {audioUrl && isEnabled && (
                                 <div className="pl-7">
-                                    <AudioPlayer 
-                                        audioUrl={audioUrl} 
+                                    <AudioPlayer
+                                        audioUrl={audioUrl}
                                         label="Preview sample"
-                                        compact={true}
                                     />
                                 </div>
                             )}
@@ -141,7 +138,7 @@ const NoiseProfilesSection = ({ noises = [], compact = false, noiseProfiles = nu
             </div>
             <div className="mt-4 p-3 bg-gray-900 rounded border border-gray-700">
                 <p className="text-xs text-gray-400">
-                    <span className="font-semibold text-gray-300">Note:</span> Each noise profile creates a separate test variant. 
+                    <span className="font-semibold text-gray-300">Note:</span> Each noise profile creates a separate test variant.
                     This persona will be tested under {noises.filter(n => n.enabled !== false).length} different noise conditions.
                 </p>
             </div>

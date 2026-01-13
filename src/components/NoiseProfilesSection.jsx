@@ -2,6 +2,7 @@ import React from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import Badge from './Badge';
 import AudioPlayer from './AudioPlayer';
+import { API_BASE_URL } from '../config/constants';
 
 /**
  * Component to display background noise profiles with consistent styling
@@ -27,10 +28,17 @@ const NoiseProfilesSection = ({ noises = [], compact = false, noiseProfiles = nu
             .join(' ');
     };
 
-    // Helper to get audio URL from metadata
+    // Helper to get audio URL from metadata with local proxy rewrite
     const getAudioUrl = (profileId) => {
         if (noiseProfiles && noiseProfiles[profileId] && noiseProfiles[profileId].audio_url) {
-            return noiseProfiles[profileId].audio_url;
+            let url = noiseProfiles[profileId].audio_url;
+
+            // If running locally (API_BASE_URL includes localhost), rewrite production URLs to local
+            if (API_BASE_URL.includes('localhost') && url.includes('shoplabs.voiceeval.com/api/v1')) {
+                url = url.replace('https://shoplabs.voiceeval.com/api/v1', API_BASE_URL);
+            }
+
+            return url;
         }
         return null;
     };
@@ -81,8 +89,8 @@ const NoiseProfilesSection = ({ noises = [], compact = false, noiseProfiles = nu
                         <div
                             key={idx}
                             className={`p-3 rounded transition-colors space-y-3 ${isEnabled
-                                    ? 'bg-gray-900 border border-gray-700'
-                                    : 'bg-gray-900/50 border border-gray-800'
+                                ? 'bg-gray-900 border border-gray-700'
+                                : 'bg-gray-900/50 border border-gray-800'
                                 }`}
                         >
                             <div className="flex items-center justify-between">
@@ -113,8 +121,8 @@ const NoiseProfilesSection = ({ noises = [], compact = false, noiseProfiles = nu
                                     <div>
                                         <span
                                             className={`text-xs px-2 py-1 rounded ${isEnabled
-                                                    ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
-                                                    : 'bg-gray-800 text-gray-500 border border-gray-700'
+                                                ? 'bg-teal-500/10 text-teal-400 border border-teal-500/20'
+                                                : 'bg-gray-800 text-gray-500 border border-gray-700'
                                                 }`}
                                         >
                                             {isEnabled ? '✓ Enabled' : '✗ Disabled'}

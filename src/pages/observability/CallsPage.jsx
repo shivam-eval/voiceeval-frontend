@@ -22,6 +22,8 @@ import {
 } from 'lucide-react';
 import AudioUploadModal from '../../components/AudioUploadModal';
 import GenericDropdown from '../../components/DropDown';
+import Badge from '../../components/Badge';
+import { extractNoiseFromSessionId, getNoiseProfileBadgeVariant } from '../../utils/noiseUtils';
 import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvaluateAudio } from '../../hooks/useCalls';
 import { useFlows } from '../../hooks/useFlows';
 import { useAgents } from '../../hooks/useAgents';
@@ -694,6 +696,7 @@ const CallsPage = () => {
                 <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
                   <th className="px-4 py-3">Call ID</th>
                   <th className="px-4 py-3 text-center">Actions</th>
+                  <th className="px-4 py-3 text-center">Noise</th>
                   <th className="px-4 py-3">Timestamp</th>
                   <th className="px-4 py-3 text-center">Overall Score</th>
                   <th className="px-4 py-3 text-center">Issues</th>
@@ -778,6 +781,18 @@ const CallsPage = () => {
                             <Download className="w-3.5 h-3.5" />
                           </button>
                         </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {(() => {
+                          const noise = extractNoiseFromSessionId(call.session_id || call.call_id);
+                          return noise ? (
+                            <Badge variant={getNoiseProfileBadgeVariant(noise.profile_id)} size="sm">
+                              {noise.displayName}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-500 text-xs">-</span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3">
                         <span className="text-gray-300 text-xs whitespace-nowrap">

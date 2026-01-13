@@ -81,6 +81,15 @@ const PersonaCard = ({ persona, onClick }) => {
                         </div>
                     </div>
                 )}
+                {/* Noise Indicator */}
+                {persona.background_noises && persona.background_noises.length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-gray-700">
+                        <div className="flex items-center gap-1.5 text-xs text-teal-400">
+                            <Volume2 className="w-3.5 h-3.5" />
+                            <span>{persona.background_noises.length} noise profile{persona.background_noises.length !== 1 ? 's' : ''}</span>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Tags */}

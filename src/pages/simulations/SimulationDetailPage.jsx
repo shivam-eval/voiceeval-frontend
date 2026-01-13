@@ -15,6 +15,7 @@ import ConfirmationModal from '../../components/ConfirmationModal';
 import { MetricCard, StatCard } from '../../components/SimulationCards';
 import { getEvaluationResults } from '../../api';
 import { useWorkflow } from '../../context/WorkFlowContext';
+import { extractNoiseFromSessionId, getNoiseProfileBadgeVariant } from '../../utils/noiseUtils';
 
 const SimulationDetailPage = () => {
     const { simulationId } = useParams();
@@ -184,7 +185,7 @@ const SimulationDetailPage = () => {
         });
 
         return () => {
-            if(evaluationTaskId){
+            if (evaluationTaskId) {
 
                 unsubscribe();
             }
@@ -735,6 +736,7 @@ const SimulationDetailPage = () => {
                                         <th className="w-10 px-4 py-3"></th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Session ID</th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Test Case</th>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Noise</th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Status</th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Score</th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Duration</th>
@@ -765,6 +767,18 @@ const SimulationDetailPage = () => {
                                                     {session.metadata?.test_case_name || session.test_case_id}
                                                 </td>
                                                 <td className="px-4 py-3">
+                                                    {(() => {
+                                                        const noise = extractNoiseFromSessionId(session.session_id);
+                                                        return noise ? (
+                                                            <Badge variant={getNoiseProfileBadgeVariant(noise.profile_id)} size="sm">
+                                                                {noise.displayName}
+                                                            </Badge>
+                                                        ) : (
+                                                            <span className="text-xs text-gray-500">-</span>
+                                                        );
+                                                    })()}
+                                                </td>
+                                                <td className="px-4 py-3">
                                                     <Badge variant={getStatusBadgeVariant(session.status)}>
                                                         {session.status}
                                                     </Badge>
@@ -790,7 +804,7 @@ const SimulationDetailPage = () => {
                                             </tr>
                                             {expandedSessions.includes(session.session_id) && (
                                                 <tr>
-                                                    <td colSpan={7} className="bg-gray-800/30 p-6">
+                                                    <td colSpan={8} className="bg-gray-800/30 p-6">
                                                         <div className="text-sm text-gray-300">
                                                             <p className="font-semibold mb-2">Session Details</p>
                                                             <div className="grid grid-cols-2 gap-4 text-xs">

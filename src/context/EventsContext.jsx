@@ -28,6 +28,9 @@ export const EventsProvider = ({ children }) => {
     const listenersRef = useRef({});
 
     useEffect(() => {
+        const eventsUrl =
+            `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}/events/stream`;
+
         let eventSource;
         let retryTimeout;
         let retryCount = 0;

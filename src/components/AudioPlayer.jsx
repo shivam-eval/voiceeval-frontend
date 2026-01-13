@@ -18,11 +18,78 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
     const [currentTime, setCurrentTime] = useState(0);
     const audioRef = useRef(null);
 
+    const [audioSrc, setAudioSrc] = useState(null);
+
     // Construct full URL if audioUrl is relative
     const fullAudioUrl = audioUrl?.startsWith('http')
         ? audioUrl
         : `${API_BASE_URL.replace('/api/v1', '')}${audioUrl}`;
 
+    useEffect(() => {
+        // Reset state when URL changes
+        setAudioSrc(null);
+        setIsLoading(true);
+        setDuration(0);
+        setCurrentTime(0);
+
+        if (!fullAudioUrl) return;
+
+        let active = true;
+        let objectUrl = null;
+
+        const fetchAudio = async () => {
+            try {
+                // If it's an external URL, just use it directly
+                if (fullAudioUrl.startsWith('http') && !fullAudioUrl.includes(API_BASE_URL)) {
+                    if (active) {
+                        setAudioSrc(fullAudioUrl);
+                        setIsLoading(false);
+                    }
+                    return;
+                }
+
+                // Internal API request with auth
+                const token = localStorage.getItem("authToken");
+                const headers = {};
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch(fullAudioUrl, { headers });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load audio: ${response.status}`);
+                }
+
+                const blob = await response.blob();
+                if (active) {
+                    objectUrl = URL.createObjectURL(blob);
+                    setAudioSrc(objectUrl);
+                    setIsLoading(false);
+                }
+            } catch (err) {
+                console.error('Error fetching audio:', err);
+                if (active) {
+                    setIsLoading(false);
+                    // Fallback to direct URL in case some auth isn't needed or strictly fails
+                    // But usually, we just show error state or don't play.
+                    // For now, let's just leave it null or maybe try direct:
+                    // setAudioSrc(fullAudioUrl); 
+                }
+            }
+        };
+
+        fetchAudio();
+
+        return () => {
+            active = false;
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
+        };
+    }, [fullAudioUrl]);
+
+    // Audio Event Handlers
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio) return;
@@ -39,13 +106,14 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
 
         const onWaiting = () => {
             // Only show loading if we are trying to play
-            if (audio.paused === false) {
+            if (audio.paused === false && !audio.ended) {
                 setIsLoading(true);
             }
         };
 
         const onCanPlay = () => {
-            setIsLoading(false);
+            // If we have a source, we are ready
+            if (audioSrc) setIsLoading(false);
         };
 
         const onEnded = () => {
@@ -60,6 +128,13 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
 
         const onLoadedMetadata = () => {
             setDuration(audio.duration);
+            setIsLoading(false);
+        };
+
+        const onError = (e) => {
+            console.error("Audio error:", e);
+            setIsLoading(false);
+            setIsPlaying(false);
         };
 
         audio.addEventListener('play', onPlay);
@@ -70,6 +145,7 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
         audio.addEventListener('ended', onEnded);
         audio.addEventListener('timeupdate', onTimeUpdate);
         audio.addEventListener('loadedmetadata', onLoadedMetadata);
+        audio.addEventListener('error', onError);
 
         return () => {
             audio.removeEventListener('play', onPlay);
@@ -80,8 +156,9 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
             audio.removeEventListener('ended', onEnded);
             audio.removeEventListener('timeupdate', onTimeUpdate);
             audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+            audio.removeEventListener('error', onError);
         };
-    }, []);
+    }, [audioSrc]);
 
     const togglePlay = () => {
         const audio = audioRef.current;
@@ -111,7 +188,7 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
     if (compact) {
         return (
             <div className="inline-flex items-center gap-2">
-                <audio ref={audioRef} src={fullAudioUrl} preload="metadata" />
+                <audio ref={audioRef} src={audioSrc} preload="metadata" />
                 <button
                     onClick={togglePlay}
                     disabled={isLoading}
@@ -133,7 +210,7 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
 
     return (
         <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
-            <audio ref={audioRef} src={fullAudioUrl} preload="metadata" />
+            <audio ref={audioRef} src={audioSrc} preload="metadata" />
 
             <div className="flex items-center gap-4">
                 {/* Play/Pause Button */}

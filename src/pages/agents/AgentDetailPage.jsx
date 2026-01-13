@@ -134,6 +134,13 @@ const AgentDetailPage = () => {
         }
     };
 
+    const handleCopySystemPrompt = () => {
+        if (systemPrompt) {
+            navigator.clipboard.writeText(systemPrompt);
+            toast.success("System prompt copied to clipboard");
+        }
+    };
+
     const tabs = [
         { id: "overview", label: "Overview", icon: <BarChart3 className="w-4 h-4" /> },
         { id: "configuration", label: "Configuration", icon: <Settings className="w-4 h-4" /> },
@@ -448,7 +455,10 @@ const AgentDetailPage = () => {
                         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-lg font-semibold text-white">System Prompt</h3>
-                                <button className="text-sm text-gray-400 hover:text-white flex items-center gap-2">
+                                <button
+                                    onClick={handleCopySystemPrompt}
+                                    className="text-sm text-gray-400 hover:text-white flex items-center gap-2"
+                                >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                                     </svg>

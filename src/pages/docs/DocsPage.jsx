@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Book, Zap, Code, Settings, Phone, Mic, Database, ArrowLeft, Headphones } from "lucide-react";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 import VAPIIntegrationSection from "./sections/VAPIIntegration";
 import ElevenLabsIntegrationSection from "./sections/ElevenLabsIntegration";
 import CartesiaIntegrationSection from "./sections/CartesiaIntegration";
@@ -233,17 +234,29 @@ const StepCard = ({ number, title, description, children }) => (
   </div>
 );
 
-const CodeBlock = ({ language, children }) => (
-  <div className="bg-dark-input border border-gray-800/50 rounded-lg overflow-hidden">
-    <div className="flex items-center justify-between px-4 py-2 bg-dark-panel border-b border-gray-800/50">
-      <span className="text-xs text-gray-500 font-mono">{language}</span>
-      <button className="text-xs text-gray-400 hover:text-[#b61249] transition-colors">Copy</button>
+const CodeBlock = ({ language, children }) => {
+  const handleCopy = () => {
+    navigator.clipboard.writeText(children);
+    toast.success("Code copied to clipboard");
+  };
+
+  return (
+    <div className="bg-dark-input border border-gray-800/50 rounded-lg overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 bg-dark-panel border-b border-gray-800/50">
+        <span className="text-xs text-gray-500 font-mono">{language}</span>
+        <button
+          onClick={handleCopy}
+          className="text-xs text-gray-400 hover:text-[#b61249] transition-colors"
+        >
+          Copy
+        </button>
+      </div>
+      <pre className="p-4 overflow-x-auto">
+        <code className="text-sm text-gray-300 font-mono">{children}</code>
+      </pre>
     </div>
-    <pre className="p-4 overflow-x-auto">
-      <code className="text-sm text-gray-300 font-mono">{children}</code>
-    </pre>
-  </div>
-);
+  );
+};
 
 // Architecture Section
 const ArchitectureSection = () => (

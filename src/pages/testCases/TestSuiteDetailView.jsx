@@ -570,7 +570,7 @@ const TestSuiteDetailView = () => {
                                         size="md"
                                     >
                                         {simulationSummary.last_run.completed}/{simulationSummary.last_run.total_sessions} Passed
-                                        {simulationSummary.last_run.overall_score && ` (${Math.round(simulationSummary.last_run.overall_score)}%)`}
+                                        {simulationSummary.last_run.total_sessions > 0 && ` (${Math.round((simulationSummary.last_run.completed / simulationSummary.last_run.total_sessions) * 100)}%)`}
                                     </Badge>
                                 ) : simulationSummary.last_run?.status === 'failed' ? (
                                     <Badge variant="danger" size="md">Last Run Failed</Badge>

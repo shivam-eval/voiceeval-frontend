@@ -196,20 +196,17 @@ const EvaluationsPage = () => {
                                             {simulation.simulation_id}
                                         </p>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="bg-gray-800/50 rounded-xl p-4 text-center">
                                         {(() => {
-                                            const scoreRaw = 
-                                                simulation.metrics?.overall_score ?? 
-                                                simulation.metrics?.average_score ?? 
-                                                simulation.simulation_evaluation?.average_overall_score ?? 
-                                                0;
-                                            const score = scoreRaw * 100;
+                                            const completed = simulation.progress?.completed || 0;
+                                            const total = simulation.progress?.total_sessions || 0;
+                                            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
                                             return (
                                                 <>
-                                                    <div className={`text-3xl font-bold ${getScoreColor(score)}`}>
-                                                        {Math.round(score)}%
+                                                    <div className={`text-3xl font-bold ${getScoreColor(percentage)}`}>
+                                                        {percentage}%
                                                     </div>
-                                                    <div className="text-xs text-gray-500">Overall Score</div>
+                                                    <div className="text-xs text-gray-500">Success Rate</div>
                                                 </>
                                             );
                                         })()}

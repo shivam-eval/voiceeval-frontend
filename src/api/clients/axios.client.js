@@ -13,7 +13,9 @@ const createApiClient = (timeout = 60000) => {
   instance.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem("authToken");
-      const tenantId = localStorage.getItem("tenantId");
+      const rawTenantId = localStorage.getItem("tenantId");
+      const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
+
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }

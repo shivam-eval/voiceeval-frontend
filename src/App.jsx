@@ -61,7 +61,10 @@ function App() {
   /* ---------------- Handlers ---------------- */
   const handleLogout = () => {
     resetWorkflow();
-    localStorage.removeItem("authToken"); // Clear auth token on logout
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("tenantId");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userName");
     setIsAuthenticated(false);
   };
 

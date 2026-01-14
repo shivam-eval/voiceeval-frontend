@@ -118,7 +118,8 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
             });
 
             const token = localStorage.getItem("authToken");
-            const tenantId = localStorage.getItem("tenantId");
+            const rawTenantId = localStorage.getItem("tenantId");
+            const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
             const headers = {};
             if (token) headers["Authorization"] = `Bearer ${token}`;
             if (tenantId) headers["X-Tenant-ID"] = tenantId;

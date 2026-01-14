@@ -15,7 +15,8 @@ const API_LONG = axios.create({
 // AUTH & TENANT
 const addHeaders = (config) => {
   const token = localStorage.getItem("authToken");
-  const tenantId = localStorage.getItem("tenantId");
+  const rawTenantId = localStorage.getItem("tenantId");
+  const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
   
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

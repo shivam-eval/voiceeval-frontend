@@ -17,7 +17,9 @@ class ApiClient {
 
         // Add auth token and tenant ID
         const token = localStorage.getItem("authToken");
-        const tenantId = localStorage.getItem("tenantId");
+        const rawTenantId = localStorage.getItem("tenantId");
+        const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
+
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
         }

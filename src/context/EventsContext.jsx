@@ -7,6 +7,8 @@ import React, {
     useCallback
 } from 'react';
 
+import { API_BASE_URL } from '../config/constants';
+
 const EventsContext = createContext(null);
 
 export const useEvents = () => {
@@ -25,27 +27,49 @@ export const EventsProvider = ({ children }) => {
     const listenersRef = useRef({});
 
     useEffect(() => {
-        const eventsUrl =
-            `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8001/api/v1'}/events/stream`;
-
         let eventSource;
         let retryTimeout;
+        let retryCount = 0;
+        const maxRetryDelay = 30000; // 30 seconds
 
         const connect = () => {
-            const connectionId = `sse_${Date.now()}`;
-            console.log(`🔌 [${connectionId}] Connecting to SSE`, eventsUrl);
+            const token = localStorage.getItem("authToken");
+            const rawTenantId = localStorage.getItem("tenantId");
+            const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
 
+            if (!token) {
+                console.log("⏭️ SSE: No auth token found, skipping connection");
+                return;
+            }
+
+            // Append auth token and tenant ID to the URL as query parameters
+            // This is a common pattern for SSE since EventSource doesn't support headers
+            const url = new URL(`${API_BASE_URL}/events/stream`);
+            url.searchParams.append('token', token);
+            if (tenantId) {
+                url.searchParams.append('tenant_id', tenantId);
+            }
+
+            const eventsUrl = url.toString();
+            const connectionId = `sse_${Date.now()}`;
+            let logUrl = eventsUrl.replace(token, '***');
+            if (tenantId) {
+                logUrl = logUrl.replace(tenantId, '***');
+            }
+            console.log(`🔌 [${connectionId}] Connecting to SSE`, logUrl);
+
+            const startTime = Date.now();
             eventSource = new EventSource(eventsUrl);
 
             eventSource.onopen = () => {
                 console.log(`📡 [${connectionId}] SSE connected`);
                 setIsConnected(true);
+                retryCount = 0; // Reset retry count on successful connection
             };
 
             const dispatch = (eventName) => (e) => {
                 try {
                     const payload = JSON.parse(e.data);
-
                     console.log(`📨 SSE [${eventName}]`, payload);
                     const listeners = listenersRef.current[eventName] || [];
 
@@ -57,10 +81,7 @@ export const EventsProvider = ({ children }) => {
                         try {
                             cb(payload);
                         } catch (err) {
-                            console.error(
-                                `❌ Error in ${eventName} listener #${idx + 1}`,
-                                err
-                            );
+                            console.error(`❌ Error in ${eventName} listener #${idx + 1}`, err);
                         }
                     });
                 } catch (err) {
@@ -68,26 +89,31 @@ export const EventsProvider = ({ children }) => {
                 }
             };
 
-            // ✅ Proper SSE event routing
-            eventSource.addEventListener(
-                'evaluation_update',
-                dispatch('evaluation_update')
-            );
-            eventSource.addEventListener(
-                'simulation_update',
-                dispatch('simulation_update')
-            );
-            eventSource.addEventListener(
-                'queue_update',
-                dispatch('queue_update')
-            );
+            eventSource.addEventListener('evaluation_update', dispatch('evaluation_update'));
+            eventSource.addEventListener('simulation_update', dispatch('simulation_update'));
+            eventSource.addEventListener('queue_update', dispatch('queue_update'));
 
             eventSource.onerror = (err) => {
-                console.error(`❌ [${connectionId}] SSE error`, err);
+                const duration = Date.now() - startTime;
+                console.error(`❌ [${connectionId}] SSE error (after ${duration}ms)`, err);
                 setIsConnected(false);
                 eventSource.close();
 
-                retryTimeout = setTimeout(connect, 3000);
+                // If it fails immediately (less than 2 seconds) and we've tried many times,
+                // it's likely a persistent auth error. Stop retrying to avoid flooding.
+                if (duration < 2000 && retryCount > 5) {
+                    console.error("🛑 SSE: Persistent failure detected. Stopping retries.");
+                    return;
+                }
+
+                // Implement exponential backoff for retries
+                const delay = Math.min(1000 * Math.pow(2, retryCount), maxRetryDelay);
+                console.log(`🔄 SSE: Retrying in ${delay}ms (attempt ${retryCount + 1})`);
+                
+                retryTimeout = setTimeout(() => {
+                    retryCount++;
+                    connect();
+                }, delay);
             };
         };
 

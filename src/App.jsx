@@ -118,15 +118,15 @@ function App() {
 
   /* ---------------- Routes ---------------- */
   return (
-    <EventsProvider>
-      <Routes>
-        {/* Documentation - standalone layout */}
-        <Route path="/docs" element={<DocsPage />} />
+    <Routes>
+      {/* Documentation - standalone layout */}
+      <Route path="/docs" element={<DocsPage />} />
 
-        {/* Main app - with DashboardLayout wrapper */}
-        <Route
-          path="/*"
-          element={
+      {/* Main app - with DashboardLayout wrapper */}
+      <Route
+        path="/*"
+        element={
+          <EventsProvider>
             <DashboardLayout
               activeSection={activeSection}
               activeTab={activeTab}
@@ -203,10 +203,10 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </DashboardLayout>
-          }
-        />
-      </Routes>
-    </EventsProvider>
+          </EventsProvider>
+        }
+      />
+    </Routes>
   );
 }
 

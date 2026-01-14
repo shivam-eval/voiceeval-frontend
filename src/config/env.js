@@ -1,6 +1,6 @@
 const config = {
   api: {
-    baseUrl: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1',
+    baseUrl: (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) || process.env.REACT_APP_API_BASE_URL || 'http://localhost:8001/api/v1',
     timeout: 60000,
     longTimeout: 180000,
   },

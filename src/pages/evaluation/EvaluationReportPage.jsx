@@ -10,6 +10,8 @@ import {
   getTranscriptData 
 } from '../../utils/evaluationDataTransform';
 
+import { GCP_STORAGE_BASE_URL } from '../../config/constants';
+
 const EvaluationReportPage = () => {
   const { evaluationId } = useParams();
   const [searchParams] = useSearchParams();
@@ -131,9 +133,8 @@ const EvaluationReportPage = () => {
   // Construct audio URL if simulationDetails is available
   const transcriptData = getTranscriptData(evaluation, evaluation);
   if (transcriptData && simulationDetails?.metadata?.audio_file) {
-    const baseUrl = 'https://storage.googleapis.com/voiceeval-public/';
     const audioPath = simulationDetails.metadata.audio_file;
-    transcriptData.audio_url = audioPath.startsWith('http') ? audioPath : `${baseUrl}${audioPath}`;
+    transcriptData.audio_url = audioPath.startsWith('http') ? audioPath : `${GCP_STORAGE_BASE_URL}/${audioPath}`;
   }
 
   return (

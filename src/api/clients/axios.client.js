@@ -1,7 +1,6 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
+import { API_BASE_URL } from "../../config/constants";
 
 // Create standard API client with default timeout
 const createApiClient = (timeout = 60000) => {
@@ -10,12 +9,16 @@ const createApiClient = (timeout = 60000) => {
     timeout,
   });
 
-  // Add auth token to requests
+  // Add auth token and tenant ID to requests
   instance.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem("authToken");
+      const tenantId = localStorage.getItem("tenantId");
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+      if (tenantId) {
+        config.headers["X-Tenant-ID"] = tenantId;
       }
       return config;
     },

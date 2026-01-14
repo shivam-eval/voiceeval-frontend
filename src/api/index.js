@@ -1,7 +1,6 @@
 import axios from "axios";
 import { toast } from "react-toastify";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8001/api/v1";
+import { API_BASE_URL } from "../config/constants";
 
 const API = axios.create({
   baseURL: API_BASE_URL,
@@ -13,17 +12,22 @@ const API_LONG = axios.create({
   timeout: 180000,
 });
 
-// AUTH
-const addAuthHeader = (config) => {
-  const token = localStorage.getItem("authToken"); // Changed from "token" to "authToken"
+// AUTH & TENANT
+const addHeaders = (config) => {
+  const token = localStorage.getItem("authToken");
+  const tenantId = localStorage.getItem("tenantId");
+  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (tenantId) {
+    config.headers["X-Tenant-ID"] = tenantId;
   }
   return config;
 };
 
-API.interceptors.request.use(addAuthHeader, (error) => Promise.reject(error));
-API_LONG.interceptors.request.use(addAuthHeader, (error) =>
+API.interceptors.request.use(addHeaders, (error) => Promise.reject(error));
+API_LONG.interceptors.request.use(addHeaders, (error) =>
   Promise.reject(error)
 );
 

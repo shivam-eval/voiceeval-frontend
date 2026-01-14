@@ -30,9 +30,9 @@ const GenericDropdown = ({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between px-4 py-2
-                   bg-dark-bg border border-gray-800 text-white rounded-md
-                   text-sm hover:border-teal-500/50 transition-all duration-200"
+        className="w-full flex items-center justify-between px-2 py-2
+                   bg-transparent border-none text-white rounded-md
+                   text-sm hover:bg-gray-800/50 transition-all duration-200"
       >
         <span className={`flex-1 text-left font-semibold whitespace-nowrap ${value ? "text-white" : "text-gray-500"}`}>
           {selectedLabel}

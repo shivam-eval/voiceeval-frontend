@@ -126,7 +126,7 @@ const PersonasPage = () => {
                         </div>
 
                         {/* Language Filter */}
-                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-56">
+                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-40 overflow-visible">
                             <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Language:</span>
                             <GenericDropdown
                                 options={languageOptions}

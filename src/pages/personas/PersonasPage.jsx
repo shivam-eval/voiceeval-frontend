@@ -115,7 +115,7 @@ const PersonasPage = () => {
 
                     <div className="flex flex-wrap gap-3">
                         {/* Region Filter */}
-                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-56">
+                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-56 overflow-visible">
                             <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Region:</span>
                             <GenericDropdown
                                 options={regionOptions}
@@ -137,7 +137,7 @@ const PersonasPage = () => {
                         </div>
 
                         {/* Age Group Filter */}
-                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-44">
+                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-44 overflow-visible">
                             <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Age:</span>
                             <GenericDropdown
                                 options={ageOptions}
@@ -148,7 +148,7 @@ const PersonasPage = () => {
                         </div>
 
                         {/* Gender Filter */}
-                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-44">
+                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-44 overflow-visible">
                             <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Gender:</span>
                             <GenericDropdown
                                 options={genderOptions}
@@ -159,7 +159,7 @@ const PersonasPage = () => {
                         </div>
 
                         {/* Noise Filter */}
-                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-48">
+                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-48 overflow-visible">
                             <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Noise:</span>
                             <GenericDropdown
                                 options={noiseOptions}

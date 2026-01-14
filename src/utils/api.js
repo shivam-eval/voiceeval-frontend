@@ -142,6 +142,12 @@ export const personasLibraryApi = {
     get: (id) => apiClient.get(`/personas/library/${id}`),
 };
 
+// Noise Profiles API endpoints
+export const noiseProfilesApi = {
+    list: (params) => apiClient.get('/noise-profiles', params),
+    get: (id) => apiClient.get(`/noise-profiles/${id}`),
+};
+
 // Test Profile API endpoints
 export const testProfilesApi = {
     list: (params) => apiClient.get('/test-profiles', params),

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import { loginUser, signupUser } from "../../api";
 
+
 const AuthScreen = ({ onAuthSuccess }) => {
   const [isSignup, setIsSignup] = useState(false);
   const [name, setName] = useState("");
@@ -120,4 +121,5 @@ const AuthScreen = ({ onAuthSuccess }) => {
 };
 
 export default AuthScreen;
+
 

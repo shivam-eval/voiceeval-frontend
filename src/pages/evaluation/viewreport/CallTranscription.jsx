@@ -2,7 +2,80 @@ import React, { useState, useRef, useEffect } from "react";
 import { Play, Pause, Download, Copy, User, Bot, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
 
-const CallTranscriptPanel = ({ transcriptData }) => {
+// Mini audio player for individual steps
+const MiniAudioPlayer = ({ audioUrl }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(err => {
+          console.error("Step audio playback failed:", err);
+          setIsPlaying(false);
+        });
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
+
+  const onTimeUpdate = () => {
+    if (audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+    }
+  };
+
+  const onLoadedMetadata = () => {
+    if (audioRef.current) {
+      setDuration(audioRef.current.duration);
+    }
+  };
+
+  const formatTime = (seconds) => {
+    if (!seconds && seconds !== 0) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="flex items-center gap-2 mt-2 bg-dark-input/30 border border-gray-700/30 rounded-lg p-2">
+      <audio
+        ref={audioRef}
+        src={audioUrl}
+        onTimeUpdate={onTimeUpdate}
+        onLoadedMetadata={onLoadedMetadata}
+        onEnded={() => setIsPlaying(false)}
+      />
+
+      <button
+        onClick={() => setIsPlaying(!isPlaying)}
+        className="w-7 h-7 rounded-full bg-teal-500/20 hover:bg-teal-500/30 flex items-center justify-center text-teal-400 transition-all transform active:scale-95 flex-shrink-0"
+      >
+        {isPlaying ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
+      </button>
+
+      <div className="flex-1 min-w-0">
+        <div className="h-1 bg-gray-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-teal-500 transition-all"
+            style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }}
+          />
+        </div>
+      </div>
+
+      <span className="text-[10px] font-mono text-gray-500 flex-shrink-0 w-10 text-right">
+        {formatTime(currentTime)}
+      </span>
+    </div>
+  );
+};
+
+
+const CallTranscriptPanel = ({ transcriptData, callRecordingUrl }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -13,16 +86,33 @@ const CallTranscriptPanel = ({ transcriptData }) => {
   // Debug logging
   useEffect(() => {
     console.log('CallTranscriptPanel received transcriptData:', transcriptData);
+    console.log('CallTranscriptPanel received callRecordingUrl:', callRecordingUrl);
     if (transcriptData) {
       console.log('Steps:', transcriptData.steps);
       console.log('Metadata:', transcriptData.metadata);
     }
-  }, [transcriptData]);
+  }, [transcriptData, callRecordingUrl]);
 
   const steps = transcriptData?.steps || [];
   const metadata = transcriptData?.metadata || {};
   const audioFiles = metadata?.audio_files || [];
-  const recordingUrl = transcriptData?.audio_url || metadata?.recording_url || (audioFiles.length > 0 ? audioFiles[0] : null);
+
+  // Create a map of step numbers to audio URLs
+  const stepAudioMap = {};
+  audioFiles.forEach(file => {
+    // Extract step number from filename pattern: *_step_N.wav
+    const match = file.filename?.match(/_step_(\d+)\.wav$/);
+    if (match) {
+      const stepNum = parseInt(match[1], 10);
+      stepAudioMap[stepNum] = file.url;
+    }
+  });
+
+  // Debug logging for audio mapping
+  useEffect(() => {
+    console.log('Step Audio Map:', stepAudioMap);
+    console.log('Audio Files:', audioFiles);
+  }, [audioFiles]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -93,11 +183,11 @@ const CallTranscriptPanel = ({ transcriptData }) => {
 
   const copyTranscript = () => {
     if (steps.length === 0) return;
-    
-    const text = steps.map(step => 
+
+    const text = steps.map(step =>
       `[${formatTime(step.speech_start_ms)}] ${step.turn_role === 'agent' ? 'Agent' : 'Simulator'}: ${step.text || '(no text)'}`
     ).join('\n');
-    
+
     navigator.clipboard.writeText(text).then(() => {
       toast.success('Transcript copied to clipboard');
     }).catch(err => {
@@ -144,7 +234,7 @@ const CallTranscriptPanel = ({ transcriptData }) => {
           </h3>
           <div className="flex items-center gap-3">
             {steps.length > 0 && (
-              <button 
+              <button
                 onClick={copyTranscript}
                 className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1.5 transition-colors px-2 py-1 rounded hover:bg-teal-400/10"
               >
@@ -152,9 +242,9 @@ const CallTranscriptPanel = ({ transcriptData }) => {
                 Copy
               </button>
             )}
-            {recordingUrl && (
-              <a 
-                href={recordingUrl}
+            {callRecordingUrl && (
+              <a
+                href={callRecordingUrl}
                 download
                 className="text-xs text-teal-400 hover:text-teal-300 flex items-center gap-1.5 transition-colors px-2 py-1 rounded hover:bg-teal-400/10"
               >
@@ -166,17 +256,17 @@ const CallTranscriptPanel = ({ transcriptData }) => {
         </div>
 
         {/* Audio Player */}
-        {recordingUrl ? (
+        {callRecordingUrl && (
           <div className="bg-dark-input/50 border border-gray-700/50 rounded-lg p-3 flex items-center gap-4">
-            <audio 
+            <audio
               ref={audioRef}
-              src={recordingUrl}
+              src={callRecordingUrl}
               onTimeUpdate={onTimeUpdate}
               onLoadedMetadata={onLoadedMetadata}
               onEnded={() => setIsPlaying(false)}
             />
-            
-            <button 
+
+            <button
               onClick={togglePlay}
               className="w-10 h-10 rounded-full bg-teal-500 hover:bg-teal-400 flex items-center justify-center text-white transition-all transform active:scale-95"
             >
@@ -188,7 +278,7 @@ const CallTranscriptPanel = ({ transcriptData }) => {
                 <span>{formatTime(currentTime * 1000)}</span>
                 <span>{formatTime(duration * 1000)}</span>
               </div>
-              <input 
+              <input
                 type="range"
                 min="0"
                 max={duration || 0}
@@ -203,7 +293,7 @@ const CallTranscriptPanel = ({ transcriptData }) => {
               <button onClick={toggleMute} className="text-gray-400 hover:text-white transition-colors">
                 {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
-              <input 
+              <input
                 type="range"
                 min="0"
                 max="1"
@@ -213,10 +303,6 @@ const CallTranscriptPanel = ({ transcriptData }) => {
                 className="w-16 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"
               />
             </div>
-          </div>
-        ) : (
-          <div className="bg-dark-input/30 border border-gray-800/50 rounded-lg p-3 text-center">
-            <p className="text-xs text-gray-500 italic">No recording available for this session</p>
           </div>
         )}
       </div>
@@ -229,7 +315,7 @@ const CallTranscriptPanel = ({ transcriptData }) => {
             {steps.map((step, index) => {
               const isAgent = step.turn_role === 'agent';
               const timestamp = formatTime(step.speech_start_ms || step.start_time_ms || 0);
-              
+
               return (
                 <div
                   key={step.step_number || step.id || index}
@@ -256,9 +342,8 @@ const CallTranscriptPanel = ({ transcriptData }) => {
                   {/* Message Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`text-sm font-semibold ${
-                        isAgent ? "text-purple-400" : "text-blue-400"
-                      }`}>
+                      <span className={`text-sm font-semibold ${isAgent ? "text-purple-400" : "text-blue-400"
+                        }`}>
                         {isAgent ? "Agent" : "Simulator"}
                       </span>
                       <span className="text-xs text-gray-600">•</span>
@@ -266,17 +351,22 @@ const CallTranscriptPanel = ({ transcriptData }) => {
                         Step {step.step_number || index + 1}
                       </span>
                     </div>
-                    
+
                     <p className="text-gray-200 text-sm leading-relaxed">
                       {step.text || step.content || step.transcript || (
                         <span className="text-gray-500 italic">No transcript text</span>
                       )}
                     </p>
-                    
+
                     {(step.duration_ms || step.duration) && (
                       <div className="mt-1.5 text-xs text-gray-500">
                         {((step.duration_ms || step.duration) / 1000).toFixed(1)}s
                       </div>
+                    )}
+
+                    {/* Step Audio Player */}
+                    {stepAudioMap[step.step_number] && (
+                      <MiniAudioPlayer audioUrl={stepAudioMap[step.step_number]} />
                     )}
                   </div>
                 </div>

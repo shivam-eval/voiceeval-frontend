@@ -1,11 +1,40 @@
 import Badge from "../../components/Badge";
-import { Volume2 } from "lucide-react";
+import { Volume2, User, UserCircle2, Sparkles } from "lucide-react";
 
 const PersonaCard = ({ persona, onClick }) => {
     const getGenderIcon = (gender) => {
-        if (gender === 'male') return '👨';
-        if (gender === 'female') return '👩';
-        return '👤';
+        const iconClass = "w-6 h-6 transition-transform group-hover:scale-105 duration-300";
+
+        if (gender === 'male') {
+            return (
+                <div className="relative">
+                    <div className="absolute inset-0 bg-blue-500/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="relative bg-gray-800 border border-gray-700 p-3 rounded-xl group-hover:border-blue-500/50 transition-colors">
+                        <User className={`${iconClass} text-blue-400`} strokeWidth={2} />
+                    </div>
+                </div>
+            );
+        }
+
+        if (gender === 'female') {
+            return (
+                <div className="relative">
+                    <div className="absolute inset-0 bg-pink-500/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="relative bg-gray-800 border border-gray-700 p-3 rounded-xl group-hover:border-pink-500/50 transition-colors">
+                        <UserCircle2 className={`${iconClass} text-pink-400`} strokeWidth={2} />
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="relative">
+                <div className="absolute inset-0 bg-purple-500/20 rounded-xl blur-md opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div className="relative bg-gray-800 border border-gray-700 p-3 rounded-xl group-hover:border-purple-500/50 transition-colors">
+                    <Sparkles className={`${iconClass} text-purple-400`} strokeWidth={2} />
+                </div>
+            </div>
+        );
     };
 
     return (
@@ -15,7 +44,7 @@ const PersonaCard = ({ persona, onClick }) => {
         >
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
-                <div className="text-4xl">{getGenderIcon(persona.gender)}</div>
+                <div>{getGenderIcon(persona.gender)}</div>
                 <Badge variant="info" size="sm">
                     {persona.region?.replace('_', ' ')}
                 </Badge>

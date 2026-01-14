@@ -6,6 +6,7 @@ import React, {
     useRef,
     useCallback
 } from 'react';
+import { EventSourcePolyfill } from 'event-source-polyfill';
 
 import { API_BASE_URL } from '../config/constants';
 
@@ -42,24 +43,27 @@ export const EventsProvider = ({ children }) => {
                 return;
             }
 
-            // Append auth token and tenant ID to the URL as query parameters
-            // This is a common pattern for SSE since EventSource doesn't support headers
-            const url = new URL(`${API_BASE_URL}/events/stream`);
-            url.searchParams.append('token', token);
-            if (tenantId) {
-                url.searchParams.append('tenant_id', tenantId);
-            }
-
-            const eventsUrl = url.toString();
+            // Use EventSourcePolyfill to send headers (native EventSource doesn't support headers)
+            const eventsUrl = `${API_BASE_URL}/events/stream`;
             const connectionId = `sse_${Date.now()}`;
-            let logUrl = eventsUrl.replace(token, '***');
+
+            console.log(`🔌 [${connectionId}] Connecting to SSE`, eventsUrl);
+
+            // Build headers object
+            const headers = {
+                'Authorization': `Bearer ${token}`
+            };
+
             if (tenantId) {
-                logUrl = logUrl.replace(tenantId, '***');
+                headers['X-Tenant-ID'] = tenantId;
             }
-            console.log(`🔌 [${connectionId}] Connecting to SSE`, logUrl);
 
             const startTime = Date.now();
-            eventSource = new EventSource(eventsUrl);
+            eventSource = new EventSourcePolyfill(eventsUrl, {
+                headers: headers,
+                heartbeatTimeout: 120000, // 2 minutes
+                withCredentials: false
+            });
 
             eventSource.onopen = () => {
                 console.log(`📡 [${connectionId}] SSE connected`);
@@ -109,7 +113,7 @@ export const EventsProvider = ({ children }) => {
                 // Implement exponential backoff for retries
                 const delay = Math.min(1000 * Math.pow(2, retryCount), maxRetryDelay);
                 console.log(`🔄 SSE: Retrying in ${delay}ms (attempt ${retryCount + 1})`);
-                
+
                 retryTimeout = setTimeout(() => {
                     retryCount++;
                     connect();

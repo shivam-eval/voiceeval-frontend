@@ -1,8 +1,19 @@
 import { X, User, Tag, Gauge, Music } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
+import NoiseProfilesSection from "../../components/NoiseProfilesSection";
+import { useNoiseProfiles } from "../../hooks/useNoiseProfiles";
 
 const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
+    // Fetch noise profiles metadata for audio URLs (must be called before any early returns)
+    const { data: noiseProfilesData } = useNoiseProfiles();
+    
+    // Convert array to map for easy lookup
+    const noiseProfilesMap = noiseProfilesData?.profiles?.reduce((acc, profile) => {
+        acc[profile.profile_id] = profile;
+        return acc;
+    }, {}) || null;
+
     if (!isOpen || !persona) return null;
 
     return (
@@ -153,6 +164,14 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                                     </div>
                                 </div>
                             </div>
+                        )}
+
+                        {/* Background Noise Profiles */}
+                        {persona.background_noises && persona.background_noises.length > 0 && (
+                            <NoiseProfilesSection 
+                                noises={persona.background_noises} 
+                                noiseProfiles={noiseProfilesMap}
+                            />
                         )}
 
                         {/* Tags */}

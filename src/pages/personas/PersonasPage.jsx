@@ -11,6 +11,7 @@ const PersonasPage = () => {
     const [languageFilter, setLanguageFilter] = useState(null);
     const [ageGroupFilter, setAgeGroupFilter] = useState(null);
     const [genderFilter, setGenderFilter] = useState(null);
+    const [hasNoiseFilter, setHasNoiseFilter] = useState(null);
 
     // Modal state
     const [selectedPersona, setSelectedPersona] = useState(null);
@@ -23,6 +24,7 @@ const PersonasPage = () => {
         language: languageFilter,
         age_group: ageGroupFilter,
         gender: genderFilter,
+        has_noise: hasNoiseFilter,
     });
 
     const personas = data?.personas || [];
@@ -114,8 +116,24 @@ const PersonasPage = () => {
                         </select>
                     </div>
 
+                    {/* Second Row: Noise Filter */}
+                    <div className="mt-4">
+                        <select
+                            value={hasNoiseFilter === null ? "" : hasNoiseFilter}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                setHasNoiseFilter(value === "" ? null : value === "true");
+                            }}
+                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400 w-full md:w-auto"
+                        >
+                            <option value="">All (Noise Config)</option>
+                            <option value="true">With Noise Profiles</option>
+                            <option value="false">Without Noise</option>
+                        </select>
+                    </div>
+
                     {/* Active Filters Summary */}
-                    {(searchQuery || regionFilter || languageFilter || ageGroupFilter || genderFilter) && (
+                    {(searchQuery || regionFilter || languageFilter || ageGroupFilter || genderFilter || hasNoiseFilter !== null) && (
                         <div className="mt-4 flex items-center gap-2 flex-wrap">
                             <span className="text-sm text-gray-400">Active filters:</span>
                             {searchQuery && (
@@ -130,7 +148,7 @@ const PersonasPage = () => {
                             )}
                             {languageFilter && (
                                 <span className="px-3 py-1 bg-teal-400/20 text-teal-400 rounded-full text-sm">
-                                    Language: {languageFilter.replace(/_/g, ' ')}
+                                    Language: {languageFilter}
                                 </span>
                             )}
                             {ageGroupFilter && (
@@ -143,6 +161,11 @@ const PersonasPage = () => {
                                     Gender: {genderFilter.replace(/_/g, ' ')}
                                 </span>
                             )}
+                            {hasNoiseFilter !== null && (
+                                <span className="px-3 py-1 bg-teal-400/20 text-teal-400 rounded-full text-sm">
+                                    {hasNoiseFilter ? 'With Noise Profiles' : 'Without Noise'}
+                                </span>
+                            )}
                             <button
                                 onClick={() => {
                                     setSearchQuery("");
@@ -150,6 +173,7 @@ const PersonasPage = () => {
                                     setLanguageFilter(null);
                                     setAgeGroupFilter(null);
                                     setGenderFilter(null);
+                                    setHasNoiseFilter(null);
                                 }}
                                 className="text-sm text-gray-400 hover:text-white transition-colors underline"
                             >

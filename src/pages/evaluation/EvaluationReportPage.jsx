@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { useEvaluation, useSessionEvaluations } from '../../hooks/useEvaluations';
 import { useSimulation } from '../../hooks/useSimulations';
+import { useEvents } from '../../context/EventsContext';
 import ViewReport from './viewreport/ViewReport';
 import DashboardLoader from '../../components/DashboardLoader';
 import { ArrowLeft } from 'lucide-react';
-import { 
-  transformSessionToReport, 
-  getTranscriptData 
+import {
+  transformSessionToReport,
+  getTranscriptData
 } from '../../utils/evaluationDataTransform';
 
 import { GCP_STORAGE_BASE_URL } from '../../config/constants';
@@ -17,18 +19,19 @@ const EvaluationReportPage = () => {
   const [searchParams] = useSearchParams();
   const sessionId = searchParams.get('sessionId');
   const navigate = useNavigate();
+  const { subscribe } = useEvents();
 
   // If we have evaluationId, fetch by ID
-  const { 
-    data: evaluationById, 
-    isLoading: isLoadingById, 
+  const {
+    data: evaluationById,
+    isLoading: isLoadingById,
     error: errorById,
     refetch: refetchById
   } = useEvaluation(evaluationId && evaluationId !== 'session' ? evaluationId : null);
 
   // If we have a sessionId, fetch by session ID using the session endpoint
-  const { 
-    data: evaluationsBySession, 
+  const {
+    data: evaluationsBySession,
     isLoading: isLoadingBySession,
     error: errorBySession,
     refetch: refetchBySession
@@ -38,14 +41,14 @@ const EvaluationReportPage = () => {
     if (evaluationById) {
       return Array.isArray(evaluationById) ? evaluationById[0] : evaluationById;
     }
-    
+
     if (evaluationsBySession) {
-      const list = Array.isArray(evaluationsBySession) 
-        ? evaluationsBySession 
+      const list = Array.isArray(evaluationsBySession)
+        ? evaluationsBySession
         : (evaluationsBySession?.evaluations || []);
       return list[0];
     }
-      
+
     return null;
   }, [evaluationById, evaluationsBySession]);
 
@@ -53,22 +56,51 @@ const EvaluationReportPage = () => {
   const simulationId = evaluation?.simulation_id || evaluation?.simulation?.simulation_id;
   const { data: simulationDetails } = useSimulation(simulationId);
 
-  // Poll for evaluation if not found yet
+  // Subscribe to SSE events for real-time evaluation updates (replaces polling)
   React.useEffect(() => {
-    let interval;
-    const isStillLoading = isLoadingById || isLoadingBySession;
-    const shouldPoll = !evaluation && (sessionId || evaluationId) && !isStillLoading;
-    
-    if (shouldPoll) {
-      interval = setInterval(() => {
-        if (sessionId) refetchBySession();
-        else if (evaluationId && evaluationId !== 'session') refetchById();
-      }, 3000);
-    }
+    const unsubscribe = subscribe('call_evaluation_update', (data) => {
+      console.log('📡 Evaluation update received:', data);
+
+      const { status, evaluation_id, session_id, error, overall_score } = data;
+
+      // Check if this update is for our evaluation
+      const isOurEvaluation =
+        (evaluationId && evaluation_id === evaluationId) ||
+        (sessionId && session_id === sessionId);
+
+      if (!isOurEvaluation) return;
+
+      // Show toast and refetch when evaluation completes
+      if (status === 'completed') {
+        const scoreText = overall_score !== undefined ? ` (Score: ${Math.round(overall_score * 100)}%)` : '';
+        toast.success(`✅ Evaluation completed${scoreText}`, {
+          autoClose: 4000,
+          position: 'bottom-right'
+        });
+        console.log('✅ Our evaluation completed, refetching data...');
+        if (sessionId) {
+          refetchBySession();
+        } else if (evaluationId && evaluationId !== 'session') {
+          refetchById();
+        }
+      } else if (status === 'failed') {
+        toast.error(`❌ Evaluation failed: ${error || 'Unknown error'}`, {
+          autoClose: 5000,
+          position: 'bottom-right'
+        });
+        console.log('❌ Our evaluation failed, refetching data...');
+        if (sessionId) {
+          refetchBySession();
+        } else if (evaluationId && evaluationId !== 'session') {
+          refetchById();
+        }
+      }
+    });
+
     return () => {
-      if (interval) clearInterval(interval);
+      unsubscribe();
     };
-  }, [evaluation, sessionId, evaluationId, isLoadingById, isLoadingBySession, refetchBySession, refetchById]);
+  }, [subscribe, evaluationId, sessionId, refetchBySession, refetchById]);
 
   const isLoading = isLoadingById || isLoadingBySession;
   const error = errorById || errorBySession;
@@ -86,7 +118,7 @@ const EvaluationReportPage = () => {
     // If we have an error that isn't a 404, show error state
     // (Assuming 404 means it's not ready yet)
     const isActuallyMissing = error && error.response?.status !== 404;
-    
+
     if (!isActuallyMissing) {
       return (
         <div className="min-h-screen bg-dark-bg flex flex-col items-center justify-center p-8">
@@ -129,7 +161,7 @@ const EvaluationReportPage = () => {
 
   // Transform evaluation for ViewReport component
   const report = transformSessionToReport(evaluation);
-  
+
   // Construct audio URL if simulationDetails is available
   const transcriptData = getTranscriptData(evaluation, evaluation);
   if (transcriptData && simulationDetails?.metadata?.audio_file) {

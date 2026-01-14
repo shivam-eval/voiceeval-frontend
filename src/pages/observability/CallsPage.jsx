@@ -64,28 +64,37 @@ const CallsPage = () => {
 
   // Use all categories from backend
   const filteredCategories = useMemo(() => {
-    if (!categoriesData) return [];
+    let categories = [];
 
-    // Handle various response formats: [ ], { categories: [] }, { data: [] }, { items: [] }
-    let raw = [];
-    if (Array.isArray(categoriesData)) {
-      raw = categoriesData;
-    } else if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
-      raw = categoriesData.categories;
-    } else if (categoriesData?.data && Array.isArray(categoriesData.data)) {
-      raw = categoriesData.data;
-    } else if (categoriesData?.items && Array.isArray(categoriesData.items)) {
-      raw = categoriesData.items;
+    if (categoriesData) {
+      // Handle various response formats: [ ], { categories: [] }, { data: [] }, { items: [] }
+      let raw = [];
+      if (Array.isArray(categoriesData)) {
+        raw = categoriesData;
+      } else if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+        raw = categoriesData.categories;
+      } else if (categoriesData?.data && Array.isArray(categoriesData.data)) {
+        raw = categoriesData.data;
+      } else if (categoriesData?.items && Array.isArray(categoriesData.items)) {
+        raw = categoriesData.items;
+      }
+
+      // Normalize to strings
+      categories = raw.map(cat => {
+        if (typeof cat === 'string') return cat;
+        if (typeof cat === 'object' && cat !== null) {
+          return cat.name || cat.category || cat.id || String(cat);
+        }
+        return String(cat);
+      }).filter(cat => !!cat && cat !== 'undefined' && cat !== 'null');
     }
 
-    // Normalize to strings
-    return raw.map(cat => {
-      if (typeof cat === 'string') return cat;
-      if (typeof cat === 'object' && cat !== null) {
-        return cat.name || cat.category || cat.id || String(cat);
-      }
-      return String(cat);
-    }).filter(cat => !!cat && cat !== 'undefined' && cat !== 'null');
+    // Ensure 'shoplabs' is always present as a primary directory
+    if (!categories.includes('shoplabs')) {
+      categories.unshift('shoplabs');
+    }
+
+    return categories;
   }, [categoriesData]);
 
   // Automatically select the first directory if none is selected

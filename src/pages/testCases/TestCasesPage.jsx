@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Search, Plus, Filter, MoreVertical, Trash2, Eye, ChevronDown } from 'lucide-react';
 import { useTestSuites, useDeleteTestSuite, useCreateTestSuite } from "../../hooks/useTestSuites";
 import { useAgents } from "../../hooks/useAgents";
 import Table from "../../components/Table";
@@ -8,13 +9,14 @@ import Badge from "../../components/Badge";
 import Button from "../../components/Button";
 import ConfirmationModal from "../../components/ConfirmationModal";
 import CreateTestSuiteModal from "../../components/CreateTestSuiteModal";
+import GenericDropdown from "../../components/DropDown";
 
 const TestCasesPage = () => {
     const navigate = useNavigate();
 
     // Filters and search
     const [searchQuery, setSearchQuery] = useState("");
-    const [agentFilter, setAgentFilter] = useState(null);
+    const [agentFilter, setAgentFilter] = useState("");
     const [selectedRows, setSelectedRows] = useState([]);
 
     // Modal state
@@ -36,6 +38,14 @@ const TestCasesPage = () => {
 
     // Fetch agents for filter dropdown
     const { data: agentsData } = useAgents({ limit: 100 });
+
+    const agentOptions = useMemo(() => [
+        { label: "All Agents", value: "" },
+        ...(agentsData?.agents?.map(agent => ({
+            label: (agent?.name || agent?.agent_name) ? `${agent?.name || agent?.agent_name} (${agent?.agent_id})` : agent?.agent_id,
+            value: agent.agent_id
+        })) || [])
+    ], [agentsData]);
 
     // Mutations
     const deleteTestSuite = useDeleteTestSuite();
@@ -173,117 +183,110 @@ const TestCasesPage = () => {
     ];
 
     return (
-        <div className="p-8">
+        <div className="p-8 bg-dark-bg min-h-screen text-white">
             <div className="w-full max-w-screen-2xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-4xl font-bold text-white mb-2">Test Suites</h1>
-                        <p className="text-gray-400">Create and manage test suites for your agents</p>
-                    </div>
-                    <div className="flex gap-3">
-                        <Button
-                            onClick={() => setShowCreateModal(true)}
-                            icon={
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                            }
-                        >
-                            Create Test Set
-                        </Button>
-                    </div>
+                <div className="mb-8">
+                    <h1 className="text-4xl font-bold text-white mb-2">Test Suites</h1>
+                    <p className="text-gray-400">Create and manage test suites for your agents</p>
                 </div>
 
-                {/* Filters Bar */}
-                <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800/50 mb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="flex-1 relative">
-                            <svg className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                {/* Header Controls */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <div className="relative flex-1 md:w-64">
                             <input
                                 type="text"
-                                placeholder="Search by ID, name, or description..."
+                                placeholder="Search test suites..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
+                                className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 px-5 text-base focus:outline-none focus:border-teal-500 transition-colors text-white placeholder-gray-500"
                             />
                         </div>
 
-                        <select
-                            value={agentFilter || ""}
-                            onChange={(e) => setAgentFilter(e.target.value || null)}
-                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400"
+                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-72">
+                            <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Agent:</span>
+                            <GenericDropdown
+                                options={agentOptions}
+                                value={agentFilter || ""}
+                                onChange={(val) => setAgentFilter(val)}
+                                className="flex-1"
+                            />
+                        </div>
+
+                        <button className="bg-dark-panel border border-gray-800 text-white px-8 py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition-colors shadow-lg">
+                            Search
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        {selectedRows.length > 0 && (
+                            <button
+                                onClick={handleBulkDelete}
+                                className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-red-500/20 transition-colors shadow-[0_0_15px_rgba(239,68,68,0.1)]"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                                Delete Selected ({selectedRows.length})
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setShowCreateModal(true)}
+                            className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.1)]"
                         >
-                            <option value="">All Agents</option>
-                            {agentsData?.agents?.map((agent) => (
-                                <option key={agent.agent_id} value={agent.agent_id}>
-                                    {(agent?.name || agent?.agent_name) ? `${agent?.name || agent?.agent_name} (${agent?.agent_id})` : agent?.agent_id}
-                                </option>
-                            ))}
-                        </select>
+                            <Plus className="w-5 h-5" />
+                            Create Test Set
+                        </button>
                     </div>
                 </div>
 
-                {/* Bulk Actions */}
-                {selectedRows.length > 0 && (
-                    <div className="mb-4 flex items-center gap-4">
-                        <span className="text-gray-400">{selectedRows.length} selected</span>
-                        <Button variant="danger" size="sm" onClick={handleBulkDelete}>
-                            Delete Selected
-                        </Button>
-                    </div>
-                )}
-
                 {/* Error State */}
                 {error && (
-                    <div className="mb-6 bg-red-500/20 border border-red-500/50 rounded-lg p-4">
-                        <p className="text-red-400">Error loading test suites: {error.message}</p>
+                    <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-center gap-3 text-red-400">
+                        <div className="p-2 bg-red-500/10 rounded-full">
+                            <Trash2 className="w-5 h-5" />
+                        </div>
+                        <p>Error loading test suites: {error.message}</p>
                     </div>
                 )}
 
-                {/* Table */}
-                <Table
-                    columns={columns}
-                    data={data?.test_suites || []}
-                    loading={isLoading}
-                    selectable
-                    selectedRows={selectedRows}
-                    onSelectionChange={setSelectedRows}
-                    primaryKey="test_suite_id"
-                    onRowClick={(row) => navigate(`/test-cases/${row.test_suite_id}`)}
-                    emptyMessage="No test suites found. Create your first test suite to get started!"
-                    actions={(row) => (
-                        <>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigate(`/test-cases/${row.test_suite_id}`);
-                                }}
-                                className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
-                                title="View/Edit"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDelete(row.test_suite_id);
-                                }}
-                                className="p-2 rounded hover:bg-gray-700 text-gray-400 hover:text-red-400 transition-colors"
-                                title="Delete Test Suite"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                </svg>
-                            </button>
-                        </>
-                    )}
-                />
+                {/* Table Container */}
+                <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
+                    <Table
+                        columns={columns}
+                        data={data?.test_suites || []}
+                        loading={isLoading}
+                        selectable
+                        selectedRows={selectedRows}
+                        onSelectionChange={setSelectedRows}
+                        primaryKey="test_suite_id"
+                        onRowClick={(row) => navigate(`/test-cases/${row.test_suite_id}`)}
+                        emptyMessage="No test suites found. Create your first test suite to get started!"
+                        actions={(row) => (
+                            <div className="flex items-center justify-center gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigate(`/test-cases/${row.test_suite_id}`);
+                                    }}
+                                    className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-teal-400 transition-colors"
+                                    title="View/Edit"
+                                >
+                                    <Eye className="w-5 h-5" />
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDelete(row.test_suite_id);
+                                    }}
+                                    className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-red-400 transition-colors"
+                                    title="Delete Test Suite"
+                                >
+                                    <Trash2 className="w-5 h-5" />
+                                </button>
+                            </div>
+                        )}
+                    />
+                </div>
             </div>
 
             {/* Create Test Suite Modal */}

@@ -30,16 +30,16 @@ const GenericDropdown = ({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full flex items-center justify-between px-3 py-1.5
+        className="w-full flex items-center justify-between px-4 py-2
                    bg-dark-bg border border-gray-800 text-white rounded-md
                    text-sm hover:border-teal-500/50 transition-all duration-200"
       >
-        <span className={`font-semibold ${value ? "text-white" : "text-gray-500"}`}>
+        <span className={`flex-1 text-left font-semibold whitespace-nowrap ${value ? "text-white" : "text-gray-500"}`}>
           {selectedLabel}
         </span>
 
         <svg
-          className={`w-3.5 h-3.5 text-gray-500 transition-transform duration-200 ${
+          className={`w-3.5 h-3.5 text-gray-500 ml-2 transition-transform duration-200 ${
             open ? "rotate-180" : ""
           }`}
           fill="none"
@@ -53,10 +53,10 @@ const GenericDropdown = ({
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full bg-dark-panel
+        <div className="absolute z-50 mt-1.5 min-w-full w-max bg-dark-panel
                         border border-gray-800 rounded-lg shadow-2xl overflow-hidden
                         animate-in fade-in zoom-in duration-200">
-          <div className="max-h-60 overflow-y-auto py-1">
+          <div className="py-1">
             {options.map((opt) => (
               <button
                 key={opt.value}
@@ -64,7 +64,7 @@ const GenericDropdown = ({
                   onChange(opt.value)
                   setOpen(false)
                 }}
-                className={`w-full text-left px-4 py-2 text-sm
+                className={`w-full text-left px-4 py-3 text-sm whitespace-nowrap
                   transition-colors ${
                     value === opt.value
                       ? "text-teal-400 bg-teal-500/10 font-medium"

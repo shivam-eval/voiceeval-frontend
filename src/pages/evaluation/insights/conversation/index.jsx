@@ -494,12 +494,14 @@ const ConversationOverview = ({ response, data, onBack }) => {
                     <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
                       {label}
                     </span>
-                    <span
-                      className={`text-2xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"
-                        }`}
-                    >
-                      {metricScore}%
-                    </span>
+                    {(metric.name || metric.metric_name) !== 'repetition_count' && (
+                      <span
+                        className={`text-2xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"
+                          }`}
+                      >
+                        {metricScore}%
+                      </span>
+                    )}
                   </div>
                   <div
                     className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed
@@ -630,7 +632,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                               <span className="text-sm text-gray-300">
                                 Turn #{turnNumber}
                               </span>
-                              {displayValue && (
+                              {displayValue ? (
                                 <span
                                   className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${isIdeal || turnStatus === "passed"
                                     ? "bg-green-500/20 text-green-400"
@@ -641,7 +643,11 @@ const ConversationOverview = ({ response, data, onBack }) => {
                                 >
                                   {displayValue}
                                 </span>
-                              )}
+                              ) : turnStatus === "failed" ? (
+                                <span className="text-[10px] px-2 py-1 rounded font-bold uppercase bg-red-500/20 text-red-400">
+                                  FAILED
+                                </span>
+                              ) : null}
                             </div>
 
                             {/* Turn Statistics */}

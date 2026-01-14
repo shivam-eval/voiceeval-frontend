@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Eye, StopCircle, RefreshCw, Download, Trash2, Search } from 'lucide-react';
+import { Play, Eye, StopCircle, RefreshCw, Download, Trash2, Search, ChevronDown } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useSimulations, useDeleteSimulation, useRerunSimulation, useCancelSimulation } from '../../hooks/useSimulations';
 import Badge from '../../components/Badge';
 import Button from '../../components/Button';
 import RunSimulationModal from '../../components/RunSimulationModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import GenericDropdown from '../../components/DropDown';
 
 const SimulationsListPage = () => {
     const navigate = useNavigate();
@@ -168,227 +169,218 @@ const SimulationsListPage = () => {
     }
 
     return (
-        <div className="p-8">
+        <div className="p-8 bg-dark-bg min-h-screen text-white">
             <div className="w-full max-w-screen-2xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <h1 className="text-4xl font-bold text-white mb-2">Sessions</h1>
                         <p className="text-gray-400">View and manage all simulation sessions</p>
                     </div>
-                    <Button
+                    <button
                         onClick={() => setShowRunModal(true)}
-                        className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg flex items-center gap-2"
+                        className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.1)]"
                     >
                         <Play className="w-5 h-5" />
                         Create New Session
-                    </Button>
+                    </button>
                 </div>
 
                 {/* Filters */}
-                <div className="bg-gray-900 rounded-xl p-6 border border-gray-800/50 mb-6">
-                    <div className="flex flex-wrap gap-4">
-                        {/* Search */}
-                        <div className="flex-1 min-w-[300px]">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search by simulation ID or test suite..."
-                                    value={filters.search}
-                                    onChange={handleSearch}
-                                    className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-teal-400"
-                                />
-                            </div>
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <div className="relative flex-1 md:w-64">
+                            <input
+                                type="text"
+                                placeholder="Search sessions..."
+                                value={filters.search}
+                                onChange={handleSearch}
+                                className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 px-5 text-base focus:outline-none focus:border-teal-500 transition-colors text-white placeholder-gray-500"
+                            />
                         </div>
 
-                        {/* Status Filter */}
-                        <div className="flex gap-2">
-                            {['All', 'Running', 'Completed', 'Failed', 'Queued'].map((status) => (
-                                <button
-                                    key={status}
-                                    onClick={() => handleStatusFilter(status === 'All' ? '' : status.toLowerCase())}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${(status === 'All' && !filters.status) || filters.status === status.toLowerCase()
-                                        ? 'bg-teal-500 text-white'
-                                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                                        }`}
-                                >
-                                    {status}
-                                </button>
-                            ))}
+                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-56">
+                            <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Status:</span>
+                            <GenericDropdown
+                                options={[
+                                    { label: "All Statuses", value: "" },
+                                    { label: "Running", value: "running" },
+                                    { label: "Completed", value: "completed" },
+                                    { label: "Failed", value: "failed" },
+                                    { label: "Queued", value: "queued" }
+                                ]}
+                                value={filters.status || ""}
+                                onChange={(val) => handleStatusFilter(val)}
+                                className="flex-1"
+                            />
                         </div>
+
+                        <button className="bg-dark-panel border border-gray-800 text-white px-8 py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition-colors shadow-lg">
+                            Search
+                        </button>
                     </div>
                 </div>
 
-                {/* Table */}
-                <div className="bg-gray-900 rounded-xl border border-gray-800/50 overflow-hidden">
+                {/* Table Container */}
+                <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
                     {isLoading ? (
-                        <div className="p-12 text-center">
-                            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400"></div>
-                            <p className="text-gray-400 mt-4">Loading simulations...</p>
+                        <div className="p-12 text-center text-gray-500">
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
+                                Loading sessions...
+                            </div>
                         </div>
                     ) : !data || data.simulations.length === 0 ? (
                         <div className="p-12 text-center">
-                            <Play className="w-16 h-16 mx-auto text-gray-600 mb-4" />
-                            <h3 className="text-xl font-semibold text-white mb-2">No simulations yet</h3>
-                            <p className="text-gray-400 mb-6">Run your first simulation to see results here</p>
-                            <Button onClick={() => setShowRunModal(true)}>
-                                Create New Session
-                            </Button>
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="p-4 bg-gray-800/30 rounded-full border border-gray-700/50">
+                                    <Play className="w-8 h-8 text-gray-500" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <p className="text-gray-400 text-lg font-medium">No sessions found</p>
+                                    <p className="text-gray-500 text-sm">Run your first simulation to see results here</p>
+                                </div>
+                                <button
+                                    onClick={() => setShowRunModal(true)}
+                                    className="mt-2 flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors"
+                                >
+                                    <Play className="w-5 h-5" />
+                                    Create Your First Session
+                                </button>
+                            </div>
                         </div>
                     ) : (
                         <>
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead className="bg-gray-800/50 border-b border-gray-800">
-                                        <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                Simulation ID
-                                            </th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                Test Suite
-                                            </th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                Started
-                                            </th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                Duration
-                                            </th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                Status
-                                            </th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                Progress
-                                            </th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                Score
-                                            </th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                                                Actions
-                                            </th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-800">
-                                        {data.simulations.map((sim) => (
-                                            <tr
-                                                key={sim.simulation_id}
-                                                onClick={() => handleRowClick(sim.simulation_id)}
-                                                className="hover:bg-gray-800/50 cursor-pointer transition-colors"
-                                            >
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <code className="text-sm text-teal-400 bg-gray-800 px-2 py-1 rounded">
-                                                        {truncateId(sim.simulation_id)}
-                                                    </code>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="text-sm text-white">
+                            <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
+                                        <th className="px-4 py-3">Simulation ID</th>
+                                        <th className="px-4 py-3">Test Suite</th>
+                                        <th className="px-4 py-3">Started</th>
+                                        <th className="px-4 py-3">Duration</th>
+                                        <th className="px-4 py-3">Status</th>
+                                        <th className="px-4 py-3">Progress</th>
+                                        <th className="px-4 py-3 text-center">Success Rate</th>
+                                        <th className="px-4 py-3 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-sm text-gray-300">
+                                    {data.simulations.map((sim) => (
+                                        <tr
+                                            key={sim.simulation_id}
+                                            onClick={() => handleRowClick(sim.simulation_id)}
+                                            className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors cursor-pointer group"
+                                        >
+                                            <td className="px-4 py-3">
+                                                <code className="text-xs text-teal-400 bg-teal-500/5 px-2 py-1 rounded border border-teal-500/10 group-hover:border-teal-500/30 transition-colors">
+                                                    {truncateId(sim.simulation_id)}
+                                                </code>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex flex-col">
+                                                    <span className="text-white font-semibold text-sm">
                                                         {sim.metadata?.test_suite_name || sim.metadata?.flow_tree_name || sim.test_suite_id}
-                                                    </div>
+                                                    </span>
                                                     {sim.metadata?.agent_name && (
-                                                        <div className="text-xs text-gray-400 mt-1">
+                                                        <span className="text-gray-500 text-xs mt-0.5">
                                                             Agent: {sim.metadata.agent_name}
-                                                        </div>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {formatDateTime(sim.timestamps?.started_at || sim.timestamps?.created_at)}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                                                    {formatDuration(sim.metrics?.total_duration_ms)}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <Badge variant={getStatusBadgeVariant(sim.status)}>
-                                                        {sim.status}
-                                                        {sim.status === 'running' && (
-                                                            <span className="ml-2 inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-                                                        )}
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    {sim.status === 'running' ? (
-                                                        <div className="w-full">
-                                                            <div className="flex items-center gap-2 mb-1">
-                                                                <div className="flex-1 bg-gray-800 rounded-full h-2">
-                                                                    <div
-                                                                        className="bg-teal-500 h-2 rounded-full transition-all duration-300"
-                                                                        style={{ width: `${sim.progress?.percentage || 0}%` }}
-                                                                    ></div>
-                                                                </div>
-                                                                <span className="text-xs text-gray-400">
-                                                                    {Math.round(sim.progress?.percentage || 0)}%
-                                                                </span>
-                                                            </div>
-                                                            <div className="text-xs text-gray-400">
-                                                                {sim.progress?.completed || 0}/{sim.progress?.total_sessions || 0} sessions
-                                                            </div>
-                                                        </div>
-                                                    ) : (
-                                                        <span className="text-sm text-gray-300">
-                                                            {sim.progress?.completed || 0}/{sim.progress?.total_sessions || 0}
                                                         </span>
                                                     )}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    {sim.progress?.total_sessions > 0 ? (
-                                                        (() => {
-                                                            const percentage = (sim.progress.completed / sim.progress.total_sessions);
-                                                            return (
-                                                                <div className={`text-sm font-semibold ${percentage >= 0.9 ? 'text-green-400' :
-                                                                    percentage >= 0.7 ? 'text-yellow-400' :
-                                                                        'text-red-400'
-                                                                    }`}>
-                                                                    {Math.round(percentage * 100)}%
-                                                                </div>
-                                                            );
-                                                        })()
-                                                    ) : (
-                                                        <span className="text-sm text-gray-500">-</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleRowClick(sim.simulation_id);
-                                                            }}
-                                                            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                                                            title="View Details"
-                                                        >
-                                                            <Eye className="w-4 h-4 text-gray-400" />
-                                                        </button>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-400">
+                                                {formatDateTime(sim.timestamps?.started_at || sim.timestamps?.created_at)}
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-400">
+                                                {formatDuration(sim.metrics?.total_duration_ms)}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <Badge variant={getStatusBadgeVariant(sim.status)}>
+                                                    <span className="flex items-center gap-1.5">
                                                         {sim.status === 'running' && (
-                                                            <button
-                                                                onClick={(e) => handleCancel(e, sim.simulation_id)}
-                                                                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                                                                title="Cancel"
-                                                            >
-                                                                <StopCircle className="w-4 h-4 text-red-400" />
-                                                            </button>
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
                                                         )}
-                                                        {sim.status === 'completed' && (
+                                                        {sim.status}
+                                                    </span>
+                                                </Badge>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex flex-col gap-1.5 min-w-[120px]">
+                                                    <div className="flex items-center justify-between text-[10px] text-gray-500">
+                                                        <span>{Math.round(sim.progress?.percentage || 0)}%</span>
+                                                        <span>{sim.progress?.completed || 0}/{sim.progress?.total_sessions || 0}</span>
+                                                    </div>
+                                                    <div className="w-full bg-gray-800/50 rounded-full h-1.5 overflow-hidden border border-gray-700/30">
+                                                        <div
+                                                            className="bg-teal-500 h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(20,184,166,0.4)]"
+                                                            style={{ width: `${sim.progress?.percentage || 0}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-4 py-3 text-center">
+                                                {sim.progress?.total_sessions > 0 ? (
+                                                    (() => {
+                                                        const percentage = (sim.progress.completed / sim.progress.total_sessions);
+                                                        return (
+                                                            <span className={`font-bold ${percentage >= 0.9 ? 'text-green-400' :
+                                                                percentage >= 0.7 ? 'text-yellow-400' :
+                                                                    'text-red-400'
+                                                                }`}>
+                                                                {Math.round(percentage * 100)}%
+                                                            </span>
+                                                        );
+                                                    })()
+                                                ) : (
+                                                    <span className="text-gray-600">-</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleRowClick(sim.simulation_id);
+                                                        }}
+                                                        className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-teal-400 transition-colors"
+                                                        title="View Details"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    {sim.status === 'running' ? (
+                                                        <button
+                                                            onClick={(e) => handleCancel(e, sim.simulation_id)}
+                                                            className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-red-400 transition-colors"
+                                                            title="Cancel Simulation"
+                                                        >
+                                                            <StopCircle className="w-4 h-4" />
+                                                        </button>
+                                                    ) : (
+                                                        <>
                                                             <button
                                                                 onClick={(e) => handleRerun(e, sim.simulation_id)}
-                                                                className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                                                                title="Rerun"
+                                                                className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-purple-400 transition-colors"
+                                                                title="Rerun Simulation"
                                                             >
-                                                                <RefreshCw className="w-4 h-4 text-teal-400" />
+                                                                <RefreshCw className="w-4 h-4" />
                                                             </button>
-                                                        )}
-                                                        <button
-                                                            onClick={(e) => handleDelete(e, sim.simulation_id)}
-                                                            className="p-2 hover:bg-gray-700 rounded-lg transition-colors"
-                                                            title="Delete"
-                                                        >
-                                                            <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-400" />
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                            <button
+                                                                onClick={(e) => handleDelete(e, sim.simulation_id)}
+                                                                className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-red-400 transition-colors"
+                                                                title="Delete Simulation"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
 
                             {/* Pagination */}
                             {data.total > filters.limit && (

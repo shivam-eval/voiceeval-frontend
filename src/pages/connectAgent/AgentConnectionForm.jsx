@@ -8,7 +8,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
   const [name, setName] = useState("")
   const [customPrompt, setCustomPrompt] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [direction, setDirection] = useState("both")
+  const [direction, setDirection] = useState("inbound")
   const [focusedField, setFocusedField] = useState(null)
 
   const handleSubmit = (e) => {
@@ -20,7 +20,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
       name,
       customPrompt: platform === 'custom' ? customPrompt : "",
       direction,
-      phoneNumber: (direction === "inbound" || direction === "both") ? phoneNumber : "",
+      phoneNumber: direction === "inbound" ? phoneNumber : "",
     })
   }
 
@@ -29,7 +29,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
     (platform === 'custom'
       ? customPrompt.trim()
       : (apiKey.trim() && agentId.trim())) &&
-    ((direction === "inbound" || direction === "both") ? phoneNumber.trim() : true)
+    (direction === "inbound" ? phoneNumber.trim() : true)
 
   // Get platform-specific labels
   const getPlatformLabels = () => {
@@ -167,7 +167,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
             </select>
           </div>
 
-          {(direction === "inbound" || direction === "both") && (
+          {direction === "inbound" && (
             <FormInput
               label="Agent Phone Number *"
               value={phoneNumber}

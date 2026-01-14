@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Search, Plus, Trash2 } from "lucide-react";
 import { useAgents, useDeleteAgent, useTestAgent, useCloneAgent, useCreateAgent } from "../../hooks/useAgents";
 import Table from "../../components/Table";
 import Badge from "../../components/Badge";
 import Button from "../../components/Button";
+import GenericDropdown from "../../components/DropDown";
 import PlatformSelection from "../platformSelection/PlatformSelection";
 import ConnectionForm from "../connectAgent";
 import { useWorkflow } from "../../context/WorkFlowContext";
@@ -22,6 +24,21 @@ const AgentsPage = () => {
     const [directionFilter, setDirectionFilter] = useState(null);
     const [statusFilter, setStatusFilter] = useState(null);
     const [selectedRows, setSelectedRows] = useState([]);
+
+    // Options for dropdowns
+    const directionOptions = useMemo(() => [
+        { label: "All Directions", value: "" },
+        { label: "Inbound", value: "inbound" },
+        { label: "Outbound", value: "outbound" },
+        { label: "Both", value: "both" },
+    ], []);
+
+    const statusOptions = useMemo(() => [
+        { label: "All Status", value: "" },
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+        { label: "Error", value: "error" },
+    ], []);
 
     // Modal state
     const [showConnectModal, setShowConnectModal] = useState(false);
@@ -228,75 +245,75 @@ const AgentsPage = () => {
     ];
 
     return (
-        <div className="p-8">
+        <div className="p-8 bg-dark-bg min-h-screen text-white">
             <div className="w-full max-w-screen-2xl mx-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-4xl font-bold text-white mb-2">Agents</h1>
-                        <p className="text-gray-400">Manage your connected voice agents</p>
-                    </div>
-                    <Button
-                        onClick={() => setShowConnectModal(true)}
-                        icon={
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                        }
-                    >
-                        Connect New Agent
-                    </Button>
+                <div className="mb-8">
+                    <h1 className="text-4xl font-bold text-white mb-2">Agents</h1>
+                    <p className="text-gray-400">Manage your connected voice agents</p>
                 </div>
 
-                {/* Filters Bar */}
-                <div className="bg-gray-900 rounded-2xl p-6 border border-gray-800/50 mb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="flex-1 relative">
-                            <svg className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                {/* Header Controls */}
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div className="flex items-center gap-3 w-full md:w-auto">
+                        <div className="relative flex-1 md:w-80">
+                            <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                             <input
                                 type="text"
-                                placeholder="Search by agent name, ID, or phone number..."
+                                placeholder="Search by name, ID, or phone..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
+                                className="w-full pl-10 pr-4 py-3 bg-dark-panel border border-gray-800 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-teal-500 transition-colors"
                             />
                         </div>
 
-                        <select
-                            value={directionFilter || ""}
-                            onChange={(e) => setDirectionFilter(e.target.value || null)}
-                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400"
-                        >
-                            <option value="">All Directions</option>
-                            <option value="inbound">Inbound</option>
-                            <option value="outbound">Outbound</option>
-                            <option value="both">Both</option>
-                        </select>
+                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-56">
+                            <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Direction:</span>
+                            <GenericDropdown
+                                options={directionOptions}
+                                value={directionFilter || ""}
+                                onChange={(val) => setDirectionFilter(val || null)}
+                                className="flex-1"
+                            />
+                        </div>
 
-                        <select
-                            value={statusFilter || ""}
-                            onChange={(e) => setStatusFilter(e.target.value || null)}
-                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400"
+                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-48">
+                            <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Status:</span>
+                            <GenericDropdown
+                                options={statusOptions}
+                                value={statusFilter || ""}
+                                onChange={(val) => setStatusFilter(val || null)}
+                                className="flex-1"
+                            />
+                        </div>
+
+                        <button className="bg-dark-panel border border-gray-800 text-white px-8 py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition-colors shadow-lg">
+                            Search
+                        </button>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        {selectedRows.length > 0 && (
+                            <button
+                                onClick={handleBulkDelete}
+                                className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-red-500/20 transition-colors shadow-[0_0_15px_rgba(239,68,68,0.1)]"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                                Delete Selected ({selectedRows.length})
+                            </button>
+                        )}
+                        <button
+                            onClick={() => setShowConnectModal(true)}
+                            className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.1)]"
                         >
-                            <option value="">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="error">Error</option>
-                        </select>
+                            <Plus className="w-5 h-5" />
+                            Connect New Agent
+                        </button>
                     </div>
                 </div>
 
-                {/* Bulk Actions */}
-                {selectedRows.length > 0 && (
-                    <div className="mb-4 flex items-center gap-4">
-                        <span className="text-gray-400">{selectedRows.length} selected</span>
-                        <Button variant="danger" size="sm" onClick={handleBulkDelete}>
-                            Delete Selected
-                        </Button>
-                    </div>
-                )}
+                {/* Bulk Actions (Old) - Removed as it's now in Header Controls */}
+                
 
                 {/* Error State */}
                 {error && (

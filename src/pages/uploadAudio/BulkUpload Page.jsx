@@ -2,6 +2,8 @@ import React, { useState, useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { Upload, X, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
+import { API_BASE_URL } from '../../config/constants';
+
 /**
  * Bulk Audio Upload Page - Production Grade Component
  * 
@@ -80,8 +82,16 @@ const BulkUploadPage = () => {
                 formData.append('files', file);
             });
 
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/audio/bulk-upload?category=${category}`, {
+            const token = localStorage.getItem("authToken");
+            const rawTenantId = localStorage.getItem("tenantId");
+            const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
+            const headers = {};
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+            if (tenantId) headers["X-Tenant-ID"] = tenantId;
+
+            const response = await fetch(`${API_BASE_URL}/audio/bulk-upload?category=${category}`, {
                 method: 'POST',
+                headers,
                 body: formData,
             });
 

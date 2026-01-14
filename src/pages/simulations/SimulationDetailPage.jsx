@@ -632,15 +632,20 @@ const SimulationDetailPage = () => {
                         icon={Star}
                         iconColor="text-yellow-400"
                         iconBgColor="bg-yellow-400/20"
-                        label="Overall Score"
+                        label="Success Rate"
                     >
-                        {simulation.metrics?.overall_score !== null && simulation.metrics?.overall_score !== undefined ? (
-                            <div className={`text-3xl font-bold mt-2 ${simulation.metrics.overall_score >= 0.9 ? 'text-green-400' :
-                                simulation.metrics.overall_score >= 0.7 ? 'text-yellow-400' :
-                                    'text-red-400'
-                                }`}>
-                                {(simulation.metrics.overall_score * 100).toFixed(1)}%
-                            </div>
+                        {simulation.progress?.total_sessions > 0 ? (
+                            (() => {
+                                const percentage = (simulation.progress.completed / simulation.progress.total_sessions);
+                                return (
+                                    <div className={`text-3xl font-bold mt-2 ${percentage >= 0.9 ? 'text-green-400' :
+                                        percentage >= 0.7 ? 'text-yellow-400' :
+                                            'text-red-400'
+                                        }`}>
+                                        {Math.round(percentage * 100)}%
+                                    </div>
+                                );
+                            })()
                         ) : (
                             <div className="text-2xl text-gray-500 mt-2">-</div>
                         )}

@@ -145,9 +145,10 @@ const TestCasesPage = () => {
                     const passed = value.completed || 0;
                     const total = value.total_sessions || 0;
                     const allPassed = value.failed === 0;
+                    const percentage = total > 0 ? Math.round((passed / total) * 100) : 0;
                     return (
                         <Badge variant={allPassed ? "success" : "warning"} size="sm">
-                            {passed}/{total} Passed
+                            {passed}/{total} Passed ({percentage}%)
                         </Badge>
                     );
                 }

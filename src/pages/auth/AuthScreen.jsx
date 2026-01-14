@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { loginUser, signupUser } from "../../api";
+import { loginUser, signupUser } from "../../api";
 
 const AuthScreen = ({ onAuthSuccess }) => {
+  const [isSignup, setIsSignup] = useState(false);
+  const [name, setName] = useState("");
   const [isSignup, setIsSignup] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -25,6 +28,11 @@ const AuthScreen = ({ onAuthSuccess }) => {
         // Login flow
         const res = await loginUser({ email, password });
         localStorage.setItem("authToken", res.data.access_token);
+        if (res.data.tenant_id) {
+          localStorage.setItem("tenantId", res.data.tenant_id);
+        } else {
+          localStorage.removeItem("tenantId");
+        }
         localStorage.setItem("userEmail", email);
         if (res.data.user_name) {
           localStorage.setItem("userName", res.data.user_name);
@@ -44,7 +52,10 @@ const AuthScreen = ({ onAuthSuccess }) => {
         toast.error("Account not found. Please check your email.");
       } else if (err.response?.status === 400) {
         toast.error(errorMessage || "Bad request. Please check your input.");
+      } else if (err.response?.status === 400) {
+        toast.error(errorMessage || "Bad request. Please check your input.");
       } else {
+        toast.error(errorMessage || `${isSignup ? "Signup" : "Login"} failed. Please try again.`);
         toast.error(errorMessage || `${isSignup ? "Signup" : "Login"} failed. Please try again.`);
       }
     } finally {
@@ -57,8 +68,19 @@ const AuthScreen = ({ onAuthSuccess }) => {
       <div className="w-full max-w-md bg-gray-900 border border-gray-800 rounded-2xl p-8 shadow-2xl">
         <h2 className="text-3xl font-bold text-white mb-6 text-center">
           {isSignup ? "Create Account" : "Welcome Back"}
+          {isSignup ? "Create Account" : "Welcome Back"}
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {isSignup && (
+            <input
+              type="text"
+              placeholder="Full Name"
+              required
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-teal-500 outline-none"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          )}
           {isSignup && (
             <input
               type="text"
@@ -90,8 +112,26 @@ const AuthScreen = ({ onAuthSuccess }) => {
             className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors"
           >
             {loading ? (isSignup ? "Creating Account..." : "Logging in...") : (isSignup ? "Sign Up" : "Login")}
+            {loading ? (isSignup ? "Creating Account..." : "Logging in...") : (isSignup ? "Sign Up" : "Login")}
           </button>
         </form>
+
+        {/* Toggle between login and signup */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-400 text-sm">
+            {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
+            <button
+              onClick={() => {
+                setIsSignup(!isSignup);
+                setName("");
+                setPassword("");
+              }}
+              className="text-teal-400 hover:text-teal-300 font-medium"
+            >
+              {isSignup ? "Login" : "Sign Up"}
+            </button>
+          </p>
+        </div>
 
         {/* Toggle between login and signup */}
         <div className="mt-6 text-center">
@@ -115,4 +155,5 @@ const AuthScreen = ({ onAuthSuccess }) => {
 };
 
 export default AuthScreen;
+
 

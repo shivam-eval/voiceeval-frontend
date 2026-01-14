@@ -329,13 +329,18 @@ const SimulationsListPage = () => {
                                                     )}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
-                                                    {sim.metrics?.overall_score !== null && sim.metrics?.overall_score !== undefined ? (
-                                                        <div className={`text-sm font-semibold ${sim.metrics.overall_score >= 0.9 ? 'text-green-400' :
-                                                            sim.metrics.overall_score >= 0.7 ? 'text-yellow-400' :
-                                                                'text-red-400'
-                                                            }`}>
-                                                            {(sim.metrics.overall_score * 100).toFixed(1)}%
-                                                        </div>
+                                                    {sim.progress?.total_sessions > 0 ? (
+                                                        (() => {
+                                                            const percentage = (sim.progress.completed / sim.progress.total_sessions);
+                                                            return (
+                                                                <div className={`text-sm font-semibold ${percentage >= 0.9 ? 'text-green-400' :
+                                                                    percentage >= 0.7 ? 'text-yellow-400' :
+                                                                        'text-red-400'
+                                                                    }`}>
+                                                                    {Math.round(percentage * 100)}%
+                                                                </div>
+                                                            );
+                                                        })()
                                                     ) : (
                                                         <span className="text-sm text-gray-500">-</span>
                                                     )}

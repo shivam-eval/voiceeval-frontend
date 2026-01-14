@@ -17,7 +17,11 @@ const SimulationOverview = ({ simulationData }) => {
   } = simulationData || {};
 
   const successRate = execution_summary 
-    ? ((execution_summary.completed_test_cases / execution_summary.total_test_cases) * 100).toFixed(1)
+    ? Math.round((execution_summary.completed_test_cases / execution_summary.total_test_cases) * 100)
+    : 0;
+
+  const failRate = execution_summary 
+    ? Math.round((execution_summary.failed_test_cases / execution_summary.total_test_cases) * 100)
     : 0;
 
   const avgDuration = timing 
@@ -89,9 +93,11 @@ const SimulationOverview = ({ simulationData }) => {
             <span className="text-xs text-gray-500 font-medium">FAILED</span>
           </div>
           <p className="text-3xl font-bold text-red-400 mb-1">
-            {execution_summary?.failed_test_cases || 0}
+            {failRate}%
           </p>
-          <p className="text-xs text-gray-400">Test Cases</p>
+          <p className="text-xs text-gray-400">
+            {execution_summary?.failed_test_cases || 0} Failed
+          </p>
         </div>
 
         {/* Avg Duration */}

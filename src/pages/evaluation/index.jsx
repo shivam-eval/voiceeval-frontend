@@ -23,6 +23,8 @@ import { getSessionTranscript } from "../../api/services/simulation.service";
 import { useSimulationReport } from "../../hooks/useEvaluations";
 import { useSimulation } from "../../hooks/useSimulations";
 
+import { API_BASE_URL, GCP_STORAGE_BASE_URL } from "../../config/constants";
+
 const CATEGORY = {
   OVERVIEW: "",
   ACCURACY: "accuracy",

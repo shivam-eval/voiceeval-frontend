@@ -5,6 +5,7 @@ import { Upload, X, CheckCircle, AlertCircle } from "lucide-react";
 import { usePersonas } from "../hooks/usePersonas";
 import { useTestProfiles } from "../hooks/useTestProfiles";
 import { useAgentFlows } from "../hooks/useFlows";
+import { API_BASE_URL } from "../config/constants";
 
 const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, defaultAgentId }) => {
     const [currentStep, setCurrentStep] = useState(1);
@@ -116,10 +117,18 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                 uploadFormData.append('files', file);
             });
 
+            const token = localStorage.getItem("authToken");
+            const rawTenantId = localStorage.getItem("tenantId");
+            const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
+            const headers = {};
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+            if (tenantId) headers["X-Tenant-ID"] = tenantId;
+
             const response = await fetch(
-                `${import.meta.env.VITE_API_BASE_URL}/audio/bulk-upload?category=test_suites`,
+                `${API_BASE_URL}/audio/bulk-upload?category=test_suites`,
                 {
                     method: 'POST',
+                    headers,
                     body: uploadFormData,
                 }
             );

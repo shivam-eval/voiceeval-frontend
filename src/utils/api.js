@@ -1,10 +1,5 @@
 import { toast } from "react-toastify";
-
-/**
- * API client for making HTTP requests to the backend.
- */
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+import { API_BASE_URL } from "../config/constants";
 
 class ApiClient {
     constructor(baseURL = API_BASE_URL) {
@@ -18,6 +13,18 @@ class ApiClient {
         const headers = { ...options.headers };
         if (!(options.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
+        }
+
+        // Add auth token and tenant ID
+        const token = localStorage.getItem("authToken");
+        const rawTenantId = localStorage.getItem("tenantId");
+        const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
+
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        if (tenantId) {
+            headers['X-Tenant-ID'] = tenantId;
         }
 
         const config = {

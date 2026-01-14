@@ -418,6 +418,8 @@ const TestCaseExpandedDetails = ({ testCase }) => {
 
 // ============ Main Component ============
 
+import { API_BASE_URL } from "../../config/constants";
+
 const TestSuiteDetailView = () => {
     const { suiteId } = useParams();
     const navigate = useNavigate();
@@ -623,7 +625,7 @@ const TestSuiteDetailView = () => {
                                         size="md"
                                     >
                                         {simulationSummary.last_run.completed}/{simulationSummary.last_run.total_sessions} Passed
-                                        {simulationSummary.last_run.overall_score && ` (${Math.round(simulationSummary.last_run.overall_score)}%)`}
+                                        {simulationSummary.last_run.total_sessions > 0 && ` (${Math.round((simulationSummary.last_run.completed / simulationSummary.last_run.total_sessions) * 100)}%)`}
                                     </Badge>
                                 ) : simulationSummary.last_run?.status === 'failed' ? (
                                     <Badge variant="danger" size="md">Last Run Failed</Badge>
@@ -668,7 +670,7 @@ const TestSuiteDetailView = () => {
                         <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => window.open(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}/test-suites/${suiteId}/export?format=json`, '_blank')}
+                            onClick={() => window.open(`${API_BASE_URL}/test-suites/${suiteId}/export?format=json`, '_blank')}
                         >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { loginUser, signupUser } from "../../api";
-import { loginUser, signupUser } from "../../api";
+
 
 const AuthScreen = ({ onAuthSuccess }) => {
-  const [isSignup, setIsSignup] = useState(false);
-  const [name, setName] = useState("");
   const [isSignup, setIsSignup] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

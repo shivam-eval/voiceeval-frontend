@@ -14,7 +14,6 @@ const PersonasPage = () => {
     const [ageGroupFilter, setAgeGroupFilter] = useState(null);
     const [genderFilter, setGenderFilter] = useState(null);
     const [hasNoiseFilter, setHasNoiseFilter] = useState(null);
-    const [hasNoiseFilter, setHasNoiseFilter] = useState(null);
 
     // Modal state
     const [selectedPersona, setSelectedPersona] = useState(null);
@@ -27,7 +26,6 @@ const PersonasPage = () => {
         language: languageFilter,
         age_group: ageGroupFilter,
         gender: genderFilter,
-        has_noise: hasNoiseFilter,
         has_noise: hasNoiseFilter,
     });
 
@@ -81,90 +79,6 @@ const PersonasPage = () => {
 
                 {/* Header Controls */}
                 <div className="flex flex-col gap-6 mb-8">
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        <div className="flex items-center gap-3 w-full md:w-auto">
-                            <div className="relative flex-1 md:w-64">
-                                <input
-                                    type="text"
-                                    placeholder="Search personas..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 px-5 text-base focus:outline-none focus:border-teal-500 transition-colors text-white placeholder-gray-500"
-                                />
-                            </div>
-                            <button className="bg-dark-panel border border-gray-800 text-white px-8 py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition-colors shadow-lg">
-                                Search
-                            </button>
-                        </div>
-
-                        {/* Region Filter */}
-                        <select
-                            value={regionFilter || ""}
-                            onChange={(e) => setRegionFilter(e.target.value || null)}
-                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400"
-                        >
-                            <option value="">All Regions</option>
-                            {regions.map((region) => (
-                                <option key={region} value={region}>
-                                    {region.replace('_', ' ').toUpperCase()}
-                                </option>
-                            ))}
-                        </select>
-
-                        {/* Language Filter */}
-                        <select
-                            value={languageFilter || ""}
-                            onChange={(e) => setLanguageFilter(e.target.value || null)}
-                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400"
-                        >
-                            <option value="">All Languages</option>
-                            {languages.map((lang) => (
-                                <option key={lang} value={lang}>
-                                    {lang.charAt(0).toUpperCase() + lang.slice(1)}
-                                </option>
-                            ))}
-                        </select>
-
-                        {/* Age Group Filter */}
-                        <select
-                            value={ageGroupFilter || ""}
-                            onChange={(e) => setAgeGroupFilter(e.target.value || null)}
-                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400"
-                        >
-                            <option value="">All Age Groups</option>
-                            <option value="young_adult">Young Adult</option>
-                            <option value="middle_aged">Middle Aged</option>
-                            <option value="senior">Senior</option>
-                        </select>
-
-                        {/* Gender Filter */}
-                        <select
-                            value={genderFilter || ""}
-                            onChange={(e) => setGenderFilter(e.target.value || null)}
-                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400"
-                        >
-                            <option value="">All Genders</option>
-                            <option value="male">Male</option>
-                            <option value="female">Female</option>
-                        </select>
-                    </div>
-
-                    {/* Second Row: Noise Filter */}
-                    <div className="mt-4">
-                        <select
-                            value={hasNoiseFilter === null ? "" : hasNoiseFilter}
-                            onChange={(e) => {
-                                const value = e.target.value;
-                                setHasNoiseFilter(value === "" ? null : value === "true");
-                            }}
-                            className="px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-gray-300 focus:outline-none focus:border-teal-400 w-full md:w-auto"
-                        >
-                            <option value="">All (Noise Config)</option>
-                            <option value="true">With Noise Profiles</option>
-                            <option value="false">Without Noise</option>
-                        </select>
-                    </div>
-
                     {/* Active Filters Summary */}
                     {(searchQuery || regionFilter || languageFilter || ageGroupFilter || genderFilter || hasNoiseFilter !== null) && (
                         <div className="mt-4 flex items-center gap-2 flex-wrap">
@@ -207,15 +121,14 @@ const PersonasPage = () => {
                                     setAgeGroupFilter(null);
                                     setGenderFilter(null);
                                     setHasNoiseFilter(null);
-                                    setHasNoiseFilter(null);
                                 }}
                                 className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm font-medium"
                             >
                                 <X className="w-4 h-4" />
                                 Clear All Filters
                             </button>
-                        )}
-                    </div>
+                        </div>
+                    )}
 
                     <div className="flex flex-wrap gap-3">
                         {/* Region Filter */}

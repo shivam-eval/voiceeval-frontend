@@ -1,4 +1,4 @@
-import { X, User, Tag, Gauge, Music } from "lucide-react";
+import { X, User, UserCircle2, Sparkles, Tag, Gauge, Music } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 import NoiseProfilesSection from "../../components/NoiseProfilesSection";
@@ -7,12 +7,48 @@ import { useNoiseProfiles } from "../../hooks/useNoiseProfiles";
 const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
     // Fetch noise profiles metadata for audio URLs (must be called before any early returns)
     const { data: noiseProfilesData } = useNoiseProfiles();
-    
+
     // Convert array to map for easy lookup
     const noiseProfilesMap = noiseProfilesData?.profiles?.reduce((acc, profile) => {
         acc[profile.profile_id] = profile;
         return acc;
     }, {}) || null;
+
+    // Gender icon helper
+    const getGenderIcon = (gender) => {
+        const iconClass = "w-8 h-8 transition-transform duration-300";
+
+        if (gender === 'male') {
+            return (
+                <div className="relative">
+                    <div className="absolute inset-0 bg-blue-500/20 rounded-xl blur-md"></div>
+                    <div className="relative bg-gray-800 border border-gray-700 p-4 rounded-xl border-blue-500/50">
+                        <User className={`${iconClass} text-blue-400`} strokeWidth={2} />
+                    </div>
+                </div>
+            );
+        }
+
+        if (gender === 'female') {
+            return (
+                <div className="relative">
+                    <div className="absolute inset-0 bg-pink-500/20 rounded-xl blur-md"></div>
+                    <div className="relative bg-gray-800 border border-gray-700 p-4 rounded-xl border-pink-500/50">
+                        <UserCircle2 className={`${iconClass} text-pink-400`} strokeWidth={2} />
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div className="relative">
+                <div className="absolute inset-0 bg-purple-500/20 rounded-xl blur-md"></div>
+                <div className="relative bg-gray-800 border border-gray-700 p-4 rounded-xl border-purple-500/50">
+                    <Sparkles className={`${iconClass} text-purple-400`} strokeWidth={2} />
+                </div>
+            </div>
+        );
+    };
 
     if (!isOpen || !persona) return null;
 
@@ -23,8 +59,8 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
                 <div className="p-6 border-b border-gray-800">
                     <div className="flex items-start justify-between">
                         <div className="flex items-center gap-4">
-                            <div className="text-5xl">
-                                {persona.gender === 'male' ? '👨' : persona.gender === 'female' ? '👩' : '👤'}
+                            <div>
+                                {getGenderIcon(persona.gender)}
                             </div>
                             <div>
                                 <h2 className="text-2xl font-bold text-white mb-1">{persona.name}</h2>
@@ -168,8 +204,8 @@ const PersonaDetailModal = ({ persona, isOpen, onClose, onSelect }) => {
 
                         {/* Background Noise Profiles */}
                         {persona.background_noises && persona.background_noises.length > 0 && (
-                            <NoiseProfilesSection 
-                                noises={persona.background_noises} 
+                            <NoiseProfilesSection
+                                noises={persona.background_noises}
                                 noiseProfiles={noiseProfilesMap}
                             />
                         )}

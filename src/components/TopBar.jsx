@@ -6,7 +6,7 @@ const TopBar = () => {
     const isMutating = useIsMutating();
 
     return (
-        <div className="fixed top-4 right-10 z-[5] flex items-center gap-4">
+        <div className="absolute top-4 right-10 z-[5] flex items-center gap-4">
             {isMutating > 0 && (
                 <div className="flex items-center gap-2 px-4 py-2 bg-teal-500/10 border border-teal-500/30 rounded-lg text-teal-400 shadow-lg animate-pulse">
                     <Loader2 className="w-4 h-4 animate-spin" />

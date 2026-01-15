@@ -45,11 +45,12 @@ const CallsPage = () => {
   const [callsPage, setCallsPage] = useState(1);
   const callsPerPage = 10;
 
-  const directoryParam = searchParams.get('directory');
-  const directory = directoryParam !== null ? directoryParam : (sessionStorage.getItem('last_directory') || 'shoplabs');
-  const viewMode = searchParams.get('view') || (directory ? 'calls' : 'directories');
 
-  // Sync session storage with current directory
+  const directoryParam = searchParams.get('directory');
+  const directory = directoryParam; // Only use URL param, no session storage fallback
+  const viewMode = searchParams.get('view') || 'directories'; // Default to agents list view
+
+  // Sync session storage with current directory (for back button functionality)
   useEffect(() => {
     if (directory) {
       sessionStorage.setItem('last_directory', directory);
@@ -67,15 +68,25 @@ const CallsPage = () => {
     }, { replace });
   }, [setSearchParams]);
 
-  // Fetch unique categories (directories) dynamically
-  const { data: categoriesData, isLoading: isCategoriesLoading } = useCallCategories();
+  // Fetch agents for the directories list
+  const { data: agentsData } = useAgents();
 
-  // Use all categories from backend
+  // Fetch unique categories (directories) dynamically - DEPRECATED, using agents instead
+  const { data: categoriesData, isLoading: isCategoriesLoading, refetch: refetchCategories } = useCallCategories();
+
+  // Use agents from /agents endpoint as the source of truth for directories
   const filteredCategories = useMemo(() => {
     let categories = [];
 
-    if (categoriesData) {
-      // Handle various response formats: [ ], { categories: [] }, { data: [] }, { items: [] }
+    // Primary source: Use agents from /agents endpoint
+    if (agentsData?.agents && Array.isArray(agentsData.agents)) {
+      categories = agentsData.agents
+        .map(agent => agent.provider_agent_id || agent.agent_id)
+        .filter(id => !!id && typeof id === 'string');
+    }
+
+    // Fallback: Use categories from /calls/categories if no agents found
+    if (categories.length === 0 && categoriesData) {
       let raw = [];
       if (Array.isArray(categoriesData)) {
         raw = categoriesData;
@@ -87,7 +98,6 @@ const CallsPage = () => {
         raw = categoriesData.items;
       }
 
-      // Normalize to strings
       categories = raw.map(cat => {
         if (typeof cat === 'string') return cat;
         if (typeof cat === 'object' && cat !== null) {
@@ -97,29 +107,20 @@ const CallsPage = () => {
       }).filter(cat => !!cat && cat !== 'undefined' && cat !== 'null');
     }
 
-    // Ensure 'shoplabs' is always present as a primary directory
-    if (!categories.includes('shoplabs')) {
-      categories.unshift('shoplabs');
+    // IMPORTANT: Ensure currently selected directory is always in the list
+    if (directory && typeof directory === 'string' && !categories.includes(directory)) {
+      console.log(`⚠️ Current directory "${directory}" not in agents list. Adding it manually.`);
+      categories.push(directory);
     }
+
+    console.log('📁 Available agent directories:', categories);
+    console.log('📍 Current directory:', directory);
 
     return categories;
-  }, [categoriesData]);
+  }, [agentsData, categoriesData, directory]);
 
-  // Automatically select the first directory if none is selected
-  // Specifically prioritize 'shoplabs' as requested
-  useEffect(() => {
-    if (!isCategoriesLoading && filteredCategories.length > 0 && !directory && viewMode === 'directories') {
-      const shoplabsDir = filteredCategories.find(cat =>
-        cat.toLowerCase() === 'shoplabs' ||
-        cat.toLowerCase().includes('shoplabs')
-      );
-      const targetDir = shoplabsDir || filteredCategories[0];
-      updateParams({ directory: targetDir, view: 'calls' }, true);
-    }
-  }, [filteredCategories, isCategoriesLoading, directory, viewMode, updateParams]);
 
-  // Fetch agents for the evaluation modal
-  const { data: agentsData } = useAgents();
+  // Generate agent options for the evaluation modal (reusing agentsData from above)
   const agentOptions = useMemo(() => {
     const agents = agentsData?.agents || [];
     const options = [
@@ -195,22 +196,24 @@ const CallsPage = () => {
           autoClose: 4000,
           position: 'bottom-right'
         });
-        console.log(`✅ Call ${call_id} evaluation completed, refetching calls...`);
+        console.log(`✅ Call ${call_id} evaluation completed, refetching calls and categories...`);
         refetch();
+        refetchCategories(); // Refresh agent list to show new agents
       } else if (status === 'failed') {
         toast.error(`❌ Evaluation failed for ${call_id}: ${error || 'Unknown error'}`, {
           autoClose: 5000,
           position: 'bottom-right'
         });
-        console.log(`❌ Call ${call_id} evaluation failed, refetching calls...`);
+        console.log(`❌ Call ${call_id} evaluation failed, refetching calls and categories...`);
         refetch();
+        refetchCategories(); // Refresh agent list even on failure
       }
     });
 
     return () => {
       unsubscribe();
     };
-  }, [subscribe, refetch]);
+  }, [subscribe, refetch, refetchCategories]);
 
   // Reset pagination when view mode or directory changes
   useEffect(() => {
@@ -348,6 +351,7 @@ const CallsPage = () => {
 
       // Force a refetch of calls and categories to ensure the UI updates
       refetch();
+      refetchCategories(); // Refresh agent list to show new agent
 
       // Update state to show the uploaded calls immediately
       updateParams({ directory: agentId, view: 'calls' }, true);
@@ -498,7 +502,7 @@ const CallsPage = () => {
 
   // Generate dynamic options from fetched categories
   const currentOptions = useMemo(() => {
-    // Use filtered categories (frontend only)
+    // Use filtered categories (already includes current directory)
     const backendCategories = filteredCategories;
 
     // Create options from backend categories, ensuring we only process strings
@@ -509,21 +513,13 @@ const CallsPage = () => {
         value: cat
       }));
 
-    // Ensure currently selected directory is in the list even if not in backend categories yet
-    if (directory && typeof directory === 'string' && !backendCategories.includes(directory)) {
-      options.push({
-        label: directory.replace(/[_-]/g, ' '),
-        value: directory
-      });
-    }
-
     // Fallback if no categories exist
     if (options.length === 0) {
       return [{ label: 'All Directories', value: '' }];
     }
 
     return options;
-  }, [filteredCategories, directory]);
+  }, [filteredCategories]);
 
   return (
     <div className="p-8 bg-dark-bg min-h-screen text-white">

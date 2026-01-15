@@ -97,6 +97,7 @@ export const EventsProvider = ({ children }) => {
             };
 
             eventSource.addEventListener('evaluation_update', dispatch('evaluation_update'));
+            eventSource.addEventListener('call_evaluation_update', dispatch('call_evaluation_update'));
             eventSource.addEventListener('simulation_update', dispatch('simulation_update'));
             eventSource.addEventListener('queue_update', dispatch('queue_update'));
 

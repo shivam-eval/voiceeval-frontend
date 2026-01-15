@@ -703,7 +703,7 @@ const CallsPage = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
-                  <th className="px-4 py-3">Call ID</th>
+                  <th className="px-4 py-3">Audio File Name</th>
                   <th className="px-4 py-3 text-center">Actions</th>
                   <th className="px-4 py-3 text-center">Noise</th>
                   <th className="px-4 py-3">Timestamp</th>
@@ -764,11 +764,11 @@ const CallsPage = () => {
                     >
                       <td className="px-4 py-3">
                         <div className="flex flex-col">
-                          <span className="text-white font-semibold font-mono text-xs truncate max-w-[180px]" title={call.call_id}>
-                            {call.call_id || 'N/A'}
-                          </span>
-                          <span className="text-gray-500 text-xs truncate max-w-[180px]">
+                          <span className="text-white font-semibold text-xs truncate max-w-[180px]" title={call.filename || 'manual_upload.mp3'}>
                             {call.filename || 'manual_upload.mp3'}
+                          </span>
+                          <span className="text-gray-500 text-xs font-mono truncate max-w-[180px]" title={call.call_id}>
+                            {call.call_id || 'N/A'}
                           </span>
                         </div>
                       </td>

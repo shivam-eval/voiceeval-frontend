@@ -32,6 +32,7 @@ import DocsPage from "./pages/docs";
 
 import { useWorkflow } from "./context/WorkFlowContext";
 import { EventsProvider } from "./context/EventsContext";
+import { useTokenExpiration } from "./hooks/useTokenExpiration";
 
 function App() {
   const location = useLocation();
@@ -48,10 +49,38 @@ function App() {
   // Check if user is authenticated by looking for auth token in localStorage
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     const token = localStorage.getItem("authToken");
-    return !!token; // Returns true if token exists, false otherwise
-  });
+    const tokenExpiration = localStorage.getItem("tokenExpiration");
+
+    if (!token || !tokenExpiration) {
+      return false;
+    }
+
+    // Check if token has expired
+    const now = Date.now();
+    const expiration = parseInt(tokenExpiration, 10);
+
+    if (now >= expiration) {
+      // Token expired, clear auth data
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("tokenExpiration");
+      localStorage.removeItem("tenantId");
+      localStorage.removeItem("userEmail");
+      localStorage.removeItem("userName");
+      return false;
+    }
+
+    return true;
+  })
   const [selectedPlatform, setSelectedPlatform] = useState(null);
   const [isConnecting, setIsConnecting] = useState(false);
+
+  // Monitor token expiration (only runs when authenticated)
+  // Shows warning 5 minutes before expiration
+  useTokenExpiration({
+    showWarning: true,
+    warningTime: 5 * 60 * 1000, // 5 minutes
+    enabled: isAuthenticated // Only monitor when authenticated
+  });
 
   /* ---------------- Auth ---------------- */
   if (!isAuthenticated) {
@@ -62,6 +91,7 @@ function App() {
   const handleLogout = () => {
     resetWorkflow();
     localStorage.removeItem("authToken");
+    localStorage.removeItem("tokenExpiration");
     localStorage.removeItem("tenantId");
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userName");

@@ -26,6 +26,11 @@ const AuthScreen = ({ onAuthSuccess }) => {
         // Login flow
         const res = await loginUser({ email, password });
         localStorage.setItem("authToken", res.data.access_token);
+
+        // Set token expiration to 72 hours from now
+        const expirationTime = Date.now() + (72 * 60 * 60 * 1000); // 72 hours in milliseconds
+        localStorage.setItem("tokenExpiration", expirationTime.toString());
+
         if (res.data.tenant_id) {
           localStorage.setItem("tenantId", res.data.tenant_id);
         } else {

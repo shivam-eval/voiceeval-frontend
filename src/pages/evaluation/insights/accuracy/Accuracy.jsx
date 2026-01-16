@@ -168,10 +168,25 @@ const AccuracyOverview = ({ response, data, onBack }) => {
               ].includes(key)
           );
 
+          // Extract turn-by-turn data from multiple possible locations
           const turnData =
             metric.details?.step_results ||
             metric.details?.turn_data ||
+            metric.details?.turns ||
+            metric.details?.turn_by_turn_results ||
+            metric.step_results ||
+            metric.turn_data ||
             null;
+
+          // Debug logging to help identify data structure
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[Accuracy] Metric: ${label}`, {
+              hasTurnData: !!turnData,
+              turnDataLength: turnData?.length,
+              metricDetails: metric.details,
+              fullMetric: metric
+            });
+          }
 
           return (
             <div
@@ -220,43 +235,225 @@ const AccuracyOverview = ({ response, data, onBack }) => {
                 </div>
               )}
 
+              {/* Response Consistency Special Display (when no turn data) */}
+              {!turnData && metric.details?.issue_detected !== undefined && (
+                <div className="pt-6 border-t border-gray-800/50">
+                  <div className="bg-white/[0.02] rounded-lg p-6 border border-gray-800/30">
+                    {/* Issue Status */}
+                    <div className="mb-5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
+                          Consistency Check
+                        </div>
+                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md ${metric.details.issue_detected === 'none'
+                          ? 'bg-green-500/5 border border-green-500/20'
+                          : 'bg-red-500/5 border border-red-500/20'
+                          }`}>
+                          <span className={`text-xs font-medium ${metric.details.issue_detected === 'none' ? 'text-green-400' : 'text-red-400'
+                            }`}>
+                            {metric.details.issue_detected === 'none' ? '✓ No Issues Detected' : `✗ ${formatKey(metric.details.issue_detected)}`}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Analysis */}
+                    {metric.details.reasoning && (
+                      <div className="pt-4 border-t border-gray-800/20">
+                        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">
+                          Analysis
+                        </div>
+                        <div className="text-sm text-gray-300 leading-relaxed">
+                          {metric.details.reasoning}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Turn-by-Turn */}
               {Array.isArray(turnData) && turnData.length > 0 && (
-                <div className="pt-6 border-t border-gray-800/50 space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                  <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">
+                <div className="pt-6 border-t border-gray-800/50 space-y-4">
+                  <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-4">
                     Turn-by-Turn Analysis
                   </div>
 
-                  {turnData.map((turn, tIdx) => (
-                    <div
-                      key={tIdx}
-                      className="rounded-xl p-5 bg-dark-input border border-gray-800/50"
-                    >
-                      <div className="flex justify-between mb-3">
-                        <span className="text-sm text-gray-300">
-                          Step #{turn.test_step_number || turn.transcript_step_number || tIdx + 1}
-                        </span>
-                        <span
-                          className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${turn.passed
-                            ? "bg-green-500/20 text-green-400"
-                            : "bg-red-500/20 text-red-400"
-                            }`}
-                        >
-                          {turn.passed ? "Passed" : "Failed"}
-                        </span>
-                      </div>
-
-                      <div className="text-sm text-gray-200 leading-relaxed">
-                        {turn.actual_text || turn.actual_response || "—"}
-                      </div>
-
-                      {turn.expected_response && (
-                        <div className="mt-3 text-sm italic text-gray-400">
-                          Expected: {turn.expected_response}
+                  {/* Summary Metrics Grid */}
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    {/* Evaluated Steps (for semantic accuracy) */}
+                    {metric.details?.evaluated_steps !== undefined && (
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">
+                          Evaluated Steps
                         </div>
-                      )}
+                        <div className="text-2xl font-bold text-white">
+                          {metric.details.evaluated_steps}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Passed Steps (for semantic accuracy) */}
+                    {metric.details?.passed_steps !== undefined && (
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">
+                          Passed Steps
+                        </div>
+                        <div className="text-2xl font-bold text-green-400">
+                          {metric.details.passed_steps}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Repetition Count (for repetition detection) */}
+                    {metric.details?.repetition_count !== undefined && (
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">
+                          Repetition Count
+                        </div>
+                        <div className="text-2xl font-bold text-white">
+                          {metric.details.repetition_count}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Agent Turns Analyzed (always show if we have turn data) */}
+                    {!metric.details?.evaluated_steps && !metric.details?.repetition_count && (
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1">
+                          Agent Turns Analyzed
+                        </div>
+                        <div className="text-2xl font-bold text-white">
+                          {turnData.length}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Repetitions List */}
+                  {metric.details?.repetitions && Array.isArray(metric.details.repetitions) && metric.details.repetitions.length > 0 && (
+                    <div className="mb-4">
+                      <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">
+                        Repetitions
+                      </div>
+                      <div className="text-sm text-gray-400">
+                        {metric.details.repetitions.join(', ') || 'None'}
+                      </div>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Reasoning */}
+                  {metric.details?.reasoning && (
+                    <div className="mb-6">
+                      <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">
+                        Reasoning
+                      </div>
+                      <div className="text-sm text-gray-300 leading-relaxed">
+                        {metric.details.reasoning}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Agent Sentences Header */}
+                  <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">
+                    Agent Sentences
+                  </div>
+
+                  {/* Turn Cards */}
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    {turnData.map((turn, tIdx) => {
+                      const turnNumber = turn.test_step_number || turn.transcript_step_number || turn.step_number || tIdx + 1;
+                      const turnText = turn.actual_text || turn.actual_response || turn.response || turn.text;
+                      const turnPassed = turn.passed !== undefined ? turn.passed : true;
+                      const hasExpected = turn.expected_greeting || turn.expected_utterance || turn.expected_keywords;
+
+                      return (
+                        <div
+                          key={tIdx}
+                          className="rounded-lg p-5 bg-white/[0.02] border border-gray-800/30 hover:border-gray-700/40 transition-all"
+                        >
+                          {/* Turn Header with Pass/Fail */}
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="text-xs font-medium text-gray-400">
+                              Turn #{turnNumber}
+                            </div>
+                            {turn.passed !== undefined && (
+                              <span
+                                className={`text-[10px] px-2.5 py-1 rounded-md font-medium uppercase tracking-wide ${turnPassed
+                                    ? "bg-green-500/5 text-green-400 border border-green-500/20"
+                                    : "bg-red-500/5 text-red-400 border border-red-500/20"
+                                  }`}
+                              >
+                                {turnPassed ? "✓ Passed" : "✗ Failed"}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Actual Text */}
+                          <div className="text-sm text-gray-200 leading-relaxed mb-4">
+                            {turnText || '—'}
+                          </div>
+
+                          {/* Expected Content */}
+                          {hasExpected && (
+                            <div className="pt-4 border-t border-gray-800/20 space-y-3">
+                              {turn.expected_greeting && (
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1.5">
+                                    Expected Greeting
+                                  </div>
+                                  <div className="text-xs text-gray-400 leading-relaxed">
+                                    {turn.expected_greeting}
+                                  </div>
+                                </div>
+                              )}
+
+                              {turn.expected_utterance && (
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-1.5">
+                                    Expected Utterance
+                                  </div>
+                                  <div className="text-xs text-gray-400 leading-relaxed">
+                                    {turn.expected_utterance}
+                                  </div>
+                                </div>
+                              )}
+
+                              {turn.expected_keywords && Array.isArray(turn.expected_keywords) && turn.expected_keywords.length > 0 && (
+                                <div>
+                                  <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">
+                                    Expected Keywords
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {turn.expected_keywords.map((keyword, kIdx) => (
+                                      <span
+                                        key={kIdx}
+                                        className="text-[10px] px-2 py-1 bg-blue-500/5 text-blue-300 rounded border border-blue-500/15 font-medium"
+                                      >
+                                        {keyword}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Reasoning */}
+                          {turn.reasoning && (
+                            <div className="pt-4 mt-4 border-t border-gray-800/20">
+                              <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">
+                                Analysis
+                              </div>
+                              <div className="text-xs text-gray-400 leading-relaxed">
+                                {turn.reasoning}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>

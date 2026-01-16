@@ -13,8 +13,28 @@ const createApiClient = (timeout = 60000) => {
   instance.interceptors.request.use(
     (config) => {
       const token = localStorage.getItem("authToken");
+      const tokenExpiration = localStorage.getItem("tokenExpiration");
       const rawTenantId = localStorage.getItem("tenantId");
       const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
+
+      // Check if token has expired
+      if (token && tokenExpiration) {
+        const now = Date.now();
+        const expiration = parseInt(tokenExpiration, 10);
+
+        if (now >= expiration) {
+          // Token has expired, clear auth data and redirect
+          localStorage.removeItem("authToken");
+          localStorage.removeItem("tokenExpiration");
+          localStorage.removeItem("tenantId");
+          localStorage.removeItem("userEmail");
+          localStorage.removeItem("userName");
+
+          toast.error("Your session has expired. Please login again.");
+          window.location.href = "/";
+          return Promise.reject(new Error("Token expired"));
+        }
+      }
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -34,6 +54,7 @@ const createApiClient = (timeout = 60000) => {
       // Handle session expiration
       if (error.response?.status === 401) {
         localStorage.removeItem("authToken");
+        localStorage.removeItem("tokenExpiration");
         // Only redirect if not already on login page
         if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/auth')) {
           toast.error("Session expired. Please login again.");

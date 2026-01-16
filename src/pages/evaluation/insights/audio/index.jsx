@@ -224,7 +224,8 @@ const AudioOverview = ({ response, data, onBack }) => {
                                 // Format numbers nicely
                                 key.includes('hz') || key.includes('pitch') ? `${value.toFixed(2)} Hz` :
                                   key.includes('score') ? `${(value * 100).toFixed(1)}%` :
-                                    value.toFixed(2)
+                                    key.includes('files') || key.includes('analyzed') ? Math.round(value) :
+                                      value.toFixed(2)
                               ) : String(value)}
                           </span>
                         )}

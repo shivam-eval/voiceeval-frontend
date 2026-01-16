@@ -191,7 +191,7 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                               <div className="space-y-1">
                                 {Object.entries(value).map(([subKey, subValue]) => (
                                   <div key={subKey} className="text-gray-300">
-                                    <span className="text-gray-500">{subKey.replace(/_/g, " ")}:</span> {String(subValue)}
+                                    <span className="text-gray-500">{subKey.replace(/_/g, " ")}:</span> {String(subValue).replace(/_/g, ' ')}
                                   </div>
                                 ))}
                               </div>
@@ -207,7 +207,7 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                                               {Object.entries(item).map(([k, v]) => (
                                                   <div key={k} className="flex gap-1 break-all">
                                                       <span className="text-gray-500 font-semibold">{k.replace(/_/g, ' ')}:</span>
-                                                      <span className="text-gray-300">{String(v)}</span>
+                                                      <span className="text-gray-300">{String(v).replace(/_/g, ' ')}</span>
                                                   </div>
                                               ))}
                                           </div>

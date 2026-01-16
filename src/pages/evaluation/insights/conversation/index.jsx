@@ -15,6 +15,7 @@ const formatValue = (key, value) => {
     if (key.includes("count")) return value;
     if (key.includes("duration") && key.includes("ms"))
       return `${Math.round(value / 1000)}s`;
+    if (key.includes("turns") || key.includes("files") || key.includes("analyzed") || key.includes("sampled")) return Math.round(value);
     return value.toFixed(2);
   }
   return String(value);
@@ -573,7 +574,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                 {hasAgentSentences && (
                   <div className="pt-6 border-t border-gray-800/50 space-y-4">
                     <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
-                      Repeated Sentences
+                      Agent Sentences
                     </div>
                     {metric.details.agent_sentences.length === 0 ? (
                       <span className="text-gray-500">None</span>
@@ -586,7 +587,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                           >
                             <div className="flex items-center justify-between mb-4">
                               <span className="text-sm text-gray-300">
-                                Turn #{i + 1}
+                                Turn #{sentence.turn || i + 1}
                               </span>
                             </div>
                             <div className="text-sm text-gray-200 leading-relaxed">

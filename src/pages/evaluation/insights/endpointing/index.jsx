@@ -186,7 +186,7 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                           <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
                           <div className="text-sm">
                             {value === null ? (
-                              <span className="text-gray-600 italic">Not available</span>
+                              <span className="text-gray-600 italic">None</span>
                             ) : typeof value === 'object' && !Array.isArray(value) ? (
                               <div className="space-y-1">
                                 {Object.entries(value).map(([subKey, subValue]) => (
@@ -199,11 +199,21 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                               value.length === 0 ? (
                                 <span className="text-gray-500">None</span>
                               ) : (
-                                <ul className="space-y-1.5">
+                                <ul className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
                                   {value.map((item, i) => (
-                                    <li key={i} className="text-gray-300 flex items-start gap-2">
-                                      <div className="w-1 h-1 bg-teal-500/40 rounded-full mt-2 flex-shrink-0" />
-                                      <span>{typeof item === 'object' ? JSON.stringify(item) : String(item)}</span>
+                                    <li key={i} className="text-gray-300 text-xs bg-black/20 rounded p-2 border border-gray-800/50">
+                                      {typeof item === 'object' ? (
+                                          <div className="grid grid-cols-1 gap-1">
+                                              {Object.entries(item).map(([k, v]) => (
+                                                  <div key={k} className="flex gap-1 break-all">
+                                                      <span className="text-gray-500 font-semibold">{k.replace(/_/g, ' ')}:</span>
+                                                      <span className="text-gray-300">{String(v)}</span>
+                                                  </div>
+                                              ))}
+                                          </div>
+                                      ) : (
+                                          <span className="break-all">{String(item)}</span>
+                                      )}
                                     </li>
                                   ))}
                                 </ul>

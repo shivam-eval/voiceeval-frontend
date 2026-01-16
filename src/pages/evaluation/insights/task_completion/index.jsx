@@ -12,10 +12,13 @@ const extractTaskCompletionData = (response, data) => {
   let metrics = [];
   let score = 0;
 
+  const normalize = (val) => (val <= 1 ? Math.round(val * 100) : Math.round(val));
+
   if (response) {
     // Called from ViewReport with single evaluation's category data
     metrics = response?.metrics || [];
-    score = typeof response.score === "number" ? Math.round(response.score * 100) : 0;
+    // Fix: normalization check
+    score = typeof response.score === "number" ? normalize(response.score) : 0;
   } else if (data) {
     // Called from Dashboard with aggregated data
     
@@ -35,11 +38,13 @@ const extractTaskCompletionData = (response, data) => {
       
       // Extract score - Prioritize by_category over average_category_scores
       if (simEval.average_scores?.by_category?.task_completion !== undefined) {
-        score = Math.round(simEval.average_scores.by_category.task_completion * 100);
+        // Fix: normalization check
+        score = normalize(simEval.average_scores.by_category.task_completion);
       } else if (Array.isArray(simEval.average_category_scores)) {
         const cat = simEval.average_category_scores.find(c => c.category === 'task_completion');
         if (cat) {
-          score = Math.round((cat.average_score || 0) * 100);
+            // Fix: normalization check
+          score = normalize(cat.average_score || 0);
         }
       }
     }
@@ -60,8 +65,9 @@ const extractTaskCompletionData = (response, data) => {
       if (taskCategory) {
         metrics = taskCategory.metrics || [];
         if (score === 0) {
+          // Fix: normalization check
           score = typeof taskCategory.average_score === "number"
-            ? Math.round(taskCategory.average_score * 100)
+            ? normalize(taskCategory.average_score)
             : 0;
         }
       }
@@ -86,7 +92,9 @@ const extractTaskCompletionData = (response, data) => {
 
       metrics = allMetrics;
       if (score === 0) {
-        score = scoreCount > 0 ? Math.round((totalScore / scoreCount) * 100) : 0;
+          // Fix: normalization check after averaging
+          const avg = scoreCount > 0 ? (totalScore / scoreCount) : 0;
+          score = normalize(avg);
       }
     }
   }
@@ -234,7 +242,7 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
           const isPassed = metric.status === "passed";
           const mName = metric.name || metric.metric_name;
           const label = humanizeMetricName(mName);
-          const score = typeof metric.score === 'number' ? Math.round(metric.score * 100) : 0;
+          const score = typeof metric.score === 'number' ? normalizeMetricScore(metric.score) : 0;
 
           // Filter and humanize details
           const details = Object.entries(metric.details || {})
@@ -264,7 +272,7 @@ const TaskCompletionOverview = ({ response, data, onBack }) => {
                           <span className="text-gray-600 italic">Not available</span>
                         ) : Array.isArray(value) ? (
                           value.length === 0 ? (
-                            <span className="text-gray-600 italic">Empty</span>
+                            <span className="text-gray-600 italic">None</span>
                           ) : (
                             <ul className="space-y-1.5">
                               {value.map((item, i) => (

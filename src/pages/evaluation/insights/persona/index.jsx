@@ -207,7 +207,7 @@ const PersonaOverview = ({ response, data, onBack }) => {
                       <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
                       <div className="text-sm">
                         {value === null ? (
-                          <span className="text-gray-600 italic">Not available</span>
+                          <span className="text-gray-600 italic">None</span>
                         ) : typeof value === 'object' && !Array.isArray(value) ? (
                           <div className="space-y-1">
                             {Object.entries(value).map(([subKey, subValue]) => (

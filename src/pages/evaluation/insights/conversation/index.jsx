@@ -6,7 +6,7 @@ const formatKey = (key) => {
 };
 
 const formatValue = (key, value) => {
-  if (value === null || value === undefined) return "Not available";
+  if (value === null || value === undefined) return "None";
   if (typeof value === "boolean") return value ? "Yes" : "No";
   if (typeof value === "number") {
     if (key.includes("wpm")) return Math.round(value);
@@ -223,7 +223,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                         <div className="text-sm">
                           {value === null ? (
                             <span className="text-gray-600 italic">
-                              Not available
+                              None
                             </span>
                           ) : typeof value === "object" &&
                             !Array.isArray(value) ? (
@@ -377,7 +377,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                       <div className="text-sm">
                         {value === null ? (
                           <span className="text-gray-600 italic">
-                            Not available
+                            None
                           </span>
                         ) : typeof value === "object" &&
                           !Array.isArray(value) ? (
@@ -524,7 +524,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                         <div className="text-sm">
                           {value === null ? (
                             <span className="text-gray-600 italic">
-                              Not available
+                              None
                             </span>
                           ) : typeof value === "object" &&
                             !Array.isArray(value) ? (

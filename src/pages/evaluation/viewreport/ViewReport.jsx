@@ -337,7 +337,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
             <Activity className="w-4 h-4 text-teal-400" />
-            <p className="text-xs text-gray-400 font-semibold uppercase">Status</p>
+            <p className="text-xs text-gray-400 font-semibold uppercase">Result</p>
           </div>
           <p className={`text-lg font-bold ${evaluationData?.passed ? 'text-green-400' : 'text-red-400'}`}>
             {evaluationData?.passed ? 'PASSED' : 'FAILED'}
@@ -379,16 +379,30 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                 Key Issues Found
               </h3>
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {evaluationData.issues.map((issue, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
-                    <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-red-400 text-xs font-bold">{idx + 1}</span>
+                {evaluationData.issues.map((issue, idx) => {
+                  const formatText = (text) => text?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  const issueText = typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue));
+                  
+                  return (
+                    <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
+                      <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-red-400 text-xs font-bold">{idx + 1}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {typeof issue === 'object' && (issue.category || issue.metric_name) && (
+                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-red-300/70">
+                            {issue.category && <span>{formatText(issue.category)}</span>}
+                            {issue.category && issue.metric_name && <span>•</span>}
+                            {issue.metric_name && <span>{formatText(issue.metric_name)}</span>}
+                          </div>
+                        )}
+                        <p className="text-sm text-gray-300">
+                          {issueText}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-300">
-                      {typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue))}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

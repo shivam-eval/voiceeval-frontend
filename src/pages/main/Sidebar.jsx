@@ -12,7 +12,7 @@ const Sidebar = ({
 }) => {
   const navigate = useNavigate();
   const { workflow, resetWorkflow } = useWorkflow();
-  const [expandedSections, setExpandedSections] = useState(["agents"]);
+  const [expandedSections, setExpandedSections] = useState(["agents", "test-cases", "observability"]);
 
   // Define sections with tabs
   const sections = [

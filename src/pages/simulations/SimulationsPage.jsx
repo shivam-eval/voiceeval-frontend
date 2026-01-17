@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import RunSimulationModal from "../../components/RunSimulationModal";
 import { useSimulations } from "../../hooks/useSimulations";
@@ -16,7 +16,12 @@ const SimulationsPage = () => {
         status: statusFilter || undefined
     });
 
-    const simulations = simulationsData?.simulations || [];
+    // Filter out inbound_loopback simulations (they belong to InboundPage)
+    const simulations = useMemo(() => {
+        const allSims = simulationsData?.simulations || [];
+        return allSims.filter(sim => sim.call_mode !== 'inbound_loopback');
+    }, [simulationsData]);
+    
     const hasSimulations = simulations.length > 0;
 
     const formatDate = (dateString) => {

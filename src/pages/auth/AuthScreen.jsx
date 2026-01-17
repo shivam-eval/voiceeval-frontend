@@ -8,11 +8,17 @@ const AuthScreen = ({ onAuthSuccess }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [tenantId, setTenantId] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
+    // Set tenant ID before making request
+    const finalTenantId = tenantId.trim() || "default";
+    localStorage.setItem("tenantId", finalTenantId);
+    
     try {
       if (isSignup) {
         // Signup flow
@@ -22,6 +28,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
         setIsSignup(false);
         setName("");
         setPassword("");
+        // Keep tenant ID for login
       } else {
         // Login flow
         const res = await loginUser({ email, password });
@@ -31,10 +38,9 @@ const AuthScreen = ({ onAuthSuccess }) => {
         const expirationTime = Date.now() + (72 * 60 * 60 * 1000); // 72 hours in milliseconds
         localStorage.setItem("tokenExpiration", expirationTime.toString());
 
+        // Store tenant ID from JWT if available, otherwise keep the one we set
         if (res.data.tenant_id) {
           localStorage.setItem("tenantId", res.data.tenant_id);
-        } else {
-          localStorage.removeItem("tenantId");
         }
         localStorage.setItem("userEmail", email);
         if (res.data.user_name) {
@@ -96,6 +102,24 @@ const AuthScreen = ({ onAuthSuccess }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          
+          {/* Tenant/Organization ID input */}
+          <div className="space-y-2">
+            <input
+              type="text"
+              placeholder="Organization ID (optional, default: 'default')"
+              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-teal-500 outline-none"
+              value={tenantId}
+              onChange={(e) => setTenantId(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
+              maxLength={64}
+            />
+            <p className="text-xs text-gray-500 px-1">
+              {isSignup 
+                ? "Create your own isolated workspace. Leave empty for 'default'." 
+                : "Enter your organization ID. Leave empty for 'default'."}
+            </p>
+          </div>
+          
           <button
             disabled={loading}
             className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors"
@@ -113,6 +137,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 setIsSignup(!isSignup);
                 setName("");
                 setPassword("");
+                // Keep tenant ID when switching modes
               }}
               className="text-teal-400 hover:text-teal-300 font-medium"
             >

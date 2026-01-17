@@ -1,9 +1,17 @@
-import { BookOpen, Loader2 } from "lucide-react";
+import { BookOpen, Loader2, Building2 } from "lucide-react";
 import { useIsMutating } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 const TopBar = () => {
     const isMutating = useIsMutating();
+    const [tenantId, setTenantId] = useState("default");
+
+    useEffect(() => {
+        const rawTenantId = localStorage.getItem("tenantId");
+        const normalizedTenantId = rawTenantId?.trim() || "default";
+        setTenantId(normalizedTenantId);
+    }, []);
 
     return (
         <div className="absolute top-4 right-10 z-[5] flex items-center gap-4">
@@ -13,6 +21,14 @@ const TopBar = () => {
                     <span className="text-sm font-bold">Processing...</span>
                 </div>
             )}
+            
+            {/* Tenant Indicator */}
+            <div className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/30 rounded-lg text-purple-400 shadow-lg">
+                <Building2 className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                    <span className="text-gray-400">Org:</span> {tenantId}
+                </span>
+            </div>
             
             <Link
                 to="/docs"

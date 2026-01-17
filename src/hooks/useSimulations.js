@@ -101,6 +101,20 @@ export const useRunSimulation = () => {
 };
 
 /**
+ * Hook to run a new inbound simulation
+ */
+export const useRunInboundSimulation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (payload) => simulationsApi.runInboundSimulation(payload),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: simulationKeys.lists() });
+        },
+    });
+};
+
+/**
  * Hook to cancel a running simulation
  */
 export const useCancelSimulation = () => {

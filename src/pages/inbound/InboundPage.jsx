@@ -1,23 +1,223 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Play, Eye, StopCircle, RefreshCw, Download, Trash2, Search, ChevronDown } from 'lucide-react';
+import { Play, Phone, Copy, X, RefreshCw, Search, Trash2, StopCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
-import { useSimulations, useDeleteSimulation, useRerunSimulation, useCancelSimulation } from '../../hooks/useSimulations';
+
+// Hooks
+import {
+    useSimulations,
+    useDeleteSimulation,
+    useCancelSimulation,
+    useRunInboundSimulation
+} from '../../hooks/useSimulations';
+import { useClients } from '../../hooks/useClients';
+import { useTestSuites } from '../../hooks/useTestSuites';
+
+// Components
 import Badge from '../../components/Badge';
 import Button from '../../components/Button';
-import RunSimulationModal from '../../components/RunSimulationModal';
-import ConfirmationModal from '../../components/ConfirmationModal';
 import GenericDropdown from '../../components/DropDown';
+import ConfirmationModal from '../../components/ConfirmationModal';
+
+// API services (for direct calls where hooks are too much or for specific lookups)
+import clientService from '../../api/services/client.service';
+import simulationsService from '../../api/services/simulations';
+
+// ============================================================================
+// MODALS
+// ============================================================================
+
+const PhoneNumberModal = ({ isOpen, phoneNumber, testSuiteId, onClose }) => {
+    const handleCopy = () => {
+        navigator.clipboard.writeText(phoneNumber);
+        toast.info('Phone number copied to clipboard!');
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-dark-panel border border-gray-800 rounded-xl shadow-2xl max-w-md w-full p-8 relative">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-gray-500 hover:text-gray-300 transition-colors"
+                >
+                    <X className="w-6 h-6" />
+                </button>
+
+                <div className="flex justify-center mb-6">
+                    <div className="p-4 bg-teal-500/10 rounded-full border border-teal-500/30">
+                        <Phone className="w-12 h-12 text-teal-400" />
+                    </div>
+                </div>
+
+                <h2 className="text-2xl font-bold text-white text-center mb-2">
+                    Initiate Call
+                </h2>
+
+                <p className="text-gray-400 text-center mb-6">
+                    Test Suite: <span className="text-teal-400 font-mono">{testSuiteId}</span>
+                </p>
+
+                <p className="text-gray-300 text-center mb-6">
+                    Please initiate a call on this number:
+                </p>
+
+                <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 mb-6">
+                    <div className="flex items-center justify-center gap-3">
+                        <Phone className="w-5 h-5 text-teal-400" />
+                        <span className="text-3xl font-bold text-white tracking-wider">
+                            {phoneNumber}
+                        </span>
+                    </div>
+                </div>
+
+                <Button
+                    onClick={handleCopy}
+                    className="w-full mb-3 flex items-center justify-center gap-2"
+                >
+                    <Copy className="w-4 h-4" />
+                    Copy Number
+                </Button>
+
+                <Button
+                    onClick={onClose}
+                    variant="secondary"
+                    className="w-full"
+                >
+                    Close
+                </Button>
+            </div>
+        </div>
+    );
+};
+
+const CreateInboundSessionModal = ({ isOpen, onClose, onSuccess }) => {
+    const runInbound = useRunInboundSimulation();
+    const { data: clientsData, isLoading: clientsLoading } = useClients();
+    const { data: testSuitesData, isLoading: suitesLoading } = useTestSuites();
+
+    const [formData, setFormData] = useState({
+        client_id: '',
+        test_suite_id: '',
+        metadata: {}
+    });
+
+    const handleSubmit = async () => {
+        if (!formData.client_id || !formData.test_suite_id) {
+            toast.warning('Please select both a client and a test suite');
+            return;
+        }
+
+        try {
+            const result = await runInbound.mutateAsync(formData);
+
+            // Find the client's inbound number for the success message
+            const selectedClient = clientsData?.find(c => c.client_id === formData.client_id);
+            const inboundNumber = selectedClient?.inbound_number || 'the designated number';
+
+            toast.success(`Inbound session created! Call ${inboundNumber}`);
+
+            if (onSuccess) {
+                onSuccess({
+                    ...result,
+                    inbound_number: inboundNumber
+                });
+            }
+            onClose();
+        } catch (error) {
+            // Error handled by global interceptor
+        }
+    };
+
+    if (!isOpen) return null;
+
+    const testSuites = testSuitesData?.test_suites || [];
+
+    return (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-dark-panel border border-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-8">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-white">Create Inbound Session</h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-300">
+                        <X className="w-6 h-6" />
+                    </button>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Client
+                        </label>
+                        <select
+                            value={formData.client_id}
+                            onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+                            className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500"
+                            disabled={clientsLoading}
+                        >
+                            <option value="">{clientsLoading ? 'Loading clients...' : 'Select a client...'}</option>
+                            {clientsData?.map((client) => (
+                                <option key={client.client_id} value={client.client_id}>
+                                    {client.client_id} - {client.inbound_number}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Test Suite
+                        </label>
+                        <select
+                            value={formData.test_suite_id}
+                            onChange={(e) => setFormData({ ...formData, test_suite_id: e.target.value })}
+                            className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-teal-500"
+                            disabled={suitesLoading}
+                        >
+                            <option value="">{suitesLoading ? 'Loading test suites...' : 'Select a test suite...'}</option>
+                            {testSuites.map((suite) => (
+                                <option key={suite.test_suite_id} value={suite.test_suite_id}>
+                                    {suite.name || suite.test_suite_id}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                        <Button
+                            onClick={onClose}
+                            variant="secondary"
+                            className="flex-1"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleSubmit}
+                            disabled={runInbound.isPending || !formData.client_id || !formData.test_suite_id}
+                            className="flex-1"
+                        >
+                            {runInbound.isPending ? 'Creating...' : 'Create Session'}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ============================================================================
+// MAIN PAGE
+// ============================================================================
 
 const InboundPage = () => {
     const navigate = useNavigate();
-    const [selectedSimulations, setSelectedSimulations] = useState([]);
-    const [showRunModal, setShowRunModal] = useState(false);
-    const [phoneNumberModal, setPhoneNumberModal] = useState({
-        isOpen: false,
-        phoneNumber: '',
-        testSuiteId: ''
-    });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('');
+    const [page, setPage] = useState(1);
+    const limit = 20;
+
+    const [phoneModal, setPhoneModal] = useState({ isOpen: false, phoneNumber: '', testSuiteId: '' });
+    const [createModal, setCreateModal] = useState(false);
     const [confirmModal, setConfirmModal] = useState({
         isOpen: false,
         title: '',
@@ -26,42 +226,77 @@ const InboundPage = () => {
         variant: 'danger',
         confirmText: 'Confirm'
     });
-    const [filters, setFilters] = useState({
-        search: '',
-        status: '',
-        skip: 0,
-        limit: 20
-    });
 
-    // Fetch simulations with filters
-    const { data, isLoading, error, refetch } = useSimulations(filters);
+    // Filters for useSimulations hook
+    const filters = useMemo(() => ({
+        search: searchTerm,
+        status: statusFilter,
+        skip: (page - 1) * limit,
+        limit: limit
+    }), [searchTerm, statusFilter, page]);
+
+    // Fetch simulations
+    const { data: simulationsData, isLoading, refetch } = useSimulations(filters);
     const deleteSimulation = useDeleteSimulation();
-    const rerunSimulation = useRerunSimulation();
     const cancelSimulation = useCancelSimulation();
 
-    // Handlers
-    const handleSearch = (e) => {
-        setFilters({ ...filters, search: e.target.value, skip: 0 });
+    // Only show sessions with call_mode === 'inbound_loopback'
+    const inboundSimulations = useMemo(() => {
+        if (!simulationsData?.simulations) return [];
+        return simulationsData.simulations.filter(
+            sim => sim.call_mode === 'inbound_loopback'
+        );
+    }, [simulationsData]);
+
+    const handleRowClick = async (sim) => {
+        try {
+            // We need to get the client's inbound number for this simulation
+            // In the metadata we might have stored client_id
+            const simulationDetail = await simulationsService.getSimulation(sim.simulation_id);
+            const clientId = simulationDetail.metadata?.client_id;
+
+            if (clientId) {
+                const client = await clientService.getClient(clientId);
+                setPhoneModal({
+                    isOpen: true,
+                    phoneNumber: client.inbound_number || 'N/A',
+                    testSuiteId: sim.test_suite_id
+                });
+            } else {
+                toast.error('Client information not linked to this session');
+            }
+        } catch (error) {
+            toast.error('Failed to load session details');
+        }
     };
 
-    const handleStatusFilter = (status) => {
-        setFilters({ ...filters, status, skip: 0 });
-    };
-
-    const handlePageChange = (newSkip) => {
-        setFilters({ ...filters, skip: newSkip });
-    };
-
-    const handleRowClick = (simulation) => {
-        // Show modal with phone number instead of navigating
-        setPhoneNumberModal({
+    const handleCreateSuccess = (result) => {
+        setPhoneModal({
             isOpen: true,
-            phoneNumber: simulation.metadata?.phone_number || '+1 (555) 123-4567', // Default if not available
-            testSuiteId: simulation.test_suite_id || simulation.metadata?.test_suite_id || 'N/A'
+            phoneNumber: result.inbound_number,
+            testSuiteId: result.test_suite_id || result.simulation_id
         });
     };
 
-    const handleDelete = async (e, simulationId) => {
+    const handleCancel = (e, simulationId) => {
+        e.stopPropagation();
+        setConfirmModal({
+            isOpen: true,
+            title: 'Cancel Simulation',
+            message: 'Are you sure you want to cancel this running simulation?',
+            confirmText: 'Cancel',
+            variant: 'danger',
+            onConfirm: async () => {
+                try {
+                    await cancelSimulation.mutateAsync(simulationId);
+                    toast.success('Simulation cancelled');
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                } catch (error) { }
+            }
+        });
+    };
+
+    const handleDelete = (e, simulationId) => {
         e.stopPropagation();
         setConfirmModal({
             isOpen: true,
@@ -72,91 +307,22 @@ const InboundPage = () => {
             onConfirm: async () => {
                 try {
                     await deleteSimulation.mutateAsync(simulationId);
-                    toast.success('Simulation deleted successfully');
+                    toast.success('Simulation deleted');
                     setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                } catch (error) {
-                    // Error handled by global interceptor
-                }
-            }
-        });
-    };
-
-    const handleRerun = async (e, simulationId) => {
-        e.stopPropagation();
-        setConfirmModal({
-            isOpen: true,
-            title: 'Rerun Simulation',
-            message: 'This will create a new simulation with the same parameters. Continue?',
-            confirmText: 'Rerun',
-            variant: 'teal',
-            onConfirm: async () => {
-                try {
-                    const result = await rerunSimulation.mutateAsync(simulationId);
-                    toast.success(`Simulation rerun initiated!`);
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                    navigate(`/inbound/runs/${result.new_simulation_id}`);
-                } catch (error) {
-                    // Error handled by global interceptor
-                }
-            }
-        });
-    };
-
-    const handleCancel = async (e, simulationId) => {
-        e.stopPropagation();
-        setConfirmModal({
-            isOpen: true,
-            title: 'Cancel Simulation',
-            message: 'Are you sure you want to cancel this running simulation?',
-            confirmText: 'Cancel Simulation',
-            variant: 'danger',
-            onConfirm: async () => {
-                try {
-                    await cancelSimulation.mutateAsync(simulationId);
-                    toast.success('Simulation cancelled successfully');
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                } catch (error) {
-                    // Error handled by global interceptor
-                }
+                } catch (error) { }
             }
         });
     };
 
     const getStatusBadgeVariant = (status) => {
-        switch (status.toLowerCase()) {
-            case 'completed':
-                return 'success';
-            case 'running':
-                return 'info';
-            case 'failed':
-                return 'danger';
+        switch (status?.toLowerCase()) {
+            case 'completed': return 'success';
+            case 'running': return 'info';
+            case 'failed': return 'danger';
             case 'queued':
-                return 'warning';
-            default:
-                return 'default';
+            case 'waiting_for_calls': return 'warning';
+            default: return 'default';
         }
-    };
-
-    const formatDateTime = (dateString) => {
-        if (!dateString) return '-';
-        const date = new Date(dateString);
-        // Check if date is valid
-        if (isNaN(date.getTime())) return '-';
-        // Check for epoch (1970) or very old dates which usually indicate default/missing values
-        if (date.getFullYear() <= 1970) return '-';
-
-        return date.toLocaleString();
-    };
-
-    const formatDuration = (ms) => {
-        if (!ms) return '-';
-        const seconds = Math.floor(ms / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-
-        if (hours > 0) return `${hours}h ${minutes % 60}m`;
-        if (minutes > 0) return `${minutes}m ${seconds % 60}s`;
-        return `${seconds}s`;
     };
 
     const truncateId = (id) => {
@@ -164,74 +330,62 @@ const InboundPage = () => {
         return id.length > 12 ? `${id.substring(0, 12)}...` : id;
     };
 
-    if (error) {
-        return (
-            <div className="p-8">
-                <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-6">
-                    <h3 className="text-red-400 font-semibold mb-2">Error loading inbound sessions</h3>
-                    <p className="text-gray-400">{error.message}</p>
-                    <Button onClick={() => refetch()} className="mt-4">
-                        Retry
-                    </Button>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="p-8 bg-dark-bg min-h-screen text-white">
             <div className="w-full max-w-screen-2xl mx-auto">
-                {/* Header */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div>
                         <h1 className="text-4xl font-bold text-white mb-2">Inbound Sessions</h1>
                         <p className="text-gray-400">View and manage all inbound simulation sessions</p>
                     </div>
-                    <button
-                        onClick={() => setShowRunModal(true)}
-                        className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.1)]"
+                    <Button
+                        onClick={() => setCreateModal(true)}
+                        className="flex items-center gap-2 shadow-lg"
                     >
                         <Play className="w-5 h-5" />
                         Create New Inbound Session
-                    </button>
+                    </Button>
                 </div>
 
                 {/* Filters */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                    <div className="flex items-center gap-3 w-full md:w-auto">
-                        <div className="relative flex-1 md:w-64">
-                            <input
-                                type="text"
-                                placeholder="Search inbound sessions..."
-                                value={filters.search}
-                                onChange={handleSearch}
-                                className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 px-5 text-base focus:outline-none focus:border-teal-500 transition-colors text-white placeholder-gray-500"
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-56">
-                            <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Status:</span>
-                            <GenericDropdown
-                                options={[
-                                    { label: "All Statuses", value: "" },
-                                    { label: "Running", value: "running" },
-                                    { label: "Completed", value: "completed" },
-                                    { label: "Failed", value: "failed" },
-                                    { label: "Queued", value: "queued" }
-                                ]}
-                                value={filters.status || ""}
-                                onChange={(val) => handleStatusFilter(val)}
-                                className="flex-1"
-                            />
-                        </div>
-
-                        <button className="bg-dark-panel border border-gray-800 text-white px-8 py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition-colors shadow-lg">
-                            Search
-                        </button>
+                <div className="flex flex-col md:flex-row gap-4 mb-8">
+                    <div className="relative flex-1 max-w-md">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                        <input
+                            type="text"
+                            placeholder="Search sessions..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:border-teal-500 text-white"
+                        />
                     </div>
+
+                    <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-56">
+                        <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Status:</span>
+                        <GenericDropdown
+                            options={[
+                                { label: "All Statuses", value: "" },
+                                { label: "Waiting", value: "waiting_for_calls" },
+                                { label: "Running", value: "running" },
+                                { label: "Completed", value: "completed" },
+                                { label: "Failed", value: "failed" }
+                            ]}
+                            value={statusFilter}
+                            onChange={(val) => setStatusFilter(val)}
+                            className="flex-1"
+                        />
+                    </div>
+
+                    <button
+                        onClick={() => refetch()}
+                        className="p-3 bg-dark-panel border border-gray-800 rounded-lg hover:bg-gray-800 transition-colors"
+                        title="Refresh"
+                    >
+                        <RefreshCw className="w-5 h-5 text-gray-400" />
+                    </button>
                 </div>
 
-                {/* Table Container */}
+                {/* Table */}
                 <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
                     {isLoading ? (
                         <div className="p-12 text-center text-gray-500">
@@ -240,105 +394,100 @@ const InboundPage = () => {
                                 Loading inbound sessions...
                             </div>
                         </div>
-                    ) : !data || data.simulations.length === 0 ? (
+                    ) : inboundSimulations.length === 0 ? (
                         <div className="p-12 text-center">
                             <div className="flex flex-col items-center gap-4">
                                 <div className="p-4 bg-gray-800/30 rounded-full border border-gray-700/50">
                                     <Play className="w-8 h-8 text-gray-500" />
                                 </div>
-                                <div className="flex flex-col gap-1">
+                                <div>
                                     <p className="text-gray-400 text-lg font-medium">No inbound sessions found</p>
-                                    <p className="text-gray-500 text-sm">Run your first inbound simulation to see results here</p>
+                                    <p className="text-gray-500 text-sm">Create your first inbound simulation to see results here</p>
                                 </div>
-                                <button
-                                    onClick={() => setShowRunModal(true)}
-                                    className="mt-2 flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors"
+                                <Button
+                                    onClick={() => setCreateModal(true)}
+                                    className="mt-2"
                                 >
                                     <Play className="w-5 h-5" />
-                                    Create Your First Inbound Session
-                                </button>
+                                    Create Your First Session
+                                </Button>
                             </div>
                         </div>
                     ) : (
-                        <>
-                            <div className="overflow-x-auto custom-scrollbar">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
-                                            <th className="px-4 py-3">Test Suite ID</th>
-                                            <th className="px-4 py-3">Agent</th>
-                                            <th className="px-4 py-3">Status</th>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
+                                        <th className="px-6 py-4">Simulation ID</th>
+                                        <th className="px-6 py-4">Test Suite</th>
+                                        <th className="px-6 py-4">Status</th>
+                                        <th className="px-6 py-4">Progress</th>
+                                        <th className="px-6 py-4 text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="text-sm text-gray-300">
+                                    {inboundSimulations.map((sim) => (
+                                        <tr
+                                            key={sim.simulation_id}
+                                            onClick={() => handleRowClick(sim)}
+                                            className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors cursor-pointer group"
+                                        >
+                                            <td className="px-6 py-4">
+                                                <code className="text-xs text-teal-400 bg-teal-500/5 px-2 py-1 rounded border border-teal-500/10 group-hover:border-teal-500/30">
+                                                    {truncateId(sim.simulation_id)}
+                                                </code>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-400">
+                                                {truncateId(sim.test_suite_id)}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <Badge variant={getStatusBadgeVariant(sim.status)}>
+                                                    {sim.status}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-6 py-4 text-gray-400">
+                                                {sim.progress?.completed || 0} / {sim.progress?.total_test_cases || 0}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    {sim.status === 'running' && (
+                                                        <button
+                                                            onClick={(e) => handleCancel(e, sim.simulation_id)}
+                                                            className="p-2 text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                                                            title="Cancel"
+                                                        >
+                                                            <StopCircle className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        onClick={(e) => handleDelete(e, sim.simulation_id)}
+                                                        className="p-2 text-gray-400 hover:bg-gray-700 rounded transition-colors"
+                                                        title="Delete"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody className="text-sm text-gray-300">
-                                        {data.simulations.map((sim) => (
-                                            <tr
-                                                key={sim.simulation_id}
-                                                onClick={() => handleRowClick(sim)}
-                                                className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors cursor-pointer group"
-                                            >
-                                                <td className="px-4 py-3">
-                                                    <code className="text-xs text-teal-400 bg-teal-500/5 px-2 py-1 rounded border border-teal-500/10 group-hover:border-teal-500/30 transition-colors">
-                                                        {truncateId(sim.test_suite_id || sim.metadata?.test_suite_id || 'N/A')}
-                                                    </code>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <span className="text-white font-medium">
-                                                        {(() => {
-                                                            const agentName = sim.metadata?.name || sim.name || sim.metadata?.agent_name || sim.agent_name || '-';
-                                                            // Remove "Agent " prefix if present
-                                                            return agentName !== '-' ? agentName.replace(/^Agent\s+/i, '') : agentName;
-                                                        })()}
-                                                    </span>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <Badge variant={getStatusBadgeVariant(sim.status)}>
-                                                        <span className="flex items-center gap-1.5">
-                                                            {sim.status === 'running' && (
-                                                                <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
-                                                            )}
-                                                            {sim.status}
-                                                        </span>
-                                                    </Badge>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            {/* Pagination */}
-                            {data.total > filters.limit && (
-                                <div className="px-6 py-4 bg-gray-800/30 border-t border-gray-800 flex items-center justify-between">
-                                    <div className="text-sm text-gray-400">
-                                        Showing {filters.skip + 1} to {Math.min(filters.skip + filters.limit, data.total)} of {data.total} simulations
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            onClick={() => handlePageChange(Math.max(0, filters.skip - filters.limit))}
-                                            disabled={filters.skip === 0}
-                                            className="disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Previous
-                                        </Button>
-                                        <Button
-                                            onClick={() => handlePageChange(filters.skip + filters.limit)}
-                                            disabled={filters.skip + filters.limit >= data.total}
-                                            className="disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Next
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                        </>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
             </div>
 
-            <RunSimulationModal
-                isOpen={showRunModal}
-                onClose={() => setShowRunModal(false)}
+            <PhoneNumberModal
+                isOpen={phoneModal.isOpen}
+                phoneNumber={phoneModal.phoneNumber}
+                testSuiteId={phoneModal.testSuiteId}
+                onClose={() => setPhoneModal({ ...phoneModal, isOpen: false })}
+            />
+
+            <CreateInboundSessionModal
+                isOpen={createModal}
+                onClose={() => setCreateModal(false)}
+                onSuccess={handleCreateSuccess}
             />
 
             <ConfirmationModal
@@ -349,80 +498,8 @@ const InboundPage = () => {
                 message={confirmModal.message}
                 confirmText={confirmModal.confirmText}
                 variant={confirmModal.variant}
-                isLoading={deleteSimulation.isLoading || rerunSimulation.isLoading || cancelSimulation.isLoading}
+                isLoading={deleteSimulation.isPending || cancelSimulation.isPending}
             />
-
-            {/* Phone Number Modal */}
-            {phoneNumberModal.isOpen && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-dark-panel border border-gray-800 rounded-xl shadow-2xl max-w-md w-full p-8 relative">
-                        {/* Close button */}
-                        <button
-                            onClick={() => setPhoneNumberModal({ isOpen: false, phoneNumber: '', testSuiteId: '' })}
-                            className="absolute top-4 right-4 text-gray-500 hover:text-gray-300 transition-colors"
-                        >
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-
-                        {/* Icon */}
-                        <div className="flex justify-center mb-6">
-                            <div className="p-4 bg-teal-500/10 rounded-full border border-teal-500/30">
-                                <svg className="w-12 h-12 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        {/* Title */}
-                        <h2 className="text-2xl font-bold text-white text-center mb-2">
-                            Initiate Call
-                        </h2>
-
-                        {/* Test Suite ID */}
-                        <p className="text-gray-400 text-center mb-6">
-                            Test Suite: <span className="text-teal-400 font-mono">{phoneNumberModal.testSuiteId}</span>
-                        </p>
-
-                        {/* Message */}
-                        <p className="text-gray-300 text-center mb-6">
-                            Please initiate a call on this number:
-                        </p>
-
-                        {/* Phone Number Display */}
-                        <div className="bg-gray-900/50 border border-gray-700 rounded-lg p-6 mb-6">
-                            <div className="flex items-center justify-center gap-3">
-                                <svg className="w-5 h-5 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                </svg>
-                                <span className="text-3xl font-bold text-white tracking-wider">
-                                    {phoneNumberModal.phoneNumber}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Copy Button */}
-                        <button
-                            onClick={() => {
-                                navigator.clipboard.writeText(phoneNumberModal.phoneNumber);
-                                toast.success('Phone number copied to clipboard!');
-                            }}
-                            className="w-full bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg font-semibold hover:bg-teal-500/20 transition-colors mb-3"
-                        >
-                            Copy Number
-                        </button>
-
-                        {/* Close Button */}
-                        <button
-                            onClick={() => setPhoneNumberModal({ isOpen: false, phoneNumber: '', testSuiteId: '' })}
-                            className="w-full bg-gray-800 border border-gray-700 text-gray-300 px-6 py-3 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

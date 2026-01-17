@@ -69,6 +69,13 @@ export const runSimulation = async (payload) => {
 };
 
 /**
+ * Start an inbound simulation
+ */
+export const runInboundSimulation = async (payload) => {
+    return apiClient.post(`${BASE_PATH}/run-inbound`, payload);
+};
+
+/**
  * Cancel a running simulation
  */
 export const cancelSimulation = async (simulationId) => {
@@ -107,6 +114,13 @@ export const getSimulationStatus = async () => {
     return apiClient.get(`${BASE_PATH}/status`);
 };
 
+/**
+ * Get simulation progress
+ */
+export const getSimulationProgress = async (simulationId) => {
+    return apiClient.get(`${BASE_PATH}/${simulationId}/progress`);
+};
+
 const simulationsService = {
     getSimulations,
     getSimulation,
@@ -117,7 +131,9 @@ const simulationsService = {
     rerunSimulation,
     deleteSimulation,
     exportSimulationResults,
-    getSimulationStatus
+    getSimulationStatus,
+    runInboundSimulation,
+    getSimulationProgress
 };
 
 export default simulationsService;

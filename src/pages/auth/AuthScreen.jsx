@@ -8,16 +8,32 @@ const AuthScreen = ({ onAuthSuccess }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [tenantId, setTenantId] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Extract organization ID from email domain
+  const extractOrgFromEmail = (email) => {
+    if (!email || !email.includes('@')) return 'default';
+    
+    const domain = email.split('@')[1];
+    if (!domain) return 'default';
+    
+    // Extract main domain name (before first dot)
+    // e.g., shoplabs.com → shoplabs, beta.inc → beta
+    const orgName = domain.split('.')[0];
+    
+    // Normalize to fit tenant ID pattern: lowercase alphanumeric with underscores/hyphens
+    const normalized = orgName.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    
+    return normalized || 'default';
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
-    // Set tenant ID before making request
-    const finalTenantId = tenantId.trim() || "default";
-    localStorage.setItem("tenantId", finalTenantId);
+    // Automatically derive tenant ID from email domain
+    const tenantId = extractOrgFromEmail(email);
+    localStorage.setItem("tenantId", tenantId);
     
     try {
       if (isSignup) {
@@ -28,7 +44,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
         setIsSignup(false);
         setName("");
         setPassword("");
-        // Keep tenant ID for login
+        // Keep email for login
       } else {
         // Login flow
         const res = await loginUser({ email, password });
@@ -103,22 +119,15 @@ const AuthScreen = ({ onAuthSuccess }) => {
             onChange={(e) => setPassword(e.target.value)}
           />
           
-          {/* Tenant/Organization ID input */}
-          <div className="space-y-2">
-            <input
-              type="text"
-              placeholder="Organization ID (optional, default: 'default')"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg p-3 text-white focus:ring-2 focus:ring-teal-500 outline-none"
-              value={tenantId}
-              onChange={(e) => setTenantId(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ''))}
-              maxLength={64}
-            />
-            <p className="text-xs text-gray-500 px-1">
-              {isSignup 
-                ? "Create your own isolated workspace. Leave empty for 'default'." 
-                : "Enter your organization ID. Leave empty for 'default'."}
-            </p>
-          </div>
+          {/* Organization info hint */}
+          {email && email.includes('@') && (
+            <div className="px-3 py-2 bg-purple-500/10 border border-purple-500/30 rounded-lg">
+              <p className="text-xs text-purple-300">
+                <span className="font-semibold">Organization:</span> {extractOrgFromEmail(email)}
+                <span className="text-gray-400 ml-2">(auto-detected from email)</span>
+              </p>
+            </div>
+          )}
           
           <button
             disabled={loading}
@@ -137,7 +146,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
                 setIsSignup(!isSignup);
                 setName("");
                 setPassword("");
-                // Keep tenant ID when switching modes
+                // Keep email when switching modes
               }}
               className="text-teal-400 hover:text-teal-300 font-medium"
             >

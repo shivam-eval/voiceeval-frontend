@@ -13,28 +13,28 @@ const AuthScreen = ({ onAuthSuccess }) => {
   // Extract organization ID from email domain
   const extractOrgFromEmail = (email) => {
     if (!email || !email.includes('@')) return 'default';
-    
+
     const domain = email.split('@')[1];
     if (!domain) return 'default';
-    
+
     // Extract main domain name (before first dot)
     // e.g., shoplabs.com → shoplabs, beta.inc → beta
     const orgName = domain.split('.')[0];
-    
+
     // Normalize to fit tenant ID pattern: lowercase alphanumeric with underscores/hyphens
     const normalized = orgName.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
-    
+
     return normalized || 'default';
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    
+
     // Automatically derive tenant ID from email domain
     const tenantId = extractOrgFromEmail(email);
     localStorage.setItem("tenantId", tenantId);
-    
+
     try {
       if (isSignup) {
         // Signup flow
@@ -118,17 +118,7 @@ const AuthScreen = ({ onAuthSuccess }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          
-          {/* Organization info hint */}
-          {email && email.includes('@') && (
-            <div className="px-3 py-2 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-              <p className="text-xs text-purple-300">
-                <span className="font-semibold">Organization:</span> {extractOrgFromEmail(email)}
-                <span className="text-gray-400 ml-2">(auto-detected from email)</span>
-              </p>
-            </div>
-          )}
-          
+
           <button
             disabled={loading}
             className="w-full bg-teal-500 hover:bg-teal-600 disabled:bg-gray-700 text-white font-bold py-3 rounded-lg transition-colors"

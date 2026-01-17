@@ -42,7 +42,6 @@ export const EventsProvider = ({ children }) => {
             const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
 
             if (!token) {
-                console.log("⏭️ SSE: No auth token found, skipping connection");
                 return;
             }
 

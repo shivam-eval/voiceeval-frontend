@@ -119,6 +119,19 @@ const CallsPage = () => {
     return categories;
   }, [agentsData, categoriesData, directory]);
 
+  // Reset pagination when search term changes
+  useEffect(() => {
+    setAgentsPage(1);
+  }, [searchTerm]);
+
+  const displayedAgents = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+    return filteredCategories.filter(cat => {
+      const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === cat);
+      const agentName = agent?.name || agent?.agent_name || `Agent ${cat.substring(0, 8)}`;
+      return cat.toLowerCase().includes(searchLower) || agentName.toLowerCase().includes(searchLower);
+    });
+  }, [filteredCategories, agentsData, searchTerm]);
 
   // Generate agent options for the evaluation modal (reusing agentsData from above)
   const agentOptions = useMemo(() => {
@@ -508,10 +521,16 @@ const CallsPage = () => {
     // Create options from backend categories, ensuring we only process strings
     const options = backendCategories
       .filter(cat => typeof cat === 'string')
-      .map(cat => ({
-        label: cat.replace(/[_-]/g, ' '),
-        value: cat
-      }));
+      .map(cat => {
+        const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === cat);
+        const rawName = agent?.name || agent?.agent_name || cat.replace(/[_-]/g, ' ');
+        const cleanName = rawName.replace(/^Agent\s+/i, '');
+
+        return {
+          label: cleanName,
+          value: cat
+        };
+      });
 
     // Fallback if no categories exist
     if (options.length === 0) {
@@ -519,7 +538,7 @@ const CallsPage = () => {
     }
 
     return options;
-  }, [filteredCategories]);
+  }, [filteredCategories, agentsData]);
 
   return (
     <div className="p-8 bg-dark-bg min-h-screen text-white">
@@ -537,7 +556,11 @@ const CallsPage = () => {
             <>
               <ChevronRight className="w-4 h-4" />
               <span className="text-teal-400 font-semibold">
-                {directory.replace(/[_-]/g, ' ')}
+                {(() => {
+                  const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === directory);
+                  const rawName = agent?.name || agent?.agent_name || directory.replace(/[_-]/g, ' ');
+                  return rawName.replace(/^Agent\s+/i, '');
+                })()}
               </span>
             </>
           )}
@@ -642,9 +665,7 @@ const CallsPage = () => {
                     </td>
                   </tr>
                 ) : (() => {
-                  const filtered = filteredCategories.filter(cat =>
-                    typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())
-                  );
+                  const filtered = displayedAgents;
                   const totalPages = Math.ceil(filtered.length / agentsPerPage);
                   const startIdx = (agentsPage - 1) * agentsPerPage;
                   const endIdx = startIdx + agentsPerPage;
@@ -659,7 +680,11 @@ const CallsPage = () => {
                           </div>
                           <div className="flex flex-col">
                             <span className="text-white font-semibold text-sm">
-                              Agent {cat.substring(0, 8)}
+                              {(() => {
+                                const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === cat);
+                                const rawName = agent?.name || agent?.agent_name || `Agent ${cat.substring(0, 8)}`;
+                                return rawName.replace(/^Agent\s+/i, '');
+                              })()}
                             </span>
                             <span className="text-gray-500 text-xs font-mono">{cat}</span>
                           </div>
@@ -880,7 +905,7 @@ const CallsPage = () => {
       {viewMode === 'directories' && filteredCategories.length > 0 && (
         <div className="mt-8 flex items-center justify-between">
           <p className="text-gray-500 text-sm">
-            Showing {Math.min(filteredCategories.filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())).length, agentsPerPage)} of {filteredCategories.filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())).length} {filteredCategories.filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())).length === 1 ? 'agent' : 'agents'}
+            Showing {Math.min(displayedAgents.length, agentsPerPage)} of {displayedAgents.length} {displayedAgents.length === 1 ? 'agent' : 'agents'}
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -891,11 +916,11 @@ const CallsPage = () => {
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="px-4 py-2 text-sm text-gray-400">
-              Page {agentsPage} of {Math.max(1, Math.ceil(filteredCategories.filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())).length / agentsPerPage))}
+              Page {agentsPage} of {Math.max(1, Math.ceil(displayedAgents.length / agentsPerPage))}
             </span>
             <button
               onClick={() => setAgentsPage(p => p + 1)}
-              disabled={agentsPage >= Math.ceil(filteredCategories.filter(cat => typeof cat === 'string' && cat.toLowerCase().includes(searchTerm.toLowerCase())).length / agentsPerPage)}
+              disabled={agentsPage >= Math.ceil(displayedAgents.length / agentsPerPage)}
               className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
             >
               <ChevronRight className="w-4 h-4" />

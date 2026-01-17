@@ -20,6 +20,8 @@ const EvaluationReportPage = () => {
   const sessionId = searchParams.get('sessionId');
   const navigate = useNavigate();
   const { subscribe } = useEvents();
+  const [transcriptData, setTranscriptData] = React.useState(null);
+  const [isLoadingTranscript, setIsLoadingTranscript] = React.useState(false);
 
   // If we have evaluationId, fetch by ID
   const {
@@ -55,6 +57,66 @@ const EvaluationReportPage = () => {
   // Fetch simulation details to get the audio_file
   const simulationId = evaluation?.simulation_id || evaluation?.simulation?.simulation_id;
   const { data: simulationDetails } = useSimulation(simulationId);
+
+  // Fetch transcript data when evaluation is available
+  React.useEffect(() => {
+    const fetchTranscript = async () => {
+      if (!evaluation?.session_id) return;
+
+      setIsLoadingTranscript(true);
+      try {
+        const { getSessionTranscript } = await import('../../api/services/simulation.service');
+        const json = await getSessionTranscript(evaluation.session_id);
+
+        const steps = json.transcript_steps || json.transcript || [];
+
+        if (steps.length === 0) {
+          console.warn('No transcript steps found in response');
+          setTranscriptData(null);
+          setIsLoadingTranscript(false);
+          return;
+        }
+
+        // Map the steps to the format expected by CallTranscriptPanel
+        const mappedSteps = steps.map(step => ({
+          ...step,
+          turn_role: step.role === "agent" ? "agent" : "user",
+          speech_start_ms: step.timing?.speech_start_ms,
+          speech_end_ms: step.timing?.speech_end_ms,
+          duration_ms: step.timing?.duration_ms
+        }));
+
+        // Get audio URL
+        let audioUrl = null;
+        const audioFilePath = simulationDetails?.metadata?.audio_file;
+        if (audioFilePath) {
+          audioUrl = audioFilePath.startsWith('http')
+            ? audioFilePath
+            : `${GCP_STORAGE_BASE_URL}/${audioFilePath}`;
+        }
+
+        const transcript = {
+          audio_url: audioUrl,
+          steps: mappedSteps,
+          metadata: {
+            session_id: json.session_id,
+            simulation_id: json.simulation_id,
+            total_turns: steps.length,
+            duration_ms: steps.length > 0 ? steps[steps.length - 1].timing?.speech_end_ms : 0
+          }
+        };
+
+        setTranscriptData(transcript);
+      } catch (error) {
+        console.error('Error fetching transcript:', error);
+        setTranscriptData(null);
+      } finally {
+        setIsLoadingTranscript(false);
+      }
+    };
+
+    fetchTranscript();
+  }, [evaluation?.session_id, simulationDetails]);
 
   // Subscribe to SSE events for real-time evaluation updates (replaces polling)
   React.useEffect(() => {
@@ -161,13 +223,6 @@ const EvaluationReportPage = () => {
 
   // Transform evaluation for ViewReport component
   const report = transformSessionToReport(evaluation);
-
-  // Construct audio URL if simulationDetails is available
-  const transcriptData = getTranscriptData(evaluation, evaluation);
-  if (transcriptData && simulationDetails?.metadata?.audio_file) {
-    const audioPath = simulationDetails.metadata.audio_file;
-    transcriptData.audio_url = audioPath.startsWith('http') ? audioPath : `${GCP_STORAGE_BASE_URL}/${audioPath}`;
-  }
 
   return (
     <div className="min-h-screen bg-dark-bg p-8">

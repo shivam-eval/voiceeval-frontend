@@ -313,7 +313,7 @@ const AgentsPage = () => {
                 </div>
 
                 {/* Bulk Actions (Old) - Removed as it's now in Header Controls */}
-                
+
 
                 {/* Error State */}
                 {error && (

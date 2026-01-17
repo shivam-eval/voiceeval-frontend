@@ -28,6 +28,7 @@ import CallsPage from "./pages/observability/CallsPage";
 import LogsPage from "./pages/observability/LogsPage";
 import Dashboard from "./pages/dasbhboard";
 import WorkspaceLoader from "./pages/workspace/WorkspaceLoader";
+import InboundPage from "./pages/inbound/InboundPage";
 import DocsPage from "./pages/docs";
 
 import { useWorkflow } from "./context/WorkFlowContext";
@@ -116,23 +117,27 @@ function App() {
 
     // Testing section
     if (path.startsWith("/testing")) {
-      if (path.includes("/personas")) return { section: "testing", tab: "personas" };
-      if (path.includes("/scenarios")) return { section: "testing", tab: "scenarios" };
-      return { section: "testing", tab: "test-suites" };
+      if (path.includes("/personas")) return { section: "test-cases", tab: "personas" };
+      if (path.includes("/scenarios")) return { section: "test-cases", tab: "scenarios" };
+      return { section: "test-cases", tab: "test-suites" };
     }
     // Legacy routes
-    if (path.startsWith("/test-cases")) return { section: "testing", tab: "test-suites" };
-    if (path.startsWith("/personas")) return { section: "testing", tab: "personas" };
+    if (path.startsWith("/test-cases")) return { section: "test-cases", tab: "test-suites" };
+    if (path.startsWith("/personas")) return { section: "test-cases", tab: "personas" };
 
-    // Simulations section
+    // Inbound section
+    if (path.startsWith("/inbound")) {
+      return { section: "test-cases", tab: "inbound" };
+    }
+
+    // Simulations section (Outbound)
     if (path.startsWith("/simulations") || path.startsWith("/simulation")) {
-      if (path.includes("/runs")) return { section: "simulations", tab: "runs" };
-      return { section: "simulations", tab: "run" };
+      return { section: "test-cases", tab: "outbound" };
     }
 
     // Evaluations section
     if (path.startsWith("/evaluations")) {
-      return { section: "evaluations", tab: "overview" };
+      return { section: "test-cases", tab: "overview" };
     }
 
     // Observability section
@@ -187,8 +192,13 @@ function App() {
                 <Route path="/test-cases/:suiteId" element={<TestSuiteDetailView />} />
                 <Route path="/personas" element={<PersonasPage />} />
 
+
                 {/* Workspace */}
                 <Route path="/workspace" element={<WorkspaceLoader />} />
+
+                {/* === INBOUND SECTION === */}
+                <Route path="/inbound/runs" element={<InboundPage />} />
+                <Route path="/inbound/runs/:simulationId" element={<SimulationDetailPage />} />
 
                 {/* === SIMULATIONS SECTION === */}
                 {/* New routes */}

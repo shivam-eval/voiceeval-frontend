@@ -18,13 +18,15 @@ import {
   BarChart3,
   Brain,
   MessageSquare,
-  Folder
+  Folder,
+  Trash2
 } from 'lucide-react';
 import AudioUploadModal from '../../components/AudioUploadModal';
 import GenericDropdown from '../../components/DropDown';
 import Badge from '../../components/Badge';
 import { extractNoiseFromSessionId, getNoiseProfileBadgeVariant } from '../../utils/noiseUtils';
-import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvaluateAudio } from '../../hooks/useCalls';
+import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvaluateAudio, useDeleteCall } from '../../hooks/useCalls';
+import ConfirmationModal from '../../components/ConfirmationModal';
 import { useFlows } from '../../hooks/useFlows';
 import { useAgents } from '../../hooks/useAgents';
 import { useWorkflow } from '../../context/WorkFlowContext';
@@ -44,6 +46,15 @@ const CallsPage = () => {
   const agentsPerPage = 10;
   const [callsPage, setCallsPage] = useState(1);
   const callsPerPage = 10;
+
+  // Confirmation Modal State for delete
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => { },
+    isLoading: false
+  });
 
 
   const directoryParam = searchParams.get('directory');
@@ -306,6 +317,28 @@ const CallsPage = () => {
   const evaluateCall = useEvaluateCall();
   const evaluateAudio = useEvaluateAudio();
   const uploadCalls = useUploadCalls();
+  const deleteCall = useDeleteCall();
+
+  const handleDeleteCall = (callId) => {
+    setConfirmationModal({
+      isOpen: true,
+      title: "Delete Call",
+      message: "Are you sure you want to delete this call? This action cannot be undone.",
+      variant: "danger",
+      confirmText: "Delete",
+      onConfirm: async () => {
+        setConfirmationModal(prev => ({ ...prev, isLoading: true }));
+        try {
+          await deleteCall.mutateAsync(callId);
+          setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+          toast.success("Call deleted successfully");
+        } catch (error) {
+          // Error handled by global interceptor
+          setConfirmationModal(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
+  };
 
   const handleAddCalls = () => {
     setIsModalOpen(true);
@@ -810,6 +843,14 @@ const CallsPage = () => {
                           >
                             <Download className="w-3.5 h-3.5" />
                           </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteCall(call.call_id); }}
+                            disabled={deleteCall.isPending}
+                            className="p-1.5 bg-red-500/10 text-red-400 rounded hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -1042,6 +1083,18 @@ const CallsPage = () => {
           </div>
         </div>
       )}
+
+      {/* Confirmation Modal for Delete */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.onConfirm}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        isLoading={confirmationModal.isLoading}
+        variant={confirmationModal.variant}
+        confirmText={confirmationModal.confirmText}
+      />
     </div>
   );
 }

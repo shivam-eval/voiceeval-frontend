@@ -186,6 +186,7 @@ export const evaluationsApi = {
 export const callsApi = {
     list: (params) => apiClient.get('/calls/', params),
     get: (id) => apiClient.get(`/calls/${id}`),
+    delete: (id) => apiClient.delete(`/calls/${id}`),
     evaluate: (id) => apiClient.post(`/calls/${id}/evaluate`, {}),
     evaluateAudio: (data) => apiClient.post('/evaluation/audio', data),
     upload: (formData, agentId) => {

@@ -76,11 +76,10 @@ function App() {
   const [isConnecting, setIsConnecting] = useState(false);
 
   // Monitor token expiration (only runs when authenticated)
-  // Shows warning 5 minutes before expiration
+  // Silently redirects to auth screen when token expires
   useTokenExpiration({
-    showWarning: true,
-    warningTime: 5 * 60 * 1000, // 5 minutes
-    enabled: isAuthenticated // Only monitor when authenticated
+    enabled: isAuthenticated,
+    onExpire: () => setIsAuthenticated(false)
   });
 
   /* ---------------- Auth ---------------- */

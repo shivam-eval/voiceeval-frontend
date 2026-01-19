@@ -150,7 +150,8 @@ const CallsPage = () => {
     const options = [
       ...agents.map(agent => ({
         label: `${agent.name} (${agent.provider_agent_id || agent.agent_id})`,
-        value: agent.provider_agent_id || agent.agent_id
+        value: agent.provider_agent_id || agent.agent_id,
+        name: agent.name // Add the name separately
       }))
     ];
 
@@ -822,7 +823,7 @@ const CallsPage = () => {
                             {call.call_id || 'N/A'}
                           </span>
                           <span className="text-gray-500 text-xs truncate max-w-[180px]">
-                            {call.filename || 'manual_upload.mp3'}
+                            {call.filename || call.agent_id || call.directory || 'No filename'}
                           </span>
                         </div>
                       </td>

@@ -94,7 +94,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
       const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
       return {
-        category: (cat.category || 'Unknown').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        category: (cat.category || 'Unknown').replace(/_/g, ' and ').replace(/\b\w/g, l => l.toUpperCase()),
         score: normalizedScore
       };
     }).filter(Boolean);
@@ -380,9 +380,9 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
               </h3>
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {evaluationData.issues.map((issue, idx) => {
-                  const formatText = (text) => text?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  const formatText = (text) => text?.replace(/_/g, ' and ').replace(/\b\w/g, l => l.toUpperCase());
                   const issueText = typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue));
-                  
+
                   return (
                     <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
                       <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -524,7 +524,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-gray-400 mb-1">
-                              {cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              {cat.category.replace(/_/g, ' and ').replace(/\b\w/g, l => l.toUpperCase())}
                             </p>
                             <p className={`text-2xl font-bold ${getScoreColor(normalizedScore)}`}>
                               {normalizedScore}%
@@ -582,34 +582,61 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
           {activeTab === 'propagation' && (
             <>
-              <FailurePropagationGraph
-                stepHealth={evaluationData?.failure_propagation?.step_health || {}}
-                cascadingFailures={evaluationData?.failure_propagation?.cascading_failures || {}}
-              />
+              {/* Check if failure propagation data is available */}
+              {evaluationData?.failure_propagation &&
+                (evaluationData.failure_propagation.critical_failure_turns?.length > 0 ||
+                  evaluationData.failure_propagation.total_tainted_steps > 0 ||
+                  Object.keys(evaluationData.failure_propagation.step_health || {}).length > 0 ||
+                  Object.keys(evaluationData.failure_propagation.cascading_failures || {}).length > 0) ? (
+                <>
+                  <FailurePropagationGraph
+                    stepHealth={evaluationData.failure_propagation.step_health || {}}
+                    cascadingFailures={evaluationData.failure_propagation.cascading_failures || {}}
+                  />
 
-              {/* Propagation Summary */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-dark-panel border border-red-500/20 rounded-xl p-5">
-                  <p className="text-sm text-gray-400 mb-2">Critical Failures</p>
-                  <p className="text-3xl font-bold text-red-400">
-                    {evaluationData?.failure_propagation?.critical_failure_turns?.length || 0}
-                  </p>
-                </div>
+                  {/* Propagation Summary */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="bg-dark-panel border border-red-500/20 rounded-xl p-5">
+                      <p className="text-sm text-gray-400 mb-2">Critical Failures</p>
+                      <p className="text-3xl font-bold text-red-400">
+                        {evaluationData.failure_propagation.critical_failure_turns?.length || 0}
+                      </p>
+                    </div>
 
-                <div className="bg-dark-panel border border-yellow-500/20 rounded-xl p-5">
-                  <p className="text-sm text-gray-400 mb-2">Tainted Steps</p>
-                  <p className="text-3xl font-bold text-yellow-400">
-                    {evaluationData?.failure_propagation?.total_tainted_steps || 0}
-                  </p>
-                </div>
+                    <div className="bg-dark-panel border border-yellow-500/20 rounded-xl p-5">
+                      <p className="text-sm text-gray-400 mb-2">Tainted Steps</p>
+                      <p className="text-3xl font-bold text-yellow-400">
+                        {evaluationData.failure_propagation.total_tainted_steps || 0}
+                      </p>
+                    </div>
 
-                <div className="bg-dark-panel border border-orange-500/20 rounded-xl p-5">
-                  <p className="text-sm text-gray-400 mb-2">Max Propagation Depth</p>
-                  <p className="text-3xl font-bold text-orange-400">
-                    {evaluationData?.failure_propagation?.propagation_depth || 0}
-                  </p>
+                    <div className="bg-dark-panel border border-orange-500/20 rounded-xl p-5">
+                      <p className="text-sm text-gray-400 mb-2">Max Propagation Depth</p>
+                      <p className="text-3xl font-bold text-orange-400">
+                        {evaluationData.failure_propagation.propagation_depth || 0}
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Fallback screen when no failure propagation data */
+                <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-gray-800/50 flex items-center justify-center">
+                      <TrendingUp className="w-8 h-8 text-gray-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-2">
+                        No Failure Propagation Data
+                      </h3>
+                      <p className="text-sm text-gray-400 max-w-md">
+                        Failure propagation analysis is not available for this evaluation.
+                        This may indicate that no failures were detected or the analysis was not performed.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>

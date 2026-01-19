@@ -24,6 +24,7 @@ import EndpointingOverview from '../insights/endpointing';
 import PersonaOverview from '../insights/persona';
 import TaskCompletionOverview from '../insights/task_completion';
 import ConversationOverview from '../insights/conversation';
+import CallKPISection from '../CallKPISection';
 
 const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -382,7 +383,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                 {evaluationData.issues.map((issue, idx) => {
                   const formatText = (text) => text?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                   const issueText = typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue));
-                  
+
                   return (
                     <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
                       <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -427,6 +428,11 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
             </div>
           )}
         </div>
+      )}
+
+      {/* KPI Section - Show call-level KPIs if available */}
+      {!activeCategory && evaluation?.kpi_results && evaluation.kpi_results.length > 0 && (
+        <CallKPISection kpiResults={evaluation.kpi_results} evaluation={evaluation} />
       )}
 
       {/* Tabs - Only show when no category is active */}

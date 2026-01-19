@@ -138,7 +138,7 @@ const CallsPage = () => {
   const displayedAgents = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
     return filteredCategories.filter(cat => {
-      const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === cat);
+      const agent = agentsData?.agents?.find(a => a.provider_agent_id === cat || a.agent_id === cat);
       const agentName = agent?.name || agent?.agent_name || `Agent ${cat.substring(0, 8)}`;
       return cat.toLowerCase().includes(searchLower) || agentName.toLowerCase().includes(searchLower);
     });
@@ -556,7 +556,7 @@ const CallsPage = () => {
     const options = backendCategories
       .filter(cat => typeof cat === 'string')
       .map(cat => {
-        const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === cat);
+        const agent = agentsData?.agents?.find(a => a.provider_agent_id === cat || a.agent_id === cat);
         const rawName = agent?.name || agent?.agent_name || cat.replace(/[_-]/g, ' ');
         const cleanName = rawName.replace(/^Agent\s+/i, '');
 
@@ -591,7 +591,7 @@ const CallsPage = () => {
               <ChevronRight className="w-4 h-4" />
               <span className="text-teal-400 font-semibold">
                 {(() => {
-                  const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === directory);
+                  const agent = agentsData?.agents?.find(a => a.provider_agent_id === directory || a.agent_id === directory);
                   const rawName = agent?.name || agent?.agent_name || directory.replace(/[_-]/g, ' ');
                   return rawName.replace(/^Agent\s+/i, '');
                 })()}
@@ -715,7 +715,7 @@ const CallsPage = () => {
                           <div className="flex flex-col">
                             <span className="text-white font-semibold text-sm">
                               {(() => {
-                                const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === cat);
+                                const agent = agentsData?.agents?.find(a => a.provider_agent_id === cat || a.agent_id === cat);
                                 const rawName = agent?.name || agent?.agent_name || `Agent ${cat.substring(0, 8)}`;
                                 return rawName.replace(/^Agent\s+/i, '');
                               })()}

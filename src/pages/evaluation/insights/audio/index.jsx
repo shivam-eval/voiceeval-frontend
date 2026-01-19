@@ -172,7 +172,7 @@ const AudioOverview = ({ response, data, onBack }) => {
 
           // Filter and humanize details
           const details = Object.entries(metric.details || {})
-            .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'llm_usage', 'value', 'error_message'].includes(key));
+            .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'llm_usage', 'value', 'error_message', 'audio_files_analyzed'].includes(key));
 
           return (
             <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>

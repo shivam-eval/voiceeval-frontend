@@ -25,6 +25,14 @@ const AudioUploadModal = ({
         }
     }, [agents, selectedAgentId]);
 
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setAudioFiles([]);
+            setUploadResults(null);
+        }
+    }, [isOpen]);
+
     const formatFileSize = (bytes) => {
         if (bytes < 1024) return bytes + ' B';
         if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';

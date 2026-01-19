@@ -29,6 +29,9 @@ import { useFlows } from '../../hooks/useFlows';
 import { useAgents } from '../../hooks/useAgents';
 import { useWorkflow } from '../../context/WorkFlowContext';
 import { useEvents } from '../../context/EventsContext';
+import { useAgentKPIs, useDiscoverKPIs } from '../../hooks/useKPIs';
+import KPIMetricsGrid from '../../components/KPIMetricsGrid';
+import { formatKPIValue } from '../../utils/kpiFormatters';
 
 const CallsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,6 +47,7 @@ const CallsPage = () => {
   const agentsPerPage = 10;
   const [callsPage, setCallsPage] = useState(1);
   const callsPerPage = 10;
+  const [showKPIs, setShowKPIs] = useState(true); // Show KPIs by default
 
 
   const directoryParam = searchParams.get('directory');
@@ -194,6 +198,109 @@ const CallsPage = () => {
       refetch();
     }
   }, [viewMode, directory, refetch]);
+
+  // Fetch agent KPIs when viewing an agent's calls
+  const { data: agentKPIsData, isLoading: isLoadingKPIs } = useAgentKPIs(
+    directory, // Only fetch if directory (agent) is selected
+    30, // 30-day period
+    { enabled: viewMode === 'calls' && !!directory } // Only enabled when viewing calls for an agent
+  );
+
+  // Hook for discovering new KPIs
+  const discoverKPIsMutation = useDiscoverKPIs();
+
+  // Format KPIs for display
+  const kpisForDisplay = useMemo(() => {
+    if (!agentKPIsData || !agentKPIsData.kpis) return [];
+
+    const kpis = agentKPIsData.kpis;
+    const displayKPIs = [];
+
+    // Add static KPIs
+    if (kpis.static_kpis) {
+      if (kpis.static_kpis.fcr_rate !== undefined) {
+        displayKPIs.push({
+          kpi_id: 'fcr',
+          name: 'FCR Rate',
+          value: kpis.static_kpis.fcr_rate,
+          unit: '%',
+          data_type: 'float',
+          aggregation_method: 'rate',
+          description: 'First Call Resolution rate - percentage of calls resolved on first contact',
+          is_static: true,
+        });
+      }
+      if (kpis.static_kpis.conversion_rate !== undefined) {
+        displayKPIs.push({
+          kpi_id: 'conversion',
+          name: 'Conversion Rate',
+          value: kpis.static_kpis.conversion_rate,
+          unit: '%',
+          data_type: 'float',
+          aggregation_method: 'rate',
+          description: 'Percentage of calls that resulted in a conversion',
+          is_static: true,
+        });
+      }
+      if (kpis.static_kpis.transfer_rate !== undefined) {
+        displayKPIs.push({
+          kpi_id: 'transfer',
+          name: 'Transfer Rate',
+          value: kpis.static_kpis.transfer_rate,
+          unit: '%',
+          data_type: 'float',
+          aggregation_method: 'rate',
+          description: 'Percentage of calls transferred to another agent',
+          is_static: true,
+        });
+      }
+      if (kpis.static_kpis.avg_objection_handling_quality !== undefined) {
+        displayKPIs.push({
+          kpi_id: 'objection_handling',
+          name: 'Objection Quality',
+          value: kpis.static_kpis.avg_objection_handling_quality,
+          unit: '%',
+          data_type: 'float',
+          aggregation_method: 'avg',
+          description: 'Average quality of objection handling',
+          is_static: true,
+        });
+      }
+    }
+
+    // Add dynamic KPIs
+    if (kpis.dynamic_kpis) {
+      Object.entries(kpis.dynamic_kpis).forEach(([key, kpiData]) => {
+        if (typeof kpiData === 'object' && kpiData.value !== undefined) {
+          displayKPIs.push({
+            kpi_id: key,
+            name: key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+            value: kpiData.value,
+            unit: kpiData.unit || '',
+            data_type: typeof kpiData.value === 'boolean' ? 'boolean' :
+              typeof kpiData.value === 'number' && Number.isInteger(kpiData.value) ? 'int' : 'float',
+            aggregation_method: kpiData.aggregation_method || 'avg',
+            description: `Dynamic KPI: ${key}`,
+            is_static: false,
+          });
+        }
+      });
+    }
+
+    return displayKPIs;
+  }, [agentKPIsData]);
+
+  const handleDiscoverKPIs = async () => {
+    if (!directory) return;
+
+    try {
+      await discoverKPIsMutation.mutateAsync({ agentId: directory, forceRefresh: true });
+      toast.success(`✨ KPI discovery started for agent`);
+    } catch (error) {
+      toast.error(`Failed to discover KPIs: ${error.message}`);
+    }
+  };
+
 
   // Subscribe to SSE events for real-time call evaluation updates (replaces polling)
   useEffect(() => {
@@ -566,6 +673,68 @@ const CallsPage = () => {
           )}
         </div>
       </div>
+
+      {/* KPI Summary Section (only in calls view) */}
+      {viewMode === 'calls' && directory && (
+        <div className="mb-6 bg-dark-panel rounded-xl border border-gray-800/50 p-6">
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex items-center gap-3">
+              <BarChart3 className="w-5 h-5 text-teal-400" />
+              <h2 className="text-lg font-bold text-white">
+                Agent Performance Metrics
+                <span className="text-sm text-gray-500 ml-2 font-normal">(Last 30 Days)</span>
+              </h2>
+            </div>
+            <div className="flex items-center gap-2">
+              {kpisForDisplay.length > 0 && (
+                <button
+                  onClick={() => setShowKPIs(!showKPIs)}
+                  className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium transition-colors"
+                >
+                  {showKPIs ? 'Hide Details' : 'Show Details'}
+                </button>
+              )}
+              {!isLoadingKPIs && kpisForDisplay.filter(k => !k.is_static).length === 0 && (
+                <button
+                  onClick={handleDiscoverKPIs}
+                  disabled={discoverKPIsMutation.isPending}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                >
+                  <Brain className="w-4 h-4" />
+                  {discoverKPIsMutation.isPending ? 'Discovering...' : 'Discover KPIs'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {showKPIs && (
+            <div className="mt-4">
+              <KPIMetricsGrid
+                kpis={kpisForDisplay}
+                columns={4}
+                loading={isLoadingKPIs}
+                emptyMessage="No KPI data available. Start by evaluating some calls or click 'Discover KPIs' to find agent-specific metrics."
+              />
+            </div>
+          )}
+
+          {!showKPIs && kpisForDisplay.length > 0 && (
+            <div className="flex items-center gap-4 text-sm">
+              {kpisForDisplay.slice(0, 4).map((kpi) => (
+                <div key={kpi.kpi_id} className="flex items-center gap-2">
+                  <span className="text-gray-400">{kpi.name}:</span>
+                  <span className="text-white font-semibold">
+                    {formatKPIValue(kpi.value, kpi.data_type, kpi.unit)}
+                  </span>
+                </div>
+              ))}
+              {kpisForDisplay.length > 4 && (
+                <span className="text-gray-500">+{kpisForDisplay.length - 4} more</span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Header Controls */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">

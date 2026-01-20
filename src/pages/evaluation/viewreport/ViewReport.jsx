@@ -247,7 +247,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         return <TaskCompletionOverview response={categoryMap.task_completion} onBack={handleBackToOverview} />;
 
       case 'conversation_quality':
-        return <ConversationOverview response={categoryMap.conversation_quality} onBack={handleBackToOverview} />;
+        return <ConversationOverview response={categoryMap.conversation_quality} data={evaluationData} transcriptData={transcriptData} onBack={handleBackToOverview} />;
 
       default:
         return null;
@@ -255,26 +255,13 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 px-8 pb-10">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold text-white mb-2">
             Test Report: {report?.test_id || evaluation?.test_case_name || 'Unknown Test'}
           </h2>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-gray-400">
-              Test ID: <span className="font-mono text-gray-300">{report?.test_id || 'N/A'}</span>
-            </span>
-            <span className="text-gray-600">•</span>
-            <span className="text-gray-400">
-              Session: <span className="font-mono text-gray-300">{report?.session_id || 'N/A'}</span>
-            </span>
-            <span className="text-gray-600">•</span>
-            <span className="text-gray-400">
-              Evaluation ID: <span className="font-mono text-gray-300">{String(evaluation?.evaluation_id || 'N/A').substring(0, 12)}...</span>
-            </span>
-          </div>
         </div>
 
         <button

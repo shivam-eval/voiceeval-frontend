@@ -162,10 +162,6 @@ const SimulationOverview = ({ simulationData }) => {
             </div>
             
             <div className="flex-1 h-px bg-gradient-to-r from-teal-500/20 to-transparent" />
-            
-            <span className="text-xs text-gray-500">
-              Schema v{simulationData.schema_version || '1.0'}
-            </span>
           </div>
         </div>
       )}

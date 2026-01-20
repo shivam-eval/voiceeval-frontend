@@ -2,6 +2,7 @@ import { MessageSquare, ArrowLeft } from "lucide-react";
 
 /* ========================= HELPERS ========================= */
 const formatKey = (key) => {
+  if (!key || typeof key !== 'string') return "Unknown";
   return key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 };
 
@@ -19,6 +20,131 @@ const formatValue = (key, value) => {
     return value.toFixed(2);
   }
   return String(value);
+};
+
+const aggregateTurnData = (metrics, transcriptData) => {
+  const turnsMap = new Map();
+
+  // 1. First populate from transcriptData if available (source of truth for text)
+  if (transcriptData && Array.isArray(transcriptData.steps)) {
+    transcriptData.steps.forEach((step, idx) => {
+      // step_number is usually 1-indexed, or fall back to idx
+      const turnIndex = step.step_number ? step.step_number - 1 : idx;
+      
+      const text = step.text || step.content || step.transcript || "";
+      // Calculate estimated WPM if duration is available
+      let estimatedWpm = null;
+      if (text && (step.duration_ms > 0 || step.duration > 0)) {
+        const durationMs = step.duration_ms || (step.duration * 1000);
+        const wordCount = text.toString().trim().split(/\s+/).length;
+        const durationMin = durationMs / 60000;
+        estimatedWpm = Math.round(wordCount / durationMin);
+      }
+
+      turnsMap.set(turnIndex, {
+        index: turnIndex,
+        title: `Turn #${turnIndex + 1}`,
+        role: step.turn_role || (turnIndex % 2 === 0 ? 'agent' : 'user'),
+        text: String(text),
+        intent: step.intent || step.user_intent || null,
+        metrics: [],
+        estimatedWpm: estimatedWpm
+      });
+    });
+  }
+
+  // 2. Merge in metric data
+  metrics.forEach(metric => {
+    // Check for turn-based data in various structures
+    const turnData = metric.details?.turn_data || 
+                    metric.details?.turn_breakdown || 
+                    metric.details?.per_turn_sentiment || 
+                    [];
+
+    if (Array.isArray(turnData)) {
+      turnData.forEach((turn, idx) => {
+        const turnIndex = turn.turn_index !== undefined ? turn.turn_index : 
+                         turn.step_number !== undefined ? turn.step_number - 1 : idx;
+        
+        if (!turnsMap.has(turnIndex)) {
+          turnsMap.set(turnIndex, {
+            index: turnIndex,
+            title: `Turn #${turnIndex + 1}`,
+            text: "",
+            intent: null,
+            metrics: []
+          });
+        }
+
+        const existingTurn = turnsMap.get(turnIndex);
+        
+        // Update text if we found a better source and existing is empty or shorter
+        const candidateText = turn.text || turn.transcript || turn.input || turn.sentence || turn.message || "";
+        // Always allowed to overwrite if existing is empty
+        if (!existingTurn.text && candidateText) {
+          existingTurn.text = String(candidateText);
+        } else if (existingTurn.text && candidateText && candidateText.length > existingTurn.text.length) {
+           // If we found a longer text, prefer it (even if we had some transcript data, it might have been truncated/empty)
+           existingTurn.text = String(candidateText);
+        }
+
+        // Update intent if found in turn data
+        const candidateIntent = turn.intent || turn.user_intent || turn.predicted_intent || turn.expected_intent;
+        if (!existingTurn.intent && candidateIntent) {
+          existingTurn.intent = String(candidateIntent);
+        }
+
+        // Add metric value for this turn
+        const mName = metric.name || metric.metric_name || "";
+        let value = null;
+        let pValue = null; // Secondary value (e.g., sentiment score)
+        let status = turn.status;
+
+        // Helper for safe emotion processing
+        const safeEmotion = typeof turn.emotion === 'string' ? turn.emotion.toLowerCase() : '';
+
+        if (mName === 'words_per_minute') {
+          value = `${Math.round(turn.wpm)} WPM`;
+        } else if (mName === 'text_sentiment') {
+          // Label
+          value = String(turn.emotion || "Unknown");
+          // Score
+          const sentimentScore = turn.sentiment_score !== undefined ? turn.sentiment_score : turn.score;
+          if (sentimentScore !== undefined) {
+             pValue = `${(Number(sentimentScore) * 100).toFixed(1)}%`;
+          }
+        } else if (mName === 'toxicity') {
+          value = turn.toxicity_score ? `Score: ${(turn.toxicity_score * 100).toFixed(1)}%` : null;
+        }
+
+        if (value || status) {
+          existingTurn.metrics.push({
+            name: formatKey(mName),
+            value: value,
+            pValue: pValue,
+            status: status,
+            // Helper for styling
+            isPositive: status === 'passed' || (mName === 'text_sentiment' && ['joy', 'positive', 'neutral'].includes(safeEmotion)),
+            isNegative: status === 'failed' || (mName === 'text_sentiment' && ['anger', 'sadness', 'negative'].includes(safeEmotion))
+          });
+        }
+      });
+    }
+  });
+
+  // 3. Post-process: Add fallback WPM if missing
+  for (const turn of turnsMap.values()) {
+     const hasWpm = turn.metrics.some(m => m.name.includes("Words Per Minute") || m.name.includes("Wpm"));
+     if (!hasWpm && turn.estimatedWpm) {
+        turn.metrics.push({
+            name: "Words Per Minute", // Consistent naming
+            value: `${turn.estimatedWpm} WPM`,
+            isPositive: true // Neutral/Positive style
+        });
+     }
+  }
+
+  return Array.from(turnsMap.values()).sort((a, b) => a.index - b.index);
 };
 
 /* ========================= Extract Conversation Category Data ========================= */
@@ -83,7 +209,7 @@ const extractConversationData = (response, data) => {
 };
 
 /* ========================= COMPONENT ========================= */
-const ConversationOverview = ({ response, data, onBack }) => {
+const ConversationOverview = ({ response, data, transcriptData, onBack }) => {
   const processedResponse = extractConversationData(response, data);
   const metrics = processedResponse.metrics || [];
   const rawScore = processedResponse.score;
@@ -94,6 +220,13 @@ const ConversationOverview = ({ response, data, onBack }) => {
 
   const passedCount = metrics.filter((m) => m.status === "passed").length;
   const failedCount = metrics.length - passedCount;
+
+  let aggregatedturns = [];
+  try {
+    aggregatedturns = aggregateTurnData(metrics, transcriptData);
+  } catch (error) {
+    console.error("Error aggregating turns:", error);
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -570,128 +703,9 @@ const ConversationOverview = ({ response, data, onBack }) => {
                   </div>
                 )}
 
-                {/* Agent Sentences (for repetition_count) */}
-                {hasAgentSentences && (
-                  <div className="pt-6 border-t border-gray-800/50 space-y-4">
-                    <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
-                      Agent Sentences
-                    </div>
-                    {metric.details.agent_sentences.length === 0 ? (
-                      <span className="text-gray-500">None</span>
-                    ) : (
-                      <div className="space-y-4">
-                        {metric.details.agent_sentences.map((sentence, i) => (
-                          <div
-                            key={i}
-                            className="rounded-xl p-5 border bg-dark-input border-gray-800/50"
-                          >
-                            <div className="flex items-center justify-between mb-4">
-                              <span className="text-sm text-gray-300">
-                                Turn #{sentence.turn || i + 1}
-                              </span>
-                            </div>
-                            <div className="text-sm text-gray-200 leading-relaxed">
-                              {typeof sentence === "object"
-                                ? sentence.text || JSON.stringify(sentence)
-                                : String(sentence)}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
 
-                {/* Turn-by-Turn Analysis */}
-                {turnData && Array.isArray(turnData) && turnData.length > 0 && (
-                  <div className="space-y-4 pt-6 border-t border-gray-800/50">
-                    <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest mb-4">
-                      Turn-by-Turn Analysis
-                    </div>
-                    <div className="space-y-4">
-                      {turnData.map((turn, tIdx) => {
-                        const turnNumber =
-                          turn.step_number || turn.turn_index + 1 || tIdx + 1;
-                        const turnStatus = turn.status;
 
-                        let isIdeal = false;
-                        let displayValue = null;
 
-                        if (mName === "words_per_minute") {
-                          isIdeal = turn.wpm >= 120 && turn.wpm <= 150;
-                          displayValue = `WPM: ${Math.round(turn.wpm)}`;
-                        } else if (mName === "text_sentiment") {
-                          displayValue = turn.emotion || "Unknown";
-                        }
-
-                        return (
-                          <div
-                            key={tIdx}
-                            className="rounded-xl p-5 border bg-dark-input border-gray-800/50"
-                          >
-                            <div className="flex items-center justify-between mb-4">
-                              <span className="text-sm text-gray-300">
-                                Turn #{turnNumber}
-                              </span>
-                              {displayValue ? (
-                                <span
-                                  className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${isIdeal || turnStatus === "passed"
-                                    ? "bg-green-500/20 text-green-400"
-                                    : mName === "text_sentiment"
-                                      ? "bg-teal-500/20 text-teal-400"
-                                      : "bg-red-500/20 text-red-400"
-                                    }`}
-                                >
-                                  {displayValue}
-                                </span>
-                              ) : turnStatus === "failed" ? (
-                                <span className="text-[10px] px-2 py-1 rounded font-bold uppercase bg-red-500/20 text-red-400">
-                                  FAILED
-                                </span>
-                              ) : null}
-                            </div>
-
-                            {/* Turn Statistics */}
-                            <div className="grid grid-cols-3 gap-6 text-sm">
-                              {Object.entries(turn)
-                                .filter(
-                                  ([key]) =>
-                                    ![
-                                      "step_number",
-                                      "turn_index",
-                                      "status",
-                                      "text",
-                                      "transcript",
-                                      "emotion",
-                                      "wpm",
-                                    ].includes(key)
-                                )
-                                .map(([key, value]) => (
-                                  <div key={key}>
-                                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">
-                                      {formatKey(key)}
-                                    </div>
-                                    <div className="text-gray-200 font-medium">
-                                      {formatValue(key, value)}
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
-
-                            {/* Turn Text/Transcript */}
-                            {(turn.text || turn.transcript) && (
-                              <div className="mt-4 pt-4 border-t border-gray-800/50">
-                                <div className="text-sm text-gray-200 leading-relaxed italic">
-                                  "{turn.text || turn.transcript}"
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
 
                 {/* Inflection Points (for sentiment metrics) */}
                 {hasInflectionPoints && (
@@ -733,6 +747,109 @@ const ConversationOverview = ({ response, data, onBack }) => {
             );
           })}
       </div>
+      {/* ================= UNIFIED CONVERSATION TURNS ================= */}
+      {aggregatedturns.length > 0 && (
+        <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-6 shadow-lg">
+          <div className="flex items-center gap-4 mb-6">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-teal-500/10 border border-teal-500/20 text-teal-400">
+              <MessageSquare size={20} />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-white">
+                Conversation Turns
+              </h3>
+              <p className="text-gray-400 text-sm mt-0.5">
+                Turn-by-turn breakdown with aggregated metric insights
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            {aggregatedturns.map((turn) => {
+              // Extract specific metrics for left column
+              const wpmMetric = turn.metrics.find(m => m.name.includes("Words Per Minute") || m.name.includes("Wpm") || m.name === "WPM");
+              const sentimentMetric = turn.metrics.find(m => m.name.includes("Sentiment"));
+              const otherMetrics = turn.metrics.filter(m => ![wpmMetric, sentimentMetric].includes(m));
+
+              return (
+              <div
+                key={turn.index}
+                className="rounded-xl border border-gray-800/50 bg-dark-input overflow-hidden"
+              >
+                {/* Turn Header */}
+                <div className="px-6 py-4 bg-gray-900/50 border-b border-gray-800/50">
+                  <span className="text-sm font-semibold text-gray-300">
+                    {turn.title}
+                  </span>
+                </div>
+
+                {/* Body Side-by-Side */}
+                <div className="p-6 flex flex-col md:flex-row gap-8">
+                  {/* Left Column: Metrics */}
+                  <div className="w-full md:w-1/4 flex flex-col gap-6 border-r border-gray-800/50 pr-8">
+                    {/* WPM */}
+                    {wpmMetric && (
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Words Per Minute</span>
+                        <div className="text-sm font-bold text-teal-400">{wpmMetric.value}</div>
+                      </div>
+                    )}
+
+                    {/* Sentiment */}
+                    {sentimentMetric && (
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Sentiment Score</span>
+                        <div className="flex flex-wrap gap-2">
+                           <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase border ${sentimentMetric.isPositive ? 'bg-green-500/10 text-green-400 border-green-500/20' : sentimentMetric.isNegative ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-teal-500/10 text-teal-400 border-teal-500/20'}`}>
+                              {sentimentMetric.value}
+                           </span>
+                           {sentimentMetric.pValue && (
+                             <span className="text-[10px] px-2 py-1 rounded font-bold uppercase border bg-teal-500/10 text-teal-400 border-teal-500/20">
+                               {sentimentMetric.pValue}
+                             </span>
+                           )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Intent */}
+                    {turn.intent && (
+                      <div className="flex flex-col gap-1.5">
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">User Intent</span>
+                        <div className="text-sm font-medium text-gray-300 leading-tight">
+                          {turn.intent}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Other small badges for minor metrics */}
+                    {otherMetrics.length > 0 && (
+                      <div className="flex flex-col gap-1.5">
+                         <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Other Insights</span>
+                         <div className="flex flex-wrap gap-2">
+                           {otherMetrics.map((m, mi) => (
+                             <span key={mi} className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase border ${m.status === 'failed' ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-gray-800 text-gray-400 border-gray-700'}`}>
+                                {m.name}
+                             </span>
+                           ))}
+                         </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right Column: Transcript */}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest block mb-3">Transcript</span>
+                    <p className="text-gray-300 leading-relaxed text-sm whitespace-pre-wrap">
+                      {turn.text || <span className="text-gray-600 italic">No transcript recorded for this turn.</span>}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );})}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

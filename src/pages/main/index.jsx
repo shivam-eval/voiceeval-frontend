@@ -26,7 +26,7 @@ const DashboardLayout = ({
         className={`flex-1 overflow-hidden ${isSidebarOpen ? "ml-64" : "ml-20"
           } transition-all duration-300`}
       >
-        <div className="h-full overflow-y-auto relative pt-10">
+        <div className="h-full overflow-y-auto relative pt-24">
           <TopBar />
           {children}
         </div>

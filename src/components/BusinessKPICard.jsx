@@ -79,8 +79,8 @@ const BusinessKPICard = ({
                 {aggregationMethod && <span className="capitalize">{aggregationMethod}</span>}
                 {confidence !== undefined && confidence < 1.0 && (
                     <span className={`px-1.5 py-0.5 rounded ${confidence >= 0.8 ? 'bg-green-500/20 text-green-400' :
-                            confidence >= 0.6 ? 'bg-yellow-500/20 text-yellow-400' :
-                                'bg-red-500/20 text-red-400'
+                        confidence >= 0.6 ? 'bg-yellow-500/20 text-yellow-400' :
+                            'bg-red-500/20 text-red-400'
                         }`}>
                         {Math.round(confidence * 100)}% sure
                     </span>

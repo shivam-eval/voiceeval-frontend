@@ -1,3 +1,4 @@
+import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { BarChart3 } from 'lucide-react';
 import KPIDetailCard from '../../components/KPIDetailCard';

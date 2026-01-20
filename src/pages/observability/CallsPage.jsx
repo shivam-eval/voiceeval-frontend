@@ -362,10 +362,12 @@ const CallsPage = () => {
   const handleEvaluateAll = (targetDirectory) => {
     if (!targetDirectory) return;
     setEvalDirectory(targetDirectory);
-    // Ensure the evalAgentId is synced with the latest stored assistantId when opening the modal
-    if (!evalAgentId && workflow?.assistantId) {
-      setEvalAgentId(workflow.assistantId);
-    }
+
+    // Default evalAgentId to the selected directory/agent if present, 
+    // otherwise fallback to workflow context
+    const defaultAgent = targetDirectory || workflow?.assistantId || '';
+    setEvalAgentId(defaultAgent);
+
     setIsEvaluateModalOpen(true);
   };
 
@@ -1009,7 +1011,7 @@ const CallsPage = () => {
         isLoading={uploadCalls.isPending}
         mode="calls"
         agents={agentOptions}
-        defaultAgentId={workflow?.assistantId || ''}
+        defaultAgentId={directory || workflow?.assistantId || ''}
       />
 
       {/* Evaluate Prompt Modal */}

@@ -18,12 +18,19 @@ const AudioUploadModal = ({
     const [uploadResults, setUploadResults] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
-    // Auto-select first agent if none selected
+    // Update selectedAgentId when defaultAgentId changes or modal opens
     useEffect(() => {
-        if (!selectedAgentId && agents.length > 0) {
+        if (isOpen && defaultAgentId) {
+            setSelectedAgentId(defaultAgentId);
+        }
+    }, [isOpen, defaultAgentId]);
+
+    // Auto-select first agent if none selected and no default provided
+    useEffect(() => {
+        if (!selectedAgentId && agents.length > 0 && !defaultAgentId) {
             setSelectedAgentId(agents[0].value);
         }
-    }, [agents, selectedAgentId]);
+    }, [agents, selectedAgentId, defaultAgentId]);
 
     const formatFileSize = (bytes) => {
         if (bytes < 1024) return bytes + ' B';

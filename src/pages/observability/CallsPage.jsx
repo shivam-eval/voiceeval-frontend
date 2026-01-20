@@ -19,6 +19,7 @@ import {
   Brain,
   MessageSquare,
   Folder,
+  Phone,
   Trash2
 } from 'lucide-react';
 import AudioUploadModal from '../../components/AudioUploadModal';
@@ -31,6 +32,9 @@ import { useFlows } from '../../hooks/useFlows';
 import { useAgents } from '../../hooks/useAgents';
 import { useWorkflow } from '../../context/WorkFlowContext';
 import { useEvents } from '../../context/EventsContext';
+import { useAgentKPIs, useDiscoverKPIs } from '../../hooks/useKPIs';
+import KPIMetricsGrid from '../../components/KPIMetricsGrid';
+import { formatKPIValue, getKPIIcon, getKPIColor } from '../../utils/kpiFormatters';
 
 const CallsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -46,6 +50,9 @@ const CallsPage = () => {
   const agentsPerPage = 10;
   const [callsPage, setCallsPage] = useState(1);
   const callsPerPage = 10;
+  const [showKPIs, setShowKPIs] = useState(true); // Show KPIs by default
+  const [discoveredKPIs, setDiscoveredKPIs] = useState(null);
+  const [isDiscoveryModalOpen, setIsDiscoveryModalOpen] = useState(false);
 
   // Confirmation Modal State for delete
   const [confirmationModal, setConfirmationModal] = useState({
@@ -206,6 +213,144 @@ const CallsPage = () => {
       refetch();
     }
   }, [viewMode, directory, refetch]);
+
+  // Fetch agent KPIs when viewing an agent's calls
+  const { data: agentKPIsData, isLoading: isLoadingKPIs } = useAgentKPIs(
+    directory, // Only fetch if directory (agent) is selected
+    30, // 30-day period
+    { enabled: viewMode === 'calls' && !!directory } // Only enabled when viewing calls for an agent
+  );
+
+  // Hook for discovering new KPIs
+  const discoverKPIsMutation = useDiscoverKPIs();
+
+  // Format KPIs for display
+  const kpisForDisplay = useMemo(() => {
+    if (!agentKPIsData || !agentKPIsData.kpis) return [];
+
+    const kpis = agentKPIsData.kpis;
+    const displayKPIs = [];
+
+    // Add static KPIs - normalize rates to percentages
+    if (kpis.static_kpis) {
+      // FCR Rate - normalize to percentage
+      if (kpis.static_kpis.fcr_rate !== undefined && kpis.static_kpis.fcr_rate !== null) {
+        const fcrValue = kpis.static_kpis.fcr_rate;
+        // If value is > 1, it's a count, convert to rate based on total_calls
+        const normalizedValue = fcrValue > 1 && kpis.static_kpis.fcr_count !== undefined
+          ? (kpis.static_kpis.fcr_count / (agentKPIsData.total_calls || 1)) * 100
+          : fcrValue <= 1 ? fcrValue * 100 : fcrValue;
+
+        displayKPIs.push({
+          kpi_id: 'fcr',
+          name: 'First Call Resolution',
+          value: normalizedValue,
+          unit: '%',
+          data_type: 'float',
+          aggregation_method: 'rate',
+          description: 'Percentage of calls resolved on first contact',
+          is_static: true,
+        });
+      }
+
+      // Conversion Rate
+      if (kpis.static_kpis.conversion_rate !== undefined && kpis.static_kpis.conversion_rate !== null) {
+        const conversionValue = kpis.static_kpis.conversion_rate;
+        const normalizedValue = conversionValue > 1 && kpis.static_kpis.conversion_count !== undefined
+          ? (kpis.static_kpis.conversion_count / (agentKPIsData.total_calls || 1)) * 100
+          : conversionValue <= 1 ? conversionValue * 100 : conversionValue;
+
+        displayKPIs.push({
+          kpi_id: 'conversion',
+          name: 'Conversion Rate',
+          value: normalizedValue,
+          unit: '%',
+          data_type: 'float',
+          aggregation_method: 'rate',
+          description: 'Percentage of calls that resulted in a conversion',
+          is_static: true,
+        });
+      }
+
+      // Transfer Rate
+      if (kpis.static_kpis.transfer_rate !== undefined && kpis.static_kpis.transfer_rate !== null) {
+        const transferValue = kpis.static_kpis.transfer_rate;
+        const normalizedValue = transferValue > 1 && kpis.static_kpis.transfer_count !== undefined
+          ? (kpis.static_kpis.transfer_count / (agentKPIsData.total_calls || 1)) * 100
+          : transferValue <= 1 ? transferValue * 100 : transferValue;
+
+        displayKPIs.push({
+          kpi_id: 'transfer',
+          name: 'Transfer Rate',
+          value: normalizedValue,
+          unit: '%',
+          data_type: 'float',
+          aggregation_method: 'rate',
+          description: 'Percentage of calls transferred to another agent',
+          is_static: true,
+        });
+      }
+
+      // Objection Handling Quality
+      if (kpis.static_kpis.avg_objection_handling_quality !== undefined && kpis.static_kpis.avg_objection_handling_quality !== null) {
+        const objectionValue = kpis.static_kpis.avg_objection_handling_quality;
+        // Normalize to 0-100 scale if needed
+        const normalizedValue = objectionValue <= 1 ? objectionValue * 100 : objectionValue;
+
+        displayKPIs.push({
+          kpi_id: 'objection_handling',
+          name: 'Objection Quality',
+          value: normalizedValue,
+          unit: '%',
+          data_type: 'float',
+          aggregation_method: 'avg',
+          description: 'Average quality of objection handling across all calls',
+          is_static: true,
+        });
+      }
+    }
+
+    // Add dynamic KPIs - use metadata from API
+    if (kpis.dynamic_kpis) {
+      Object.entries(kpis.dynamic_kpis).forEach(([key, kpiData]) => {
+        // Only add KPIs with non-null values
+        if (typeof kpiData === 'object' && kpiData.value !== null && kpiData.value !== undefined) {
+          displayKPIs.push({
+            kpi_id: kpiData.kpi_id || key,
+            name: kpiData.kpi_name || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+            value: kpiData.value,
+            unit: kpiData.unit || '',
+            data_type: kpiData.data_type || (typeof kpiData.value === 'boolean' ? 'boolean' :
+              typeof kpiData.value === 'number' && Number.isInteger(kpiData.value) ? 'int' : 'float'),
+            aggregation_method: kpiData.aggregation_method || 'avg',
+            description: `${kpiData.kpi_name || key} - ${kpiData.category || 'Dynamic KPI'}`,
+            category: kpiData.category,
+            is_static: false,
+            // Additional metadata for display
+            count: kpiData.count,
+            min: kpiData.min,
+            max: kpiData.max,
+          });
+        }
+      });
+    }
+
+    return displayKPIs;
+  }, [agentKPIsData]);
+
+  const handleDiscoverKPIs = async () => {
+    if (!directory) return;
+
+    try {
+      const result = await discoverKPIsMutation.mutateAsync({ agentId: directory, forceRefresh: true });
+      setDiscoveredKPIs(result);
+      setIsDiscoveryModalOpen(true);
+      toast.success(`✨ KPI discovery completed! Found ${result?.schemas?.length || 0} metrics.`);
+    } catch (error) {
+      toast.error(`Failed to discover KPIs: ${error.message}`);
+    }
+  };
+
 
   // Subscribe to SSE events for real-time call evaluation updates (replaces polling)
   useEffect(() => {
@@ -603,6 +748,247 @@ const CallsPage = () => {
         </div>
       </div>
 
+      {/* KPI Summary Section (only in calls view) */}
+      {viewMode === 'calls' && directory && (
+        <div className="mb-6 space-y-4">
+          {/* Overview Section - First 4 Static KPIs */}
+          {(() => {
+            const overviewKPIs = kpisForDisplay.filter(k => k.is_static).slice(0, 4);
+            const agentSpecificKPIs = kpisForDisplay.filter(k => !k.is_static);
+
+            return (
+              <>
+                {/* Overview Section */}
+                {overviewKPIs.length > 0 && (
+                  <div className="bg-dark-panel rounded-xl border border-gray-800/50 p-5">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 bg-teal-500/10 rounded-lg border border-teal-500/20">
+                          <BarChart3 className="w-4 h-4 text-teal-400" />
+                        </div>
+                        <h3 className="text-base font-bold text-white">
+                          Performance Overview
+                          <span className="text-xs text-gray-500 ml-2 font-normal">(Last 30 Days)</span>
+                        </h3>
+                      </div>
+                    </div>
+
+                    {isLoadingKPIs ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                        {Array.from({ length: 5 }).map((_, idx) => (
+                          <div key={idx} className="bg-gray-800/30 rounded-lg p-3 border border-gray-800/50 animate-pulse">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-8 h-8 bg-gray-700 rounded-lg"></div>
+                            </div>
+                            <div className="h-6 w-16 bg-gray-700 rounded mb-1"></div>
+                            <div className="h-3 w-24 bg-gray-700 rounded"></div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                        {/* Total Calls Card - Always first */}
+                        <div
+                          className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20 transition-all hover:bg-opacity-80"
+                          title={`Total calls analyzed in the last 30 days`}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="p-1.5 rounded-lg bg-blue-500/20">
+                              <Phone className="w-4 h-4 text-blue-400" />
+                            </div>
+                          </div>
+                          <div className="text-xl font-bold text-blue-400 mb-0.5">
+                            {agentKPIsData?.total_calls || 0}
+                          </div>
+                          <div className="text-gray-400 text-xs font-medium">
+                            Total Calls
+                          </div>
+                        </div>
+
+                        {/* Static KPI Cards */}
+                        {overviewKPIs.map((kpi) => {
+                          const Icon = getKPIIcon(kpi.kpi_id, kpi.kpi_id);
+                          const color = getKPIColor(kpi.value, kpi.data_type);
+                          const formattedValue = formatKPIValue(kpi.value, kpi.data_type, kpi.unit);
+
+                          const colorClasses = {
+                            teal: { bg: 'bg-teal-500/10', border: 'border-teal-500/20', text: 'text-teal-400', icon: 'bg-teal-500/20' },
+                            green: { bg: 'bg-green-500/10', border: 'border-green-500/20', text: 'text-green-400', icon: 'bg-green-500/20' },
+                            yellow: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', text: 'text-yellow-400', icon: 'bg-yellow-500/20' },
+                            red: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', icon: 'bg-red-500/20' },
+                            blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: 'bg-blue-500/20' },
+                            gray: { bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-400', icon: 'bg-gray-500/20' },
+                          };
+
+                          const colors = colorClasses[color] || colorClasses.gray;
+
+                          return (
+                            <div
+                              key={kpi.kpi_id}
+                              className={`${colors.bg} rounded-lg p-3 border ${colors.border} transition-all hover:bg-opacity-80`}
+                              title={kpi.description}
+                            >
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className={`p-1.5 rounded-lg ${colors.icon}`}>
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                              </div>
+                              <div className={`text-xl font-bold ${colors.text} mb-0.5`}>
+                                {formattedValue}
+                              </div>
+                              <div className="text-gray-400 text-xs font-medium">
+                                {kpi.name}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Agent-Specific Metrics Section */}
+                {agentSpecificKPIs.length > 0 && (
+                  <div className="bg-dark-panel rounded-xl border border-gray-800/50 p-5">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                          <Brain className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <h3 className="text-base font-bold text-white">
+                          Agent-Specific Metrics
+                          <span className="text-xs text-gray-500 ml-2 font-normal">({agentSpecificKPIs.length} metrics)</span>
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setShowKPIs(!showKPIs)}
+                        className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 rounded-lg text-xs font-medium transition-colors"
+                      >
+                        {showKPIs ? 'Collapse' : 'Expand'}
+                      </button>
+                    </div>
+
+                    {showKPIs && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {agentSpecificKPIs.map((kpi) => {
+                          const Icon = getKPIIcon(kpi.kpi_id, kpi.kpi_id);
+                          const color = getKPIColor(kpi.value, kpi.data_type);
+                          const formattedValue = formatKPIValue(kpi.value, kpi.data_type, kpi.unit);
+
+                          const colorClasses = {
+                            teal: { bg: 'bg-teal-500/10', border: 'border-teal-500/20', text: 'text-teal-400', icon: 'bg-teal-500/20' },
+                            green: { bg: 'bg-green-500/10', border: 'border-green-500/20', text: 'text-green-400', icon: 'bg-green-500/20' },
+                            yellow: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', text: 'text-yellow-400', icon: 'bg-yellow-500/20' },
+                            red: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', icon: 'bg-red-500/20' },
+                            blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: 'bg-blue-500/20' },
+                            gray: { bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-400', icon: 'bg-gray-500/20' },
+                          };
+
+                          const colors = colorClasses[color] || colorClasses.gray;
+
+                          return (
+                            <div
+                              key={kpi.kpi_id}
+                              className={`${colors.bg} rounded-lg p-3 border ${colors.border} transition-all hover:bg-opacity-80 relative`}
+                              title={kpi.description}
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className={`p-1.5 rounded-lg ${colors.icon}`}>
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 uppercase font-bold">
+                                  Dynamic
+                                </span>
+                              </div>
+                              <div className={`text-xl font-bold ${colors.text} mb-0.5`}>
+                                {formattedValue}
+                              </div>
+                              <div className="text-gray-400 text-xs font-medium mb-1">
+                                {kpi.name}
+                              </div>
+                              {kpi.aggregation_method && (
+                                <div className="text-gray-500 text-[10px] capitalize">
+                                  {kpi.aggregation_method}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {!showKPIs && (
+                      <div className="flex items-center gap-3 text-xs flex-wrap">
+                        {agentSpecificKPIs.slice(0, 3).map((kpi) => (
+                          <div key={kpi.kpi_id} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                            <span className="text-gray-400">{kpi.name}:</span>
+                            <span className="text-white font-semibold">
+                              {formatKPIValue(kpi.value, kpi.data_type, kpi.unit)}
+                            </span>
+                          </div>
+                        ))}
+                        {agentSpecificKPIs.length > 3 && (
+                          <span className="text-gray-500 px-2">+{agentSpecificKPIs.length - 3} more</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Discover KPIs CTA */}
+                {!isLoadingKPIs && agentSpecificKPIs.length === 0 && overviewKPIs.length > 0 && (
+                  <div className="bg-purple-500/5 rounded-xl border border-purple-500/20 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                          <Brain className="w-5 h-5 text-purple-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white mb-0.5">Discover Agent-Specific Metrics</h4>
+                          <p className="text-xs text-gray-400">AI will analyze your calls to find unique KPIs for this agent</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleDiscoverKPIs}
+                        disabled={discoverKPIsMutation.isPending}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                      >
+                        <Brain className="w-4 h-4" />
+                        {discoverKPIsMutation.isPending ? 'Discovering...' : 'Discover KPIs'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {!isLoadingKPIs && overviewKPIs.length === 0 && agentSpecificKPIs.length === 0 && (
+                  <div className="bg-dark-panel rounded-xl border border-gray-800/50 p-8 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="p-3 bg-gray-800/30 rounded-full border border-gray-700/50">
+                        <BarChart3 className="w-6 h-6 text-gray-500" />
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm font-medium mb-1">No KPI data available</p>
+                        <p className="text-gray-500 text-xs">Start by evaluating some calls or click 'Discover KPIs' to find agent-specific metrics.</p>
+                      </div>
+                      <button
+                        onClick={handleDiscoverKPIs}
+                        disabled={discoverKPIsMutation.isPending}
+                        className="mt-2 flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                      >
+                        <Brain className="w-4 h-4" />
+                        {discoverKPIsMutation.isPending ? 'Discovering...' : 'Discover KPIs'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )
+      }
+
       {/* Header Controls */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div className="flex items-center gap-3 w-full md:w-auto">
@@ -946,60 +1332,64 @@ const CallsPage = () => {
       </div>
 
       {/* Pagination for Agents */}
-      {viewMode === 'directories' && filteredCategories.length > 0 && (
-        <div className="mt-8 flex items-center justify-between">
-          <p className="text-gray-500 text-sm">
-            Showing {Math.min(displayedAgents.length, agentsPerPage)} of {displayedAgents.length} {displayedAgents.length === 1 ? 'agent' : 'agents'}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setAgentsPage(p => Math.max(1, p - 1))}
-              disabled={agentsPage === 1}
-              className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="px-4 py-2 text-sm text-gray-400">
-              Page {agentsPage} of {Math.max(1, Math.ceil(displayedAgents.length / agentsPerPage))}
-            </span>
-            <button
-              onClick={() => setAgentsPage(p => p + 1)}
-              disabled={agentsPage >= Math.ceil(displayedAgents.length / agentsPerPage)}
-              className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+      {
+        viewMode === 'directories' && filteredCategories.length > 0 && (
+          <div className="mt-8 flex items-center justify-between">
+            <p className="text-gray-500 text-sm">
+              Showing {Math.min(displayedAgents.length, agentsPerPage)} of {displayedAgents.length} {displayedAgents.length === 1 ? 'agent' : 'agents'}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setAgentsPage(p => Math.max(1, p - 1))}
+                disabled={agentsPage === 1}
+                className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="px-4 py-2 text-sm text-gray-400">
+                Page {agentsPage} of {Math.max(1, Math.ceil(displayedAgents.length / agentsPerPage))}
+              </span>
+              <button
+                onClick={() => setAgentsPage(p => p + 1)}
+                disabled={agentsPage >= Math.ceil(displayedAgents.length / agentsPerPage)}
+                className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Pagination for Calls */}
-      {viewMode === 'calls' && calls.length > 0 && (
-        <div className="mt-8 flex items-center justify-between">
-          <p className="text-gray-500 text-sm">
-            Showing {Math.min(calls.length, callsPerPage)} of {calls.length} {calls.length === 1 ? 'call' : 'calls'}
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCallsPage(p => Math.max(1, p - 1))}
-              disabled={callsPage === 1}
-              className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <span className="px-4 py-2 text-sm text-gray-400">
-              Page {callsPage} of {Math.max(1, Math.ceil(calls.length / callsPerPage))}
-            </span>
-            <button
-              onClick={() => setCallsPage(p => p + 1)}
-              disabled={callsPage >= Math.ceil(calls.length / callsPerPage)}
-              className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
+      {
+        viewMode === 'calls' && calls.length > 0 && (
+          <div className="mt-8 flex items-center justify-between">
+            <p className="text-gray-500 text-sm">
+              Showing {Math.min(calls.length, callsPerPage)} of {calls.length} {calls.length === 1 ? 'call' : 'calls'}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setCallsPage(p => Math.max(1, p - 1))}
+                disabled={callsPage === 1}
+                className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="px-4 py-2 text-sm text-gray-400">
+                Page {callsPage} of {Math.max(1, Math.ceil(calls.length / callsPerPage))}
+              </span>
+              <button
+                onClick={() => setCallsPage(p => p + 1)}
+                disabled={callsPage >= Math.ceil(calls.length / callsPerPage)}
+                className="p-2 bg-dark-panel border border-gray-800 rounded hover:bg-gray-800 transition-colors text-gray-400 disabled:opacity-30"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
 
 
@@ -1015,78 +1405,89 @@ const CallsPage = () => {
       />
 
       {/* Evaluate Prompt Modal */}
-      {isEvaluateModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
-          <div className="bg-dark-bg rounded-2xl max-w-md w-full border border-gray-800 relative shadow-2xl">
-            <button
-              onClick={() => {
-                setIsEvaluateModalOpen(false);
-              }}
-              className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+      {
+        isEvaluateModalOpen && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+            <div className="bg-dark-bg rounded-2xl max-w-md w-full border border-gray-800 relative shadow-2xl">
+              <button
+                onClick={() => {
+                  setIsEvaluateModalOpen(false);
+                }}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
 
-            <div className="p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
-                  <Brain className="w-6 h-6 text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Evaluate All Calls</h3>
-                  <p className="text-gray-400 text-sm">Configure evaluation parameters</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Select Agent
-                  </label>
-                  <GenericDropdown
-                    options={agentOptions}
-                    value={evalAgentId}
-                    onChange={(val) => setEvalAgentId(val)}
-                    className="w-full"
-                  />
+              <div className="p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-3 bg-purple-500/10 rounded-xl border border-purple-500/20">
+                    <Brain className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white">Evaluate All Calls</h3>
+                    <p className="text-gray-400 text-sm">Configure evaluation parameters</p>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Manual Agent ID Input
-                  </label>
-                  <input
-                    type="text"
-                    value={evalAgentId}
-                    onChange={(e) => setEvalAgentId(e.target.value)}
-                    placeholder="Enter agent ID to evaluate against..."
-                    className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
-                  />
-                  <p className="mt-2 text-xs text-gray-500">
-                    If provided, this ID will be used for the evaluation request.
-                  </p>
-                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Select Agent
+                    </label>
+                    <GenericDropdown
+                      options={agentOptions}
+                      value={evalAgentId}
+                      onChange={(val) => setEvalAgentId(val)}
+                      className="w-full"
+                    />
+                  </div>
 
-                <div className="pt-4">
-                  <button
-                    onClick={submitEvaluate}
-                    disabled={evaluateAudio.isPending}
-                    className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-purple-600/20 disabled:opacity-50"
-                  >
-                    {evaluateAudio.isPending ? (
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Brain className="w-5 h-5" />
-                    )}
-                    Start Evaluation
-                  </button>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Manual Agent ID Input
+                    </label>
+                    <input
+                      type="text"
+                      value={evalAgentId}
+                      onChange={(e) => setEvalAgentId(e.target.value)}
+                      placeholder="Enter agent ID to evaluate against..."
+                      className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                    />
+                    <p className="mt-2 text-xs text-gray-500">
+                      If provided, this ID will be used for the evaluation request.
+                    </p>
+                  </div>
+
+                  <div className="pt-4">
+                    <button
+                      onClick={submitEvaluate}
+                      disabled={evaluateAudio.isPending}
+                      className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg shadow-purple-600/20 disabled:opacity-50"
+                    >
+                      {evaluateAudio.isPending ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Brain className="w-5 h-5" />
+                      )}
+                      Start Evaluation
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
+        )
+      }
+      {/* KPI Discovery Modal */}
+      {
+        isDiscoveryModalOpen && discoveredKPIs && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden border border-gray-800 flex flex-col">
+              <div className="p-6 border-b border-gray-800 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-purple-500/20 text-purple-400 rounded-lg">
+                    <Brain className="w-6 h-6" />
+              
       {/* Confirmation Modal for Delete */}
       <ConfirmationModal
         isOpen={confirmationModal.isOpen}
@@ -1099,6 +1500,78 @@ const CallsPage = () => {
         confirmText={confirmationModal.confirmText}
       />
     </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-white">Discovered KPIs</h2>
+                    <p className="text-sm text-gray-400">
+                      AI discovered {discoveredKPIs.schemas?.length || 0} unique metrics for <span className="text-teal-400">{discoveredKPIs.agent_name || directory}</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsDiscoveryModalOpen(false)}
+                  className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {discoveredKPIs.schemas?.map((schema, idx) => (
+                    <div key={idx} className="bg-gray-800/50 border border-gray-700 rounded-xl p-5 hover:border-purple-500/30 transition-all group">
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="text-lg font-bold text-white group-hover:text-purple-400 transition-colors">
+                          {schema.name}
+                        </h3>
+                        <Badge variant="purple" className="text-[10px] uppercase px-1.5 py-0">
+                          {schema.category?.replace('_', ' ') || 'Metric'}
+                        </Badge>
+                      </div>
+                      <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                        {schema.description}
+                      </p>
+                      <div className="flex flex-wrap gap-2 mt-auto">
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-900 rounded text-xs text-gray-500 border border-gray-700">
+                          <span className="font-semibold text-gray-400">Unit:</span> {schema.unit || 'n/a'}
+                        </div>
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-900 rounded text-xs text-gray-500 border border-gray-700">
+                          <span className="font-semibold text-gray-400">Type:</span> {schema.data_type}
+                        </div>
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-gray-900 rounded text-xs text-gray-500 border border-gray-700">
+                          <span className="font-semibold text-gray-400">Agg:</span> {schema.aggregation_method}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 bg-blue-500/10 border border-blue-500/30 rounded-xl p-6 flex gap-4">
+                  <div className="w-10 h-10 bg-blue-500/20 text-blue-400 rounded-full flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-blue-400 font-bold mb-1">Getting Started</h4>
+                    <p className="text-blue-400/80 text-sm leading-relaxed">
+                      These KPIs have been registered for this agent. Once you evaluate calls,
+                      the AI will automatically extract these metrics and calculate the aggregate scores shown on your dashboard.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-gray-800 flex justify-end">
+                <button
+                  onClick={() => setIsDiscoveryModalOpen(false)}
+                  className="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )
+      }
+    </div >
   );
 }
 

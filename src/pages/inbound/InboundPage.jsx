@@ -338,13 +338,13 @@ const InboundPage = () => {
                         <h1 className="text-4xl font-bold text-white mb-2">Inbound Sessions</h1>
                         <p className="text-gray-400">View and manage all inbound simulation sessions</p>
                     </div>
-                    <Button
+                    <button
                         onClick={() => setCreateModal(true)}
-                        className="flex items-center gap-2 shadow-lg"
+                        className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.1)]"
                     >
                         <Play className="w-5 h-5" />
                         Create New Inbound Session
-                    </Button>
+                    </button>
                 </div>
 
                 {/* Filters */}
@@ -404,13 +404,13 @@ const InboundPage = () => {
                                     <p className="text-gray-400 text-lg font-medium">No inbound sessions found</p>
                                     <p className="text-gray-500 text-sm">Create your first inbound simulation to see results here</p>
                                 </div>
-                                <Button
+                                <button
                                     onClick={() => setCreateModal(true)}
-                                    className="mt-2"
+                                    className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.1)] mt-2"
                                 >
                                     <Play className="w-5 h-5" />
                                     Create Your First Session
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     ) : (

@@ -24,6 +24,7 @@ import EndpointingOverview from '../insights/endpointing';
 import PersonaOverview from '../insights/persona';
 import TaskCompletionOverview from '../insights/task_completion';
 import ConversationOverview from '../insights/conversation';
+import CallKPISection from '../CallKPISection';
 
 const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -80,8 +81,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
-    { id: 'transcript', label: 'Transcript', icon: MessageSquare },
-    { id: 'propagation', label: 'Failure Analysis', icon: TrendingUp }
+    { id: 'transcript', label: 'Transcript', icon: MessageSquare }
   ];
 
   // Prepare radar chart data from actual category scores
@@ -257,24 +257,11 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pr-48">
         <div>
           <h2 className="text-3xl font-bold text-white mb-2">
             Test Report: {report?.test_id || evaluation?.test_case_name || 'Unknown Test'}
           </h2>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="text-gray-400">
-              Test ID: <span className="font-mono text-gray-300">{report?.test_id || 'N/A'}</span>
-            </span>
-            <span className="text-gray-600">•</span>
-            <span className="text-gray-400">
-              Session: <span className="font-mono text-gray-300">{report?.session_id || 'N/A'}</span>
-            </span>
-            <span className="text-gray-600">•</span>
-            <span className="text-gray-400">
-              Evaluation ID: <span className="font-mono text-gray-300">{String(evaluation?.evaluation_id || 'N/A').substring(0, 12)}...</span>
-            </span>
-          </div>
         </div>
 
         <button
@@ -297,7 +284,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
               <XCircle className="w-4 h-4 text-red-400" />
             )}
           </div>
-          <p className={`text-3xl font-bold ${getScoreColor(evaluationData?.overall_score || 0)}`}>
+          <p className={`text-xl font-bold ${getScoreColor(evaluationData?.overall_score || 0)}`}>
             {evaluationData?.overall_score || 0}%
           </p>
         </div>
@@ -383,6 +370,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                   const formatText = (text) => text?.replace(/_/g, ' and ').replace(/\b\w/g, l => l.toUpperCase());
                   const issueText = typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue));
 
+
                   return (
                     <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
                       <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -427,6 +415,11 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
             </div>
           )}
         </div>
+      )}
+
+      {/* KPI Section - Show call-level KPIs if available */}
+      {!activeCategory && evaluation?.kpi_results && evaluation.kpi_results.length > 0 && (
+        <CallKPISection kpiResults={evaluation.kpi_results} evaluation={evaluation} />
       )}
 
       {/* Tabs - Only show when no category is active */}
@@ -572,69 +565,6 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                 <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
                   <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                   <p className="text-gray-400 text-sm">No transcript data available</p>
-                </div>
-              )}
-            </>
-          )}
-
-
-
-
-          {activeTab === 'propagation' && (
-            <>
-              {/* Check if failure propagation data is available */}
-              {evaluationData?.failure_propagation &&
-                (evaluationData.failure_propagation.critical_failure_turns?.length > 0 ||
-                  evaluationData.failure_propagation.total_tainted_steps > 0 ||
-                  Object.keys(evaluationData.failure_propagation.step_health || {}).length > 0 ||
-                  Object.keys(evaluationData.failure_propagation.cascading_failures || {}).length > 0) ? (
-                <>
-                  <FailurePropagationGraph
-                    stepHealth={evaluationData.failure_propagation.step_health || {}}
-                    cascadingFailures={evaluationData.failure_propagation.cascading_failures || {}}
-                  />
-
-                  {/* Propagation Summary */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-dark-panel border border-red-500/20 rounded-xl p-5">
-                      <p className="text-sm text-gray-400 mb-2">Critical Failures</p>
-                      <p className="text-3xl font-bold text-red-400">
-                        {evaluationData.failure_propagation.critical_failure_turns?.length || 0}
-                      </p>
-                    </div>
-
-                    <div className="bg-dark-panel border border-yellow-500/20 rounded-xl p-5">
-                      <p className="text-sm text-gray-400 mb-2">Tainted Steps</p>
-                      <p className="text-3xl font-bold text-yellow-400">
-                        {evaluationData.failure_propagation.total_tainted_steps || 0}
-                      </p>
-                    </div>
-
-                    <div className="bg-dark-panel border border-orange-500/20 rounded-xl p-5">
-                      <p className="text-sm text-gray-400 mb-2">Max Propagation Depth</p>
-                      <p className="text-3xl font-bold text-orange-400">
-                        {evaluationData.failure_propagation.propagation_depth || 0}
-                      </p>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                /* Fallback screen when no failure propagation data */
-                <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-gray-800/50 flex items-center justify-center">
-                      <TrendingUp className="w-8 h-8 text-gray-600" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-white mb-2">
-                        No Failure Propagation Data
-                      </h3>
-                      <p className="text-sm text-gray-400 max-w-md">
-                        Failure propagation analysis is not available for this evaluation.
-                        This may indicate that no failures were detected or the analysis was not performed.
-                      </p>
-                    </div>
-                  </div>
                 </div>
               )}
             </>

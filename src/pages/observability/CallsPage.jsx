@@ -18,7 +18,8 @@ import {
   BarChart3,
   Brain,
   MessageSquare,
-  Folder
+  Folder,
+  Phone
 } from 'lucide-react';
 import AudioUploadModal from '../../components/AudioUploadModal';
 import GenericDropdown from '../../components/DropDown';
@@ -31,7 +32,7 @@ import { useWorkflow } from '../../context/WorkFlowContext';
 import { useEvents } from '../../context/EventsContext';
 import { useAgentKPIs, useDiscoverKPIs } from '../../hooks/useKPIs';
 import KPIMetricsGrid from '../../components/KPIMetricsGrid';
-import { formatKPIValue } from '../../utils/kpiFormatters';
+import { formatKPIValue, getKPIIcon, getKPIColor } from '../../utils/kpiFormatters';
 
 const CallsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -218,25 +219,39 @@ const CallsPage = () => {
     const kpis = agentKPIsData.kpis;
     const displayKPIs = [];
 
-    // Add static KPIs
+    // Add static KPIs - normalize rates to percentages
     if (kpis.static_kpis) {
-      if (kpis.static_kpis.fcr_rate !== undefined) {
+      // FCR Rate - normalize to percentage
+      if (kpis.static_kpis.fcr_rate !== undefined && kpis.static_kpis.fcr_rate !== null) {
+        const fcrValue = kpis.static_kpis.fcr_rate;
+        // If value is > 1, it's a count, convert to rate based on total_calls
+        const normalizedValue = fcrValue > 1 && kpis.static_kpis.fcr_count !== undefined
+          ? (kpis.static_kpis.fcr_count / (agentKPIsData.total_calls || 1)) * 100
+          : fcrValue <= 1 ? fcrValue * 100 : fcrValue;
+
         displayKPIs.push({
           kpi_id: 'fcr',
-          name: 'FCR Rate',
-          value: kpis.static_kpis.fcr_rate,
+          name: 'First Call Resolution',
+          value: normalizedValue,
           unit: '%',
           data_type: 'float',
           aggregation_method: 'rate',
-          description: 'First Call Resolution rate - percentage of calls resolved on first contact',
+          description: 'Percentage of calls resolved on first contact',
           is_static: true,
         });
       }
-      if (kpis.static_kpis.conversion_rate !== undefined) {
+
+      // Conversion Rate
+      if (kpis.static_kpis.conversion_rate !== undefined && kpis.static_kpis.conversion_rate !== null) {
+        const conversionValue = kpis.static_kpis.conversion_rate;
+        const normalizedValue = conversionValue > 1 && kpis.static_kpis.conversion_count !== undefined
+          ? (kpis.static_kpis.conversion_count / (agentKPIsData.total_calls || 1)) * 100
+          : conversionValue <= 1 ? conversionValue * 100 : conversionValue;
+
         displayKPIs.push({
           kpi_id: 'conversion',
           name: 'Conversion Rate',
-          value: kpis.static_kpis.conversion_rate,
+          value: normalizedValue,
           unit: '%',
           data_type: 'float',
           aggregation_method: 'rate',
@@ -244,11 +259,18 @@ const CallsPage = () => {
           is_static: true,
         });
       }
-      if (kpis.static_kpis.transfer_rate !== undefined) {
+
+      // Transfer Rate
+      if (kpis.static_kpis.transfer_rate !== undefined && kpis.static_kpis.transfer_rate !== null) {
+        const transferValue = kpis.static_kpis.transfer_rate;
+        const normalizedValue = transferValue > 1 && kpis.static_kpis.transfer_count !== undefined
+          ? (kpis.static_kpis.transfer_count / (agentKPIsData.total_calls || 1)) * 100
+          : transferValue <= 1 ? transferValue * 100 : transferValue;
+
         displayKPIs.push({
           kpi_id: 'transfer',
           name: 'Transfer Rate',
-          value: kpis.static_kpis.transfer_rate,
+          value: normalizedValue,
           unit: '%',
           data_type: 'float',
           aggregation_method: 'rate',
@@ -256,34 +278,46 @@ const CallsPage = () => {
           is_static: true,
         });
       }
-      if (kpis.static_kpis.avg_objection_handling_quality !== undefined) {
+
+      // Objection Handling Quality
+      if (kpis.static_kpis.avg_objection_handling_quality !== undefined && kpis.static_kpis.avg_objection_handling_quality !== null) {
+        const objectionValue = kpis.static_kpis.avg_objection_handling_quality;
+        // Normalize to 0-100 scale if needed
+        const normalizedValue = objectionValue <= 1 ? objectionValue * 100 : objectionValue;
+
         displayKPIs.push({
           kpi_id: 'objection_handling',
           name: 'Objection Quality',
-          value: kpis.static_kpis.avg_objection_handling_quality,
+          value: normalizedValue,
           unit: '%',
           data_type: 'float',
           aggregation_method: 'avg',
-          description: 'Average quality of objection handling',
+          description: 'Average quality of objection handling across all calls',
           is_static: true,
         });
       }
     }
 
-    // Add dynamic KPIs
+    // Add dynamic KPIs - use metadata from API
     if (kpis.dynamic_kpis) {
       Object.entries(kpis.dynamic_kpis).forEach(([key, kpiData]) => {
-        if (typeof kpiData === 'object' && kpiData.value !== undefined) {
+        // Only add KPIs with non-null values
+        if (typeof kpiData === 'object' && kpiData.value !== null && kpiData.value !== undefined) {
           displayKPIs.push({
-            kpi_id: key,
-            name: key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+            kpi_id: kpiData.kpi_id || key,
+            name: kpiData.kpi_name || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
             value: kpiData.value,
             unit: kpiData.unit || '',
-            data_type: typeof kpiData.value === 'boolean' ? 'boolean' :
-              typeof kpiData.value === 'number' && Number.isInteger(kpiData.value) ? 'int' : 'float',
+            data_type: kpiData.data_type || (typeof kpiData.value === 'boolean' ? 'boolean' :
+              typeof kpiData.value === 'number' && Number.isInteger(kpiData.value) ? 'int' : 'float'),
             aggregation_method: kpiData.aggregation_method || 'avg',
-            description: `Dynamic KPI: ${key}`,
+            description: `${kpiData.kpi_name || key} - ${kpiData.category || 'Dynamic KPI'}`,
+            category: kpiData.category,
             is_static: false,
+            // Additional metadata for display
+            count: kpiData.count,
+            min: kpiData.min,
+            max: kpiData.max,
           });
         }
       });
@@ -680,63 +714,241 @@ const CallsPage = () => {
 
       {/* KPI Summary Section (only in calls view) */}
       {viewMode === 'calls' && directory && (
-        <div className="mb-6 bg-dark-panel rounded-xl border border-gray-800/50 p-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-3">
-              <BarChart3 className="w-5 h-5 text-teal-400" />
-              <h2 className="text-lg font-bold text-white">
-                Agent Performance Metrics
-                <span className="text-sm text-gray-500 ml-2 font-normal">(Last 30 Days)</span>
-              </h2>
-            </div>
-            <div className="flex items-center gap-2">
-              {kpisForDisplay.length > 0 && (
-                <button
-                  onClick={() => setShowKPIs(!showKPIs)}
-                  className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium transition-colors"
-                >
-                  {showKPIs ? 'Hide Details' : 'Show Details'}
-                </button>
-              )}
-              {!isLoadingKPIs && kpisForDisplay.filter(k => !k.is_static).length === 0 && (
-                <button
-                  onClick={handleDiscoverKPIs}
-                  disabled={discoverKPIsMutation.isPending}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
-                >
-                  <Brain className="w-4 h-4" />
-                  {discoverKPIsMutation.isPending ? 'Discovering...' : 'Discover KPIs'}
-                </button>
-              )}
-            </div>
-          </div>
+        <div className="mb-6 space-y-4">
+          {/* Overview Section - First 4 Static KPIs */}
+          {(() => {
+            const overviewKPIs = kpisForDisplay.filter(k => k.is_static).slice(0, 4);
+            const agentSpecificKPIs = kpisForDisplay.filter(k => !k.is_static);
 
-          {showKPIs && (
-            <div className="mt-4">
-              <KPIMetricsGrid
-                kpis={kpisForDisplay}
-                columns={4}
-                loading={isLoadingKPIs}
-                emptyMessage="No KPI data available. Start by evaluating some calls or click 'Discover KPIs' to find agent-specific metrics."
-              />
-            </div>
-          )}
+            return (
+              <>
+                {/* Overview Section */}
+                {overviewKPIs.length > 0 && (
+                  <div className="bg-dark-panel rounded-xl border border-gray-800/50 p-5">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 bg-teal-500/10 rounded-lg border border-teal-500/20">
+                          <BarChart3 className="w-4 h-4 text-teal-400" />
+                        </div>
+                        <h3 className="text-base font-bold text-white">
+                          Performance Overview
+                          <span className="text-xs text-gray-500 ml-2 font-normal">(Last 30 Days)</span>
+                        </h3>
+                      </div>
+                    </div>
 
-          {!showKPIs && kpisForDisplay.length > 0 && (
-            <div className="flex items-center gap-4 text-sm">
-              {kpisForDisplay.slice(0, 4).map((kpi) => (
-                <div key={kpi.kpi_id} className="flex items-center gap-2">
-                  <span className="text-gray-400">{kpi.name}:</span>
-                  <span className="text-white font-semibold">
-                    {formatKPIValue(kpi.value, kpi.data_type, kpi.unit)}
-                  </span>
-                </div>
-              ))}
-              {kpisForDisplay.length > 4 && (
-                <span className="text-gray-500">+{kpisForDisplay.length - 4} more</span>
-              )}
-            </div>
-          )}
+                    {isLoadingKPIs ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                        {Array.from({ length: 5 }).map((_, idx) => (
+                          <div key={idx} className="bg-gray-800/30 rounded-lg p-3 border border-gray-800/50 animate-pulse">
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="w-8 h-8 bg-gray-700 rounded-lg"></div>
+                            </div>
+                            <div className="h-6 w-16 bg-gray-700 rounded mb-1"></div>
+                            <div className="h-3 w-24 bg-gray-700 rounded"></div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
+                        {/* Total Calls Card - Always first */}
+                        <div
+                          className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20 transition-all hover:bg-opacity-80"
+                          title={`Total calls analyzed in the last 30 days`}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="p-1.5 rounded-lg bg-blue-500/20">
+                              <Phone className="w-4 h-4 text-blue-400" />
+                            </div>
+                          </div>
+                          <div className="text-xl font-bold text-blue-400 mb-0.5">
+                            {agentKPIsData?.total_calls || 0}
+                          </div>
+                          <div className="text-gray-400 text-xs font-medium">
+                            Total Calls
+                          </div>
+                        </div>
+
+                        {/* Static KPI Cards */}
+                        {overviewKPIs.map((kpi) => {
+                          const Icon = getKPIIcon(kpi.kpi_id, kpi.kpi_id);
+                          const color = getKPIColor(kpi.value, kpi.data_type);
+                          const formattedValue = formatKPIValue(kpi.value, kpi.data_type, kpi.unit);
+
+                          const colorClasses = {
+                            teal: { bg: 'bg-teal-500/10', border: 'border-teal-500/20', text: 'text-teal-400', icon: 'bg-teal-500/20' },
+                            green: { bg: 'bg-green-500/10', border: 'border-green-500/20', text: 'text-green-400', icon: 'bg-green-500/20' },
+                            yellow: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', text: 'text-yellow-400', icon: 'bg-yellow-500/20' },
+                            red: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', icon: 'bg-red-500/20' },
+                            blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: 'bg-blue-500/20' },
+                            gray: { bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-400', icon: 'bg-gray-500/20' },
+                          };
+
+                          const colors = colorClasses[color] || colorClasses.gray;
+
+                          return (
+                            <div
+                              key={kpi.kpi_id}
+                              className={`${colors.bg} rounded-lg p-3 border ${colors.border} transition-all hover:bg-opacity-80`}
+                              title={kpi.description}
+                            >
+                              <div className="flex items-center gap-2 mb-2">
+                                <div className={`p-1.5 rounded-lg ${colors.icon}`}>
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                              </div>
+                              <div className={`text-xl font-bold ${colors.text} mb-0.5`}>
+                                {formattedValue}
+                              </div>
+                              <div className="text-gray-400 text-xs font-medium">
+                                {kpi.name}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Agent-Specific Metrics Section */}
+                {agentSpecificKPIs.length > 0 && (
+                  <div className="bg-dark-panel rounded-xl border border-gray-800/50 p-5">
+                    <div className="flex justify-between items-center mb-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                          <Brain className="w-4 h-4 text-purple-400" />
+                        </div>
+                        <h3 className="text-base font-bold text-white">
+                          Agent-Specific Metrics
+                          <span className="text-xs text-gray-500 ml-2 font-normal">({agentSpecificKPIs.length} metrics)</span>
+                        </h3>
+                      </div>
+                      <button
+                        onClick={() => setShowKPIs(!showKPIs)}
+                        className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 rounded-lg text-xs font-medium transition-colors"
+                      >
+                        {showKPIs ? 'Collapse' : 'Expand'}
+                      </button>
+                    </div>
+
+                    {showKPIs && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {agentSpecificKPIs.map((kpi) => {
+                          const Icon = getKPIIcon(kpi.kpi_id, kpi.kpi_id);
+                          const color = getKPIColor(kpi.value, kpi.data_type);
+                          const formattedValue = formatKPIValue(kpi.value, kpi.data_type, kpi.unit);
+
+                          const colorClasses = {
+                            teal: { bg: 'bg-teal-500/10', border: 'border-teal-500/20', text: 'text-teal-400', icon: 'bg-teal-500/20' },
+                            green: { bg: 'bg-green-500/10', border: 'border-green-500/20', text: 'text-green-400', icon: 'bg-green-500/20' },
+                            yellow: { bg: 'bg-yellow-500/10', border: 'border-yellow-500/20', text: 'text-yellow-400', icon: 'bg-yellow-500/20' },
+                            red: { bg: 'bg-red-500/10', border: 'border-red-500/20', text: 'text-red-400', icon: 'bg-red-500/20' },
+                            blue: { bg: 'bg-blue-500/10', border: 'border-blue-500/20', text: 'text-blue-400', icon: 'bg-blue-500/20' },
+                            gray: { bg: 'bg-gray-500/10', border: 'border-gray-500/20', text: 'text-gray-400', icon: 'bg-gray-500/20' },
+                          };
+
+                          const colors = colorClasses[color] || colorClasses.gray;
+
+                          return (
+                            <div
+                              key={kpi.kpi_id}
+                              className={`${colors.bg} rounded-lg p-3 border ${colors.border} transition-all hover:bg-opacity-80 relative`}
+                              title={kpi.description}
+                            >
+                              <div className="flex items-center justify-between gap-2 mb-2">
+                                <div className={`p-1.5 rounded-lg ${colors.icon}`}>
+                                  <Icon className="w-4 h-4" />
+                                </div>
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 uppercase font-bold">
+                                  Dynamic
+                                </span>
+                              </div>
+                              <div className={`text-xl font-bold ${colors.text} mb-0.5`}>
+                                {formattedValue}
+                              </div>
+                              <div className="text-gray-400 text-xs font-medium mb-1">
+                                {kpi.name}
+                              </div>
+                              {kpi.aggregation_method && (
+                                <div className="text-gray-500 text-[10px] capitalize">
+                                  {kpi.aggregation_method}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {!showKPIs && (
+                      <div className="flex items-center gap-3 text-xs flex-wrap">
+                        {agentSpecificKPIs.slice(0, 3).map((kpi) => (
+                          <div key={kpi.kpi_id} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700/50">
+                            <span className="text-gray-400">{kpi.name}:</span>
+                            <span className="text-white font-semibold">
+                              {formatKPIValue(kpi.value, kpi.data_type, kpi.unit)}
+                            </span>
+                          </div>
+                        ))}
+                        {agentSpecificKPIs.length > 3 && (
+                          <span className="text-gray-500 px-2">+{agentSpecificKPIs.length - 3} more</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Discover KPIs CTA */}
+                {!isLoadingKPIs && agentSpecificKPIs.length === 0 && overviewKPIs.length > 0 && (
+                  <div className="bg-purple-500/5 rounded-xl border border-purple-500/20 p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-purple-500/10 rounded-lg border border-purple-500/20">
+                          <Brain className="w-5 h-5 text-purple-400" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-white mb-0.5">Discover Agent-Specific Metrics</h4>
+                          <p className="text-xs text-gray-400">AI will analyze your calls to find unique KPIs for this agent</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleDiscoverKPIs}
+                        disabled={discoverKPIsMutation.isPending}
+                        className="flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                      >
+                        <Brain className="w-4 h-4" />
+                        {discoverKPIsMutation.isPending ? 'Discovering...' : 'Discover KPIs'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {!isLoadingKPIs && overviewKPIs.length === 0 && agentSpecificKPIs.length === 0 && (
+                  <div className="bg-dark-panel rounded-xl border border-gray-800/50 p-8 text-center">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="p-3 bg-gray-800/30 rounded-full border border-gray-700/50">
+                        <BarChart3 className="w-6 h-6 text-gray-500" />
+                      </div>
+                      <div>
+                        <p className="text-gray-400 text-sm font-medium mb-1">No KPI data available</p>
+                        <p className="text-gray-500 text-xs">Start by evaluating some calls or click 'Discover KPIs' to find agent-specific metrics.</p>
+                      </div>
+                      <button
+                        onClick={handleDiscoverKPIs}
+                        disabled={discoverKPIsMutation.isPending}
+                        className="mt-2 flex items-center gap-2 px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-400 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50"
+                      >
+                        <Brain className="w-4 h-4" />
+                        {discoverKPIsMutation.isPending ? 'Discovering...' : 'Discover KPIs'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )
       }

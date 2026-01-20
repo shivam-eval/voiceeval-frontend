@@ -94,7 +94,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
       const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
       return {
-        category: (cat.category || 'Unknown').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        category: (cat.category || 'Unknown').replace(/_/g, ' and ').replace(/\b\w/g, l => l.toUpperCase()),
         score: normalizedScore
       };
     }).filter(Boolean);
@@ -367,8 +367,9 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
               </h3>
               <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {evaluationData.issues.map((issue, idx) => {
-                  const formatText = (text) => text?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  const formatText = (text) => text?.replace(/_/g, ' and ').replace(/\b\w/g, l => l.toUpperCase());
                   const issueText = typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue));
+
 
                   return (
                     <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
@@ -516,7 +517,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm text-gray-400 mb-1">
-                              {cat.category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              {cat.category.replace(/_/g, ' and ').replace(/\b\w/g, l => l.toUpperCase())}
                             </p>
                             <p className={`text-2xl font-bold ${getScoreColor(normalizedScore)}`}>
                               {normalizedScore}%

@@ -35,6 +35,20 @@ class ApiClient {
         try {
             const response = await fetch(url, config);
 
+            // Handle 401 Unauthorized - token expired or invalid
+            if (response.status === 401) {
+                // Clear auth data
+                localStorage.removeItem("authToken");
+                localStorage.removeItem("tokenExpiration");
+                localStorage.removeItem("tenantId");
+                localStorage.removeItem("userEmail");
+                localStorage.removeItem("userName");
+
+                // Redirect to auth screen (will trigger App.jsx to show AuthScreen)
+                window.location.href = '/';
+                return;
+            }
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 const message = errorData.detail || `HTTP error! status: ${response.status}`;
@@ -186,6 +200,7 @@ export const evaluationsApi = {
 export const callsApi = {
     list: (params) => apiClient.get('/calls/', params),
     get: (id) => apiClient.get(`/calls/${id}`),
+    delete: (id) => apiClient.delete(`/calls/${id}`),
     evaluate: (id) => apiClient.post(`/calls/${id}/evaluate`, {}),
     evaluateAudio: (data) => apiClient.post('/evaluation/audio', data),
     upload: (formData, agentId) => {

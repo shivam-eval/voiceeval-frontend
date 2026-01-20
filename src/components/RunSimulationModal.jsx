@@ -3,6 +3,7 @@ import { toast } from 'react-toastify';
 import { X, Play, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom'; // Added import
 import { useTestSuites } from '../hooks/useTestSuites';
+import { useAgents } from '../hooks/useAgents';
 import { useRunSimulation } from '../hooks/useSimulations';
 import Button from './Button';
 import Badge from './Badge';
@@ -14,17 +15,25 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
     const [phoneNumber, setPhoneNumber] = useState('');
 
     // Fetch agents and test suites
+    const { data: agentsData, isLoading: agentsLoading } = useAgents();
     const { data: testSuitesData, isLoading: testSuitesLoading } = useTestSuites({
         agent_id: selectedAgentId || undefined
     });
 
     const runSimulation = useRunSimulation();
 
+    const agents = agentsData?.agents || [];
     const testSuites = testSuitesData?.test_suites || [];
 
-    // Find selected items
-
-    const selectedTestSuite = testSuites.find(ts => ts.test_suite_id === selectedTestSuiteId);
+    // Auto-fill phone number when agent is selected
+    useEffect(() => {
+        if (selectedAgentId) {
+            const agent = agents.find(a => (a.provider_agent_id || a.agent_id) === selectedAgentId);
+            if (agent && agent.phone_number) {
+                setPhoneNumber(agent.phone_number);
+            }
+        }
+    }, [selectedAgentId, agents]);
 
     // Update state when preSelected props change (when modal opens with new values)
     useEffect(() => {
@@ -34,7 +43,8 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
         }
     }, [isOpen, preSelectedAgentId, preSelectedTestSuiteId]);
 
-    // Removal of phone number auto-fill as agents data is no longer fetched in this modal
+    // Find selected items
+    const selectedTestSuite = testSuites.find(ts => ts.test_suite_id === selectedTestSuiteId);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -89,16 +99,27 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    {/* Agent Identification */}
+                    {/* Agent Selection */}
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Agent ID
+                            Select Agent
                         </label>
-                        <div className="w-full px-4 py-3 bg-gray-800/50 border border-gray-700 rounded-lg">
-                            <div className="text-white font-medium font-mono">
-                                {selectedAgentId || 'No Agent Selected'}
-                            </div>
-                        </div>
+                        <select
+                            value={selectedAgentId}
+                            onChange={(e) => {
+                                setSelectedAgentId(e.target.value);
+                                setSelectedTestSuiteId(''); // Reset test suite when agent changes
+                            }}
+                            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
+                            disabled={agentsLoading}
+                        >
+                            <option value="">Choose an agent...</option>
+                            {agents.map(agent => (
+                                <option key={agent.agent_id} value={agent.provider_agent_id || agent.agent_id}>
+                                    {agent.name} ({agent.provider_agent_id || agent.agent_id})
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* Test Suite Selection */}

@@ -4,11 +4,11 @@ import Button from "./Button";
 import Badge from "./Badge";
 import { Upload, X, CheckCircle, AlertCircle, User } from "lucide-react";
 
-const AudioUploadModal = ({ 
-    isOpen, 
-    onClose, 
-    onSubmit, 
-    isLoading, 
+const AudioUploadModal = ({
+    isOpen,
+    onClose,
+    onSubmit,
+    isLoading,
     mode = "calls",
     agents = [],
     defaultAgentId = ""
@@ -18,12 +18,19 @@ const AudioUploadModal = ({
     const [uploadResults, setUploadResults] = useState(null);
     const [isUploading, setIsUploading] = useState(false);
 
-    // Auto-select first agent if none selected
+    // Update selectedAgentId when defaultAgentId changes or modal opens
     useEffect(() => {
-        if (!selectedAgentId && agents.length > 0) {
+        if (isOpen && defaultAgentId) {
+            setSelectedAgentId(defaultAgentId);
+        }
+    }, [isOpen, defaultAgentId]);
+
+    // Auto-select first agent if none selected and no default provided
+    useEffect(() => {
+        if (!selectedAgentId && agents.length > 0 && !defaultAgentId) {
             setSelectedAgentId(agents[0].value);
         }
-    }, [agents, selectedAgentId]);
+    }, [agents, selectedAgentId, defaultAgentId]);
 
     const formatFileSize = (bytes) => {
         if (bytes < 1024) return bytes + ' B';
@@ -36,7 +43,7 @@ const AudioUploadModal = ({
             const ext = file.name.split('.').pop().toLowerCase();
             return ['wav', 'mp3', 'flac', 'ogg', 'm4a', 'aac', 'mp4'].includes(ext);
         });
-        
+
         const newFiles = validFiles.map(file => ({
             file,
             id: Date.now() + Math.random(),
@@ -44,7 +51,7 @@ const AudioUploadModal = ({
             size: file.size,
             status: 'pending'
         }));
-        
+
         setAudioFiles(prev => [...prev, ...newFiles]);
     };
 
@@ -135,7 +142,7 @@ const AudioUploadModal = ({
                                 <span className="text-red-400">*</span>
                             </h3>
                             <div>
-                                <select 
+                                <select
                                     value={selectedAgentId}
                                     onChange={(e) => setSelectedAgentId(e.target.value)}
                                     className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400 transition-colors"
@@ -148,7 +155,7 @@ const AudioUploadModal = ({
                                     ))}
                                 </select>
                                 <p className="mt-2 text-xs text-gray-500">
-                                    Calls will be uploaded to directory: <span className="text-teal-400 font-mono">{selectedAgentId || 'agent_id'}</span>
+                                    Calls will be uploaded to directory: <span className="text-teal-400 font-mono">{agents.find(a => a.value === selectedAgentId)?.name || 'agent_id'}</span>
                                 </p>
                             </div>
                         </div>

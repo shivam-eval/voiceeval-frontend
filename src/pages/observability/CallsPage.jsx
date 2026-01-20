@@ -19,13 +19,15 @@ import {
   Brain,
   MessageSquare,
   Folder,
-  Phone
+  Phone,
+  Trash2
 } from 'lucide-react';
 import AudioUploadModal from '../../components/AudioUploadModal';
 import GenericDropdown from '../../components/DropDown';
 import Badge from '../../components/Badge';
 import { extractNoiseFromSessionId, getNoiseProfileBadgeVariant } from '../../utils/noiseUtils';
-import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvaluateAudio } from '../../hooks/useCalls';
+import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvaluateAudio, useDeleteCall } from '../../hooks/useCalls';
+import ConfirmationModal from '../../components/ConfirmationModal';
 import { useFlows } from '../../hooks/useFlows';
 import { useAgents } from '../../hooks/useAgents';
 import { useWorkflow } from '../../context/WorkFlowContext';
@@ -51,6 +53,15 @@ const CallsPage = () => {
   const [showKPIs, setShowKPIs] = useState(true); // Show KPIs by default
   const [discoveredKPIs, setDiscoveredKPIs] = useState(null);
   const [isDiscoveryModalOpen, setIsDiscoveryModalOpen] = useState(false);
+
+  // Confirmation Modal State for delete
+  const [confirmationModal, setConfirmationModal] = useState({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => { },
+    isLoading: false
+  });
 
 
   const directoryParam = searchParams.get('directory');
@@ -134,7 +145,7 @@ const CallsPage = () => {
   const displayedAgents = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
     return filteredCategories.filter(cat => {
-      const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === cat);
+      const agent = agentsData?.agents?.find(a => a.provider_agent_id === cat || a.agent_id === cat);
       const agentName = agent?.name || agent?.agent_name || `Agent ${cat.substring(0, 8)}`;
       return cat.toLowerCase().includes(searchLower) || agentName.toLowerCase().includes(searchLower);
     });
@@ -146,7 +157,8 @@ const CallsPage = () => {
     const options = [
       ...agents.map(agent => ({
         label: `${agent.name} (${agent.provider_agent_id || agent.agent_id})`,
-        value: agent.provider_agent_id || agent.agent_id
+        value: agent.provider_agent_id || agent.agent_id,
+        name: agent.name // Add the name separately
       }))
     ];
 
@@ -451,6 +463,28 @@ const CallsPage = () => {
   const evaluateCall = useEvaluateCall();
   const evaluateAudio = useEvaluateAudio();
   const uploadCalls = useUploadCalls();
+  const deleteCall = useDeleteCall();
+
+  const handleDeleteCall = (callId) => {
+    setConfirmationModal({
+      isOpen: true,
+      title: "Delete Call",
+      message: "Are you sure you want to delete this call? This action cannot be undone.",
+      variant: "danger",
+      confirmText: "Delete",
+      onConfirm: async () => {
+        setConfirmationModal(prev => ({ ...prev, isLoading: true }));
+        try {
+          await deleteCall.mutateAsync(callId);
+          setConfirmationModal(prev => ({ ...prev, isOpen: false }));
+          toast.success("Call deleted successfully");
+        } catch (error) {
+          // Error handled by global interceptor
+          setConfirmationModal(prev => ({ ...prev, isLoading: false }));
+        }
+      }
+    });
+  };
 
   const handleAddCalls = () => {
     setIsModalOpen(true);
@@ -473,10 +507,12 @@ const CallsPage = () => {
   const handleEvaluateAll = (targetDirectory) => {
     if (!targetDirectory) return;
     setEvalDirectory(targetDirectory);
-    // Ensure the evalAgentId is synced with the latest stored assistantId when opening the modal
-    if (!evalAgentId && workflow?.assistantId) {
-      setEvalAgentId(workflow.assistantId);
-    }
+
+    // Default evalAgentId to the selected directory/agent if present, 
+    // otherwise fallback to workflow context
+    const defaultAgent = targetDirectory || workflow?.assistantId || '';
+    setEvalAgentId(defaultAgent);
+
     setIsEvaluateModalOpen(true);
   };
 
@@ -667,7 +703,7 @@ const CallsPage = () => {
     const options = backendCategories
       .filter(cat => typeof cat === 'string')
       .map(cat => {
-        const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === cat);
+        const agent = agentsData?.agents?.find(a => a.provider_agent_id === cat || a.agent_id === cat);
         const rawName = agent?.name || agent?.agent_name || cat.replace(/[_-]/g, ' ');
         const cleanName = rawName.replace(/^Agent\s+/i, '');
 
@@ -702,7 +738,7 @@ const CallsPage = () => {
               <ChevronRight className="w-4 h-4" />
               <span className="text-teal-400 font-semibold">
                 {(() => {
-                  const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === directory);
+                  const agent = agentsData?.agents?.find(a => a.provider_agent_id === directory || a.agent_id === directory);
                   const rawName = agent?.name || agent?.agent_name || directory.replace(/[_-]/g, ' ');
                   return rawName.replace(/^Agent\s+/i, '');
                 })()}
@@ -1067,7 +1103,7 @@ const CallsPage = () => {
                           <div className="flex flex-col">
                             <span className="text-white font-semibold text-sm">
                               {(() => {
-                                const agent = agentsData?.agents?.find(a => (a.provider_agent_id || a.agent_id) === cat);
+                                const agent = agentsData?.agents?.find(a => a.provider_agent_id === cat || a.agent_id === cat);
                                 const rawName = agent?.name || agent?.agent_name || `Agent ${cat.substring(0, 8)}`;
                                 return rawName.replace(/^Agent\s+/i, '');
                               })()}
@@ -1175,7 +1211,7 @@ const CallsPage = () => {
                             {call.call_id || 'N/A'}
                           </span>
                           <span className="text-gray-500 text-xs truncate max-w-[180px]">
-                            {call.filename || 'manual_upload.mp3'}
+                            {call.filename || call.agent_id || call.directory || 'No filename'}
                           </span>
                         </div>
                       </td>
@@ -1195,6 +1231,14 @@ const CallsPage = () => {
                             title="Download"
                           >
                             <Download className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteCall(call.call_id); }}
+                            disabled={deleteCall.isPending}
+                            className="p-1.5 bg-red-500/10 text-red-400 rounded hover:bg-red-500/20 transition-colors disabled:opacity-50"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </td>
@@ -1357,7 +1401,7 @@ const CallsPage = () => {
         isLoading={uploadCalls.isPending}
         mode="calls"
         agents={agentOptions}
-        defaultAgentId={workflow?.assistantId || ''}
+        defaultAgentId={directory || workflow?.assistantId || ''}
       />
 
       {/* Evaluate Prompt Modal */}
@@ -1443,7 +1487,19 @@ const CallsPage = () => {
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-purple-500/20 text-purple-400 rounded-lg">
                     <Brain className="w-6 h-6" />
-                  </div>
+              
+      {/* Confirmation Modal for Delete */}
+      <ConfirmationModal
+        isOpen={confirmationModal.isOpen}
+        onClose={() => setConfirmationModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmationModal.onConfirm}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        isLoading={confirmationModal.isLoading}
+        variant={confirmationModal.variant}
+        confirmText={confirmationModal.confirmText}
+      />
+    </div>
                   <div>
                     <h2 className="text-2xl font-bold text-white">Discovered KPIs</h2>
                     <p className="text-sm text-gray-400">

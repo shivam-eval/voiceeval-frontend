@@ -259,22 +259,6 @@ const EvaluationsPage = () => {
                                     </div>
                                 </div>
 
-                                {/* Progress Bar */}
-                                {(simulation.progress?.total_sessions || 0) > 0 && (
-                                    <div className="mt-4">
-                                        <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                                            <div
-                                                className={`h-full transition-all ${(simulation.metrics?.overall_score || 0) >= 0.7
-                                                    ? 'bg-green-500'
-                                                    : 'bg-yellow-500'
-                                                    }`}
-                                                style={{
-                                                    width: `${simulation.progress?.percentage || 0}%`
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         ))}
                     </div>

@@ -24,6 +24,7 @@ import EndpointingOverview from '../insights/endpointing';
 import PersonaOverview from '../insights/persona';
 import TaskCompletionOverview from '../insights/task_completion';
 import ConversationOverview from '../insights/conversation';
+import CallKPISection from '../CallKPISection';
 
 const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -359,44 +360,33 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
       {!activeCategory && ((evaluationData?.issues && evaluationData.issues.length > 0) || (evaluationData?.recommendations && evaluationData.recommendations.length > 0)) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Issues Panel */}
-          {(() => {
-            const issues = evaluationData?.issues || [];
-            const validIssues = issues.filter(issue => {
-              const text = typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue));
-              const lowerText = text.toLowerCase();
-              return !lowerText.includes('error code:') && !lowerText.includes('rate limit reached');
-            });
+          {evaluationData?.issues && evaluationData.issues.length > 0 && (
+            <div className="bg-dark-panel border border-red-500/20 rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-red-400" />
+                Key Issues Found
+              </h3>
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                {evaluationData.issues.map((issue, idx) => {
+                  const formatText = (text) => text?.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  const issueText = typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue));
 
-            if (validIssues.length === 0) return null;
-
-            return (
-              <div className="bg-dark-panel border border-red-500/20 rounded-xl p-6">
-                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                  <XCircle className="w-5 h-5 text-red-400" />
-                  Key Issues Found
-                </h3>
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                  {validIssues.map((issue, idx) => {
-                    const formatText = (text) => text?.replace(/_/g, ' and ').replace(/\b\w/g, l => l.toUpperCase());
-                    const issueText = typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue));
-
-                    return (
-                      <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
-                        <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-red-400 text-xs font-bold">{idx + 1}</span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          {typeof issue === 'object' && (issue.category || issue.metric_name) && (
-                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-red-300/70">
-                              {issue.category && <span>{formatText(issue.category)}</span>}
-                              {issue.category && issue.metric_name && <span>•</span>}
-                              {issue.metric_name && <span>{formatText(issue.metric_name)}</span>}
-                            </div>
-                          )}
-                          <p className="text-sm text-gray-300">
-                            {issueText}
-                          </p>
-                        </div>
+                  return (
+                    <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
+                      <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-red-400 text-xs font-bold">{idx + 1}</span>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        {typeof issue === 'object' && (issue.category || issue.metric_name) && (
+                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-red-300/70">
+                            {issue.category && <span>{formatText(issue.category)}</span>}
+                            {issue.category && issue.metric_name && <span>•</span>}
+                            {issue.metric_name && <span>{formatText(issue.metric_name)}</span>}
+                          </div>
+                        )}
+                        <p className="text-sm text-gray-300">
+                          {issueText}
+                        </p>
                       </div>
                     );
                   })}
@@ -425,6 +415,11 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
             </div>
           )}
         </div>
+      )}
+
+      {/* KPI Section - Show call-level KPIs if available */}
+      {!activeCategory && evaluation?.kpi_results && evaluation.kpi_results.length > 0 && (
+        <CallKPISection kpiResults={evaluation.kpi_results} evaluation={evaluation} />
       )}
 
       {/* Tabs - Only show when no category is active */}

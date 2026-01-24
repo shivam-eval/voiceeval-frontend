@@ -103,15 +103,10 @@ const KPIDetailCard = ({ kpi }) => {
                     <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
                         {humanizedName}
                     </span>
-                    <div className={`text-xl font-bold ${colorClasses[color]?.split(' ')[0] || 'text-white'}`}>
+                    <div className={`${colorClasses[color]?.split(' ')[0] || 'text-white'} text-base font-normal`}>
                         {formattedValue}
                     </div>
                 </div>
-                {is_dynamic && (
-                    <div className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                        Dynamic
-                    </div>
-                )}
             </div>
 
             {/* Details Grid */}

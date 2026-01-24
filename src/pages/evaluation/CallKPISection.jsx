@@ -72,7 +72,7 @@ const CallKPISection = ({ kpiResults, evaluation }) => {
                     <h3 className="text-lg font-semibold text-cyan-400 mb-3 flex items-center gap-2">
                         <span>Agent-Specific Metrics</span>
                         <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                            {dynamicKPIs.length} Dynamic
+                            {dynamicKPIs.length}
                         </span>
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">

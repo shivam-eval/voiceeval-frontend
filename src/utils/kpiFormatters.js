@@ -33,7 +33,7 @@ export const formatKPIValue = (value, dataType, unit = '') => {
             return value === true ? 'YES' : value === false ? 'NO' : '--';
 
         case 'int':
-            return unit ? `${value} ${unit}` : value.toString();
+            return (unit && unit !== 'count') ? `${value} ${unit}` : value.toString();
 
         case 'float':
             if (unit === '%' || unit === 'percentage') {
@@ -44,7 +44,7 @@ export const formatKPIValue = (value, dataType, unit = '') => {
                 const symbol = unit === 'INR' ? '₹' : (unit === 'USD' || unit === '$') ? '$' : unit;
                 return `${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             } else {
-                return unit ? `${value.toFixed(2)} ${unit}` : value.toFixed(2);
+                return (unit && unit !== 'count') ? `${value.toFixed(2)} ${unit}` : value.toFixed(2);
             }
 
         case 'string':

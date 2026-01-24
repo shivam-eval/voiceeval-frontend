@@ -57,12 +57,7 @@ const BusinessKPICard = ({
                 <div className={`p-2 rounded-lg ${iconColorClass}`}>
                     <Icon className="w-5 h-5" />
                 </div>
-                {!isStatic && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                        Dynamic
-                    </span>
-                )}
-            </div>
+                </div>
 
             {/* Value */}
             <div className="mb-1">

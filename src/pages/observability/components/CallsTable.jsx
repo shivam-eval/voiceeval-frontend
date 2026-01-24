@@ -12,6 +12,7 @@ const CallsTable = ({
     onRowClick,
     onEvaluate,
     onDeleteCall,
+    onDownload,
     onAddCalls,
     formatDate,
     getMetricValue,
@@ -37,7 +38,7 @@ const CallsTable = ({
             <tbody className="text-sm text-gray-300">
                 {isCallsLoading ? (
                     <tr>
-                        <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
+                        <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
                             <div className="flex flex-col items-center gap-3">
                                 <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
                                 Loading calls...
@@ -46,7 +47,7 @@ const CallsTable = ({
                     </tr>
                 ) : error ? (
                     <tr>
-                        <td colSpan="5" className="px-4 py-8 text-center text-red-400">
+                        <td colSpan="6" className="px-4 py-8 text-center text-red-400">
                             <div className="flex flex-col items-center gap-3">
                                 <AlertCircle className="w-8 h-8" />
                                 Error loading calls: {error.message}
@@ -55,7 +56,7 @@ const CallsTable = ({
                     </tr>
                 ) : calls.length === 0 ? (
                     <tr>
-                        <td colSpan="5" className="px-4 py-12 text-center">
+                        <td colSpan="6" className="px-4 py-12 text-center">
                             <div className="flex flex-col items-center gap-4">
                                 <div className="p-4 bg-gray-800/30 rounded-full border border-gray-700/50">
                                     <Upload className="w-8 h-8 text-gray-500" />
@@ -102,7 +103,7 @@ const CallsTable = ({
                                         <Brain className="w-3.5 h-3.5" />
                                     </button>
                                     <button
-                                        onClick={(e) => e.stopPropagation()}
+                                        onClick={(e) => { e.stopPropagation(); onDownload && onDownload(call); }}
                                         className="p-1.5 bg-gray-800 text-gray-400 rounded hover:bg-gray-700 transition-colors"
                                         title="Download"
                                     >

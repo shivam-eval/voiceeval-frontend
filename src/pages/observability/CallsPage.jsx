@@ -394,6 +394,70 @@ const CallsPage = () => {
     toast.info('🔄 Loading evaluation status...', { autoClose: 2000 });
   };
 
+  const handleDownloadCall = async (call) => {
+    toast.info('Preparing download...');
+    
+    try {
+      let audioFilePath = null;
+      
+      // Try to get audio file from simulation if available
+      const simulationId = call.simulation_id || call.evaluation?.simulation_id;
+      
+      if (simulationId) {
+        const simResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/simulation/${simulationId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            'X-Tenant-ID': localStorage.getItem('tenantId') || '',
+          }
+        });
+        
+        if (simResponse.ok) {
+          const simData = await simResponse.json();
+          audioFilePath = simData?.metadata?.audio_file;
+        }
+      }
+      
+      // Fallback to call data if simulation didn't have it
+      if (!audioFilePath) {
+        audioFilePath = call.audio_url || call.filename || call.audio_path;
+      }
+      
+      if (!audioFilePath) {
+        toast.error('Audio file source not found for this call.');
+        return;
+      }
+
+      const GCP_STORAGE_BASE_URL = import.meta.env.VITE_GCP_STORAGE_BASE_URL || 'https://storage.googleapis.com/voiceeval-public';
+      
+      const fullUrl = audioFilePath.startsWith('http') 
+        ? audioFilePath 
+        : `${GCP_STORAGE_BASE_URL}/${audioFilePath.startsWith('/') ? audioFilePath.slice(1) : audioFilePath}`;
+
+      // Use direct link approach
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = fullUrl;
+      a.target = '_blank';
+      
+      const fileName = audioFilePath.split('/').pop() || `call-${call.call_id}.wav`;
+      a.download = fileName;
+      
+      document.body.appendChild(a);
+      a.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(a);
+      }, 100);
+      
+      toast.success('Download initiated!');
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error('Failed to prepare download. Please try again.');
+    }
+  };
+
+
+
   const handleDeleteCall = (callId) => {
     setConfirmationModal({
       isOpen: true,
@@ -714,6 +778,7 @@ const CallsPage = () => {
               onRowClick={handleRowClick}
               onEvaluate={handleEvaluate}
               onDeleteCall={handleDeleteCall}
+              onDownload={handleDownloadCall}
               onAddCalls={handleAddCalls}
               formatDate={formatDate}
               getMetricValue={getMetricValue}

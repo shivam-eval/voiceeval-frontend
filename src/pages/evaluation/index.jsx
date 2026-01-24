@@ -335,7 +335,7 @@ const EvaluationDashboard = ({ onBack }) => {
       } else {
         // Only fall back to metadata if call_recording is not in the response at all
         const audioFilePath = simulationDetails?.metadata?.audio_file;
-        const GCP_STORAGE_BASE_URL = 'https://storage.googleapis.com/voiceeval-public';
+        const GCP_STORAGE_BASE_URL = import.meta.env.VITE_GCP_STORAGE_BASE_URL || 'https://storage.googleapis.com/voiceeval-public';
         audioUrl = audioFilePath ? `${GCP_STORAGE_BASE_URL}/${audioFilePath}` : null;
       }
 

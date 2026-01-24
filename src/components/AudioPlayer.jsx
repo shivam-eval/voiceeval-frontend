@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Play, Pause, Volume2, Loader } from 'lucide-react';
 
-// Get API base URL from environment or default
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
+// Get GCP Storage base URL from environment or default
+const GCP_STORAGE_BASE_URL = import.meta.env.VITE_GCP_STORAGE_BASE_URL || 'https://storage.googleapis.com/voiceeval-public';
 
 /**
- * Simple audio player component for noise profile previews
+ * Simple audio player component for audio playback
  * 
  * @param {string} audioUrl - URL to the audio file (can be relative or absolute)
  * @param {string} label - Label to display (optional)
@@ -23,7 +23,7 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
     // Construct full URL if audioUrl is relative
     const fullAudioUrl = audioUrl?.startsWith('http')
         ? audioUrl
-        : `${API_BASE_URL.replace('/api/v1', '')}${audioUrl}`;
+        : `${GCP_STORAGE_BASE_URL}/${audioUrl?.startsWith('/') ? audioUrl.slice(1) : audioUrl}`;
 
     useEffect(() => {
         // Reset state when URL changes
@@ -39,8 +39,12 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
 
         const fetchAudio = async () => {
             try {
-                // If it's an external URL, just use it directly
-                if (fullAudioUrl.startsWith('http') && !fullAudioUrl.includes(API_BASE_URL)) {
+                console.log('AudioPlayer: Original URL:', audioUrl);
+                console.log('AudioPlayer: Constructed full URL:', fullAudioUrl);
+
+                // If it's an external URL (GCP Storage), just use it directly without auth
+                if (fullAudioUrl.startsWith('http')) {
+                    console.log('AudioPlayer: Using external URL directly (GCP Storage)');
                     if (active) {
                         setAudioSrc(fullAudioUrl);
                         setIsLoading(false);
@@ -49,6 +53,7 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
                 }
 
                 // Internal API request with auth
+                console.log('AudioPlayer: Fetching with auth headers');
                 const token = localStorage.getItem("authToken");
                 const headers = {};
                 if (token) {
@@ -58,17 +63,21 @@ const AudioPlayer = ({ audioUrl, label, compact = false }) => {
                 const response = await fetch(fullAudioUrl, { headers });
 
                 if (!response.ok) {
-                    throw new Error(`Failed to load audio: ${response.status}`);
+                    throw new Error(`Failed to load audio: ${response.status} ${response.statusText}`);
                 }
 
                 const blob = await response.blob();
+                console.log('AudioPlayer: Audio blob loaded, size:', blob.size, 'type:', blob.type);
+
                 if (active) {
                     objectUrl = URL.createObjectURL(blob);
+                    console.log('AudioPlayer: Created blob URL:', objectUrl);
                     setAudioSrc(objectUrl);
                     setIsLoading(false);
                 }
             } catch (err) {
-                console.error('Error fetching audio:', err);
+                console.error('AudioPlayer: Error fetching audio:', err);
+                console.error('AudioPlayer: Failed URL:', fullAudioUrl);
                 if (active) {
                     setIsLoading(false);
                     // Fallback to direct URL in case some auth isn't needed or strictly fails

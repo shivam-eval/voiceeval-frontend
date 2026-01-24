@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Play, Pause, Download, Copy, User, Bot, Volume2, VolumeX, AlertCircle } from "lucide-react";
 import { toast } from "react-toastify";
+import AudioPlayer from "../../../components/AudioPlayer";
 
 // Mini audio player for individual steps
 const MiniAudioPlayer = ({ audioUrl }) => {
@@ -76,13 +77,6 @@ const MiniAudioPlayer = ({ audioUrl }) => {
 
 
 const CallTranscriptPanel = ({ transcriptData, callRecordingUrl }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [volume, setVolume] = useState(1);
-  const audioRef = useRef(null);
-
   // Debug logging
   useEffect(() => {
     console.log('CallTranscriptPanel received transcriptData:', transcriptData);
@@ -113,57 +107,6 @@ const CallTranscriptPanel = ({ transcriptData, callRecordingUrl }) => {
     console.log('Step Audio Map:', stepAudioMap);
     console.log('Audio Files:', audioFiles);
   }, [audioFiles]);
-
-  useEffect(() => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.play().catch(err => {
-          console.error("Playback failed:", err);
-          toast.error("Audio playback failed. Please check the recording URL.");
-          setIsPlaying(false);
-        });
-      } else {
-        audioRef.current.pause();
-      }
-    }
-  }, [isPlaying]);
-
-  const togglePlay = () => setIsPlaying(!isPlaying);
-
-  const onTimeUpdate = () => {
-    if (audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-    }
-  };
-
-  const onLoadedMetadata = () => {
-    if (audioRef.current) {
-      setDuration(audioRef.current.duration);
-    }
-  };
-
-  const handleSeek = (e) => {
-    const time = parseFloat(e.target.value);
-    setCurrentTime(time);
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-    }
-  };
-
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
-    }
-  };
-
-  const handleVolumeChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setVolume(val);
-    if (audioRef.current) {
-      audioRef.current.volume = val;
-    }
-  };
 
   const formatTime = (ms) => {
     if (!ms && ms !== 0) return "00:00";
@@ -257,52 +200,8 @@ const CallTranscriptPanel = ({ transcriptData, callRecordingUrl }) => {
 
         {/* Audio Player */}
         {callRecordingUrl && (
-          <div className="bg-dark-input/50 border border-gray-700/50 rounded-lg p-3 flex items-center gap-4">
-            <audio
-              ref={audioRef}
-              src={callRecordingUrl}
-              onTimeUpdate={onTimeUpdate}
-              onLoadedMetadata={onLoadedMetadata}
-              onEnded={() => setIsPlaying(false)}
-            />
-
-            <button
-              onClick={togglePlay}
-              className="w-10 h-10 rounded-full bg-teal-500 hover:bg-teal-400 flex items-center justify-center text-white transition-all transform active:scale-95"
-            >
-              {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
-            </button>
-
-            <div className="flex-1 space-y-1">
-              <div className="flex items-center justify-between text-[10px] font-mono text-gray-500">
-                <span>{formatTime(currentTime * 1000)}</span>
-                <span>{formatTime(duration * 1000)}</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max={duration || 0}
-                step="0.1"
-                value={currentTime}
-                onChange={handleSeek}
-                className="w-full h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-teal-500"
-              />
-            </div>
-
-            <div className="flex items-center gap-2 group relative">
-              <button onClick={toggleMute} className="text-gray-400 hover:text-white transition-colors">
-                {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={handleVolumeChange}
-                className="w-16 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-teal-500 opacity-0 group-hover:opacity-100 transition-opacity"
-              />
-            </div>
+          <div className="mt-4">
+            <AudioPlayer audioUrl={callRecordingUrl} label="Call Recording" />
           </div>
         )}
       </div>

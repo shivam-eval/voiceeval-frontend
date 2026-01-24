@@ -12,8 +12,6 @@ import {
   getTranscriptData
 } from '../../utils/evaluationDataTransform';
 
-import { GCP_STORAGE_BASE_URL } from '../../config/constants';
-
 const EvaluationReportPage = () => {
   const { evaluationId } = useParams();
   const [searchParams] = useSearchParams();
@@ -64,9 +62,22 @@ const EvaluationReportPage = () => {
       if (!evaluation?.session_id) return;
 
       setIsLoadingTranscript(true);
+
+      // Set a timeout to prevent indefinite loading
+      const timeoutId = setTimeout(() => {
+        console.warn('Transcript fetch timeout - continuing without transcript');
+        setIsLoadingTranscript(false);
+        toast.warning('Transcript is taking longer than expected. Report will load without it.', {
+          autoClose: 5000,
+          position: 'bottom-right'
+        });
+      }, 10000); // 10 second timeout
+
       try {
         const { getSessionTranscript } = await import('../../api/services/simulation.service');
         const json = await getSessionTranscript(evaluation.session_id);
+
+        clearTimeout(timeoutId); // Clear timeout on success
 
         const steps = json.transcript_steps || json.transcript || [];
 
@@ -86,10 +97,13 @@ const EvaluationReportPage = () => {
           duration_ms: step.timing?.duration_ms
         }));
 
-        // Get audio URL
+        // Get audio URL - use GCP Storage for audio files
         let audioUrl = null;
         const audioFilePath = simulationDetails?.metadata?.audio_file;
         if (audioFilePath) {
+          // If it's already a full URL (http/https), use it as-is
+          // Otherwise, construct GCP Storage URL
+          const GCP_STORAGE_BASE_URL = import.meta.env.VITE_GCP_STORAGE_BASE_URL || 'https://storage.googleapis.com/voiceeval-public';
           audioUrl = audioFilePath.startsWith('http')
             ? audioFilePath
             : `${GCP_STORAGE_BASE_URL}/${audioFilePath}`;
@@ -108,7 +122,24 @@ const EvaluationReportPage = () => {
 
         setTranscriptData(transcript);
       } catch (error) {
+        clearTimeout(timeoutId); // Clear timeout on error
         console.error('Error fetching transcript:', error);
+
+        // Show a user-friendly error message
+        if (error.response?.status === 404) {
+          console.info('Transcript not found - may not be available yet');
+        } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+          toast.error('Transcript request timed out. Please try refreshing the page.', {
+            autoClose: 5000,
+            position: 'bottom-right'
+          });
+        } else {
+          toast.error('Failed to load transcript. Showing evaluation results only.', {
+            autoClose: 5000,
+            position: 'bottom-right'
+          });
+        }
+
         setTranscriptData(null);
       } finally {
         setIsLoadingTranscript(false);
@@ -117,6 +148,7 @@ const EvaluationReportPage = () => {
 
     fetchTranscript();
   }, [evaluation?.session_id, simulationDetails]);
+
 
   // Subscribe to SSE events for real-time evaluation updates (replaces polling)
   React.useEffect(() => {
@@ -171,8 +203,9 @@ const EvaluationReportPage = () => {
     navigate(-1);
   };
 
-  if (isLoading) {
-    return <DashboardLoader message="Loading evaluation report..." />;
+  // Show loading state while fetching evaluation OR initial transcript
+  if (isLoading || (evaluation && isLoadingTranscript && !transcriptData)) {
+    return <DashboardLoader message={isLoading ? "Loading evaluation report..." : "Loading transcript data..."} />;
   }
 
   // If not found yet but we have a sessionId or evaluationId, show a waiting state instead of error

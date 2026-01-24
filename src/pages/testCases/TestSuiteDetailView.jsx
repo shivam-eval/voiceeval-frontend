@@ -32,7 +32,7 @@ const IconButton = ({ icon, onClick, title, variant = 'default', className = '' 
 
 const MetricCard = ({ label, value, valueClassName = 'text-3xl font-bold text-white' }) => {
     return (
-        <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+        <div className="bg-[#030712] rounded-xl p-6 border border-teal-500/20 transition-all hover:bg-opacity-80 border-opacity-50">
             <div className="text-gray-400 text-sm mb-1">{label}</div>
             <div className={valueClassName}>{value}</div>
         </div>
@@ -174,7 +174,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
         <div className="space-y-6">
             {/* Session Info - Show noise and session ID if test was run */}
             {testCase.session_status && (
-                <div className="bg-gray-900/50 rounded-lg p-4 border border-gray-800">
+                <div className="rounded-lg p-4 border border-teal-500/20">
                     <h4 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -217,7 +217,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
                                 </svg>
                                 Goal
                             </h4>
-                            <div className="bg-gray-900 rounded p-4 text-gray-300 text-sm">
+                            <div className="rounded p-4 text-gray-300 text-sm border border-gray-800">
                                 {testCase.goal}
                             </div>
                         </div>
@@ -230,7 +230,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
                                 </svg>
                                 Description
                             </h4>
-                            <div className="bg-gray-900 rounded p-4 text-gray-300 text-sm">
+                            <div className="rounded p-4 text-gray-300 text-sm border border-gray-800">
                                 {testCase.description}
                             </div>
                         </div>
@@ -271,7 +271,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
                     </svg>
                     Conversation Flow
                 </h4>
-                <div className="bg-gray-900 rounded p-4">
+                <div className="rounded p-4 border border-gray-800">
                     <div className="flex flex-wrap gap-2">
                         {testCase.node_sequence.map((node, idx) => (
                             <div key={idx} className="flex items-center gap-1">
@@ -296,7 +296,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
                 {testCase.assigned_personas && testCase.assigned_personas.length > 0 ? (
                     <div className="space-y-2">
                         {testCase.assigned_personas.map((persona, idx) => (
-                            <div key={idx} className="bg-gray-900 rounded p-3">
+                            <div key={idx} className="rounded p-3 border border-gray-800">
                                 <div className="font-medium text-teal-400">{persona.name}</div>
                                 <div className="text-sm text-gray-400 mt-1">
                                     {formatPersonaField(persona.region)} • {formatPersonaField(persona.age_group)} • {formatPersonaField(persona.gender)}
@@ -365,7 +365,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
         {testCase.extra_instructions && (
             <div>
                 <h4 className="text-sm font-semibold text-gray-400 mb-2">Extra Instructions</h4>
-                <div className="bg-gray-900 rounded p-4 text-gray-300 text-sm">
+                <div className="rounded p-4 text-gray-300 text-sm border border-gray-800">
                     {testCase.extra_instructions}
                 </div>
             </div>
@@ -380,7 +380,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
                     </svg>
                     Test Steps ({testCase.steps.length})
                 </h4>
-                <div className="bg-gray-900 rounded p-4 space-y-3 max-h-96 overflow-y-auto">
+                <div className="rounded p-4 space-y-3 max-h-96 overflow-y-auto border border-gray-800">
                     {testCase.steps.map((step, idx) => (
                         <div key={idx} className="border-l-2 border-teal-500 pl-4 py-2">
                             <div className="flex items-center gap-2 mb-1">
@@ -659,7 +659,7 @@ const TestSuiteDetailView = () => {
                         <Button
                             size="sm"
                             onClick={() => setShowRunSimulationModal(true)}
-                            className="bg-teal-500 hover:bg-teal-600"
+                            className="bg-teal-500/10 border border-teal-500/30 text-teal-400 hover:bg-teal-500/20 shadow-[0_0_15px_rgba(20,184,166,0.1)]"
                         >
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -677,12 +677,17 @@ const TestSuiteDetailView = () => {
                             </svg>
                             Export
                         </Button>
-                        <Button size="sm" variant="danger" onClick={handleDelete}>
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            Delete
-                        </Button>
+                        <IconButton
+                            icon={
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            }
+                            onClick={handleDelete}
+                            title="Delete"
+                            variant="danger"
+                            className="p-2 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg"
+                        />
                     </div>
                 </div>
 
@@ -708,37 +713,37 @@ const TestSuiteDetailView = () => {
 
 
                 {/* Test Cases Table */}
-                <div className="bg-gray-900 rounded-2xl border border-gray-800 overflow-hidden">
-                    <div className="p-6 border-b border-gray-800">
+                <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
+                    <div className="p-6 border-b border-gray-800/50">
                         <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-bold text-white">Test Cases</h2>
+                            <h2 className="text-xl font-bold text-white">Test Cases</h2>
                         </div>
                     </div>
 
                     {testCases.length === 0 ? (
                         <EmptyState />
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full">
-                                <thead className="bg-gray-800/50">
-                                    <tr>
-                                        <th className="w-8 px-4 py-3"></th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Name / ID</th>
-                                        <th className="px-4 py-3 text-left text-sm font-semibold text-gray-300">Status</th>
-                                        <th className="px-4 py-3 text-right text-sm font-semibold text-gray-300">Actions</th>
+                        <div className="overflow-x-auto custom-scrollbar">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
+                                        <th className="px-4 py-3 w-12"></th>
+                                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider">Name / ID</th>
+                                        <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wider">Status</th>
+                                        <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody className="text-sm text-gray-300">
                                     {testCases.map((testCase, index) => (
                                         <>
                                             <tr
                                                 key={testCase.test_case_id || index}
-                                                className="border-t border-gray-800 hover:bg-gray-800/30 cursor-pointer transition-colors"
+                                                className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors group cursor-pointer"
                                                 onClick={() => toggleRow(testCase.test_case_id || index)}
                                             >
-                                                <td className="px-4 py-4">
+                                                <td className="px-4 py-3">
                                                     <svg
-                                                        className={`w-5 h-5 text-gray-500 transition-transform ${expandedRows.has(testCase.test_case_id || index) ? 'rotate-90' : ''}`}
+                                                        className={`w-4 h-4 text-gray-500 transition-transform ${expandedRows.has(testCase.test_case_id || index) ? 'rotate-90' : ''}`}
                                                         fill="none"
                                                         stroke="currentColor"
                                                         viewBox="0 0 24 24"

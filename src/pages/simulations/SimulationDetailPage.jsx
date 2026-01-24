@@ -4,7 +4,7 @@ import { toast } from 'react-toastify';
 import {
     ArrowLeft, StopCircle, RefreshCw, Download, MoreVertical,
     CheckCircle, XCircle, Users, Zap, AlertTriangle, Clock,
-    ChevronRight, ChevronDown, Eye, BarChart3, Hash, Activity, Star
+    ChevronRight, ChevronDown, Eye, BarChart3, Hash, Activity, Star, Trash2
 } from 'lucide-react';
 import { useSimulationWithLiveUpdates, useSimulationSessions, useCancelSimulation, useRerunSimulation, useDeleteSimulation } from '../../hooks/useSimulations';
 import { useBatchEvaluateSimulation } from '../../hooks/useEvaluations';
@@ -20,7 +20,6 @@ import { extractNoiseFromSessionId, getNoiseProfileBadgeVariant } from '../../ut
 const SimulationDetailPage = () => {
     const { simulationId } = useParams();
     const navigate = useNavigate();
-    const [expandedSessions, setExpandedSessions] = useState([]);
     const [sessionFilter, setSessionFilter] = useState('all');
     const [isEvaluating, setIsEvaluating] = useState(false);
     const [evaluationTaskId, setEvaluationTaskId] = useState(null);
@@ -191,14 +190,6 @@ const SimulationDetailPage = () => {
             }
         };
     }, [evaluationTaskId]);
-
-    const toggleSession = (sessionId) => {
-        setExpandedSessions(prev =>
-            prev.includes(sessionId)
-                ? prev.filter(id => id !== sessionId)
-                : [...prev, sessionId]
-        );
-    };
 
     const handleCancel = async () => {
         setConfirmModal({
@@ -550,39 +541,39 @@ const SimulationDetailPage = () => {
 
                         <div className="flex items-center gap-3">
                             {simulation.status === 'running' && (
-                                <Button
+                                <button
                                     onClick={handleCancel}
-                                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                    className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.1)] font-medium"
                                 >
                                     <StopCircle className="w-4 h-4" />
                                     Cancel
-                                </Button>
+                                </button>
                             )}
                             {simulation.status === 'completed' && (
                                 <>
-                                    <Button
+                                    <button
                                         onClick={handleRerun}
-                                        className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+                                        className="bg-teal-500/10 border border-teal-500/30 text-teal-400 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-500/20 transition-all shadow-[0_0_15px_rgba(20,184,166,0.1)] font-medium"
                                     >
                                         <RefreshCw className="w-4 h-4" />
                                         Rerun
-                                    </Button>
-                                    <Button
+                                    </button>
+                                    <button
                                         onClick={handleViewEvaluation}
                                         disabled={isEvaluating}
-                                        className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="bg-teal-500/10 border border-teal-500/30 text-teal-400 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-teal-500/20 transition-all shadow-[0_0_15px_rgba(20,184,166,0.1)] disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                                     >
                                         <BarChart3 className="w-4 h-4" />
                                         {isEvaluating ? 'Evaluating...' : 'View Evaluation'}
-                                    </Button>
+                                    </button>
                                 </>
                             )}
-                            <Button
+                            <button
                                 onClick={handleDelete}
-                                className="bg-gray-700 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+                                className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-2 rounded-lg hover:bg-red-500/20 transition-all shadow-[0_0_15px_rgba(239,68,68,0.1)] flex items-center justify-center"
                             >
-                                <AlertTriangle className="w-4 h-4" />
-                            </Button>
+                                <Trash2 className="w-4 h-4" />
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -701,7 +692,7 @@ const SimulationDetailPage = () => {
                 )}
 
                 {/* Sessions Table */}
-                <div className="bg-gray-900 rounded-xl border border-gray-800/50 overflow-hidden">
+                <div className="bg-dark-panel rounded-xl border border-gray-800/50 overflow-hidden">
                     <div className="p-6 border-b border-gray-800">
                         <h2 className="text-xl font-bold text-white mb-4">Sessions</h2>
                         <div className="flex gap-2">
@@ -715,10 +706,18 @@ const SimulationDetailPage = () => {
                                         }`}
                                 >
                                     {filter}
-                                    {filter === 'all' && simulation.progress?.total_sessions && ` (${simulation.progress.total_sessions})`}
-                                    {filter === 'completed' && simulation.progress?.completed && ` (${simulation.progress.completed})`}
-                                    {filter === 'failed' && simulation.progress?.failed && ` (${simulation.progress.failed})`}
-                                    {filter === 'running' && simulation.progress?.active && ` (${simulation.progress.active})`}
+                                    {filter === 'all' && (
+                                        ` (${simulation.progress?.total_sessions || sessions.length || 0})`
+                                    )}
+                                    {filter === 'completed' && (
+                                        ` (${simulation.progress?.completed || (sessionFilter === 'all' ? sessions.filter(s => s.status?.toLowerCase() === 'completed').length : 0)})`
+                                    )}
+                                    {filter === 'failed' && (
+                                        ` (${simulation.progress?.failed || (sessionFilter === 'all' ? sessions.filter(s => s.status?.toLowerCase() === 'failed').length : 0)})`
+                                    )}
+                                    {filter === 'running' && (
+                                        ` (${simulation.progress?.active || (sessionFilter === 'all' ? sessions.filter(s => s.status?.toLowerCase() === 'running').length : 0)})`
+                                    )}
                                 </button>
                             ))}
                         </div>
@@ -733,7 +732,6 @@ const SimulationDetailPage = () => {
                             <table className="w-full">
                                 <thead className="bg-gray-800/50 border-b border-gray-800">
                                     <tr>
-                                        <th className="w-10 px-4 py-3"></th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Session ID</th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Test Case</th>
                                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase">Noise</th>
@@ -745,94 +743,55 @@ const SimulationDetailPage = () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-800">
                                     {sessions.map((session) => (
-                                        <>
-                                            <tr
-                                                key={session.session_id}
-                                                className="hover:bg-gray-800/50 transition-colors cursor-pointer"
-                                                onClick={() => toggleSession(session.session_id)}
-                                            >
-                                                <td className="px-4 py-3">
-                                                    {expandedSessions.includes(session.session_id) ? (
-                                                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                                        <tr
+                                            key={session.session_id}
+                                            className="hover:bg-gray-800/50 transition-colors cursor-pointer"
+                                            onClick={() => navigate(`/evaluations/results/${simulationId}`)}
+                                        >
+                                            <td className="px-4 py-3">
+                                                <code className="text-xs text-teal-400 bg-gray-800 px-2 py-1 rounded">
+                                                    {session.session_id.substring(0, 12)}...
+                                                </code>
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-white">
+                                                {session.metadata?.test_case_name || session.test_case_id}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {(() => {
+                                                    const noise = extractNoiseFromSessionId(session.session_id);
+                                                    return noise ? (
+                                                        <Badge variant={getNoiseProfileBadgeVariant(noise.profile_id)} size="sm">
+                                                            {noise.displayName}
+                                                        </Badge>
                                                     ) : (
-                                                        <ChevronRight className="w-4 h-4 text-gray-400" />
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <code className="text-xs text-teal-400 bg-gray-800 px-2 py-1 rounded">
-                                                        {session.session_id.substring(0, 12)}...
-                                                    </code>
-                                                </td>
-                                                <td className="px-4 py-3 text-sm text-white">
-                                                    {session.metadata?.test_case_name || session.test_case_id}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    {(() => {
-                                                        const noise = extractNoiseFromSessionId(session.session_id);
-                                                        return noise ? (
-                                                            <Badge variant={getNoiseProfileBadgeVariant(noise.profile_id)} size="sm">
-                                                                {noise.displayName}
-                                                            </Badge>
-                                                        ) : (
-                                                            <span className="text-xs text-gray-500">-</span>
-                                                        );
-                                                    })()}
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    <Badge variant={getStatusBadgeVariant(session.status)}>
-                                                        {session.status}
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-4 py-3">
-                                                    {session.metrics?.score !== null && session.metrics?.score !== undefined ? (
-                                                        <span className={`text-sm font-semibold ${session.metrics.score >= 90 ? 'text-green-400' :
-                                                            session.metrics.score >= 70 ? 'text-yellow-400' :
-                                                                'text-red-400'
-                                                            }`}>
-                                                            {session.metrics.score.toFixed(1)}%
-                                                        </span>
-                                                    ) : (
-                                                        <span className="text-sm text-gray-500">-</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-4 py-3 text-sm text-gray-300">
-                                                    {formatDuration(session.transcript?.metadata?.duration_ms)}
-                                                </td>
-                                                <td className="px-4 py-3 text-sm text-gray-300">
-                                                    {formatDateTime(session.timestamps?.started_at)}
-                                                </td>
-                                            </tr>
-                                            {expandedSessions.includes(session.session_id) && (
-                                                <tr>
-                                                    <td colSpan={8} className="bg-gray-800/30 p-6">
-                                                        <div className="text-sm text-gray-300">
-                                                            <p className="font-semibold mb-2">Session Details</p>
-                                                            <div className="grid grid-cols-2 gap-4 text-xs">
-                                                                <div>
-                                                                    <span className="text-gray-400">Test Case ID:</span>
-                                                                    <span className="ml-2 text-white">{session.test_case_id}</span>
-                                                                </div>
-                                                                {session.agent_id && (
-                                                                    <div>
-                                                                        <span className="text-gray-400">Agent ID:</span>
-                                                                        <span className="ml-2 text-white">{session.agent_id}</span>
-                                                                    </div>
-                                                                )}
-                                                                {session.error_message && (
-                                                                    <div className="col-span-2">
-                                                                        <span className="text-red-400">Error:</span>
-                                                                        <span className="ml-2 text-red-300">{session.error_message}</span>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                            <div className="mt-4 text-xs text-gray-400">
-                                                                Click on a session to view transcript, metrics, and detailed results.
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )}
-                                        </>
+                                                        <span className="text-xs text-gray-500">-</span>
+                                                    );
+                                                })()}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                <Badge variant={getStatusBadgeVariant(session.status)}>
+                                                    {session.status}
+                                                </Badge>
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {session.metrics?.score !== null && session.metrics?.score !== undefined ? (
+                                                    <span className={`text-sm font-semibold ${session.metrics.score >= 90 ? 'text-green-400' :
+                                                        session.metrics.score >= 70 ? 'text-yellow-400' :
+                                                            'text-red-400'
+                                                        }`}>
+                                                        {session.metrics.score.toFixed(1)}%
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-sm text-gray-500">-</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-300">
+                                                {formatDuration(session.transcript?.metadata?.duration_ms)}
+                                            </td>
+                                            <td className="px-4 py-3 text-sm text-gray-300">
+                                                {formatDateTime(session.timestamps?.started_at)}
+                                            </td>
+                                        </tr>
                                     ))}
                                 </tbody>
                             </table>

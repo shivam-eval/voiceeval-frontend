@@ -54,7 +54,6 @@ const TestCasesPage = () => {
     const handleCreateSuite = (formData) => {
         // Close modal immediately
         setShowCreateModal(false);
-        toast.info("Creating test suite in background...");
 
         createTestSuite.mutate(formData, {
             onSuccess: () => {

@@ -31,30 +31,20 @@ const KPISection = ({
 
         return (
             <div
-                className={`${colors.bg} rounded-lg p-3 border ${colors.border} transition-all hover:bg-opacity-80 ${isDynamic ? 'relative' : ''}`}
+                className="bg-[#030712] rounded-xl p-4 border border-teal-500/20 transition-all hover:bg-opacity-80 border-opacity-50"
                 title={kpi.description}
             >
-                <div className={`flex items-center ${isDynamic ? 'justify-between' : ''} gap-2 mb-2`}>
+                <div className="flex items-center gap-2 mb-3">
                     <div className={`p-1.5 rounded-lg ${colors.icon}`}>
                         <Icon className="w-4 h-4" />
                     </div>
-                    {isDynamic && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 uppercase font-bold">
-                            Dynamic
-                        </span>
-                    )}
+                    <div className="text-gray-400 text-xs font-medium line-clamp-1">
+                        {kpi.name}
+                    </div>
                 </div>
-                <div className={`text-xl font-bold ${colors.text} mb-0.5`}>
+                <div className={`text-xl font-bold ${colors.text}`}>
                     {formattedValue}
                 </div>
-                <div className="text-gray-400 text-xs font-medium mb-1">
-                    {kpi.name}
-                </div>
-                {isDynamic && kpi.aggregation_method && (
-                    <div className="text-gray-500 text-[10px] capitalize">
-                        {kpi.aggregation_method}
-                    </div>
-                )}
             </div>
         );
     };
@@ -92,19 +82,19 @@ const KPISection = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
                             {/* Total Calls Card - Always first */}
                             <div
-                                className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20 transition-all hover:bg-opacity-80"
+                                className="bg-[#030712] rounded-xl p-4 border border-blue-500/20 transition-all hover:bg-opacity-80"
                                 title="Total calls analyzed in the last 30 days"
                             >
-                                <div className="flex items-center gap-2 mb-2">
+                                <div className="flex items-center gap-2 mb-3">
                                     <div className="p-1.5 rounded-lg bg-blue-500/20">
                                         <Phone className="w-4 h-4 text-blue-400" />
                                     </div>
+                                    <div className="text-gray-400 text-xs font-medium">
+                                        Total Calls
+                                    </div>
                                 </div>
-                                <div className="text-xl font-bold text-blue-400 mb-0.5">
+                                <div className="text-xl font-bold text-blue-400">
                                     {agentKPIsData?.total_calls || 0}
-                                </div>
-                                <div className="text-gray-400 text-xs font-medium">
-                                    Total Calls
                                 </div>
                             </div>
 
@@ -130,37 +120,13 @@ const KPISection = ({
                                 <span className="text-xs text-gray-500 ml-2 font-normal">({agentSpecificKPIs.length} metrics)</span>
                             </h3>
                         </div>
-                        <button
-                            onClick={onToggleKPIs}
-                            className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 rounded-lg text-xs font-medium transition-colors"
-                        >
-                            {showKPIs ? 'Collapse' : 'Expand'}
-                        </button>
                     </div>
 
-                    {showKPIs && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                            {agentSpecificKPIs.map((kpi) => (
-                                <KPICard key={kpi.kpi_id} kpi={kpi} isDynamic />
-                            ))}
-                        </div>
-                    )}
-
-                    {!showKPIs && (
-                        <div className="flex items-center gap-3 text-xs flex-wrap">
-                            {agentSpecificKPIs.slice(0, 3).map((kpi) => (
-                                <div key={kpi.kpi_id} className="flex items-center gap-1.5 px-2.5 py-1.5 bg-gray-800/50 rounded-lg border border-gray-700/50">
-                                    <span className="text-gray-400">{kpi.name}:</span>
-                                    <span className="text-white font-semibold">
-                                        {formatKPIValue(kpi.value, kpi.data_type, kpi.unit)}
-                                    </span>
-                                </div>
-                            ))}
-                            {agentSpecificKPIs.length > 3 && (
-                                <span className="text-gray-500 px-2">+{agentSpecificKPIs.length - 3} more</span>
-                            )}
-                        </div>
-                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                        {agentSpecificKPIs.map((kpi) => (
+                            <KPICard key={kpi.kpi_id} kpi={kpi} isDynamic />
+                        ))}
+                    </div>
                 </div>
             )}
 

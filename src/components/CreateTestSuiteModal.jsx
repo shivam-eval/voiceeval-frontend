@@ -179,7 +179,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
 
         // Close modal immediately and show progress toast
         onClose();
-        toast.info('Processing test suite creation in background...');
+        toast.info('Creating test suite...');
 
         // If audio type, upload files first
         if (formData.testCaseType === 'audio' && formData.audioFiles.length > 0) {

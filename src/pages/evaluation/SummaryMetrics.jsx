@@ -4,7 +4,7 @@ const SummaryMetric = ({ mainText, sideText, successRate }) => {
     : 0;
 
   return (
-    <div className="bg-dark-panel rounded-xl p-6 border border-gray-800/50">
+    <div className="bg-[#030712] rounded-xl p-6 border border-teal-500/20">
       <div className="text-gray-400 text-sm mb-2">{sideText}</div>
       <div className="flex items-baseline gap-2 mb-2">
         <div className={`w-3 h-3 rounded-full ${displayScore >= 70 ? 'bg-teal-400' : 'bg-red-400'}`}></div>

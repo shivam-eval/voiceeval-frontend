@@ -275,7 +275,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
       {/* Summary Cards */}
       <div className="grid grid-cols-5 gap-4">
-        <div className={`bg-dark-panel border rounded-xl p-5 ${getScoreBg(evaluationData?.overall_score || 0)}`}>
+        <div className={`bg-[#030712] border rounded-xl p-5 ${getScoreBg(evaluationData?.overall_score || 0)}`}>
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-gray-400 font-semibold uppercase">Overall Score</p>
             {evaluationData?.passed ? (
@@ -289,7 +289,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
           </p>
         </div>
 
-        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
+        <div className="bg-[#030712] border border-teal-500/20 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="w-4 h-4 text-purple-400" />
             <p className="text-xs text-gray-400 font-semibold uppercase">Execution Time</p>
@@ -301,7 +301,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
           </p>
         </div>
 
-        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
+        <div className="bg-[#030712] border border-teal-500/20 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
             <XCircle className="w-4 h-4 text-red-400" />
             <p className="text-xs text-gray-400 font-semibold uppercase">Issues Found</p>
@@ -311,7 +311,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
           </p>
         </div>
 
-        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-5">
+        <div className="bg-[#030712] border border-teal-500/20 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-2">
             <BarChart3 className="w-4 h-4 text-blue-400" />
             <p className="text-xs text-gray-400 font-semibold uppercase">Total Metrics</p>
@@ -360,7 +360,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Issues Panel */}
           {evaluationData?.issues && evaluationData.issues.length > 0 && (
-            <div className="bg-dark-panel border border-red-500/20 rounded-xl p-6">
+            <div className="bg-[#030712] border border-red-500/20 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <XCircle className="w-5 h-5 text-red-400" />
                 Key Issues Found
@@ -397,7 +397,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
           {/* Recommendations Panel */}
           {evaluationData?.recommendations && evaluationData.recommendations.length > 0 && (
-            <div className="bg-dark-panel border border-yellow-500/20 rounded-xl p-6">
+            <div className="bg-[#030712] border border-yellow-500/20 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                 <TrendingUp className="w-5 h-5 text-yellow-400" />
                 Recommendations
@@ -454,7 +454,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
             <>
               {/* Category Scores Radar */}
               {radarData.length > 0 && (
-                <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-6">
+                <div className="bg-[#030712] border border-teal-500/20 rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-white mb-6">
                     Category Performance
                   </h3>
@@ -512,7 +512,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                     return (
                       <div
                         key={cat.category}
-                        className="bg-dark-panel border border-gray-800/50 rounded-xl p-4 hover:border-gray-700/50 transition-all"
+                        className="bg-[#030712] border border-teal-500/20 rounded-xl p-4 hover:border-gray-700/50 transition-all"
                       >
                         <div className="flex items-center justify-between">
                           <div>
@@ -562,7 +562,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                   callRecordingUrl={transcriptData?.audio_url || report?.call_recording}
                 />
               ) : (
-                <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
+                <div className="bg-[#030712] border border-teal-500/20 rounded-xl p-12 text-center">
                   <MessageSquare className="w-12 h-12 text-gray-600 mx-auto mb-3" />
                   <p className="text-gray-400 text-sm">No transcript data available</p>
                 </div>

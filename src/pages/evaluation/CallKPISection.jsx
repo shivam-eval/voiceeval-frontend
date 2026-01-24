@@ -58,7 +58,7 @@ const CallKPISection = ({ kpiResults, evaluation }) => {
                             {staticKPIs.length}
                         </span>
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                         {staticKPIs.map((kpi, index) => (
                             <KPIDetailCard key={kpi.kpi_type || kpi.kpi_name || index} kpi={kpi} />
                         ))}
@@ -75,7 +75,7 @@ const CallKPISection = ({ kpiResults, evaluation }) => {
                             {dynamicKPIs.length} Dynamic
                         </span>
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                         {dynamicKPIs.map((kpi, index) => (
                             <KPIDetailCard key={kpi.kpi_type || kpi.kpi_name || index} kpi={kpi} />
                         ))}

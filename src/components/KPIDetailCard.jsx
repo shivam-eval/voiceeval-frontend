@@ -52,79 +52,111 @@ const KPIDetailCard = ({ kpi }) => {
     const cardColorClass = colorClasses[color] || colorClasses.gray;
     const confidenceBadgeClass = confidenceBadgeClasses[confidenceColor] || confidenceBadgeClasses.green;
 
+    // Humanize metric names
+    const humanizeMetricName = (name) => {
+        if (!name) return "Unknown Metric";
+        if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
+        return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    };
+
+    const humanizedName = humanizeMetricName(name);
+
     // Format details for display
     const formatDetails = (detailsObj) => {
         if (!detailsObj || typeof detailsObj !== 'object') return null;
 
         return Object.entries(detailsObj).map(([key, val]) => {
-            if (val === null || val === undefined || key.toLowerCase().includes('llm_usage')) return null;
+            const lowerKey = key.toLowerCase().replace(/_/g, ' ');
+            if (val === null || val === undefined || 
+                lowerKey.includes('llm usage') || 
+                lowerKey.includes('data type') || 
+                lowerKey.includes('unit') || 
+                lowerKey.includes('conversation turns')) return null;
+
+            // Handle objects like conversion or outcome
+            let displayVal = String(val);
+            if (typeof val === 'object') {
+                if (val.outcome) displayVal = String(val.outcome);
+                else if (val.converted !== undefined) displayVal = val.converted ? 'Yes' : 'No';
+                else if (val.transferred !== undefined) displayVal = val.transferred ? 'Yes' : 'No';
+                else displayVal = JSON.stringify(val);
+            }
+
             return (
-                <div key={key} className="flex justify-between text-xs">
-                    <span className="text-gray-500 capitalize">{key.replace(/_/g, ' ')}:</span>
-                    <span className="text-gray-300">{String(val)}</span>
+                <div key={key} className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                        {key.replace(/_/g, ' ')}
+                    </span>
+                    <span className="text-sm text-gray-300">
+                        {displayVal}
+                    </span>
                 </div>
             );
         }).filter(Boolean);
     };
 
     return (
-        <div className={`bg-dark-panel rounded-lg p-4 border ${cardColorClass}`}>
+        <div className="bg-[#030712] rounded-xl p-6 border border-teal-500/20 flex flex-col gap-6">
             {/* Header */}
-            <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded ${cardColorClass}`}>
-                        <Icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                        <h4 className="text-white font-semibold">{name}</h4>
-                        {description && (
-                            <p className="text-gray-500 text-xs mt-0.5">{description}</p>
-                        )}
+            <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
+                        {humanizedName}
+                    </span>
+                    <div className={`text-xl font-bold ${colorClasses[color]?.split(' ')[0] || 'text-white'}`}>
+                        {formattedValue}
                     </div>
                 </div>
                 {is_dynamic && (
-                    <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                    <div className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
                         Dynamic
-                    </span>
+                    </div>
                 )}
             </div>
 
-            {/* Value */}
-            <div className="mb-3">
-                <div className={`text-xl font-bold ${colorClasses[color]?.split(' ')[0] || 'text-white'}`}>
-                    {formattedValue}
-                </div>
-            </div>
-
-            {/* Confidence and Expand Button */}
-            <div className="flex items-center justify-between mb-2">
-                {confidence !== undefined && confidence < 1.0 && (
-                    <span className={`text-xs px-2 py-1 rounded border ${confidenceBadgeClass}`}>
-                        {Math.round(confidence * 100)}% confident
-                    </span>
-                )}
-                {reasoning && (
-                    <button
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-300 transition-colors ml-auto"
-                    >
-                        <span>Reasoning</span>
-                        {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                    </button>
-                )}
-            </div>
-
-            {/* Expandable Reasoning */}
-            {isExpanded && reasoning && (
-                <div className="mt-3 p-3 bg-gray-800/50 rounded border border-gray-700/50">
-                    <p className="text-sm text-gray-300 leading-relaxed">{reasoning}</p>
+            {/* Details Grid */}
+            {((details && Object.keys(details).length > 0) || confidence !== undefined || unit) && (
+                <div className="grid grid-cols-2 gap-y-4 gap-x-8 pt-6 border-t border-gray-800/50">
+                   {confidence !== undefined && (
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Confidence</span>
+                            <span className={`text-sm font-semibold ${confidenceBadgeClasses[confidenceColor]?.split(' ')[1] || 'text-gray-300'}`}>
+                                {Math.round(confidence * 100)}%
+                            </span>
+                        </div>
+                    )}
+                    {unit && (
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Unit</span>
+                            <span className="text-sm text-gray-300">{unit}</span>
+                        </div>
+                    )}
+                    {formatDetails(details)}
                 </div>
             )}
 
-            {/* Details */}
-            {details && Object.keys(details).length > 0 && (
-                <div className="mt-3 pt-3 border-t border-gray-700/50 space-y-1">
-                    {formatDetails(details)}
+            {/* Reasoning Toggle Section */}
+            {reasoning && (
+                <div className="flex flex-col gap-2 pt-6 border-t border-gray-800/50">
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        className="flex items-center gap-2 group transition-all"
+                    >
+                        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest group-hover:text-gray-400">
+                            Reasoning
+                        </span>
+                        {isExpanded ? (
+                            <ChevronUp className="w-3 h-3 text-gray-500 group-hover:text-gray-400" />
+                        ) : (
+                            <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-gray-400" />
+                        )}
+                    </button>
+                    
+                    {isExpanded && (
+                        <p className="text-sm text-gray-300 leading-relaxed mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                            {reasoning}
+                        </p>
+                    )}
                 </div>
             )}
         </div>

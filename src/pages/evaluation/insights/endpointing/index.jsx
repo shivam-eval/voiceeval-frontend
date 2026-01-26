@@ -189,7 +189,9 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                           <span className="text-gray-600 italic">None</span>
                         ) : typeof value === 'object' && !Array.isArray(value) ? (
                           <div className="space-y-1">
-                            {Object.entries(value).map(([subKey, subValue]) => (
+                            {Object.entries(value)
+                              .filter(([subKey]) => subKey !== 'node_id')
+                              .map(([subKey, subValue]) => (
                               <div key={subKey} className="text-gray-300">
                                 <span className="text-gray-500">{humanizeMetricName(subKey)}:</span> {humanizeMetricName(subValue)}
                               </div>
@@ -204,7 +206,9 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                                 <li key={i} className="text-gray-300 text-xs bg-black/20 rounded p-2 border border-gray-800/50">
                                   {typeof item === 'object' ? (
                                     <div className="grid grid-cols-1 gap-1">
-                                      {Object.entries(item).map(([k, v]) => (
+                                      {Object.entries(item)
+                                        .filter(([k]) => k !== 'node_id')
+                                        .map(([k, v]) => (
                                         <div key={k} className="flex gap-1 break-all">
                                           <span className="text-gray-500 font-semibold">{humanizeMetricName(k)}:</span>
                                           <span className="text-gray-300">{humanizeMetricName(v)}</span>

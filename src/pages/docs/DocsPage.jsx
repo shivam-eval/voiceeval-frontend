@@ -129,13 +129,13 @@ const DocsPage = () => {
                       <li key={item.id}>
                         <button
                           onClick={() => setActiveSection(item.id)}
-                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors ${activeSection === item.id
+                          className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors text-left h-auto ${activeSection === item.id
                               ? "bg-teal-400/20 text-teal-400 font-medium border border-teal-400/50"
                               : "text-gray-400 hover:text-white hover:bg-dark-input"
                             }`}
                         >
                           <Icon className="w-4 h-4 flex-shrink-0" />
-                          <span className="whitespace-nowrap">{item.label}</span>
+                          <span className="whitespace-normal leading-tight">{item.label}</span>
                         </button>
                       </li>
                     );

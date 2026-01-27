@@ -229,7 +229,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
     switch (activeCategory) {
       case 'accuracy':
-        return <AccuracyView response={categoryMap.accuracy} onBack={handleBackToOverview} />;
+        return <AccuracyView response={categoryMap.accuracy} transcriptData={transcriptData} onBack={handleBackToOverview} />;
 
       case 'latency':
         return <LatencyOverview response={categoryMap.latency} onBack={handleBackToOverview} />;
@@ -247,7 +247,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         return <TaskCompletionOverview response={categoryMap.task_completion} onBack={handleBackToOverview} />;
 
       case 'conversation_quality':
-        return <ConversationOverview response={categoryMap.conversation_quality} onBack={handleBackToOverview} />;
+        return <ConversationOverview response={categoryMap.conversation_quality} transcriptData={transcriptData} onBack={handleBackToOverview} />;
 
       default:
         return null;

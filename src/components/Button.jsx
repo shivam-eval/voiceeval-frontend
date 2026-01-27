@@ -18,6 +18,7 @@ const Button = ({
         secondary: "bg-gray-800 hover:bg-gray-700 text-gray-300 disabled:bg-gray-800/50",
         danger: "bg-red-500 hover:bg-red-600 text-white disabled:bg-red-500/50",
         outline: "bg-transparent border border-gray-700 hover:border-gray-600 text-gray-300 disabled:border-gray-700/50",
+        premium: "bg-teal-500/10 border border-teal-500/30 text-teal-400 hover:bg-teal-500/20 shadow-[0_0_15px_rgba(20,184,166,0.1)]",
     };
 
     const sizes = {

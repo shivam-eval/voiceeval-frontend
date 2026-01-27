@@ -192,7 +192,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                   : "bg-red-950/10 border-red-900/20"
                   }`}
               >
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-start justify-between mb-4">
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
                       {label}
@@ -215,7 +215,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                 </div>
 
                 {details.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-4 border-t border-gray-800/50">
                     {details.map(([key, value]) => (
                       <div key={key} className={`flex flex-col gap-1.5 ${key === 'reasoning' ? 'md:col-span-2' : ''}`}>
                         <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
@@ -314,7 +314,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                 : "bg-red-950/10 border-red-900/20"
                 }`}
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-start justify-between mb-4">
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
                     {label}
@@ -340,7 +340,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
               {metric.details?.hallucinations &&
                 Array.isArray(metric.details.hallucinations) &&
                 metric.details.hallucinations.length > 0 && (
-                  <div className="mb-6 pt-6 border-t border-gray-800/50 space-y-4">
+                  <div className="mb-4 pt-4 border-t border-gray-800/50 space-y-4">
                     <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
                       Hallucinations Detected
                     </div>
@@ -369,7 +369,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
                 )}
 
               {details.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-4 border-t border-gray-800/50">
                   {details.map(([key, value]) => (
                     <div key={key} className={`flex flex-col gap-1.5 ${key === 'reasoning' ? 'md:col-span-2' : ''}`}>
                       <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
@@ -468,11 +468,12 @@ const ConversationOverview = ({ response, data, onBack }) => {
                   "error_message",
                   "turn_data",
                   "turn_breakdown",
-                  "per_turn_sentiment",
-                  "inflection_points",
-                  "agent_sentences",
-                ].includes(key)
-            );
+                   "per_turn_sentiment",
+                   "inflection_points",
+                   "agent_sentences",
+                   "repetition_count"
+                 ].includes(key)
+             );
 
             const hasAgentSentences =
               metric.details?.agent_sentences &&
@@ -490,19 +491,17 @@ const ConversationOverview = ({ response, data, onBack }) => {
                   }`}
               >
                 {/* Metric Header */}
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-start justify-between mb-4">
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
                       {label}
                     </span>
-                    {(metric.name || metric.metric_name) !== 'repetition_count' && (
-                      <span
-                        className={`text-2xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"
-                          }`}
-                      >
-                        {metricScore}%
-                      </span>
-                    )}
+                        <span
+                          className={`text-2xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"
+                            }`}
+                        >
+                          {(metric.name || metric.metric_name) === 'repetition_count' ? (metric.details?.repetition_count ?? 0) : `${metricScore}%`}
+                        </span>
                   </div>
                   <div
                     className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed
@@ -516,7 +515,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
 
                 {/* Summary Statistics */}
                 {details.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-4 border-t border-gray-800/50">
                     {details.map(([key, value]) => (
                       <div key={key} className={`flex flex-col gap-1.5 ${key === 'reasoning' ? 'md:col-span-2' : ''}`}>
                         <span className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
@@ -572,7 +571,7 @@ const ConversationOverview = ({ response, data, onBack }) => {
 
                 {/* Agent Sentences (for repetition_count) */}
                 {hasAgentSentences && (
-                  <div className="pt-6 border-t border-gray-800/50 space-y-4">
+                  <div className="pt-4 border-t border-gray-800/50 space-y-4">
                     <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
                       Agent Sentences
                     </div>
@@ -604,8 +603,8 @@ const ConversationOverview = ({ response, data, onBack }) => {
 
                 {/* Turn-by-Turn Analysis */}
                 {turnData && Array.isArray(turnData) && turnData.length > 0 && (
-                  <div className="space-y-4 pt-6 border-t border-gray-800/50">
-                    <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest mb-4">
+                  <div className="space-y-4 pt-4 border-t border-gray-800/50">
+                    <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest mb-3">
                       Turn-by-Turn Analysis
                     </div>
                     <div className="space-y-4">
@@ -695,8 +694,8 @@ const ConversationOverview = ({ response, data, onBack }) => {
 
                 {/* Inflection Points (for sentiment metrics) */}
                 {hasInflectionPoints && (
-                  <div className="pt-6 border-t border-gray-800/50">
-                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-4">
+                  <div className="pt-4 border-t border-gray-800/50">
+                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">
                       Sentiment Inflection Points
                     </div>
                     <div className="space-y-3">

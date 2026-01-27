@@ -30,14 +30,12 @@ const IconButton = ({ icon, onClick, title, variant = 'default', className = '' 
     );
 };
 
-const MetricCard = ({ label, value, valueClassName = 'text-3xl font-bold text-white' }) => {
-    return (
-        <div className="bg-[#030712] rounded-xl p-6 border border-teal-500/20 transition-all hover:bg-opacity-80 border-opacity-50">
-            <div className="text-gray-400 text-sm mb-1">{label}</div>
-            <div className={valueClassName}>{value}</div>
-        </div>
-    );
-};
+const MetricCard = ({ label, value, valueClassName = 'text-2xl font-bold text-white' }) => (
+    <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+        <div className="text-gray-400 text-xs font-semibold uppercase tracking-wider mb-1">{label}</div>
+        <div className={valueClassName}>{value}</div>
+    </div>
+);
 
 const EditableField = ({ value, isEditing, onEdit, onSave, onCancel, placeholder, multiline = false }) => {
     const [tempValue, setTempValue] = useState(value);
@@ -217,7 +215,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
                                 </svg>
                                 Goal
                             </h4>
-                            <div className="rounded p-4 text-gray-300 text-sm border border-gray-800">
+                            <div className="bg-gray-800/30 rounded p-4 text-gray-300 text-sm">
                                 {testCase.goal}
                             </div>
                         </div>
@@ -230,7 +228,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
                                 </svg>
                                 Description
                             </h4>
-                            <div className="rounded p-4 text-gray-300 text-sm border border-gray-800">
+                            <div className="bg-gray-800/30 rounded p-4 text-gray-300 text-sm">
                                 {testCase.description}
                             </div>
                         </div>
@@ -271,7 +269,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
                     </svg>
                     Conversation Flow
                 </h4>
-                <div className="rounded p-4 border border-gray-800">
+                <div className="bg-gray-800/30 rounded p-4">
                     <div className="flex flex-wrap gap-2">
                         {testCase.node_sequence.map((node, idx) => (
                             <div key={idx} className="flex items-center gap-1">
@@ -296,7 +294,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
                 {testCase.assigned_personas && testCase.assigned_personas.length > 0 ? (
                     <div className="space-y-2">
                         {testCase.assigned_personas.map((persona, idx) => (
-                            <div key={idx} className="rounded p-3 border border-gray-800">
+                            <div key={idx} className="bg-gray-800/30 rounded p-3">
                                 <div className="font-medium text-teal-400">{persona.name}</div>
                                 <div className="text-sm text-gray-400 mt-1">
                                     {formatPersonaField(persona.region)} • {formatPersonaField(persona.age_group)} • {formatPersonaField(persona.gender)}
@@ -365,7 +363,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
         {testCase.extra_instructions && (
             <div>
                 <h4 className="text-sm font-semibold text-gray-400 mb-2">Extra Instructions</h4>
-                <div className="rounded p-4 text-gray-300 text-sm border border-gray-800">
+                <div className="bg-gray-800/30 rounded p-4 text-gray-300 text-sm">
                     {testCase.extra_instructions}
                 </div>
             </div>
@@ -380,7 +378,7 @@ const TestCaseExpandedDetails = ({ testCase }) => {
                     </svg>
                     Test Steps ({testCase.steps.length})
                 </h4>
-                <div className="rounded p-4 space-y-3 max-h-96 overflow-y-auto border border-gray-800">
+                <div className="bg-gray-800/30 rounded p-4 space-y-3 max-h-96 overflow-y-auto">
                     {testCase.steps.map((step, idx) => (
                         <div key={idx} className="border-l-2 border-teal-500 pl-4 py-2">
                             <div className="flex items-center gap-2 mb-1">
@@ -657,22 +655,20 @@ const TestSuiteDetailView = () => {
                     {/* Actions */}
                     <div className="flex items-center gap-3 mt-6">
                         <Button
-                            size="sm"
+                            variant="premium"
                             onClick={() => setShowRunSimulationModal(true)}
-                            className="bg-teal-500/10 border border-teal-500/30 text-teal-400 hover:bg-teal-500/20 shadow-[0_0_15px_rgba(20,184,166,0.1)]"
                         >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Run Simulation
                         </Button>
                         <Button
-                            size="sm"
                             variant="outline"
                             onClick={() => window.open(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}/test-suites/${suiteId}/export?format=json`, '_blank')}
                         >
-                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                             Export
@@ -686,7 +682,6 @@ const TestSuiteDetailView = () => {
                             onClick={handleDelete}
                             title="Delete"
                             variant="danger"
-                            className="p-2 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg"
                         />
                     </div>
                 </div>

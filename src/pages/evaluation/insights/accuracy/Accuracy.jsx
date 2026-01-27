@@ -3,7 +3,7 @@ import { Target, ArrowLeft } from "lucide-react";
 /* ========================= HELPERS ========================= */
 
 const formatKey = (key) =>
-  key.replace(/_/g, " and ").replace(/\b\w/g, (l) => l.toUpperCase());
+  key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
 const formatValue = (key, value) => {
   if (value === null || value === undefined) return "Not available";
@@ -13,7 +13,7 @@ const formatValue = (key, value) => {
       return `${Math.round(value * 100)}%`;
     return value.toFixed(2);
   }
-  return String(value);
+  return String(value).replace(/_/g, " ");
 };
 
 const normalizeScore = (v) =>
@@ -206,7 +206,7 @@ const AccuracyOverview = ({ response, data, onBack }) => {
                     className={`text-2xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"
                       }`}
                   >
-                    {metricScore}%
+                    {`${metricScore}%`}
                   </div>
                 </div>
                 <div
@@ -238,37 +238,17 @@ const AccuracyOverview = ({ response, data, onBack }) => {
               {/* Response Consistency Special Display (when no turn data) */}
               {!turnData && metric.details?.issue_detected !== undefined && (
                 <div className="pt-6 border-t border-gray-800/50">
-                  <div className="bg-white/[0.02] rounded-lg p-6 border border-gray-800/30">
-                    {/* Issue Status */}
-                    <div className="mb-5">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">
-                          Consistency Check
-                        </div>
-                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-md ${metric.details.issue_detected === 'none'
-                          ? 'bg-green-500/5 border border-green-500/20'
-                          : 'bg-red-500/5 border border-red-500/20'
-                          }`}>
-                          <span className={`text-xs font-medium ${metric.details.issue_detected === 'none' ? 'text-green-400' : 'text-red-400'
-                            }`}>
-                            {metric.details.issue_detected === 'none' ? '✓ No Issues Detected' : `✗ ${formatKey(metric.details.issue_detected)}`}
-                          </span>
-                        </div>
+                  {/* Analysis */}
+                  {metric.details.reasoning && (
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">
+                        Analysis
+                      </div>
+                      <div className="text-sm text-gray-300 leading-relaxed">
+                        {metric.details.reasoning}
                       </div>
                     </div>
-
-                    {/* Analysis */}
-                    {metric.details.reasoning && (
-                      <div className="pt-4 border-t border-gray-800/20">
-                        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">
-                          Analysis
-                        </div>
-                        <div className="text-sm text-gray-300 leading-relaxed">
-                          {metric.details.reasoning}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               )}
 

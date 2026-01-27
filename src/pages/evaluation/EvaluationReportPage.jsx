@@ -254,7 +254,8 @@ const EvaluationReportPage = () => {
     );
   }
 
-  // Transform evaluation for ViewReport component
+  // Read isUploaded flag from URL
+  const isUploadedFromUrl = searchParams.get('isUploaded') === 'true';
   const report = transformSessionToReport(evaluation);
 
   return (
@@ -264,6 +265,7 @@ const EvaluationReportPage = () => {
         evaluation={evaluation}
         transcriptData={transcriptData}
         onBack={handleBack}
+        isUploaded={isUploadedFromUrl}
       />
     </div>
   );

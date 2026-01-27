@@ -27,6 +27,7 @@ const CallsPage = () => {
 
   // State management
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEvaluateModalOpen, setIsEvaluateModalOpen] = useState(false);
   const [evalAgentId, setEvalAgentId] = useState(workflow?.assistantId || '');
@@ -60,6 +61,14 @@ const CallsPage = () => {
     }
   }, [directory]);
 
+  // Handle search debouncing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 400); // 400ms debounce
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const updateParams = useCallback((updates, replace = false) => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev);
@@ -77,8 +86,10 @@ const CallsPage = () => {
   const { data, isLoading: isCallsLoading, error, refetch } = useCalls({
     category: directory,
     directory: directory,
-    search: searchTerm,
+    search: debouncedSearch,
     include_evaluations: true
+  }, {
+    placeholderData: (previousData) => previousData, // keepPreviousData: true alternative for React Query v5
   });
 
   // Fetch flows
@@ -361,7 +372,7 @@ const CallsPage = () => {
       call.evaluation?.evaluation?.session_id;
 
     if (evaluationId) {
-      navigate(`/evaluations/report/${evaluationId}`);
+      navigate(`/evaluations/report/${evaluationId}?isUploaded=true`);
       return;
     }
 
@@ -371,7 +382,7 @@ const CallsPage = () => {
     }
 
     if (sessionId) {
-      navigate(`/evaluations/session?sessionId=${sessionId}`);
+      navigate(`/evaluations/session?sessionId=${sessionId}&isUploaded=true`);
       return;
     }
 
@@ -394,65 +405,65 @@ const CallsPage = () => {
     toast.info('🔄 Loading evaluation status...', { autoClose: 2000 });
   };
 
-  const handleDownloadCall = async (call) => {
-    toast.info('Preparing download...');
-    
-    try {
-      let audioFilePath = null;
-      
-      // Try to get audio file from simulation if available
-      const simulationId = call.simulation_id || call.evaluation?.simulation_id;
-      
-      if (simulationId) {
-        const simResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL || ''}/simulation/${simulationId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-            'X-Tenant-ID': localStorage.getItem('tenantId') || '',
-          }
-        });
-        
-        if (simResponse.ok) {
-          const simData = await simResponse.json();
-          audioFilePath = simData?.metadata?.audio_file;
+  const handleDownload = (audioUrl, filename = 'audio.mp3') => {
+    if (!audioUrl) {
+      toast.error('Audio not available');
+      return;
+    }
+
+    // Force browser download
+    const link = document.createElement('a');
+    link.href = audioUrl;
+    link.download = filename || 'audio.mp3';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadCall = (call) => {
+    // Use backend download endpoint which handles GCS streaming
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+    const downloadUrl = `${API_BASE_URL}/calls/${call.call_id}/download`;
+
+    // Open download URL with authentication
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = call.filename || `call-${call.call_id}.mp3`;
+
+    // Add auth token to request (if needed, browser will handle it via cookies/session)
+    // For token-based auth, we might need to fetch and create blob
+    const authToken = localStorage.getItem('authToken');
+    if (authToken) {
+      // Fetch with auth and create blob URL
+      fetch(downloadUrl, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'X-Tenant-ID': localStorage.getItem('tenantId') || '',
         }
-      }
-      
-      // Fallback to call data if simulation didn't have it
-      if (!audioFilePath) {
-        audioFilePath = call.audio_url || call.filename || call.audio_path;
-      }
-      
-      if (!audioFilePath) {
-        toast.error('Audio file source not found for this call.');
-        return;
-      }
-
-      const GCP_STORAGE_BASE_URL = import.meta.env.VITE_GCP_STORAGE_BASE_URL || 'https://storage.googleapis.com/voiceeval-public';
-      
-      const fullUrl = audioFilePath.startsWith('http') 
-        ? audioFilePath 
-        : `${GCP_STORAGE_BASE_URL}/${audioFilePath.startsWith('/') ? audioFilePath.slice(1) : audioFilePath}`;
-
-      // Use direct link approach
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = fullUrl;
-      a.target = '_blank';
-      
-      const fileName = audioFilePath.split('/').pop() || `call-${call.call_id}.wav`;
-      a.download = fileName;
-      
-      document.body.appendChild(a);
-      a.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(a);
-      }, 100);
-      
-      toast.success('Download initiated!');
-    } catch (error) {
-      console.error('Download error:', error);
-      toast.error('Failed to prepare download. Please try again.');
+      })
+        .then(response => {
+          if (!response.ok) throw new Error('Download failed');
+          return response.blob();
+        })
+        .then(blob => {
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = call.filename || `call-${call.call_id}.mp3`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        })
+        .catch(error => {
+          console.error('Download error:', error);
+          toast.error('Failed to download audio file');
+        });
+    } else {
+      // No auth token, try direct link
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
   };
 
@@ -572,7 +583,7 @@ const CallsPage = () => {
     });
   };
 
-  const getMetricValue = (call, metricName) => {
+  const getMetricValue = useCallback((call, metricName) => {
     if (!call) return '--';
 
     const isLatency = metricName === 'avg_latency';
@@ -669,7 +680,7 @@ const CallsPage = () => {
     }
 
     return '--';
-  };
+  }, []);
 
   // Subscribe to SSE events
   useEffect(() => {

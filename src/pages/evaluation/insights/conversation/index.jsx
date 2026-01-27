@@ -15,10 +15,18 @@ const formatValue = (key, value) => {
     if (key.includes("count")) return value;
     if (key.includes("duration") && key.includes("ms"))
       return `${Math.round(value / 1000)}s`;
-    if (key.includes("turns") || key.includes("files") || key.includes("analyzed") || key.includes("sampled")) return Math.round(value);
+    if (key.includes("turns") || key.includes("files") || key.includes("analyzed") || key.includes("sampled") || key === "total_pauses") return Math.round(value);
     return value.toFixed(2);
   }
   return String(value);
+};
+
+const formatTimestamp = (ms) => {
+  if (!ms && ms !== 0) return "00:00";
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
 /* ========================= Extract Conversation Category Data ========================= */
@@ -83,7 +91,7 @@ const extractConversationData = (response, data) => {
 };
 
 /* ========================= COMPONENT ========================= */
-const ConversationOverview = ({ response, data, onBack }) => {
+const ConversationOverview = ({ response, data, transcriptData, onBack }) => {
   const processedResponse = extractConversationData(response, data);
   const metrics = processedResponse.metrics || [];
   const rawScore = processedResponse.score;
@@ -468,12 +476,12 @@ const ConversationOverview = ({ response, data, onBack }) => {
                   "error_message",
                   "turn_data",
                   "turn_breakdown",
-                   "per_turn_sentiment",
-                   "inflection_points",
-                   "agent_sentences",
-                   "repetition_count"
-                 ].includes(key)
-             );
+                  "per_turn_sentiment",
+                  "inflection_points",
+                  "agent_sentences",
+                  "repetition_count"
+                ].includes(key)
+            );
 
             const hasAgentSentences =
               metric.details?.agent_sentences &&
@@ -496,12 +504,12 @@ const ConversationOverview = ({ response, data, onBack }) => {
                     <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
                       {label}
                     </span>
-                        <span
-                          className={`text-2xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"
-                            }`}
-                        >
-                          {(metric.name || metric.metric_name) === 'repetition_count' ? (metric.details?.repetition_count ?? 0) : `${metricScore}%`}
-                        </span>
+                    <span
+                      className={`text-2xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"
+                        }`}
+                    >
+                      {(metric.name || metric.metric_name) === 'repetition_count' ? (metric.details?.repetition_count ?? 0) : `${metricScore}%`}
+                    </span>
                   </div>
                   <div
                     className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed
@@ -585,9 +593,27 @@ const ConversationOverview = ({ response, data, onBack }) => {
                             className="rounded-xl p-5 border bg-dark-input border-gray-800/50"
                           >
                             <div className="flex items-center justify-between mb-4">
-                              <span className="text-sm text-gray-300">
-                                Turn #{sentence.turn || i + 1}
-                              </span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm text-gray-300">
+                                  Turn #{sentence.turn || i + 1}
+                                </span>
+                                {transcriptData?.steps && (
+                                  (() => {
+                                    const transcriptStep = transcriptData.steps.find(
+                                      (s) => s.step_number === (sentence.turn || i + 1)
+                                    );
+                                    if (transcriptStep) {
+                                      const timestamp = formatTimestamp(transcriptStep.speech_start_ms || transcriptStep.start_time_ms || 0);
+                                      return (
+                                        <div className="text-[10px] font-mono text-gray-500 bg-gray-500/5 px-2 py-0.5 rounded border border-gray-500/10">
+                                          {timestamp}
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  })()
+                                )}
+                              </div>
                             </div>
                             <div className="text-sm text-gray-200 leading-relaxed">
                               {typeof sentence === "object"
@@ -629,9 +655,27 @@ const ConversationOverview = ({ response, data, onBack }) => {
                             className="rounded-xl p-5 border bg-dark-input border-gray-800/50"
                           >
                             <div className="flex items-center justify-between mb-4">
-                              <span className="text-sm text-gray-300">
-                                Turn #{turnNumber}
-                              </span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-sm text-gray-300">
+                                  Turn #{turnNumber}
+                                </span>
+                                {transcriptData?.steps && (
+                                  (() => {
+                                    const transcriptStep = transcriptData.steps.find(
+                                      (s) => s.step_number === turnNumber || s.step_number === turn.step_number
+                                    );
+                                    if (transcriptStep) {
+                                      const timestamp = formatTimestamp(transcriptStep.speech_start_ms || transcriptStep.start_time_ms || 0);
+                                      return (
+                                        <div className="text-[10px] font-mono text-gray-500 bg-gray-500/5 px-2 py-0.5 rounded border border-gray-500/10">
+                                          {timestamp}
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  })()
+                                )}
+                              </div>
                               {displayValue ? (
                                 <span
                                   className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${isIdeal || turnStatus === "passed"

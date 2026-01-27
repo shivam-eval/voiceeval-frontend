@@ -19,6 +19,14 @@ const formatValue = (key, value) => {
 const normalizeScore = (v) =>
   typeof v === "number" ? (v > 1 ? Math.round(v) : Math.round(v * 100)) : 0;
 
+const formatTimestamp = (ms) => {
+  if (!ms && ms !== 0) return "00:00";
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
 /* ========================= DATA EXTRACTION ========================= */
 
 const extractAccuracyData = (response, data) => {
@@ -84,7 +92,7 @@ const extractAccuracyData = (response, data) => {
 
 /* ========================= COMPONENT ========================= */
 
-const AccuracyOverview = ({ response, data, onBack }) => {
+const AccuracyOverview = ({ response, data, transcriptData, onBack }) => {
   const { metrics, score } = extractAccuracyData(response, data);
   if (!metrics.length) return null;
 
@@ -347,6 +355,17 @@ const AccuracyOverview = ({ response, data, onBack }) => {
                       const turnPassed = turn.passed !== undefined ? turn.passed : true;
                       const hasExpected = turn.expected_greeting || turn.expected_utterance || turn.expected_keywords;
 
+                      // Find timestamp from transcriptData
+                      let timestamp = null;
+                      if (transcriptData?.steps) {
+                        const transcriptStep = transcriptData.steps.find(
+                          (s) => s.step_number === turn.transcript_step_number
+                        );
+                        if (transcriptStep) {
+                          timestamp = formatTimestamp(transcriptStep.speech_start_ms || transcriptStep.start_time_ms || 0);
+                        }
+                      }
+
                       return (
                         <div
                           key={tIdx}
@@ -354,8 +373,15 @@ const AccuracyOverview = ({ response, data, onBack }) => {
                         >
                           {/* Turn Header with Pass/Fail */}
                           <div className="flex items-center justify-between mb-4">
-                            <div className="text-xs font-medium text-gray-400">
-                              Turn #{turnNumber}
+                            <div className="flex items-center gap-3">
+                              <div className="text-xs font-medium text-gray-400">
+                                Turn #{turnNumber}
+                              </div>
+                              {timestamp && (
+                                <div className="text-[10px] font-mono text-gray-500 bg-gray-500/5 px-2 py-0.5 rounded border border-gray-500/10">
+                                  {timestamp}
+                                </div>
+                              )}
                             </div>
                             {turn.passed !== undefined && (
                               <span

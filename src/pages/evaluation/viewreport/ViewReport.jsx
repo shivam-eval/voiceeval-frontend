@@ -26,7 +26,7 @@ import TaskCompletionOverview from '../insights/task_completion';
 import ConversationOverview from '../insights/conversation';
 import CallKPISection from '../CallKPISection';
 
-const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack }) => {
+const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack, isUploaded }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [activeCategory, setActiveCategory] = useState('');
   const transcriptData = initialTranscriptData;
@@ -229,7 +229,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
     switch (activeCategory) {
       case 'accuracy':
-        return <AccuracyView response={categoryMap.accuracy} onBack={handleBackToOverview} />;
+        return <AccuracyView response={categoryMap.accuracy} transcriptData={transcriptData} onBack={handleBackToOverview} />;
 
       case 'latency':
         return <LatencyOverview response={categoryMap.latency} onBack={handleBackToOverview} />;
@@ -247,7 +247,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         return <TaskCompletionOverview response={categoryMap.task_completion} onBack={handleBackToOverview} />;
 
       case 'conversation_quality':
-        return <ConversationOverview response={categoryMap.conversation_quality} onBack={handleBackToOverview} />;
+        return <ConversationOverview response={categoryMap.conversation_quality} transcriptData={transcriptData} onBack={handleBackToOverview} />;
 
       default:
         return null;
@@ -560,6 +560,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                 <CallTranscriptPanel
                   transcriptData={transcriptData}
                   callRecordingUrl={transcriptData?.audio_url || report?.call_recording}
+                  isUploaded={isUploaded}
                 />
               ) : (
                 <div className="bg-[#030712] border border-teal-500/20 rounded-xl p-12 text-center">

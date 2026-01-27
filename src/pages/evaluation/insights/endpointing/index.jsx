@@ -196,12 +196,12 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                             {Object.entries(value)
                               .filter(([subKey]) => subKey !== 'duplex_overlap')
                               .map(([subKey, subValue]) => (
-                              <div key={subKey} className="text-gray-300">
-                                <span className="text-gray-500">{humanizeMetricName(subKey)}:</span> {
-                                  subKey === 'total_speech_turns' ? Math.round(subValue) : humanizeMetricName(subValue)
-                                }
-                              </div>
-                            ))}
+                                <div key={subKey} className="text-gray-300">
+                                  <span className="text-gray-500">{humanizeMetricName(subKey)}:</span> {
+                                    typeof subValue === 'number' ? subValue : humanizeMetricName(subValue)
+                                  }
+                                </div>
+                              ))}
                           </div>
                         ) : Array.isArray(value) ? (
                           value.length === 0 ? (
@@ -214,12 +214,17 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                                     <div className="grid grid-cols-1 gap-1">
                                       {Object.entries(item)
                                         .filter(([k]) => k.toLowerCase() !== 'node_id' && k.toLowerCase() !== 'node id')
-                                        .map(([k, v]) => (
-                                        <div key={k} className="flex gap-1 break-all">
-                                          <span className="text-gray-500 font-semibold">{humanizeMetricName(k)}:</span>
-                                          <span className="text-gray-300">{humanizeMetricName(v)}</span>
-                                        </div>
-                                      ))}
+                                        .map(([k, v]) => {
+                                          const displayVal = typeof v === 'number' && (k.toLowerCase().includes('ms') || k.toLowerCase().includes('time'))
+                                            ? `${Math.round(v)} ms`
+                                            : humanizeMetricName(v);
+                                          return (
+                                            <div key={k} className="flex gap-1 break-all">
+                                              <span className="text-gray-500 font-semibold">{humanizeMetricName(k)}:</span>
+                                              <span className="text-gray-300">{displayVal}</span>
+                                            </div>
+                                          );
+                                        })}
                                     </div>
                                   ) : (
                                     <span className="break-all">{String(item)}</span>

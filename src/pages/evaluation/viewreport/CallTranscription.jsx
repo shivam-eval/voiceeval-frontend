@@ -76,16 +76,17 @@ const MiniAudioPlayer = ({ audioUrl }) => {
 };
 
 
-const CallTranscriptPanel = ({ transcriptData, callRecordingUrl }) => {
+const CallTranscriptPanel = ({ transcriptData, callRecordingUrl, isUploaded }) => {
   // Debug logging
   useEffect(() => {
     console.log('CallTranscriptPanel received transcriptData:', transcriptData);
     console.log('CallTranscriptPanel received callRecordingUrl:', callRecordingUrl);
+    console.log('CallTranscriptPanel isUploaded:', isUploaded);
     if (transcriptData) {
       console.log('Steps:', transcriptData.steps);
       console.log('Metadata:', transcriptData.metadata);
     }
-  }, [transcriptData, callRecordingUrl]);
+  }, [transcriptData, callRecordingUrl, isUploaded]);
 
   const steps = transcriptData?.steps || [];
   const metadata = transcriptData?.metadata || {};
@@ -128,7 +129,7 @@ const CallTranscriptPanel = ({ transcriptData, callRecordingUrl }) => {
     if (steps.length === 0) return;
 
     const text = steps.map(step =>
-      `[${formatTime(step.speech_start_ms)}] ${step.turn_role === 'agent' ? 'Agent' : 'Simulator'}: ${step.text || '(no text)'}`
+      `[${formatTime(step.speech_start_ms)}] ${step.turn_role === 'agent' ? 'Agent' : (isUploaded ? 'User' : 'Simulator')}: ${step.text || '(no text)'}`
     ).join('\n');
 
     navigator.clipboard.writeText(text).then(() => {
@@ -243,7 +244,7 @@ const CallTranscriptPanel = ({ transcriptData, callRecordingUrl }) => {
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`text-sm font-semibold ${isAgent ? "text-purple-400" : "text-blue-400"
                         }`}>
-                        {isAgent ? "Agent" : "Simulator"}
+                        {isAgent ? "Agent" : (isUploaded ? "User" : "Simulator")}
                       </span>
                       <span className="text-xs text-gray-600">•</span>
                       <span className="text-xs text-gray-500">

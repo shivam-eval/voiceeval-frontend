@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Bot, Clock, Mic, Volume2, AlertCircle } from 'lucide-react';
 
-const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
+const TurnByTurnAnalysis = ({ steps = [], stepHealth = {}, isUploaded }) => {
   const formatDuration = (ms) => {
     if (!ms) return 'N/A';
     return `${(ms / 1000).toFixed(2)}s`;
@@ -10,10 +10,10 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
   const formatTimestamp = (ms) => {
     if (!ms) return 'N/A';
     const date = new Date(ms);
-    return date.toLocaleTimeString('en-US', { 
-      hour12: false, 
-      hour: '2-digit', 
-      minute: '2-digit', 
+    return date.toLocaleTimeString('en-US', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
       second: '2-digit',
       fractionalSecondDigits: 3
     });
@@ -66,16 +66,14 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
           const HealthIcon = healthStatus?.icon;
 
           return (
-            <div 
+            <div
               key={step.step_number || index}
-              className={`relative pl-12 pb-6 ${
-                index !== steps.length - 1 ? 'border-l-2 border-gray-800/50 ml-6' : ''
-              }`}
+              className={`relative pl-12 pb-6 ${index !== steps.length - 1 ? 'border-l-2 border-gray-800/50 ml-6' : ''
+                }`}
             >
               {/* Timeline Node */}
-              <div className={`absolute left-0 top-0 -ml-6 w-12 h-12 rounded-full flex items-center justify-center ${
-                isUser ? 'bg-blue-500/10 border-2 border-blue-500/30' : 'bg-purple-500/10 border-2 border-purple-500/30'
-              }`}>
+              <div className={`absolute left-0 top-0 -ml-6 w-12 h-12 rounded-full flex items-center justify-center ${isUser ? 'bg-blue-500/10 border-2 border-blue-500/30' : 'bg-purple-500/10 border-2 border-purple-500/30'
+                }`}>
                 {isUser ? (
                   <User className="w-5 h-5 text-blue-400" />
                 ) : (
@@ -88,14 +86,13 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
                 {/* Header */}
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      isUser 
-                        ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' 
-                        : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
-                    }`}>
-                      {isUser ? 'SIMULATOR' : 'AGENT'}
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${isUser
+                      ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                      : 'bg-purple-500/10 text-purple-400 border border-purple-500/20'
+                      }`}>
+                      {isUser ? (isUploaded ? 'USER' : 'SIMULATOR') : 'AGENT'}
                     </span>
-                    
+
                     <span className="text-gray-500 font-mono text-xs">
                       Step #{step.step_number}
                     </span>
@@ -172,7 +169,7 @@ const TurnByTurnAnalysis = ({ steps = [], stepHealth = {} }) => {
                     <p className="text-xs text-gray-500 mb-2">Failed Metrics:</p>
                     <div className="flex flex-wrap gap-2">
                       {stepHealth[step.step_number].failed_metrics.map((metric, i) => (
-                        <span 
+                        <span
                           key={i}
                           className="px-2 py-1 bg-red-500/10 border border-red-500/20 rounded text-red-400 text-xs font-mono"
                         >

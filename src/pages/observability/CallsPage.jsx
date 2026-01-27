@@ -308,17 +308,17 @@ const CallsPage = () => {
     // Add dynamic KPIs
     if (kpis.dynamic_kpis) {
       Object.entries(kpis.dynamic_kpis).forEach(([key, kpiData]) => {
-        if (typeof kpiData === 'object' && kpiData.value !== null && kpiData.value !== undefined) {
+        if (typeof kpiData === 'object' && kpiData !== null) {
           displayKPIs.push({
+            kpi_id: kpiData.kpi_id || key,
+            name: kpiData.kpi_name || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
             kpi_id: kpiData.kpi_id || key,
             name: kpiData.kpi_name || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
             value: kpiData.value,
             unit: kpiData.unit || '',
-            data_type: kpiData.data_type || (typeof kpiData.value === 'boolean' ? 'boolean' :
-              typeof kpiData.value === 'number' && Number.isInteger(kpiData.value) ? 'int' : 'float'),
+            data_type: kpiData.data_type || 'float',
             aggregation_method: kpiData.aggregation_method || 'avg',
-            description: `${kpiData.kpi_name || key} - ${kpiData.category || 'Dynamic KPI'}`,
-            category: kpiData.category,
+            description: `Dynamic KPI: ${kpiData.kpi_name || key}`,
             is_static: false,
             count: kpiData.count,
             min: kpiData.min,

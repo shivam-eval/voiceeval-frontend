@@ -117,7 +117,6 @@ const KPISection = ({
                             </div>
                             <h3 className="text-base font-bold text-white">
                                 Agent-Specific Metrics
-                                <span className="text-xs text-gray-500 ml-2 font-normal">({agentSpecificKPIs.length} metrics)</span>
                             </h3>
                         </div>
                     </div>

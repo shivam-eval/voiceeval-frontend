@@ -75,11 +75,16 @@ const KPIDetailCard = ({ kpi }) => {
 
             // Handle objects like conversion or outcome
             let displayVal = String(val);
-            if (typeof val === 'object') {
+            if (typeof val === 'object' && val !== null) {
                 if (val.outcome) displayVal = String(val.outcome);
                 else if (val.converted !== undefined) displayVal = val.converted ? 'Yes' : 'No';
                 else if (val.transferred !== undefined) displayVal = val.transferred ? 'Yes' : 'No';
                 else displayVal = JSON.stringify(val);
+            }
+
+            // Humanize 'category' values
+            if (key.toLowerCase() === 'category') {
+                displayVal = humanizeMetricName(displayVal);
             }
 
             return (

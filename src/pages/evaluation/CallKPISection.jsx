@@ -43,9 +43,6 @@ const CallKPISection = ({ kpiResults, evaluation }) => {
                 </div>
                 <div>
                     <h2 className="text-2xl font-bold text-white">Business KPIs</h2>
-                    <p className="text-gray-400 text-sm">
-                        {staticKPIs.length} standard metrics, {dynamicKPIs.length} agent-specific metrics
-                    </p>
                 </div>
             </div>
 
@@ -54,9 +51,6 @@ const CallKPISection = ({ kpiResults, evaluation }) => {
                 <div>
                     <h3 className="text-lg font-semibold text-gray-300 mb-3 flex items-center gap-2">
                         <span>Standard Metrics</span>
-                        <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-400">
-                            {staticKPIs.length}
-                        </span>
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                         {staticKPIs.map((kpi, index) => (
@@ -71,9 +65,6 @@ const CallKPISection = ({ kpiResults, evaluation }) => {
                 <div>
                     <h3 className="text-lg font-semibold text-cyan-400 mb-3 flex items-center gap-2">
                         <span>Agent-Specific Metrics</span>
-                        <span className="text-xs px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
-                            {dynamicKPIs.length}
-                        </span>
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                         {dynamicKPIs.map((kpi, index) => (

@@ -163,7 +163,7 @@ const EndpointingOverview = ({ response, data, onBack }) => {
 
           // Filter and humanize details
           const details = Object.entries(metric.details || {})
-            .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'llm_usage', 'value', 'error_message', 'reasoning'].includes(key));
+            .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'llm_usage', 'value', 'error_message', 'reasoning', 'interruption_count'].includes(key));
 
           return (
             <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>
@@ -171,7 +171,7 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{label}</span>
                   <span className={`text-2xl font-bold ${isPassed ? 'text-teal-400' : 'text-red-400'}`}>
-                    {score}%
+                    {mName === 'interruption_count' ? metric.details?.interruption_count ?? 0 : `${score}%`}
                   </span>
                 </div>
                 <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
@@ -190,10 +190,12 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                         ) : typeof value === 'object' && !Array.isArray(value) ? (
                           <div className="space-y-1">
                             {Object.entries(value)
-                              .filter(([subKey]) => subKey !== 'node_id')
+                              .filter(([subKey]) => subKey !== 'duplex_overlap')
                               .map(([subKey, subValue]) => (
                               <div key={subKey} className="text-gray-300">
-                                <span className="text-gray-500">{humanizeMetricName(subKey)}:</span> {humanizeMetricName(subValue)}
+                                <span className="text-gray-500">{humanizeMetricName(subKey)}:</span> {
+                                  subKey === 'total_speech_turns' ? Math.round(subValue) : humanizeMetricName(subValue)
+                                }
                               </div>
                             ))}
                           </div>
@@ -207,7 +209,7 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                                   {typeof item === 'object' ? (
                                     <div className="grid grid-cols-1 gap-1">
                                       {Object.entries(item)
-                                        .filter(([k]) => k !== 'node_id')
+                                        .filter(([k]) => k.toLowerCase() !== 'node_id' && k.toLowerCase() !== 'node id')
                                         .map(([k, v]) => (
                                         <div key={k} className="flex gap-1 break-all">
                                           <span className="text-gray-500 font-semibold">{humanizeMetricName(k)}:</span>
@@ -227,10 +229,11 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                             {typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
                               typeof value === 'number' ? (
                                 // Format numbers nicely
-                                key.includes('ms') || key.includes('pause') ? `${value.toFixed(2)} ms` :
-                                  key.includes('count') ? value :
-                                    key.includes('accuracy') ? `${(value * 100).toFixed(1)}%` :
-                                      value.toFixed(2)
+                                key === 'long_pauses' ? Math.round(value) :
+                                  key.includes('ms') || key.includes('pause') ? `${value.toFixed(2)} ms` :
+                                    key.includes('count') ? value :
+                                      key.includes('accuracy') ? `${(value * 100).toFixed(1)}%` :
+                                        value.toFixed(2)
                               ) : String(value)}
                           </span>
                         )}

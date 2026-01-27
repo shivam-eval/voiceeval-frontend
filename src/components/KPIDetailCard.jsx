@@ -57,7 +57,7 @@ const KPIDetailCard = ({ kpi }) => {
         if (!detailsObj || typeof detailsObj !== 'object') return null;
 
         return Object.entries(detailsObj).map(([key, val]) => {
-            if (val === null || val === undefined) return null;
+            if (val === null || val === undefined || key.toLowerCase().includes('llm_usage')) return null;
             return (
                 <div key={key} className="flex justify-between text-xs">
                     <span className="text-gray-500 capitalize">{key.replace(/_/g, ' ')}:</span>
@@ -91,7 +91,7 @@ const KPIDetailCard = ({ kpi }) => {
 
             {/* Value */}
             <div className="mb-3">
-                <div className={`text-3xl font-bold ${colorClasses[color]?.split(' ')[0] || 'text-white'}`}>
+                <div className={`text-xl font-bold ${colorClasses[color]?.split(' ')[0] || 'text-white'}`}>
                     {formattedValue}
                 </div>
             </div>

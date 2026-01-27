@@ -25,20 +25,24 @@ import {
 export const formatKPIValue = (value, dataType, unit = '') => {
     if (value === null || value === undefined) return '--';
 
-    switch (dataType) {
+    // Auto-detect object type if dataType isn't explicitly set correctly
+    const effectiveDataType = (typeof value === 'object' && !Array.isArray(value)) ? 'object' : dataType;
+
+    switch (effectiveDataType) {
         case 'boolean':
-            return value ? 'YES' : 'NO';
+            return value === true ? 'YES' : value === false ? 'NO' : '--';
 
         case 'int':
             return unit ? `${value} ${unit}` : value.toString();
 
         case 'float':
             if (unit === '%' || unit === 'percentage') {
-                // If value is already 0-1, convert to percentage
-                const percentage = value <= 1 ? (value * 100).toFixed(1) : value.toFixed(1);
+                // If value is 0-1, convert to percentage. If 0-100, keep as is.
+                const percentage = (value >= 0 && value <= 1) ? (value * 100).toFixed(1) : value.toFixed(1);
                 return `${percentage}%`;
-            } else if (unit === 'USD' || unit === '$') {
-                return `$${value.toFixed(2)}`;
+            } else if (unit === 'USD' || unit === '$' || unit === 'INR') {
+                const symbol = unit === 'INR' ? '₹' : (unit === 'USD' || unit === '$') ? '$' : unit;
+                return `${symbol}${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
             } else {
                 return unit ? `${value.toFixed(2)} ${unit}` : value.toFixed(2);
             }
@@ -55,12 +59,27 @@ export const formatKPIValue = (value, dataType, unit = '') => {
         case 'dict':
         case 'object':
             if (typeof value === 'object') {
-                // Special handling for objection_handling type
+                // 1. Conversion Rate object
+                if (value.converted !== undefined) {
+                    return value.converted ? 'CONVERTED' : 'NO CONVERSION';
+                }
+                // 2. Transfer Rate object
+                if (value.transferred !== undefined) {
+                    return value.transferred ? 'TRANSFERRED' : 'NOT TRANSFERRED';
+                }
+                // 3. Objection Handling object
                 if (value.objections_detected !== undefined) {
                     return `${value.objections_handled || 0} / ${value.objections_detected || 0} handled`;
                 }
-                // For generic objects, show count of keys
-                return `${Object.keys(value).length} items`;
+                // 4. Outcome object
+                if (value.outcome !== undefined) {
+                    return String(value.outcome).toUpperCase();
+                }
+                // 5. General object fallback - check if it has a 'value' field itself
+                if (value.value !== undefined) return String(value.value);
+
+                // Final fallback: show count of keys
+                return `${Object.keys(value).length} details`;
             }
             return '--';
 

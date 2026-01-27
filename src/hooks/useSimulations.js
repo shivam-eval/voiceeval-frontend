@@ -108,8 +108,28 @@ export const useRunInboundSimulation = () => {
 
     return useMutation({
         mutationFn: (payload) => simulationsApi.runInboundSimulation(payload),
-        onSuccess: () => {
+        onSuccess: (data) => {
+            // Invalidate lists so server state is refreshed
             queryClient.invalidateQueries({ queryKey: simulationKeys.lists() });
+
+            // If the API returned the created simulation object, ensure it's marked
+            // as inbound in any cached lists so the main sessions page can filter it out
+            try {
+                if (data?.simulation_id) {
+                    const lists = queryClient.getQueriesData(simulationKeys.lists());
+                    lists.forEach(([key, cached]) => {
+                        if (cached && Array.isArray(cached.simulations)) {
+                            const existing = cached.simulations.find(s => s.simulation_id === data.simulation_id);
+                            const item = { ...data, call_mode: data.call_mode || 'inbound' };
+                            const newSims = existing ? cached.simulations.map(s => s.simulation_id === data.simulation_id ? item : s) : [item, ...cached.simulations];
+                            queryClient.setQueryData(key, { ...cached, simulations: newSims });
+                        }
+                    });
+                }
+            } catch (err) {
+                // swallow cache update errors - invalidate above will refresh data
+                console.error('Failed to patch inbound simulation into cache', err);
+            }
         },
     });
 };

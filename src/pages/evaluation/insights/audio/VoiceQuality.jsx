@@ -2,11 +2,15 @@ import { Waves } from "lucide-react";
 
 const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
+
+  // Format 0_1 as (0-1)
+  let processedName = String(name).replace(/0_1/g, "(0-1)");
+
   // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
-  if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-  
+  if (typeof processedName === 'string' && processedName.includes(' ') && processedName[0] === processedName[0].toUpperCase()) return processedName;
+
   // No hardcoded map - just transform the snake_case name to Title Case
-  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  return processedName.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 const VoiceQualityConsistency = ({ response }) => {

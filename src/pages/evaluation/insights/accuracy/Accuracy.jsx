@@ -3,7 +3,7 @@ import { Target, ArrowLeft } from "lucide-react";
 /* ========================= HELPERS ========================= */
 
 const formatKey = (key) =>
-  key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  key.replace(/_/g, " and ").replace(/\b\w/g, (l) => l.toUpperCase());
 
 const formatValue = (key, value) => {
   if (value === null || value === undefined) return "Not available";
@@ -380,8 +380,8 @@ const AccuracyOverview = ({ response, data, onBack }) => {
                             {turn.passed !== undefined && (
                               <span
                                 className={`text-[10px] px-2.5 py-1 rounded-md font-medium uppercase tracking-wide ${turnPassed
-                                    ? "bg-green-500/5 text-green-400 border border-green-500/20"
-                                    : "bg-red-500/5 text-red-400 border border-red-500/20"
+                                  ? "bg-green-500/5 text-green-400 border border-green-500/20"
+                                  : "bg-red-500/5 text-red-400 border border-red-500/20"
                                   }`}
                               >
                                 {turnPassed ? "✓ Passed" : "✗ Failed"}

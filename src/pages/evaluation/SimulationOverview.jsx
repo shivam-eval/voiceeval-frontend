@@ -38,9 +38,6 @@ const SimulationOverview = ({ simulationData }) => {
             <h2 className="text-2xl font-bold text-white mb-2">
               Simulation Overview
             </h2>
-            <p className="text-gray-400 text-sm font-mono">
-              ID: {simulation_id || 'N/A'}
-            </p>
           </div>
           
           <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-lg">

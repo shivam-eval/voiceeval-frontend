@@ -8,7 +8,7 @@ const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
   // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
-  
+
   // No hardcoded map - just transform the snake_case name to Title Case
   return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
@@ -155,89 +155,89 @@ const EndpointingOverview = ({ response, data, onBack }) => {
 
       {/* ================= ENDPOINTING ANALYTICS ================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {metrics.map((metric, idx) => {
-              const isPassed = metric.status === "passed";
-              const mName = metric.name || metric.metric_name;
-              const label = humanizeMetricName(mName);
-              const score = typeof metric.score === 'number' ? Math.round(metric.score * 100) : 0;
+        {metrics.map((metric, idx) => {
+          const isPassed = metric.status === "passed";
+          const mName = metric.name || metric.metric_name;
+          const label = humanizeMetricName(mName);
+          const score = typeof metric.score === 'number' ? Math.round(metric.score * 100) : 0;
 
-              // Filter and humanize details
-              const details = Object.entries(metric.details || {})
-                .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'llm_usage', 'value', 'error_message', 'reasoning'].includes(key));
+          // Filter and humanize details
+          const details = Object.entries(metric.details || {})
+            .filter(([key]) => !['passed', 'threshold', 'execution_time_ms', 'llm_usage', 'value', 'error_message', 'reasoning'].includes(key));
 
-              return (
-                <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{label}</span>
-                      <span className={`text-2xl font-bold ${isPassed ? 'text-teal-400' : 'text-red-400'}`}>
-                        {score}%
-                      </span>
-                    </div>
-                    <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
-                      {isPassed ? '✓ PASSED' : '✗ FAILED'}
-                    </div>
-                  </div>
-
-                  {details.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
-                      {details.map(([key, value]) => (
-                        <div key={key} className="flex flex-col gap-1.5">
-                          <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
-                          <div className="text-sm">
-                            {value === null ? (
-                              <span className="text-gray-600 italic">None</span>
-                            ) : typeof value === 'object' && !Array.isArray(value) ? (
-                              <div className="space-y-1">
-                                {Object.entries(value).map(([subKey, subValue]) => (
-                                  <div key={subKey} className="text-gray-300">
-                                    <span className="text-gray-500">{subKey.replace(/_/g, " ")}:</span> {String(subValue).replace(/_/g, ' ')}
-                                  </div>
-                                ))}
-                              </div>
-                            ) : Array.isArray(value) ? (
-                              value.length === 0 ? (
-                                <span className="text-gray-500">None</span>
-                              ) : (
-                                <ul className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
-                                  {value.map((item, i) => (
-                                    <li key={i} className="text-gray-300 text-xs bg-black/20 rounded p-2 border border-gray-800/50">
-                                      {typeof item === 'object' ? (
-                                          <div className="grid grid-cols-1 gap-1">
-                                              {Object.entries(item).map(([k, v]) => (
-                                                  <div key={k} className="flex gap-1 break-all">
-                                                      <span className="text-gray-500 font-semibold">{k.replace(/_/g, ' ')}:</span>
-                                                      <span className="text-gray-300">{String(v).replace(/_/g, ' ')}</span>
-                                                  </div>
-                                              ))}
-                                          </div>
-                                      ) : (
-                                          <span className="break-all">{String(item)}</span>
-                                      )}
-                                    </li>
-                                  ))}
-                                </ul>
-                              )
-                            ) : (
-                              <span className="text-gray-300 leading-relaxed">
-                                {typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
-                                  typeof value === 'number' ? (
-                                    // Format numbers nicely
-                                    key.includes('ms') || key.includes('pause') ? `${value.toFixed(2)} ms` :
-                                      key.includes('count') ? value :
-                                        key.includes('accuracy') ? `${(value * 100).toFixed(1)}%` :
-                                          value.toFixed(2)
-                                  ) : String(value)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+          return (
+            <div key={idx} className={`rounded-xl p-6 border ${isPassed ? 'bg-white/[0.02] border-white/[0.05]' : 'bg-red-950/10 border-red-900/20'}`}>
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">{label}</span>
+                  <span className={`text-2xl font-bold ${isPassed ? 'text-teal-400' : 'text-red-400'}`}>
+                    {score}%
+                  </span>
                 </div>
-              );
-            })}
+                <div className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                  {isPassed ? '✓ PASSED' : '✗ FAILED'}
+                </div>
+              </div>
+
+              {details.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
+                  {details.map(([key, value]) => (
+                    <div key={key} className="flex flex-col gap-1.5">
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
+                      <div className="text-sm">
+                        {value === null ? (
+                          <span className="text-gray-600 italic">None</span>
+                        ) : typeof value === 'object' && !Array.isArray(value) ? (
+                          <div className="space-y-1">
+                            {Object.entries(value).map(([subKey, subValue]) => (
+                              <div key={subKey} className="text-gray-300">
+                                <span className="text-gray-500">{humanizeMetricName(subKey)}:</span> {humanizeMetricName(subValue)}
+                              </div>
+                            ))}
+                          </div>
+                        ) : Array.isArray(value) ? (
+                          value.length === 0 ? (
+                            <span className="text-gray-500">None</span>
+                          ) : (
+                            <ul className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar pr-1">
+                              {value.map((item, i) => (
+                                <li key={i} className="text-gray-300 text-xs bg-black/20 rounded p-2 border border-gray-800/50">
+                                  {typeof item === 'object' ? (
+                                    <div className="grid grid-cols-1 gap-1">
+                                      {Object.entries(item).map(([k, v]) => (
+                                        <div key={k} className="flex gap-1 break-all">
+                                          <span className="text-gray-500 font-semibold">{humanizeMetricName(k)}:</span>
+                                          <span className="text-gray-300">{humanizeMetricName(v)}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <span className="break-all">{String(item)}</span>
+                                  )}
+                                </li>
+                              ))}
+                            </ul>
+                          )
+                        ) : (
+                          <span className="text-gray-300 leading-relaxed">
+                            {typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
+                              typeof value === 'number' ? (
+                                // Format numbers nicely
+                                key.includes('ms') || key.includes('pause') ? `${value.toFixed(2)} ms` :
+                                  key.includes('count') ? value :
+                                    key.includes('accuracy') ? `${(value * 100).toFixed(1)}%` :
+                                      value.toFixed(2)
+                              ) : String(value)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

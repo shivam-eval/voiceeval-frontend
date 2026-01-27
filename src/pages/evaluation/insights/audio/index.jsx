@@ -6,11 +6,15 @@ import { Volume2, CheckCircle, XCircle, ArrowLeft } from "lucide-react";
 
 const humanizeMetricName = (name) => {
   if (!name) return "Unknown Metric";
+
+  // Format 0_1 as (0-1)
+  let processedName = String(name).replace(/0_1/g, "(0-1)");
+
   // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
-  if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
+  if (typeof processedName === 'string' && processedName.includes(' ') && processedName[0] === processedName[0].toUpperCase()) return processedName;
 
   // No hardcoded map - just transform the snake_case name to Title Case
-  return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+  return processedName.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
 /* =========================
@@ -192,7 +196,7 @@ const AudioOverview = ({ response, data, onBack }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-12 pt-6 border-t border-gray-800/50">
                   {details.map(([key, value]) => (
                     <div key={key} className={`flex flex-col gap-1.5 ${key === 'reasoning' ? 'md:col-span-2' : ''}`}>
-                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
+                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{key.replace(/0_1/g, "(0-1)").replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}</span>
                       <div className="text-sm">
                         {value === null ? (
                           <span className="text-gray-600 italic">None</span>

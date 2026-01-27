@@ -154,6 +154,14 @@ const SimulationsListPage = () => {
         return id.length > 12 ? `${id.substring(0, 12)}...` : id;
     };
 
+    // Filter out inbound sessions from the general sessions list so inbound runs
+    // are only visible on the Inbound page.
+    const filteredSimulations = (data?.simulations || []).filter((sim) => {
+        const callMode = (sim.call_mode || sim.metadata?.call_mode || '').toString().toLowerCase();
+        return !callMode.includes('inbound');
+    });
+    const filteredTotal = filteredSimulations.length;
+
     if (error) {
         return (
             <div className="p-8">
@@ -230,7 +238,7 @@ const SimulationsListPage = () => {
                                 Loading sessions...
                             </div>
                         </div>
-                    ) : !data || data.simulations.length === 0 ? (
+                    ) : !data || filteredSimulations.length === 0 ? (
                         <div className="p-12 text-center">
                             <div className="flex flex-col items-center gap-4">
                                 <div className="p-4 bg-gray-800/30 rounded-full border border-gray-700/50">
@@ -266,7 +274,7 @@ const SimulationsListPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="text-sm text-gray-300">
-                                    {data.simulations.map((sim) => (
+                                    {filteredSimulations.map((sim) => (
                                         <tr
                                             key={sim.simulation_id}
                                             onClick={() => handleRowClick(sim.simulation_id)}
@@ -383,10 +391,10 @@ const SimulationsListPage = () => {
                         </div>
 
                             {/* Pagination */}
-                            {data.total > filters.limit && (
+                            {filteredTotal > filters.limit && (
                                 <div className="px-6 py-4 bg-gray-800/30 border-t border-gray-800 flex items-center justify-between">
                                     <div className="text-sm text-gray-400">
-                                        Showing {filters.skip + 1} to {Math.min(filters.skip + filters.limit, data.total)} of {data.total} simulations
+                                        Showing {filters.skip + 1} to {Math.min(filters.skip + filters.limit, filteredTotal)} of {filteredTotal} sessions
                                     </div>
                                     <div className="flex gap-2">
                                         <Button

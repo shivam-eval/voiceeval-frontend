@@ -94,3 +94,18 @@ export const useUploadCalls = () => {
         },
     });
 };
+
+/**
+ * Hook to delete a call
+ */
+export const useDeleteCall = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (id) => callsApi.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: callKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: callKeys.categories() });
+        },
+    });
+};

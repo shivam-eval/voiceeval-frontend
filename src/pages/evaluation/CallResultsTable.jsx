@@ -174,17 +174,11 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
               <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Test Case
               </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Session ID
-              </th>
               <th className="text-center px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Score
               </th>
               <th className="text-center px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Status
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                Transcript ID
               </th>
               <th className="text-center px-6 py-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Action
@@ -225,13 +219,6 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
                     </div>
                   </td>
 
-                  {/* Session ID */}
-                  <td className="px-6 py-4">
-                    <span className="text-gray-400 font-mono text-xs">
-                      {sessionId}
-                    </span>
-                  </td>
-
                   {/* Score */}
                   <td className="px-6 py-4 text-center">
                     <div className="flex flex-col items-center">
@@ -253,13 +240,6 @@ const CallResultsTable = ({ transcriptResults = [], onViewReport, evaluationData
                   {/* Status */}
                   <td className="px-6 py-4 text-center">
                     {getStatusBadge(status)}
-                  </td>
-
-                  {/* Transcript ID */}
-                  <td className="px-6 py-4">
-                    <span className="text-gray-500 font-mono text-xs">
-                      {transcriptResultId !== 'N/A' ? `${transcriptResultId.substring(0, 20)}...` : 'N/A'}
-                    </span>
                   </td>
 
                   {/* Action */}

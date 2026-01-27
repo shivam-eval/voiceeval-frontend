@@ -54,6 +54,7 @@ const KPIDetailCard = ({ kpi }) => {
 
     // Humanize metric names
     const humanizeMetricName = (name) => {
+        if (name === 0 || name === '0') return "0";
         if (!name) return "Unknown Metric";
         if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
         return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
@@ -67,10 +68,10 @@ const KPIDetailCard = ({ kpi }) => {
 
         return Object.entries(detailsObj).map(([key, val]) => {
             const lowerKey = key.toLowerCase().replace(/_/g, ' ');
-            if (val === null || val === undefined || 
-                lowerKey.includes('llm usage') || 
-                lowerKey.includes('data type') || 
-                lowerKey.includes('unit') || 
+            if (val === null || val === undefined ||
+                lowerKey.includes('llm usage') ||
+                lowerKey.includes('data type') ||
+                lowerKey.includes('unit') ||
                 lowerKey.includes('conversation turns')) return null;
 
             // Handle objects like conversion or outcome
@@ -117,7 +118,7 @@ const KPIDetailCard = ({ kpi }) => {
             {/* Details Grid */}
             {((details && Object.keys(details).length > 0) || confidence !== undefined || unit) && (
                 <div className="grid grid-cols-2 gap-y-4 gap-x-8 pt-6 border-t border-gray-800/50">
-                   {confidence !== undefined && (
+                    {confidence !== undefined && (
                         <div className="flex flex-col gap-1">
                             <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Confidence</span>
                             <span className={`text-sm font-semibold ${confidenceBadgeClasses[confidenceColor]?.split(' ')[1] || 'text-gray-300'}`}>
@@ -151,7 +152,7 @@ const KPIDetailCard = ({ kpi }) => {
                             <ChevronDown className="w-3 h-3 text-gray-500 group-hover:text-gray-400" />
                         )}
                     </button>
-                    
+
                     {isExpanded && (
                         <p className="text-sm text-gray-300 leading-relaxed mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
                             {reasoning}

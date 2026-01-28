@@ -5,12 +5,15 @@ import { MessageCircle, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 ========================= */
 
 const humanizeMetricName = (name) => {
-  if (name === 0 || name === '0') return "0";
-  if (!name) return "Unknown Metric";
-  // Use the name directly if it's already humanized (contains spaces and starts with uppercase)
+  if (name === null || name === undefined || name === "") return "Unknown";
+  
+  // If it's a number, return as is (don't humanize)
+  if (typeof name === 'number') return name;
+
+  // Use the name directly if it's already humanized
   if (typeof name === 'string' && name.includes(' ') && name[0] === name[0].toUpperCase()) return name;
 
-  // No hardcoded map - just transform the snake_case name to Title Case
+  // Transform snake_case to Title Case
   return String(name).replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
 };
 
@@ -235,12 +238,11 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                             {typeof value === 'boolean' ? (value ? 'Yes' : 'No') :
                               typeof value === 'number' ? (
                                 // Format numbers nicely
-                                (key === 'long_pauses' || key === 'total_pauses') ? Math.round(value) :
-                                  (key.includes('ms') || (key.includes('pause') && !key.includes('total'))) ? `${value.toFixed(2)} ms` :
-                                    key.includes('count') ? value :
-                                      key.includes('accuracy') ? `${(value * 100).toFixed(1)}%` :
-                                        value.toFixed(2)
-                              ) : String(value)}
+                                key.includes('turns') || key.includes('count') || key === 'long_pauses' ? Math.round(value) :
+                                  key.includes('ms') || key.includes('pause') ? `${Math.round(value)} ms` :
+                                    key.includes('accuracy') || key.includes('rate') ? `${(value * 100).toFixed(0)}%` :
+                                      value.toFixed(2)
+                              ) : humanizeMetricName(value)}
                           </span>
                         )}
                       </div>

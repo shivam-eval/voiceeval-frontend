@@ -91,6 +91,16 @@ const CallTranscriptPanel = ({ transcriptData, callRecordingUrl, isUploaded }) =
   const steps = transcriptData?.steps || [];
   const metadata = transcriptData?.metadata || {};
   const audioFiles = metadata?.audio_files || [];
+  
+  const [activeTurnIndex, setActiveTurnIndex] = useState(-1);
+  const audioPlayerRef = useRef(null);
+  const transcriptContainerRef = useRef(null);
+  const turnRefs = useRef([]);
+
+  // Sync turn refs with steps length
+  useEffect(() => {
+    turnRefs.current = turnRefs.current.slice(0, steps.length);
+  }, [steps]);
 
   // Create a map of step numbers to audio URLs
   const stepAudioMap = {};
@@ -138,6 +148,48 @@ const CallTranscriptPanel = ({ transcriptData, callRecordingUrl, isUploaded }) =
       toast.error('Failed to copy transcript: ' + (err.message || 'Unknown error'));
     });
   };
+
+  const handleTimeUpdate = (currentTime) => {
+    const timeMs = currentTime * 1000;
+    // Find the current active turn
+    const index = steps.findIndex((step, i) => {
+      const start = step.speech_start_ms || step.start_time_ms || 0;
+      const duration = step.duration_ms || step.duration || 0;
+      const end = start + duration;
+      
+      // If duration is missing, assume it lasts until the next turn starts
+      if (duration === 0) {
+        const nextStep = steps[i + 1];
+        const nextStart = nextStep?.speech_start_ms || nextStep?.start_time_ms || Infinity;
+        return timeMs >= start && timeMs < nextStart;
+      }
+      
+      return timeMs >= start && timeMs < end;
+    });
+
+    if (index !== activeTurnIndex) {
+      setActiveTurnIndex(index);
+    }
+  };
+
+  const handleTurnClick = (step, index) => {
+    const startMs = step.speech_start_ms || step.start_time_ms || 0;
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.seek(startMs / 1000);
+      audioPlayerRef.current.play();
+    }
+    setActiveTurnIndex(index);
+  };
+
+  // Auto-scroll logic
+  useEffect(() => {
+    if (activeTurnIndex !== -1 && turnRefs.current[activeTurnIndex]) {
+      turnRefs.current[activeTurnIndex].scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    }
+  }, [activeTurnIndex]);
 
   // If transcriptData is null/undefined
   if (!transcriptData) {
@@ -202,7 +254,12 @@ const CallTranscriptPanel = ({ transcriptData, callRecordingUrl, isUploaded }) =
         {/* Audio Player */}
         {callRecordingUrl && (
           <div className="mt-4">
-            <AudioPlayer audioUrl={callRecordingUrl} label="Call Recording" />
+            <AudioPlayer 
+              ref={audioPlayerRef}
+              audioUrl={callRecordingUrl} 
+              label="Call Recording" 
+              onTimeUpdate={handleTimeUpdate}
+            />
           </div>
         )}
       </div>
@@ -211,15 +268,25 @@ const CallTranscriptPanel = ({ transcriptData, callRecordingUrl, isUploaded }) =
       <div className="p-6 space-y-6">
         {/* Transcript Messages */}
         {steps.length > 0 ? (
-          <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+          <div 
+            ref={transcriptContainerRef}
+            className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar"
+          >
             {steps.map((step, index) => {
               const isAgent = step.turn_role === 'agent';
               const timestamp = formatTime(step.speech_start_ms || step.start_time_ms || 0);
+              const isActive = index === activeTurnIndex;
 
               return (
                 <div
                   key={step.step_number || step.id || index}
-                  className="flex gap-3 group"
+                  ref={el => turnRefs.current[index] = el}
+                  className={`flex gap-3 group px-3 py-4 rounded-xl transition-all cursor-pointer border ${
+                    isActive 
+                      ? "bg-teal-500/5 border-teal-500/20 shadow-[0_4px_20px_-4px_rgba(20,184,166,0.1)] shadow-inner" 
+                      : "border-transparent hover:bg-white/[0.02]"
+                  }`}
+                  onClick={() => handleTurnClick(step, index)}
                 >
                   {/* Timestamp */}
                   <div className="text-xs text-gray-500 font-mono w-20 shrink-0 pt-1">

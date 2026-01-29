@@ -312,8 +312,6 @@ const CallsPage = () => {
           displayKPIs.push({
             kpi_id: kpiData.kpi_id || key,
             name: kpiData.kpi_name || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-            kpi_id: kpiData.kpi_id || key,
-            name: kpiData.kpi_name || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
             value: kpiData.value,
             unit: kpiData.unit || '',
             data_type: kpiData.data_type || 'float',

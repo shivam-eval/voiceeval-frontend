@@ -210,3 +210,41 @@ export const useEvaluateTimeRange = () => {
     },
   });
 };
+
+/**
+ * Hook to sync traces from LangFuse
+ */
+export const useSyncTraces = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (force = false) => observabilityService.syncNow(force),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries([QUERY_KEYS.TRACES]);
+      queryClient.invalidateQueries([QUERY_KEYS.KPIS]);
+      queryClient.invalidateQueries([QUERY_KEYS.TRENDS]);
+      
+      const { summary } = data;
+      if (summary.traces_processed > 0) {
+        toast.success(`Synced ${summary.traces_processed} traces from LangFuse`);
+      } else {
+        toast.info('No new traces found');
+      }
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.detail || 'Failed to sync traces');
+    },
+  });
+};
+
+/**
+ * Hook to get sync status
+ */
+export const useSyncStatus = () => {
+  return useQuery({
+    queryKey: ['sync_status'],
+    queryFn: () => observabilityService.getSyncStatus(),
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // Refetch every minute
+  });
+};

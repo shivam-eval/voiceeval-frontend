@@ -150,6 +150,30 @@ class ObservabilityService {
     const response = await api.get(`/observability/trends?${params.toString()}`);
     return response.data;
   }
+
+  /**
+   * Trigger manual sync from LangFuse
+   */
+  async syncNow(force = false) {
+    const response = await api.post('/observability/sync/now', { force });
+    return response.data;
+  }
+
+  /**
+   * Get sync worker status
+   */
+  async getSyncStatus() {
+    const response = await api.get('/observability/sync/status');
+    return response.data;
+  }
+
+  /**
+   * Get sync history
+   */
+  async getSyncHistory(limit = 10) {
+    const response = await api.get(`/observability/sync/history?limit=${limit}`);
+    return response.data;
+  }
 }
 
 export default new ObservabilityService();

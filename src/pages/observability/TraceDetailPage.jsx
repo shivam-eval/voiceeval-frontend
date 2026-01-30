@@ -85,7 +85,7 @@ const TraceDetailPage = () => {
             <p className="text-gray-400 mt-1 font-mono">{trace.trace_id}</p>
           </div>
           
-          {!evaluation?.evaluated && (
+          {(!evaluation?.evaluated || !evaluation?.evaluation) && (
             <button
               onClick={handleEvaluate}
               disabled={evaluateMutation.isLoading}

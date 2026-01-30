@@ -166,7 +166,7 @@ const TraceCard = ({ trace, onEvaluate, compact = false }) => {
             >
               View Details
             </button>
-            {!trace.evaluated && onEvaluate && (
+            {(!trace.evaluated || !trace.evaluation_id || trace.evaluation_score === null) && onEvaluate && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -179,7 +179,7 @@ const TraceCard = ({ trace, onEvaluate, compact = false }) => {
               </button>
             )}
           </div>
-          {trace.evaluated && trace.evaluation_id && (
+          {trace.evaluated && trace.evaluation_id && trace.evaluation_score !== null && (
             <button
               onClick={() => navigate(`/evaluations/${trace.evaluation_id}`)}
               className="text-sm text-primary-400 hover:text-primary-300 transition-colors font-medium"

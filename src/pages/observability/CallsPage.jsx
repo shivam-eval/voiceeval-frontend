@@ -8,8 +8,7 @@ import { useFlows } from '../../hooks/useFlows';
 import { useAgents } from '../../hooks/useAgents';
 import { useWorkflow } from '../../context/WorkFlowContext';
 import { useEvents } from '../../context/EventsContext';
-import { useAgentKPIs, useDiscoverKPIs } from '../../hooks/useKPIs';
-
+import { useAgentKPIs, useDiscoverKPIs, useNormalizedAgentKPIs, useAgentKPIsAggregated } from '../../hooks/useKPIs';
 // Import modular components
 import CallsPageHeader from './components/CallsPageHeader';
 import CallsSearchBar from './components/CallsSearchBar';
@@ -39,6 +38,9 @@ const CallsPage = () => {
   const [showKPIs, setShowKPIs] = useState(true);
   const [discoveredKPIs, setDiscoveredKPIs] = useState(null);
   const [isDiscoveryModalOpen, setIsDiscoveryModalOpen] = useState(false);
+  
+  // KPI Filters State
+  const [kpiFilters, setKpiFilters] = useState({});
 
   // Confirmation Modal State
   const [confirmationModal, setConfirmationModal] = useState({
@@ -53,6 +55,31 @@ const CallsPage = () => {
   const directoryParam = searchParams.get('directory');
   const directory = directoryParam;
   const viewMode = searchParams.get('view') || 'directories';
+
+  // Use aggregated KPIs hook with filters
+  const { normalized, isLoading: isLoadingNormalizedKPIs } =
+    useNormalizedAgentKPIs(directory, 30, {
+      enabled: !!directory && Object.keys(kpiFilters).length === 0, // Use basic hook when no filters
+    });
+
+  // Use aggregated KPIs hook WITH filters when filters are active
+  const { 
+    data: filteredKPIsData, 
+    isLoading: isLoadingFilteredKPIs 
+  } = useAgentKPIsAggregated(
+    directory,
+    null, // start_date
+    null, // end_date
+    null, // kpi_types
+    kpiFilters, // filters
+    {
+      enabled: !!directory && Object.keys(kpiFilters).length > 0,
+    }
+  );
+
+  // Determine which KPI data to use
+  const activeKPIData = Object.keys(kpiFilters).length > 0 ? filteredKPIsData : normalized;
+  const isLoadingKPIs = Object.keys(kpiFilters).length > 0 ? isLoadingFilteredKPIs : isLoadingNormalizedKPIs;
 
   // Sync session storage with current directory
   useEffect(() => {
@@ -83,13 +110,23 @@ const CallsPage = () => {
   // Fetch data
   const { data: agentsData } = useAgents();
   const { data: categoriesData, isLoading: isCategoriesLoading, refetch: refetchCategories } = useCallCategories();
+  
+  // Build filters for calls query based on KPI filters
+  const callsQueryFilters = useMemo(() => {
+    if (Object.keys(kpiFilters).length === 0) return undefined;
+    
+    // Convert KPI filters to call query format
+    return JSON.stringify(kpiFilters);
+  }, [kpiFilters]);
+
   const { data, isLoading: isCallsLoading, error, refetch } = useCalls({
     category: directory,
     directory: directory,
     search: debouncedSearch,
-    include_evaluations: true
+    include_evaluations: true,
+    filters: callsQueryFilters, // Pass filters to calls API
   }, {
-    placeholderData: (previousData) => previousData, // keepPreviousData: true alternative for React Query v5
+    placeholderData: (previousData) => previousData,
   });
 
   // Fetch flows
@@ -97,13 +134,6 @@ const CallsPage = () => {
   const flowId = useMemo(() => {
     return flowsData?.flows?.[0]?.flow_id || null;
   }, [flowsData]);
-
-  // Fetch agent KPIs
-  const { data: agentKPIsData, isLoading: isLoadingKPIs } = useAgentKPIs(
-    directory,
-    30,
-    { enabled: viewMode === 'calls' && !!directory }
-  );
 
   // Hook for discovering new KPIs
   const discoverKPIsMutation = useDiscoverKPIs();
@@ -221,115 +251,18 @@ const CallsPage = () => {
     return options;
   }, [filteredCategories, agentsData]);
 
-  // Format KPIs for display
-  const kpisForDisplay = useMemo(() => {
-    if (!agentKPIsData || !agentKPIsData.kpis) return [];
-
-    const kpis = agentKPIsData.kpis;
-    const displayKPIs = [];
-
-    // Add static KPIs
-    if (kpis.static_kpis) {
-      // FCR Rate
-      if (kpis.static_kpis.fcr_rate !== undefined && kpis.static_kpis.fcr_rate !== null) {
-        const fcrValue = kpis.static_kpis.fcr_rate;
-        const normalizedValue = fcrValue > 1 && kpis.static_kpis.fcr_count !== undefined
-          ? (kpis.static_kpis.fcr_count / (agentKPIsData.total_calls || 1)) * 100
-          : fcrValue <= 1 ? fcrValue * 100 : fcrValue;
-
-        displayKPIs.push({
-          kpi_id: 'fcr',
-          name: 'First Call Resolution',
-          value: normalizedValue,
-          unit: '%',
-          data_type: 'float',
-          aggregation_method: 'rate',
-          description: 'Percentage of calls resolved on first contact',
-          is_static: true,
-        });
-      }
-
-      // Conversion Rate
-      if (kpis.static_kpis.conversion_rate !== undefined && kpis.static_kpis.conversion_rate !== null) {
-        const conversionValue = kpis.static_kpis.conversion_rate;
-        const normalizedValue = conversionValue > 1 && kpis.static_kpis.conversion_count !== undefined
-          ? (kpis.static_kpis.conversion_count / (agentKPIsData.total_calls || 1)) * 100
-          : conversionValue <= 1 ? conversionValue * 100 : conversionValue;
-
-        displayKPIs.push({
-          kpi_id: 'conversion',
-          name: 'Conversion Rate',
-          value: normalizedValue,
-          unit: '%',
-          data_type: 'float',
-          aggregation_method: 'rate',
-          description: 'Percentage of calls that resulted in a conversion',
-          is_static: true,
-        });
-      }
-
-      // Transfer Rate
-      if (kpis.static_kpis.transfer_rate !== undefined && kpis.static_kpis.transfer_rate !== null) {
-        const transferValue = kpis.static_kpis.transfer_rate;
-        const normalizedValue = transferValue > 1 && kpis.static_kpis.transfer_count !== undefined
-          ? (kpis.static_kpis.transfer_count / (agentKPIsData.total_calls || 1)) * 100
-          : transferValue <= 1 ? transferValue * 100 : transferValue;
-
-        displayKPIs.push({
-          kpi_id: 'transfer',
-          name: 'Transfer Rate',
-          value: normalizedValue,
-          unit: '%',
-          data_type: 'float',
-          aggregation_method: 'rate',
-          description: 'Percentage of calls transferred to another agent',
-          is_static: true,
-        });
-      }
-
-      // Objection Handling Quality
-      if (kpis.static_kpis.avg_objection_handling_quality !== undefined && kpis.static_kpis.avg_objection_handling_quality !== null) {
-        const objectionValue = kpis.static_kpis.avg_objection_handling_quality;
-        const normalizedValue = objectionValue <= 1 ? objectionValue * 100 : objectionValue;
-
-        displayKPIs.push({
-          kpi_id: 'objection_handling',
-          name: 'Objection Quality',
-          value: normalizedValue,
-          unit: '%',
-          data_type: 'float',
-          aggregation_method: 'avg',
-          description: 'Average quality of objection handling across all calls',
-          is_static: true,
-        });
-      }
-    }
-
-    // Add dynamic KPIs
-    if (kpis.dynamic_kpis) {
-      Object.entries(kpis.dynamic_kpis).forEach(([key, kpiData]) => {
-        if (typeof kpiData === 'object' && kpiData !== null) {
-          displayKPIs.push({
-            kpi_id: kpiData.kpi_id || key,
-            name: kpiData.kpi_name || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-            kpi_id: kpiData.kpi_id || key,
-            name: kpiData.kpi_name || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-            value: kpiData.value,
-            unit: kpiData.unit || '',
-            data_type: kpiData.data_type || 'float',
-            aggregation_method: kpiData.aggregation_method || 'avg',
-            description: `Dynamic KPI: ${kpiData.kpi_name || key}`,
-            is_static: false,
-            count: kpiData.count,
-            min: kpiData.min,
-            max: kpiData.max,
-          });
-        }
+  // Handle KPI filter changes
+  const handleKPIFilterChange = useCallback((filters) => {
+    setKpiFilters(filters);
+    setCallsPage(1); // Reset to first page when filters change
+    
+    // Show toast notification
+    if (Object.keys(filters).length > 0) {
+      toast.info(`Filtering calls by ${Object.keys(filters).length} metric${Object.keys(filters).length > 1 ? 's' : ''}`, {
+        autoClose: 2000,
       });
     }
-
-    return displayKPIs;
-  }, [agentKPIsData]);
+  }, []);
 
   // Event handlers
   const handleDiscoverKPIs = async () => {
@@ -348,12 +281,14 @@ const CallsPage = () => {
   const handleDirectoryClick = (dir) => {
     updateParams({ directory: dir, view: 'calls' });
     setSearchTerm('');
+    setKpiFilters({}); // Clear filters when changing directory
   };
 
   const handleBackToDirectories = () => {
     sessionStorage.removeItem('last_directory');
     updateParams({ directory: '', view: 'directories' });
     setSearchTerm('');
+    setKpiFilters({}); // Clear filters when going back
   };
 
   const handleRowClick = (call) => {
@@ -405,36 +340,16 @@ const CallsPage = () => {
     toast.info('🔄 Loading evaluation status...', { autoClose: 2000 });
   };
 
-  const handleDownload = (audioUrl, filename = 'audio.mp3') => {
-    if (!audioUrl) {
-      toast.error('Audio not available');
-      return;
-    }
-
-    // Force browser download
-    const link = document.createElement('a');
-    link.href = audioUrl;
-    link.download = filename || 'audio.mp3';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const handleDownloadCall = (call) => {
-    // Use backend download endpoint which handles GCS streaming
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
     const downloadUrl = `${API_BASE_URL}/calls/${call.call_id}/download`;
 
-    // Open download URL with authentication
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.download = call.filename || `call-${call.call_id}.mp3`;
 
-    // Add auth token to request (if needed, browser will handle it via cookies/session)
-    // For token-based auth, we might need to fetch and create blob
     const authToken = localStorage.getItem('authToken');
     if (authToken) {
-      // Fetch with auth and create blob URL
       fetch(downloadUrl, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -460,14 +375,11 @@ const CallsPage = () => {
           toast.error('Failed to download audio file');
         });
     } else {
-      // No auth token, try direct link
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
   };
-
-
 
   const handleDeleteCall = (callId) => {
     setConfirmationModal({
@@ -733,19 +645,19 @@ const CallsPage = () => {
         viewMode={viewMode}
         directory={directory}
         agentsData={agentsData}
+        agentName={activeKPIData?.agentName}
+        period={activeKPIData?.period}
+        totalCalls={activeKPIData?.totalCalls}
+        isLoading={isLoadingKPIs}
         onBackToDirectories={handleBackToDirectories}
       />
 
-      {/* KPI Summary Section */}
+      {/* KPI Section with Filters */}
       {viewMode === 'calls' && directory && (
         <KPISection
-          kpisForDisplay={kpisForDisplay}
+          normalized={activeKPIData}
           isLoadingKPIs={isLoadingKPIs}
-          agentKPIsData={agentKPIsData}
-          showKPIs={showKPIs}
-          onToggleKPIs={() => setShowKPIs(!showKPIs)}
-          onDiscoverKPIs={handleDiscoverKPIs}
-          isDiscovering={discoverKPIsMutation.isPending}
+          onFilterChange={handleKPIFilterChange}
         />
       )}
 
@@ -762,6 +674,19 @@ const CallsPage = () => {
         onAddCalls={handleAddCalls}
         isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
       />
+
+      {/* Active Filters Indicator */}
+      {Object.keys(kpiFilters).length > 0 && (
+        <div className="mb-4 flex items-center gap-2 text-sm text-teal-400">
+          <span>Filtering by {Object.keys(kpiFilters).length} metric{Object.keys(kpiFilters).length > 1 ? 's' : ''}</span>
+          <button
+            onClick={() => handleKPIFilterChange({})}
+            className="text-xs underline hover:text-teal-300"
+          >
+            Clear all filters
+          </button>
+        </div>
+      )}
 
       {/* Table Container */}
       <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">

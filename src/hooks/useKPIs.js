@@ -1,114 +1,221 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import kpiService from '../api/services/kpi.service';
+// useKPIs.js - Add this hook to your existing hooks file
+
+import { useQuery } from '@tanstack/react-query';
+import api from '../api/index'
 
 /**
- * Hook to fetch agent-level KPIs with aggregation
+ * Hook to fetch aggregated KPI metrics with optional filters
  * @param {string} agentId - Agent ID
- * @param {number} periodDays - Number of days to aggregate (default: 30)
+ * @param {string|null} startDate - Start date (ISO format)
+ * @param {string|null} endDate - End date (ISO format)
+ * @param {string[]|null} kpiTypes - Filter by specific KPI types
+ * @param {object} filters - Advanced filters (e.g. {'avg_latency': {'gt': 500}})
  * @param {object} options - React Query options
  */
-export const useAgentKPIs = (agentId, periodDays = 30, options = {}) => {
-    return useQuery({
-        queryKey: ['agent-kpis', agentId, periodDays],
-        queryFn: () => kpiService.getAgentKPIs(agentId, periodDays),
-        enabled: !!agentId, // Only run if agentId is provided
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        cacheTime: 10 * 60 * 1000, // 10 minutes
-        ...options,
-    });
+export const useAgentKPIsAggregated = (
+  agentId,
+  startDate = null,
+  endDate = null,
+  kpiTypes = null,
+  filters = {},
+  options = {}
+) => {
+  return useQuery({
+    queryKey: ['agent-kpis-aggregated', agentId, startDate, endDate, kpiTypes, filters],
+    queryFn: async () => {
+      if (!agentId) {
+        throw new Error('Agent ID is required');
+      }
+
+      const params = new URLSearchParams();
+      
+      if (startDate) params.append('start_date', startDate);
+      if (endDate) params.append('end_date', endDate);
+      if (kpiTypes && kpiTypes.length > 0) {
+        kpiTypes.forEach(type => params.append('kpi_types', type));
+      }
+      if (filters && Object.keys(filters).length > 0) {
+        params.append('filters', JSON.stringify(filters));
+      }
+
+      const response = await api.get(
+        `/agents/${agentId}/kpis/aggregated?${params.toString()}`
+      );
+
+      return response.data;
+    },
+    enabled: !!agentId && (options.enabled !== false),
+    staleTime: 30000, // 30 seconds
+    ...options,
+  });
 };
 
 /**
- * Hook to fetch KPI schemas (static + dynamic)
+ * Hook to fetch KPI trend data for visualization
  * @param {string} agentId - Agent ID
- * @param {boolean} includeStatic - Include static schemas
- * @param {object} options - React Query options
- */
-export const useKPISchemas = (agentId, includeStatic = true, options = {}) => {
-    return useQuery({
-        queryKey: ['kpi-schemas', agentId, includeStatic],
-        queryFn: () => kpiService.getKPISchemas(agentId, includeStatic),
-        enabled: !!agentId,
-        staleTime: 60 * 60 * 1000, // 1 hour (schemas change rarely)
-        cacheTime: 2 * 60 * 60 * 1000, // 2 hours
-        ...options,
-    });
-};
-
-/**
- * Hook to fetch KPI trends
- * @param {string} agentId - Agent ID
- * @param {string} kpiType - KPI type (e.g., 'fcr_rate')
- * @param {number} periodDays - Number of days
+ * @param {string} kpiType - KPI type (fcr_rate, conversion_rate, etc.)
+ * @param {number} periodDays - Number of days for trend
  * @param {number} intervalDays - Interval between data points
  * @param {object} options - React Query options
  */
-export const useKPITrends = (
-    agentId,
-    kpiType,
-    periodDays = 30,
-    intervalDays = 1,
-    options = {}
+export const useAgentKPITrends = (
+  agentId,
+  kpiType,
+  periodDays = 30,
+  intervalDays = 1,
+  options = {}
 ) => {
-    return useQuery({
-        queryKey: ['kpi-trends', agentId, kpiType, periodDays, intervalDays],
-        queryFn: () => kpiService.getKPITrends(agentId, kpiType, periodDays, intervalDays),
-        enabled: !!agentId && !!kpiType,
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        ...options,
-    });
+  return useQuery({
+    queryKey: ['agent-kpi-trends', agentId, kpiType, periodDays, intervalDays],
+    queryFn: async () => {
+      if (!agentId || !kpiType) {
+        throw new Error('Agent ID and KPI type are required');
+      }
+
+      const params = new URLSearchParams({
+        kpi_type: kpiType,
+        period_days: periodDays.toString(),
+        interval_days: intervalDays.toString(),
+      });
+
+      const response = await api.get(
+        `/agents/${agentId}/kpis/trends?${params.toString()}`
+      );
+
+      return response.data;
+    },
+    enabled: !!agentId && !!kpiType && (options.enabled !== false),
+    staleTime: 60000, // 1 minute
+    ...options,
+  });
 };
 
 /**
- * Hook to trigger dynamic KPI discovery (mutation)
- */
-export const useDiscoverKPIs = () => {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: ({ agentId, forceRefresh = false }) =>
-            kpiService.discoverAgentKPIs(agentId, forceRefresh),
-        onSuccess: (data, variables) => {
-            // Invalidate KPI schemas cache to refetch with new schemas
-            queryClient.invalidateQueries({
-                queryKey: ['kpi-schemas', variables.agentId],
-            });
-            // Also invalidate agent KPIs to get updated data
-            queryClient.invalidateQueries({
-                queryKey: ['agent-kpis', variables.agentId],
-            });
-        },
-    });
-};
-
-/**
- * Hook to fetch call with KPIs
- * @param {string} callId - Call ID
+ * Hook to fetch filtered calls based on KPI criteria
+ * @param {string} agentId - Agent ID
+ * @param {string|null} startDate - Start date (ISO format)
+ * @param {string|null} endDate - End date (ISO format)
+ * @param {object} filters - Filters (e.g. {'avg_latency': {'gt': 500}})
+ * @param {number} skip - Pagination offset
+ * @param {number} limit - Pagination limit
  * @param {object} options - React Query options
  */
-export const useCallWithKPIs = (callId, options = {}) => {
-    return useQuery({
-        queryKey: ['call-with-kpis', callId],
-        queryFn: () => kpiService.getCallWithKPIs(callId),
-        enabled: !!callId,
-        staleTime: 2 * 60 * 1000, // 2 minutes
-        ...options,
-    });
+export const useAgentKPICalls = (
+  agentId,
+  startDate = null,
+  endDate = null,
+  filters = {},
+  skip = 0,
+  limit = 50,
+  options = {}
+) => {
+  return useQuery({
+    queryKey: ['agent-kpi-calls', agentId, startDate, endDate, filters, skip, limit],
+    queryFn: async () => {
+      if (!agentId) {
+        throw new Error('Agent ID is required');
+      }
+
+      const params = new URLSearchParams({
+        skip: skip.toString(),
+        limit: limit.toString(),
+      });
+      
+      if (startDate) params.append('start_date', startDate);
+      if (endDate) params.append('end_date', endDate);
+      if (filters && Object.keys(filters).length > 0) {
+        params.append('filters', JSON.stringify(filters));
+      }
+
+      const response = await api.get(
+        `/agents/${agentId}/kpis/calls?${params.toString()}`
+      );
+
+      return response.data;
+    },
+    enabled: !!agentId && (options.enabled !== false),
+    staleTime: 10000, // 10 seconds
+    ...options,
+  });
 };
 
 /**
- * Hook to clear KPI schemas (mutation)
+ * Hook to discover dynamic KPIs for an agent
+ * @param {string} agentId - Agent ID
+ * @param {boolean} forceRefresh - Force re-discovery
+ * @param {object} options - React Query options
+ */
+export const useDiscoverKPIs = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ agentId, forceRefresh = false }) => {
+      const params = new URLSearchParams();
+      if (forceRefresh) params.append('force_refresh', 'true');
+
+      const response = await api.post(
+        `/agents/${agentId}/kpis/discover?${params.toString()}`
+      );
+
+      return response.data;
+    },
+    onSuccess: (data, { agentId }) => {
+      // Invalidate related queries
+      queryClient.invalidateQueries(['agent-kpi-schemas', agentId]);
+      queryClient.invalidateQueries(['agent-kpis', agentId]);
+      queryClient.invalidateQueries(['agent-kpis-aggregated', agentId]);
+    },
+  });
+};
+
+/**
+ * Hook to get all KPI schemas for an agent (static + dynamic)
+ * @param {string} agentId - Agent ID
+ * @param {boolean} includeStatic - Include static KPI schemas
+ * @param {object} options - React Query options
+ */
+export const useAgentKPISchemas = (
+  agentId,
+  includeStatic = true,
+  options = {}
+) => {
+  return useQuery({
+    queryKey: ['agent-kpi-schemas', agentId, includeStatic],
+    queryFn: async () => {
+      if (!agentId) {
+        throw new Error('Agent ID is required');
+      }
+
+      const params = new URLSearchParams({
+        include_static: includeStatic.toString(),
+      });
+
+      const response = await api.get(
+        `/agents/${agentId}/kpis/schemas?${params.toString()}`
+      );
+
+      return response.data;
+    },
+    enabled: !!agentId && (options.enabled !== false),
+    staleTime: 300000, // 5 minutes
+    ...options,
+  });
+};
+
+/**
+ * Hook to clear cached KPI schemas for an agent
  */
 export const useClearKPISchemas = () => {
-    const queryClient = useQueryClient();
+  const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: (agentId) => kpiService.clearKPISchemas(agentId),
-        onSuccess: (data, agentId) => {
-            // Invalidate schemas cache
-            queryClient.invalidateQueries({
-                queryKey: ['kpi-schemas', agentId],
-            });
-        },
-    });
+  return useMutation({
+    mutationFn: async (agentId) => {
+      const response = await api.delete(`/agents/${agentId}/kpis/schemas`);
+      return response.data;
+    },
+    onSuccess: (data, agentId) => {
+      // Invalidate schemas query
+      queryClient.invalidateQueries(['agent-kpi-schemas', agentId]);
+    },
+  });
 };

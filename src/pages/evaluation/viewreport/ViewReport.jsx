@@ -356,9 +356,9 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
       {activeCategory && renderCategoryView()}
 
       {/* Issues & Recommendations Panel */}
-      {!activeCategory && ((evaluationData?.issues && evaluationData.issues.length > 0) || (evaluationData?.recommendations && evaluationData.recommendations.length > 0)) && (
+      {/* {!activeCategory && ((evaluationData?.issues && evaluationData.issues.length > 0) || (evaluationData?.recommendations && evaluationData.recommendations.length > 0)) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Issues Panel */}
+          
           {evaluationData?.issues && evaluationData.issues.length > 0 && (
             <div className="bg-[#030712] border border-red-500/20 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -395,7 +395,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
             </div>
           )}
 
-          {/* Recommendations Panel */}
+      
           {evaluationData?.recommendations && evaluationData.recommendations.length > 0 && (
             <div className="bg-[#030712] border border-yellow-500/20 rounded-xl p-6">
               <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
@@ -415,7 +415,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
             </div>
           )}
         </div>
-      )}
+      )} */}
 
       {/* KPI Section - Show call-level KPIs if available */}
       {!activeCategory && evaluation?.kpi_results && evaluation.kpi_results.length > 0 && (
@@ -503,7 +503,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
               )}
 
               {/* Quick Stats Grid */}
-              {evaluationData?.category_scores.length > 0 && (
+              {/* {evaluationData?.category_scores.length > 0 && (
                 <div className="grid grid-cols-2 gap-4">
                   {evaluationData.category_scores.map(cat => {
                     const score = cat.score || 0;
@@ -550,7 +550,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                     );
                   })}
                 </div>
-              )}
+              )} */}
             </>
           )}
 

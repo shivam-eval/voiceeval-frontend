@@ -8,7 +8,7 @@ import { useFlows } from '../../hooks/useFlows';
 import { useAgents } from '../../hooks/useAgents';
 import { useWorkflow } from '../../context/WorkFlowContext';
 import { useEvents } from '../../context/EventsContext';
-import { useAgentKPIs, useDiscoverKPIs, useNormalizedAgentKPIs, useAgentKPIsAggregated } from '../../hooks/useKPIs';
+import { useDiscoverKPIs, useNormalizedAgentKPIs, useAgentKPIsAggregated } from '../../hooks/useKPIs';
 // Import modular components
 import CallsPageHeader from './components/CallsPageHeader';
 import CallsSearchBar from './components/CallsSearchBar';

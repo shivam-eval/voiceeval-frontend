@@ -1,6 +1,6 @@
 // useKPIs.js - Add this hook to your existing hooks file
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../api/index'
 
 /**
@@ -48,6 +48,22 @@ export const useAgentKPIsAggregated = (
     staleTime: 30000, // 30 seconds
     ...options,
   });
+};
+
+/**
+ * Hook to fetch normalized KPI metrics for an agent (aggregated, no filters)
+ * @param {string} agentId - Agent ID (directory)
+ * @param {number} periodDays - Number of days for the window (optional)
+ * @param {object} options - React Query options
+ * @returns {{ normalized: object|undefined, isLoading: boolean }}
+ */
+export const useNormalizedAgentKPIs = (agentId, periodDays = 30, options = {}) => {
+  const result = useAgentKPIsAggregated(agentId, null, null, null, {}, options);
+  return {
+    normalized: result.data,
+    isLoading: result.isLoading,
+    ...result,
+  };
 };
 
 /**

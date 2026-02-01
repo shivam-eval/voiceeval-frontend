@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import {
   ArrowLeft,
   Activity,
@@ -10,8 +9,7 @@ import {
   BarChart3,
   Zap,
   DollarSign,
-  MessageSquare,
-  BookOpen
+  MessageSquare
 } from 'lucide-react';
 import CallTranscriptPanel from "./CallTranscription";
 import FailurePropagationGraph from './FailurePropagationGraph';
@@ -258,7 +256,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Top row: Back to Results (left), Documentation CTA (right) */}
+      {/* Top row: Back to Results (left) - Documentation is in main layout */}
       <div className="flex items-center justify-between">
         <button
           onClick={onBack}
@@ -267,13 +265,6 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
           <ArrowLeft className="w-4 h-4" />
           Back to Results
         </button>
-        <Link
-          to="/docs"
-          className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
-        >
-          <BookOpen className="w-4 h-4" />
-          Documentation
-        </Link>
       </div>
 
       {/* Title */}

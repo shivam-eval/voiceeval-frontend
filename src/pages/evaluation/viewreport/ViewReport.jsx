@@ -255,9 +255,9 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Top row: Back to Results (left) - Documentation is in main layout */}
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-4">
+      {/* Top row: Back to Results (left) - in line with Documentation in main layout */}
+      <div className="flex items-center justify-between flex-shrink-0">
         <button
           onClick={onBack}
           className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
@@ -268,7 +268,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
       </div>
 
       {/* Title */}
-      <h2 className="text-3xl font-bold text-white">
+      <h2 className="text-3xl font-bold text-white flex-shrink-0">
         Call Analysis
       </h2>
 

@@ -259,7 +259,7 @@ const EvaluationReportPage = () => {
   const report = transformSessionToReport(evaluation);
 
   return (
-    <div className="min-h-screen bg-dark-bg pt-4 px-8 pb-8">
+    <div className="min-h-screen bg-dark-bg pt-0 px-8 pb-8">
       <ViewReport
         report={report}
         evaluation={evaluation}

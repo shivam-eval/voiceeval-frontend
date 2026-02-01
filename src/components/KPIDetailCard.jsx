@@ -116,7 +116,7 @@ const KPIDetailCard = ({ kpi }) => {
             </div>
 
             {/* Details Grid */}
-            {((details && Object.keys(details).length > 0) || confidence !== undefined || unit) && (
+            {((details && Object.keys(details).length > 0) || confidence !== undefined || unit || description) && (
                 <div className="grid grid-cols-2 gap-y-4 gap-x-8 pt-6 border-t border-gray-800/50">
                     {confidence !== undefined && (
                         <div className="flex flex-col gap-1">
@@ -124,6 +124,12 @@ const KPIDetailCard = ({ kpi }) => {
                             <span className={`text-sm font-semibold ${confidenceBadgeClasses[confidenceColor]?.split(' ')[1] || 'text-gray-300'}`}>
                                 {Math.round(confidence * 100)}%
                             </span>
+                        </div>
+                    )}
+                    {description && (
+                        <div className="flex flex-col gap-1 col-span-2">
+                            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Goal</span>
+                            <span className="text-sm text-gray-300">{description}</span>
                         </div>
                     )}
                     {unit && (

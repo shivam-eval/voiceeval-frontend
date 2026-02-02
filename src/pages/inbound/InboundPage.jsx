@@ -261,7 +261,7 @@ const InboundPage = () => {
     isOpen: false,
     title: "",
     message: "",
-    onConfirm: () => {},
+    onConfirm: () => { },
     variant: "danger",
     confirmText: "Confirm",
   });
@@ -293,7 +293,12 @@ const InboundPage = () => {
     });
   }, [simulationsData]);
 
-  const handleRowClick = async (sim) => {
+  const handleRowClick = (sim) => {
+    navigate(`/simulation/runs/${sim.simulation_id}`);
+  };
+
+  const handleShowNumber = async (e, sim) => {
+    e.stopPropagation();
     try {
       // We need to get the client's inbound number for this simulation
       // In the metadata we might have stored client_id
@@ -338,7 +343,7 @@ const InboundPage = () => {
           await cancelSimulation.mutateAsync(simulationId);
           toast.success("Simulation cancelled");
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-        } catch (error) {}
+        } catch (error) { }
       },
     });
   };
@@ -357,7 +362,7 @@ const InboundPage = () => {
           await deleteSimulation.mutateAsync(simulationId);
           toast.success("Simulation deleted");
           setConfirmModal((prev) => ({ ...prev, isOpen: false }));
-        } catch (error) {}
+        } catch (error) { }
       },
     });
   };
@@ -541,7 +546,7 @@ const InboundPage = () => {
                       <td className="px-6 py-4 text-gray-400">
                         {formatDateTime(
                           sim.timestamps?.started_at ||
-                            sim.timestamps?.created_at,
+                          sim.timestamps?.created_at,
                         )}
                       </td>
                       <td className="px-6 py-4 text-gray-400">
@@ -582,7 +587,7 @@ const InboundPage = () => {
                       </td>
                       <td className="px-6 py-4 text-center">
                         {sim.progress?.total_sessions > 0 ||
-                        sim.progress?.total_test_cases > 0 ? (
+                          sim.progress?.total_test_cases > 0 ? (
                           (() => {
                             const total =
                               sim.progress?.total_sessions ||
@@ -593,13 +598,12 @@ const InboundPage = () => {
                               total > 0 ? completed / total : 0;
                             return (
                               <span
-                                className={`font-bold ${
-                                  percentage >= 0.9
+                                className={`font-bold ${percentage >= 0.9
                                     ? "text-green-400"
                                     : percentage >= 0.7
                                       ? "text-yellow-400"
                                       : "text-red-400"
-                                }`}
+                                  }`}
                               >
                                 {Math.round(percentage * 100)}%
                               </span>
@@ -611,6 +615,13 @@ const InboundPage = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={(e) => handleShowNumber(e, sim)}
+                            className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-green-400 transition-colors"
+                            title="View Call Details"
+                          >
+                            <Phone className="w-4 h-4" />
+                          </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

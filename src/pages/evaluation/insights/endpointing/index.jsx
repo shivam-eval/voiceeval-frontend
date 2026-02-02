@@ -239,9 +239,10 @@ const EndpointingOverview = ({ response, data, onBack }) => {
                               typeof value === 'number' ? (
                                 // Format numbers nicely
                                 key.includes('turns') || key.includes('count') || key === 'long_pauses' ? Math.round(value) :
-                                  key.includes('ms') || key.includes('pause') ? `${Math.round(value)} ms` :
-                                    key.includes('accuracy') || key.includes('rate') ? `${(value * 100).toFixed(0)}%` :
-                                      value.toFixed(2)
+                                  key.includes('pause') ? Math.round(value) :
+                                    key.includes('ms') ? `${Math.round(value)} ms` :
+                                      key.includes('accuracy') || key.includes('rate') ? `${(value * 100).toFixed(0)}%` :
+                                        value.toFixed(2)
                               ) : humanizeMetricName(value)}
                           </span>
                         )}

@@ -8,7 +8,7 @@ import KPIDetailCard from '../../components/KPIDetailCard';
  * Displays call-level KPIs in evaluation reports
  * Groups into Static (standard) and Dynamic (agent-specific) KPIs
  */
-const CallKPISection = ({ kpiResults, evaluation }) => {
+const CallKPISection = ({ kpiResults = [], evaluation = null }) => {
     // Separate static and dynamic KPIs
     const { staticKPIs, dynamicKPIs } = useMemo(() => {
         if (!kpiResults || kpiResults.length === 0) {
@@ -91,11 +91,6 @@ CallKPISection.propTypes = {
         })
     ),
     evaluation: PropTypes.object,
-};
-
-CallKPISection.defaultProps = {
-    kpiResults: [],
-    evaluation: null,
 };
 
 export default CallKPISection;

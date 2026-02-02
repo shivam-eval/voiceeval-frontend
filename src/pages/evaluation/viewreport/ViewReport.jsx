@@ -25,6 +25,8 @@ import EndpointingOverview from '../insights/endpointing';
 import PersonaOverview from '../insights/persona';
 import TaskCompletionOverview from '../insights/task_completion';
 import ConversationOverview from '../insights/conversation';
+import GibberishDetection from '../insights/gibberish/GibberishDetection';
+import HallucinationOverview from '../insights/hallucination';
 import CallKPISection from '../CallKPISection';
 
 const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack, isUploaded }) => {
@@ -213,6 +215,10 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         if (mName === 'response_consistency' || mName === 'semantic_accuracy') {
           category = 'accuracy';
         }
+        // Special override: ensure hallucination is its own category
+        if (mName === 'hallucination') {
+          category = 'hallucination';
+        }
 
         if (!category) return;
 
@@ -269,6 +275,18 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
       case 'conversation_quality':
         return <ConversationOverview response={categoryMap.conversation_quality} transcriptData={transcriptData} onBack={handleBackToOverview} />;
+
+      case 'gibberish':
+        return (
+          <GibberishDetection
+            response={{
+              metric_results: categoryMap.gibberish?.metrics || []
+            }}
+          />
+        );
+      
+      case 'hallucination':
+        return <HallucinationOverview response={categoryMap.hallucination} onBack={handleBackToOverview} />;
 
       default:
         return null;

@@ -383,7 +383,7 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
                       <span className="font-medium">{datum.label}</span>
                       <span className="text-gray-400">·</span>
                       <span>{datum.value} {datum.value === 1 ? 'call' : 'calls'}</span>
-                      <span className="text-xs text-gray-500 ml-2">(Click to filter)</span>
+                
                     </div>
                   )}
                 />

@@ -257,11 +257,7 @@ const CallsPage = () => {
     setCallsPage(1); // Reset to first page when filters change
     
     // Show toast notification
-    if (Object.keys(filters).length > 0) {
-      toast.info(`Filtering calls by ${Object.keys(filters).length} metric${Object.keys(filters).length > 1 ? 's' : ''}`, {
-        autoClose: 2000,
-      });
-    }
+    // No toast notification when KPI filters change
   }, []);
 
   // Event handlers

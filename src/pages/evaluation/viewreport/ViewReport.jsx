@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import {
   ArrowLeft,
   Activity,
@@ -11,6 +11,7 @@ import {
   DollarSign,
   MessageSquare
 } from 'lucide-react';
+import { TopBarContext } from '../../main';
 import CallTranscriptPanel from "./CallTranscription";
 import FailurePropagationGraph from './FailurePropagationGraph';
 import TurnByTurnAnalysis from './TurnByTurnAnalysis';
@@ -29,10 +30,23 @@ import CallKPISection from '../CallKPISection';
 const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack, isUploaded }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [activeCategory, setActiveCategory] = useState('');
+  const topBarContext = useContext(TopBarContext);
   const transcriptData = initialTranscriptData;
 
+  // Update TopBar with back button when this component mounts, and restore previous state on unmount
+  useEffect(() => {
+    const setter = topBarContext?.setTopBarState;
+    if (!setter) return;
 
-  console.log('TestReportView received evaluation:', evaluation);
+    // Save previous state so we can restore it on unmount
+    const prev = topBarContext.topBarState || { showBackButton: false, onBack: null };
+
+    setter({ showBackButton: true, onBack });
+
+    return () => {
+      setter(prev);
+    };
+  }, [topBarContext?.setTopBarState, onBack]);
 
   // Extract sessionId from report
   const sessionId = report?.session_id;
@@ -222,6 +236,9 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
     return map;
   }, [evaluationData]);
 
+  // Get call recording URL
+  const callRecordingUrl = transcriptData?.audio_url || report?.call_recording;
+
   // Render category-specific view
   const renderCategoryView = () => {
     console.log('Rendering category:', activeCategory);
@@ -232,7 +249,11 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         return <AccuracyView response={categoryMap.accuracy} transcriptData={transcriptData} onBack={handleBackToOverview} />;
 
       case 'latency':
-        return <LatencyOverview response={categoryMap.latency} onBack={handleBackToOverview} />;
+        return <LatencyOverview 
+          response={categoryMap.latency} 
+          onBack={handleBackToOverview}
+          callRecordingUrl={callRecordingUrl}
+        />;
 
       case 'audio_quality':
         return <AudioOverview response={categoryMap.audio_quality} onBack={handleBackToOverview} />;
@@ -256,17 +277,6 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Top row: Back to Results (left) - in line with Documentation in main layout */}
-      <div className="flex items-center justify-between flex-shrink-0">
-        <button
-          onClick={onBack}
-          className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Results
-        </button>
-      </div>
-
       {/* Title */}
       <h2 className="text-3xl font-bold text-white flex-shrink-0">
         Call Analysis
@@ -338,7 +348,6 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
           onChange={handleCategoryChange}
           categoryScores={evaluationData.category_scores.map(cat => {
             const score = cat.score || 0;
-            // Normalize score: if it's 0-1, convert to 0-100. If already > 1, assume 0-100.
             const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
             return {
@@ -353,68 +362,6 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
       {/* Render Category View if active */}
       {activeCategory && renderCategoryView()}
-
-      {/* Issues & Recommendations Panel */}
-      {/* {!activeCategory && ((evaluationData?.issues && evaluationData.issues.length > 0) || (evaluationData?.recommendations && evaluationData.recommendations.length > 0)) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          {evaluationData?.issues && evaluationData.issues.length > 0 && (
-            <div className="bg-[#030712] border border-red-500/20 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <XCircle className="w-5 h-5 text-red-400" />
-                Key Issues Found
-              </h3>
-              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {evaluationData.issues.map((issue, idx) => {
-                  const formatText = (text) => text?.replace(/_/g, ' and ').replace(/\b\w/g, l => l.toUpperCase());
-                  const issueText = typeof issue === 'string' ? issue : (issue.description || issue.message || JSON.stringify(issue));
-
-
-                  return (
-                    <div key={idx} className="flex items-start gap-3 p-3 bg-red-500/5 rounded-lg border border-red-500/10">
-                      <div className="w-6 h-6 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-red-400 text-xs font-bold">{idx + 1}</span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        {typeof issue === 'object' && (issue.category || issue.metric_name) && (
-                          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-red-300/70">
-                            {issue.category && <span>{formatText(issue.category)}</span>}
-                            {issue.category && issue.metric_name && <span>•</span>}
-                            {issue.metric_name && <span>{formatText(issue.metric_name)}</span>}
-                          </div>
-                        )}
-                        <p className="text-sm text-gray-300">
-                          {issueText}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-      
-          {evaluationData?.recommendations && evaluationData.recommendations.length > 0 && (
-            <div className="bg-[#030712] border border-yellow-500/20 rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-yellow-400" />
-                Recommendations
-              </h3>
-              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {evaluationData.recommendations.map((rec, idx) => (
-                  <div key={idx} className="flex items-start gap-3 p-3 bg-yellow-500/5 rounded-lg border border-yellow-500/10">
-                    <div className="w-6 h-6 rounded-full bg-yellow-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-yellow-400 text-xs font-bold">{idx + 1}</span>
-                    </div>
-                    <p className="text-sm text-gray-300">{rec}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )} */}
 
       {/* KPI Section - Show call-level KPIs if available */}
       {!activeCategory && evaluation?.kpi_results && evaluation.kpi_results.length > 0 && (
@@ -500,56 +447,6 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                   </div>
                 </div>
               )}
-
-              {/* Quick Stats Grid */}
-              {/* {evaluationData?.category_scores.length > 0 && (
-                <div className="grid grid-cols-2 gap-4">
-                  {evaluationData.category_scores.map(cat => {
-                    const score = cat.score || 0;
-                    const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
-
-                    return (
-                      <div
-                        key={cat.category}
-                        className="bg-[#030712] border border-teal-500/20 rounded-xl p-4 hover:border-gray-700/50 transition-all"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm text-gray-400 mb-1">
-                              {cat.category.replace(/_/g, ' and ').replace(/\b\w/g, l => l.toUpperCase())}
-                            </p>
-                            <p className={`text-2xl font-bold ${getScoreColor(normalizedScore)}`}>
-                              {normalizedScore}%
-                            </p>
-                          </div>
-                          <div className="w-16 h-16">
-                            <svg viewBox="0 0 36 36" className="transform -rotate-90">
-                              <circle
-                                cx="18"
-                                cy="18"
-                                r="16"
-                                fill="none"
-                                stroke="#374151"
-                                strokeWidth="3"
-                              />
-                              <circle
-                                cx="18"
-                                cy="18"
-                                r="16"
-                                fill="none"
-                                stroke={normalizedScore >= 90 ? '#22c55e' : normalizedScore >= 75 ? '#eab308' : '#ef4444'}
-                                strokeWidth="3"
-                                strokeDasharray={`${normalizedScore * 1.005}, 100.5`}
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )} */}
             </>
           )}
 
@@ -558,7 +455,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
               {transcriptData ? (
                 <CallTranscriptPanel
                   transcriptData={transcriptData}
-                  callRecordingUrl={transcriptData?.audio_url || report?.call_recording}
+                  callRecordingUrl={callRecordingUrl}
                   isUploaded={isUploaded}
                 />
               ) : (

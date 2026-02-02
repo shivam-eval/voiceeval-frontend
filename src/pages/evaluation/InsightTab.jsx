@@ -10,13 +10,29 @@ const CATEGORY_LABELS = {
   persona: "Persona",
 };
 
+const titleize = (s) => {
+  if (!s) return '';
+  return s
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, l => l.toUpperCase());
+};
+
+const normalizeScore = (raw) => {
+  if (raw === undefined || raw === null) return 0;
+  const n = Number(raw);
+  if (isNaN(n)) return 0;
+  return n <= 1 ? Math.round(n * 100) : Math.round(n);
+};
+
 const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = true, clickable = true }) => {
+  // Prefer dynamic categories from `categoryScores`; fallback to fixed labels
+  const items = (Array.isArray(categoryScores) && categoryScores.length > 0)
+    ? categoryScores.map(c => ({ key: c.category || c.metric || c.id || 'unknown', label: titleize(c.category || c.metric || c.id || 'Unknown'), score: normalizeScore(c.score ?? c.value), raw: c }))
+    : Object.entries(CATEGORY_LABELS).map(([key, label]) => ({ key, label, score: 0, raw: null }));
+
   return (
     <div className="w-full grid grid-cols-7 gap-3">
-      {Object.entries(CATEGORY_LABELS).map(([key, label]) => {
-        const scoreData = categoryScores.find(c => c.category === key);
-        const score = scoreData?.score ?? 0;
-
+      {items.map(({ key, label, score, raw }) => {
         const statusColor =
           score >= 85
             ? "text-emerald-400"
@@ -29,7 +45,8 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = 
         return (
           <button
             key={key}
-            onClick={() => onChange(key)}
+            onClick={() => clickable && onChange && onChange(key)}
+            disabled={!clickable}
             className={`
               relative group rounded-xl transition-all flex flex-col items-center justify-center py-4
               ${isActive
@@ -38,25 +55,15 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = 
               }
             `}
           >
-            {/* Label */}
             <div className="text-xs tracking-wide text-gray-400 mb-1">
               {label}
             </div>
 
-            {/* Score */}
             <div className={`text-xl font-semibold ${statusColor}`}>
               {score}%
             </div>
 
-            {/* Weight indicator (if non-zero) */}
-            {/* {scoreData?.weight > 0 && (
-              <div className="text-[10px] text-gray-500 mt-1">
-                Weight: {Math.round(scoreData.weight * 100)}%
-              </div>
-            )} */}
-
-            {/* Hover overlay */}
-            {!isActive&&enabled && (
+            {!isActive && enabled && clickable && (
               <div className="
                 absolute inset-0 flex items-center justify-center
                 bg-black/60 opacity-0 group-hover:opacity-100

@@ -198,14 +198,17 @@ const CallTranscriptPanel = ({ transcriptData, callRecordingUrl, isUploaded }) =
     }
   };
 
-  const handleTurnClick = (step, index) => {
-    const startMs = step.speech_start_ms || step.start_time_ms || 0;
-    if (audioPlayerRef.current) {
-      audioPlayerRef.current.seek(startMs / 1000);
-      audioPlayerRef.current.play();
-    }
-    setActiveTurnIndex(index);
-  };
+const handleTurnClick = (step, index) => {
+  const startMs = step.speech_start_ms || step.start_time_ms || 0;
+  const seconds = startMs / 1000;
+
+  if (audioPlayerRef.current?.seekAndPlay) {
+    audioPlayerRef.current.seekAndPlay(seconds);
+  }
+
+  setActiveTurnIndex(index);
+};
+
 
   const handleTimestampClick = (index) => {
     const step = steps[index];

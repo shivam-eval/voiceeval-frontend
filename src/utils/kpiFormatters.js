@@ -123,7 +123,7 @@ export const getKPIIcon = (kpiType, kpiId) => {
     // Map dynamic KPIs based on common keywords
     const kpiLower = (kpiId || kpiType || '').toLowerCase();
 
-    if (kpiLower.includes('payment') || kpiLower.includes('amount') || kpiLower.includes('price')) {
+    if (kpiLower.includes('payment') || kpiLower.includes('amount') || kpiLower.includes('price') || kpiLower.includes('discount') || kpiLower.includes('offered')) {
         return DollarSign;
     }
     if (kpiLower.includes('count') || kpiLower.includes('number') || kpiLower.includes('quantity')) {

@@ -479,16 +479,17 @@ const ConversationOverview = ({ response, data, transcriptData, onBack }) => {
                   "per_turn_sentiment",
                   "inflection_points",
                   "agent_sentences",
-                  "repetition_count"
+                  "repetition_count",
+                  "repetitions"
                 ].includes(key)
             );
 
-            const hasAgentSentences =
-              metric.details?.agent_sentences &&
-              Array.isArray(metric.details.agent_sentences);
             const hasInflectionPoints =
               metric.details?.inflection_points &&
               Array.isArray(metric.details.inflection_points);
+
+            const isRepetitionMetric = (metric.name || metric.metric_name) === 'repetition_count';
+            const hasRepetitions = isRepetitionMetric && metric.details?.repetitions && Array.isArray(metric.details.repetitions);
 
             return (
               <div
@@ -508,7 +509,7 @@ const ConversationOverview = ({ response, data, transcriptData, onBack }) => {
                       className={`text-2xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"
                         }`}
                     >
-                      {(metric.name || metric.metric_name) === 'repetition_count' ? (metric.details?.repetition_count ?? 0) : `${metricScore}%`}
+                      {isRepetitionMetric ? (metric.details?.repetition_count ?? 0) : `${metricScore}%`}
                     </span>
                   </div>
                   <div
@@ -577,48 +578,60 @@ const ConversationOverview = ({ response, data, transcriptData, onBack }) => {
                   </div>
                 )}
 
-                {/* Agent Sentences (for repetition_count) */}
-                {hasAgentSentences && (
+                {/* Repetitions List (for repetition_count) */}
+                {hasRepetitions && (
                   <div className="pt-4 border-t border-gray-800/50 space-y-4">
                     <div className="text-[10px] text-gray-300 font-bold uppercase tracking-widest">
-                      Agent Sentences
+                      Repeated Information
                     </div>
-                    {metric.details.agent_sentences.length === 0 ? (
+                    {metric.details.repetitions.length === 0 ? (
                       <span className="text-gray-500">None</span>
                     ) : (
                       <div className="space-y-4">
-                        {metric.details.agent_sentences.map((sentence, i) => (
+                        {metric.details.repetitions.map((repetition, i) => (
                           <div
                             key={i}
-                            className="rounded-xl p-5 border bg-dark-input border-gray-800/50"
+                            className="rounded-xl p-5 border bg-amber-950/20 border-amber-900/40"
                           >
                             <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center gap-3">
-                                <span className="text-sm text-gray-300">
-                                  Turn #{sentence.turn || i + 1}
+                              <span className="text-sm text-amber-300 font-medium">
+                                Repetition #{i + 1}
+                              </span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-gray-400 font-mono">
+                                  Turn {repetition.turn_a} → Turn {repetition.turn_b}
                                 </span>
-                                {transcriptData?.steps && (
-                                  (() => {
-                                    const transcriptStep = transcriptData.steps.find(
-                                      (s) => s.step_number === (sentence.turn || i + 1)
-                                    );
-                                    if (transcriptStep) {
-                                      const timestamp = formatTimestamp(transcriptStep.speech_start_ms || transcriptStep.start_time_ms || 0);
-                                      return (
-                                        <div className="text-[10px] font-mono text-gray-500 bg-gray-500/5 px-2 py-0.5 rounded border border-gray-500/10">
-                                          {timestamp}
-                                        </div>
-                                      );
-                                    }
-                                    return null;
-                                  })()
-                                )}
                               </div>
                             </div>
-                            <div className="text-sm text-gray-200 leading-relaxed">
-                              {typeof sentence === "object"
-                                ? sentence.text || JSON.stringify(sentence)
-                                : String(sentence)}
+                            <div className="space-y-3">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                                  Type
+                                </span>
+                                <span className="text-sm text-gray-300">
+                                  {repetition.type || 'Unknown'}
+                                </span>
+                              </div>
+                              {repetition.repeated_text && (
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                                    Repeated Text
+                                  </span>
+                                  <span className="text-sm text-gray-200 italic">
+                                    "{repetition.repeated_text}"
+                                  </span>
+                                </div>
+                              )}
+                              {repetition.description && (
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+                                    Description
+                                  </span>
+                                  <span className="text-sm text-gray-300 leading-relaxed">
+                                    {repetition.description}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}

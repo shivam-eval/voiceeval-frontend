@@ -91,8 +91,23 @@ const CallsTable = ({
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-300">
                   {(() => {
-                    const avgLatency = call.evaluation?.category_scores?.find(cat => cat.category === 'latency')?.metrics?.find(m => m.name === 'response_latency')?.score;
-                    return avgLatency !== undefined && avgLatency !== null ? `${(avgLatency * 1000).toFixed(0)}ms` : '--';
+                    // Primary: Get from metric_results (source of truth)
+                    const responseLatencyMetric = call.evaluation?.metric_results?.find(m => m.metric_name === 'response_latency');
+                    if (responseLatencyMetric?.details?.average_ms) {
+                      return `${Math.round(responseLatencyMetric.details.average_ms)}ms`;
+                    }
+                    
+                    // Fallback: Try category_scores for backwards compatibility
+                    const latencyCategory = call.evaluation?.category_scores?.find(cat => cat.category === 'latency');
+                    const latencyMetric = latencyCategory?.metrics?.find(m => m.name === 'response_latency');
+                    
+                    if (latencyMetric?.score !== undefined && latencyMetric?.score !== null) {
+                      // Score is normalized 0-1, multiply by threshold or use average from details if available
+                      const avgLatency = latencyMetric.score * 1000;
+                      return `${Math.round(avgLatency)}ms`;
+                    }
+                    
+                    return '--';
                   })()}
                 </td>
                 <td className="px-4 py-3 text-sm text-gray-300">

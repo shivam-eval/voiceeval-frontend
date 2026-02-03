@@ -104,7 +104,7 @@ const CallsTable = ({
                     if (latencyMetric?.score !== undefined && latencyMetric?.score !== null) {
                       // Score is normalized 0-1, multiply by threshold or use average from details if available
                       const avgLatency = latencyMetric.score * 1000;
-                      return `${Math.round(avgLatency)}ms`;
+                      return `${Math.round(avgLatency)}score`;
                     }
                     
                     return '--';

@@ -38,7 +38,7 @@ const CallsPage = () => {
   const [showKPIs, setShowKPIs] = useState(true);
   const [discoveredKPIs, setDiscoveredKPIs] = useState(null);
   const [isDiscoveryModalOpen, setIsDiscoveryModalOpen] = useState(false);
-  
+
   // KPI Filters State
   const [kpiFilters, setKpiFilters] = useState({});
 
@@ -63,9 +63,9 @@ const CallsPage = () => {
     });
 
   // Use aggregated KPIs hook WITH filters when filters are active
-  const { 
-    data: filteredKPIsData, 
-    isLoading: isLoadingFilteredKPIs 
+  const {
+    data: filteredKPIsData,
+    isLoading: isLoadingFilteredKPIs
   } = useAgentKPIsAggregated(
     directory,
     null, // start_date
@@ -110,11 +110,11 @@ const CallsPage = () => {
   // Fetch data
   const { data: agentsData } = useAgents();
   const { data: categoriesData, isLoading: isCategoriesLoading, refetch: refetchCategories } = useCallCategories();
-  
+
   // Build filters for calls query based on KPI filters
   const callsQueryFilters = useMemo(() => {
     if (Object.keys(kpiFilters).length === 0) return undefined;
-    
+
     // Convert KPI filters to call query format
     return JSON.stringify(kpiFilters);
   }, [kpiFilters]);
@@ -144,43 +144,28 @@ const CallsPage = () => {
   const uploadCalls = useUploadCalls();
   const deleteCall = useDeleteCall();
 
-  // Process categories
+  // Process categories - now backend returns only active agents
   const filteredCategories = useMemo(() => {
-    let categories = [];
+    // Backend now returns categories from database (active agents only)
+    // Format: [{ id: "agent_id", name: "Agent Name", platform: "vapi", has_agent: true }]
+    
+    if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+      // Extract agent IDs from the new format
+      return categoriesData.categories
+        .filter(cat => cat.has_agent !== false) // Only show agents that exist
+        .map(cat => cat.id)
+        .filter(id => !!id && typeof id === 'string');
+    }
 
+    // Fallback: Try to get from agentsData if categories API fails
     if (agentsData?.agents && Array.isArray(agentsData.agents)) {
-      categories = agentsData.agents
+      return agentsData.agents
         .map(agent => agent.provider_agent_id || agent.agent_id)
         .filter(id => !!id && typeof id === 'string');
     }
 
-    if (categories.length === 0 && categoriesData) {
-      let raw = [];
-      if (Array.isArray(categoriesData)) {
-        raw = categoriesData;
-      } else if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
-        raw = categoriesData.categories;
-      } else if (categoriesData?.data && Array.isArray(categoriesData.data)) {
-        raw = categoriesData.data;
-      } else if (categoriesData?.items && Array.isArray(categoriesData.items)) {
-        raw = categoriesData.items;
-      }
-
-      categories = raw.map(cat => {
-        if (typeof cat === 'string') return cat;
-        if (typeof cat === 'object' && cat !== null) {
-          return cat.name || cat.category || cat.id || String(cat);
-        }
-        return String(cat);
-      }).filter(cat => !!cat && cat !== 'undefined' && cat !== 'null');
-    }
-
-    if (directory && typeof directory === 'string' && !categories.includes(directory)) {
-      categories.push(directory);
-    }
-
-    return categories;
-  }, [agentsData, categoriesData, directory]);
+    return [];
+  }, [agentsData, categoriesData]);
 
   // Process calls
   const calls = useMemo(() => {
@@ -208,15 +193,29 @@ const CallsPage = () => {
     return rawCalls.filter(call => !!call);
   }, [data]);
 
-  // Display agents with search
+  // Display agents with search - use enriched categories data
   const displayedAgents = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
+    
+    // Use categoriesData which now has agent names already
+    if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+      return categoriesData.categories
+        .filter(cat => {
+          if (cat.has_agent === false) return false; // Skip orphaned directories
+          const name = cat.name || cat.id;
+          return name.toLowerCase().includes(searchLower) || 
+                 cat.id.toLowerCase().includes(searchLower);
+        })
+        .map(cat => cat.id);
+    }
+    
+    // Fallback to filteredCategories
     return filteredCategories.filter(cat => {
       const agent = agentsData?.agents?.find(a => a.provider_agent_id === cat || a.agent_id === cat);
       const agentName = agent?.name || agent?.agent_name || `Agent ${cat.substring(0, 8)}`;
       return cat.toLowerCase().includes(searchLower) || agentName.toLowerCase().includes(searchLower);
     });
-  }, [filteredCategories, agentsData, searchTerm]);
+  }, [categoriesData, filteredCategories, agentsData, searchTerm]);
 
   // Agent options for dropdowns
   const agentOptions = useMemo(() => {
@@ -230,32 +229,40 @@ const CallsPage = () => {
 
   // Current options for agent dropdown
   const currentOptions = useMemo(() => {
-    const backendCategories = filteredCategories;
-    const options = backendCategories
-      .filter(cat => typeof cat === 'string')
-      .map(cat => {
-        const agent = agentsData?.agents?.find(a => a.provider_agent_id === cat || a.agent_id === cat);
-        const rawName = agent?.name || agent?.agent_name || cat.replace(/[_-]/g, ' ');
-        const cleanName = rawName.replace(/^Agent\s+/i, '');
+    // Use the new categories format from backend
+    if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+      const options = categoriesData.categories
+        .filter(cat => cat.has_agent !== false)
+        .map(cat => ({
+          label: cat.name || cat.id,
+          value: cat.id,
+          platform: cat.platform
+        }));
 
-        return {
-          label: cleanName,
-          value: cat
-        };
-      });
+      if (options.length === 0) {
+        return [{ label: 'No Agents Available', value: '' }];
+      }
 
-    if (options.length === 0) {
-      return [{ label: 'All Directories', value: '' }];
+      return options;
     }
 
-    return options;
-  }, [filteredCategories, agentsData]);
+    // Fallback to agentsData
+    if (agentsData?.agents && Array.isArray(agentsData.agents)) {
+      return agentsData.agents.map(agent => ({
+        label: agent.name || agent.agent_name || agent.agent_id,
+        value: agent.provider_agent_id || agent.agent_id,
+        platform: agent.provider
+      }));
+    }
+
+    return [{ label: 'No Agents Available', value: '' }];
+  }, [categoriesData, agentsData]);
 
   // Handle KPI filter changes
   const handleKPIFilterChange = useCallback((filters) => {
     setKpiFilters(filters);
     setCallsPage(1); // Reset to first page when filters change
-    
+
     // Show toast notification
     // No toast notification when KPI filters change
   }, []);
@@ -565,6 +572,24 @@ const CallsPage = () => {
           });
           if (metric) return formatScore(metric.score);
         }
+      }
+    }
+
+    // Look in metric_results (primary source for detailed metrics)
+    if (evalObj?.metric_results && Array.isArray(evalObj.metric_results)) {
+      const result = evalObj.metric_results.find(m => {
+        if (!m || !m.metric_name) return false;
+        const name = m.metric_name.toLowerCase().replace(/_/g, ' ');
+        return normalizedAliases.includes(name);
+      });
+
+      if (result) {
+        // Special handling for latency - use average_ms from details
+        if (isLatency && result.details?.average_ms) {
+          return formatScore(result.details.average_ms);
+        }
+        // For other metrics, use score or value
+        return formatScore(result.score !== undefined ? result.score : result.value);
       }
     }
 

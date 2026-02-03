@@ -69,17 +69,25 @@ const extractHallucinationData = (response) => {
 
   // Fallback: check if response.metrics exists
   if (metrics.length === 0 && Array.isArray(response.metrics)) {
-    metrics = response.metrics.filter((m) => m.category === "hallucination");
+    metrics = response.metrics.filter((m) => m.category === "hallucination"); // In case it's a mix
+    if (metrics.length === 0) {
+      metrics = response.metrics; // Assume all metrics passed in response.metrics are relevant if filtered by ViewReport
+    }
   }
 
   // Extract category score
-  const categoryScore = Array.isArray(response.category_scores)
-    ? response.category_scores.find((c) => c.category === "hallucination")
-    : null;
+  // Check if response IS the category object (from ViewReport) or has category_scores (raw)
+  let categoryScore = null;
+  if (Array.isArray(response.category_scores)) {
+    categoryScore = response.category_scores.find((c) => c.category === "hallucination");
+  } else if (response.score !== undefined) {
+    // response is likely the category object itself
+    categoryScore = response;
+  }
 
   // Calculate overall score
   let score = 0;
-  if (categoryScore) {
+  if (categoryScore && categoryScore.score !== undefined) {
     score = normalizeScore(categoryScore.score);
   } else if (metrics.length > 0) {
     const avgScore = metrics.reduce((sum, m) => sum + (m.score || 0), 0) / metrics.length;
@@ -151,11 +159,10 @@ const MetricCard = ({ metric, index }) => {
 
   return (
     <div
-      className={`rounded-xl p-6 border transition-all ${
-        isPassed 
-          ? "bg-white/[0.02] border-white/[0.05] hover:border-white/[0.08]" 
+      className={`rounded-xl p-6 border transition-all ${isPassed
+          ? "bg-white/[0.02] border-white/[0.05] hover:border-white/[0.08]"
           : "bg-red-950/10 border-red-900/20 hover:border-red-900/30"
-      }`}
+        }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
@@ -168,11 +175,10 @@ const MetricCard = ({ metric, index }) => {
           </span>
         </div>
         <div
-          className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
-            isPassed
+          className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed
               ? "bg-green-500/10 text-green-400 border border-green-500/20"
               : "bg-red-500/10 text-red-400 border border-red-500/20"
-          }`}
+            }`}
         >
           {isPassed ? "PASSED" : "FAILED"}
         </div>
@@ -238,11 +244,11 @@ const MetricCard = ({ metric, index }) => {
 const HallucinationOverview = ({ response, onBack }) => {
   console.log('=== HallucinationOverview Debug ===');
   console.log('Response:', response);
-  
+
   const { metrics, score, categoryScore, passed, weight } = extractHallucinationData(response);
   const scoreColor =
     score >= 90 ? "text-green-400" : score >= 70 ? "text-yellow-400" : "text-red-400";
-  
+
   console.log('Extracted metrics:', metrics);
   console.log('Score:', score);
   console.log('Category score:', categoryScore);
@@ -329,11 +335,10 @@ const HallucinationOverview = ({ response, onBack }) => {
               <>
                 <div className="h-12 w-px bg-gray-800 hidden lg:block" />
                 <div
-                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${
-                    passed
+                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${passed
                       ? "bg-green-500/10 text-green-400 border border-green-500/20"
                       : "bg-red-500/10 text-red-400 border border-red-500/20"
-                  }`}
+                    }`}
                 >
                   {passed ? "CATEGORY PASSED" : "CATEGORY FAILED"}
                 </div>

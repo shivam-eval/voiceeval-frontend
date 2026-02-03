@@ -4,6 +4,7 @@ import { useState } from 'react'
 const platforms = [
   { id: 'vapi', name: 'Vapi', color: 'from-purple-500 to-pink-500' },
   { id: 'elevenlabs', name: 'ElevenLabs', color: 'from-orange-500 to-red-500' },
+  { id: 'bolna', name: 'Bolna', color: 'from-blue-500 to-indigo-600' },
   { id: 'cartesia', name: 'Cartesia', color: 'from-teal-500 to-blue-500' },
   { id: 'custom', name: 'Custom Prompt', color: 'from-gray-500 to-gray-700' },
 ]

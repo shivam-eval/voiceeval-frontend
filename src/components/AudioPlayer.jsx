@@ -12,8 +12,9 @@ const GCP_STORAGE_BASE_URL =
   'https://storage.googleapis.com/voiceeval-public';
 
 const AudioPlayer = forwardRef(
-  ({ audioUrl, label }, ref) => {
+  ({ audioUrl, label, onTimeUpdate }, ref) => {
     const audioRef = useRef(null);
+    const onTimeUpdateRef = useRef(onTimeUpdate);
 
     const [audioSrc, setAudioSrc] = useState(null);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -40,6 +41,10 @@ const AudioPlayer = forwardRef(
       setAudioSrc(fullAudioUrl);
     }, [fullAudioUrl]);
 
+    useEffect(() => {
+      onTimeUpdateRef.current = onTimeUpdate;
+    }, [onTimeUpdate]);
+
     /* ---------------------------------------------
        Audio event wiring
     ---------------------------------------------- */
@@ -56,6 +61,9 @@ const AudioPlayer = forwardRef(
 
       const onTimeUpdate = () => {
         setCurrentTime(audio.currentTime);
+        if (onTimeUpdateRef.current) {
+          onTimeUpdateRef.current(audio.currentTime);
+        }
       };
 
       const onPlay = () => setIsPlaying(true);
@@ -133,6 +141,26 @@ const AudioPlayer = forwardRef(
     const progress =
       duration > 0 ? Math.min(100, (currentTime / duration) * 100) : 0;
 
+    const handleSeek = async (event) => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      const nextTime = Number(event.target.value);
+      if (!Number.isFinite(nextTime)) return;
+
+      if (audio.readyState < 2) {
+        await new Promise((res) =>
+          audio.addEventListener('loadedmetadata', res, { once: true })
+        );
+      }
+
+      audio.currentTime = nextTime;
+      setCurrentTime(nextTime);
+      if (onTimeUpdateRef.current) {
+        onTimeUpdateRef.current(nextTime);
+      }
+    };
+
     /* ---------------------------------------------
        UI
     ---------------------------------------------- */
@@ -161,12 +189,19 @@ const AudioPlayer = forwardRef(
               {label && <span className="text-sm text-gray-300">{label}</span>}
             </div>
 
-            <div className="relative h-2 bg-gray-800 rounded-full overflow-hidden">
-              <div
-                className="absolute left-0 top-0 h-full bg-teal-500 transition-all"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+            <input
+              type="range"
+              min="0"
+              max={duration || 0}
+              step="0.01"
+              value={duration ? currentTime : 0}
+              onChange={handleSeek}
+              disabled={isLoading || !duration}
+              className="w-full h-2 rounded-full bg-gray-800 accent-teal-500 cursor-pointer"
+              style={{
+                background: `linear-gradient(to right, #14b8a6 ${progress}%, #1f2937 ${progress}%)`
+              }}
+            />
 
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>{formatTime(currentTime)}</span>

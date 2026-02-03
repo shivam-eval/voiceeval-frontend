@@ -38,7 +38,7 @@ const CallsPage = () => {
   const [showKPIs, setShowKPIs] = useState(true);
   const [discoveredKPIs, setDiscoveredKPIs] = useState(null);
   const [isDiscoveryModalOpen, setIsDiscoveryModalOpen] = useState(false);
-  
+
   // KPI Filters State
   const [kpiFilters, setKpiFilters] = useState({});
 
@@ -63,9 +63,9 @@ const CallsPage = () => {
     });
 
   // Use aggregated KPIs hook WITH filters when filters are active
-  const { 
-    data: filteredKPIsData, 
-    isLoading: isLoadingFilteredKPIs 
+  const {
+    data: filteredKPIsData,
+    isLoading: isLoadingFilteredKPIs
   } = useAgentKPIsAggregated(
     directory,
     null, // start_date
@@ -110,11 +110,11 @@ const CallsPage = () => {
   // Fetch data
   const { data: agentsData } = useAgents();
   const { data: categoriesData, isLoading: isCategoriesLoading, refetch: refetchCategories } = useCallCategories();
-  
+
   // Build filters for calls query based on KPI filters
   const callsQueryFilters = useMemo(() => {
     if (Object.keys(kpiFilters).length === 0) return undefined;
-    
+
     // Convert KPI filters to call query format
     return JSON.stringify(kpiFilters);
   }, [kpiFilters]);
@@ -255,7 +255,7 @@ const CallsPage = () => {
   const handleKPIFilterChange = useCallback((filters) => {
     setKpiFilters(filters);
     setCallsPage(1); // Reset to first page when filters change
-    
+
     // Show toast notification
     // No toast notification when KPI filters change
   }, []);
@@ -565,6 +565,24 @@ const CallsPage = () => {
           });
           if (metric) return formatScore(metric.score);
         }
+      }
+    }
+
+    // Look in metric_results (primary source for detailed metrics)
+    if (evalObj?.metric_results && Array.isArray(evalObj.metric_results)) {
+      const result = evalObj.metric_results.find(m => {
+        if (!m || !m.metric_name) return false;
+        const name = m.metric_name.toLowerCase().replace(/_/g, ' ');
+        return normalizedAliases.includes(name);
+      });
+
+      if (result) {
+        // Special handling for latency - use average_ms from details
+        if (isLatency && result.details?.average_ms) {
+          return formatScore(result.details.average_ms);
+        }
+        // For other metrics, use score or value
+        return formatScore(result.score !== undefined ? result.score : result.value);
       }
     }
 

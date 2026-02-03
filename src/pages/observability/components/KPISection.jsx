@@ -9,6 +9,7 @@ import {
   Activity,
   Filter,
   X,
+  DollarSign,
 } from 'lucide-react';
 
 /* ================= CARD ================= */
@@ -27,12 +28,12 @@ const MetricCard = ({ title, icon, rate, count, onClick, isActive }) => {
   const percentage = rate !== undefined ? Math.round(rate * 100) : 0;
 
   return (
-    <Card 
-      title={title} 
+    <Card
+      title={title}
       icon={icon}
       className={`cursor-pointer ${isActive ? 'ring-2 ring-teal-400/50 bg-gray-800/50' : ''}`}
     >
-      <div 
+      <div
         className="flex flex-col items-center justify-center py-6"
         onClick={onClick}
       >
@@ -57,11 +58,10 @@ const FilterDropdown = ({ activeFilters, onFilterChange, onClearFilters }) => {
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
-          hasActiveFilters
-            ? 'bg-teal-500/10 border-teal-500/30 text-teal-400'
-            : 'bg-gray-800/30 border-gray-700/50 text-gray-400 hover:bg-gray-800/50'
-        }`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${hasActiveFilters
+          ? 'bg-teal-500/10 border-teal-500/30 text-teal-400'
+          : 'bg-gray-800/30 border-gray-700/50 text-gray-400 hover:bg-gray-800/50'
+          }`}
       >
         <Filter className="w-4 h-4" />
         <span className="text-sm font-medium">
@@ -72,11 +72,11 @@ const FilterDropdown = ({ activeFilters, onFilterChange, onClearFilters }) => {
       {isOpen && (
         <>
           {/* Backdrop */}
-          <div 
-            className="fixed inset-0 z-10" 
+          <div
+            className="fixed inset-0 z-10"
             onClick={() => setIsOpen(false)}
           />
-          
+
           {/* Dropdown Menu */}
           <div className="absolute right-0 mt-2 w-80 bg-gray-900 border border-gray-700/50 rounded-lg shadow-2xl z-20">
             <div className="p-4">
@@ -107,7 +107,7 @@ const FilterDropdown = ({ activeFilters, onFilterChange, onClearFilters }) => {
                           {key.replace(/_/g, ' ')}
                         </div>
                         <div className="text-sm text-white font-medium">
-                          {typeof value === 'object' 
+                          {typeof value === 'object'
                             ? `${Object.keys(value)[0]}: ${Object.values(value)[0]}`
                             : value}
                         </div>
@@ -147,6 +147,7 @@ const DUMMY_DATA = {
     issue_resolved: { rate: 0.5, count: 5 },
     hallucination: { rate: 0.22, count: 2 },
     gibberish: { rate: 0.33, count: 3 },
+    disc_offered: { rate: 0.45, count: 5 },
     avg_latency: { value: 445, count: 11 },
     abandonment_reason: {
       distribution: {
@@ -172,13 +173,13 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
 
   const handleMetricClick = (metricKey, value) => {
     const newFilters = { ...activeFilters };
-    
+
     // Toggle filter
     if (newFilters[metricKey]) {
       delete newFilters[metricKey];
     } else {
-      // For boolean metrics (issue_resolved, hallucination, gibberish)
-      if (metricKey === 'issue_resolved' || metricKey === 'hallucination' || metricKey === 'gibberish') {
+      // For boolean metrics (issue_resolved, hallucination, gibberish, disc_offered)
+      if (['issue_resolved', 'hallucination', 'gibberish', 'disc_offered'].includes(metricKey)) {
         newFilters[metricKey] = { eq: true };
       }
       // For latency, filter by range
@@ -186,7 +187,7 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
         newFilters[metricKey] = { gt: value };
       }
     }
-    
+
     setActiveFilters(newFilters);
     if (onFilterChange) {
       onFilterChange(newFilters);
@@ -196,14 +197,14 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
   const handleAbandonmentClick = (reason) => {
     const newFilters = { ...activeFilters };
     const filterKey = 'abandonment_reason';
-    
+
     // Toggle filter
     if (newFilters[filterKey]?.eq === reason) {
       delete newFilters[filterKey];
     } else {
       newFilters[filterKey] = { eq: reason };
     }
-    
+
     setActiveFilters(newFilters);
     if (onFilterChange) {
       onFilterChange(newFilters);
@@ -313,13 +314,23 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
             isActive={!!activeFilters.gibberish}
           />
 
+          {/* Discount Offered */}
+          <MetricCard
+            title="Discount Offered"
+            icon={DollarSign}
+            rate={kpis.disc_offered?.rate}
+            count={kpis.disc_offered?.count}
+            onClick={() => handleMetricClick('disc_offered', true)}
+            isActive={!!activeFilters.disc_offered}
+          />
+
           {/* Average Latency */}
-          <Card 
-            title="Avg Latency" 
+          <Card
+            title="Avg Latency"
             icon={Zap}
             className={`cursor-pointer ${activeFilters.avg_latency ? 'ring-2 ring-teal-400/50 bg-gray-800/50' : ''}`}
           >
-            <div 
+            <div
               className="flex flex-col items-center justify-center py-6"
               onClick={() => handleMetricClick('avg_latency', kpis.avg_latency?.value ?? 0)}
             >
@@ -383,7 +394,7 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
                       <span className="font-medium">{datum.label}</span>
                       <span className="text-gray-400">·</span>
                       <span>{datum.value} {datum.value === 1 ? 'call' : 'calls'}</span>
-                
+
                     </div>
                   )}
                 />
@@ -403,11 +414,10 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
                     <button
                       key={item.id}
                       onClick={() => handleAbandonmentClick(item.id)}
-                      className={`flex items-center gap-2 px-2 py-1 rounded transition-all ${
-                        isActive 
-                          ? 'bg-teal-500/20 ring-1 ring-teal-400/50' 
-                          : 'hover:bg-gray-700/30'
-                      }`}
+                      className={`flex items-center gap-2 px-2 py-1 rounded transition-all ${isActive
+                        ? 'bg-teal-500/20 ring-1 ring-teal-400/50'
+                        : 'hover:bg-gray-700/30'
+                        }`}
                     >
                       <div
                         className="w-3 h-3 rounded-full"

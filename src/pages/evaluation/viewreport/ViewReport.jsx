@@ -106,7 +106,10 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
     return evaluationData.category_scores.map(cat => {
       if (!cat) return null;
-      const score = cat.score || 0;
+      const rawScore = cat.score;
+      const score = (typeof rawScore === 'object' && rawScore !== null)
+        ? (rawScore.parsedValue ?? 0)
+        : (rawScore || 0);
       const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
       return {
@@ -191,7 +194,10 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
     if (Array.isArray(evaluationData?.category_scores)) {
       evaluationData.category_scores.forEach(cat => {
         if (!cat || !cat.category) return;
-        const score = cat.score || 0;
+        const rawScore = cat.score;
+        const score = (typeof rawScore === 'object' && rawScore !== null)
+          ? (rawScore.parsedValue ?? 0)
+          : (rawScore || 0);
         const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
 
         map[cat.category] = {
@@ -255,8 +261,8 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         return <AccuracyView response={categoryMap.accuracy} transcriptData={transcriptData} onBack={handleBackToOverview} />;
 
       case 'latency':
-        return <LatencyOverview 
-          response={categoryMap.latency} 
+        return <LatencyOverview
+          response={categoryMap.latency}
           onBack={handleBackToOverview}
           callRecordingUrl={callRecordingUrl}
         />;
@@ -284,7 +290,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
             }}
           />
         );
-      
+
       case 'hallucination':
         return <HallucinationOverview response={categoryMap.hallucination} onBack={handleBackToOverview} />;
 

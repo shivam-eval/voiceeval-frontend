@@ -11,8 +11,12 @@ const humanizeMetricName = (name) => {
 };
 
 const normalizeScore = (raw) => {
-  if (typeof raw !== "number") return 0;
-  return raw <= 1 ? Math.round(raw * 100) : Math.round(raw);
+  let val = raw;
+  if (typeof raw === "object" && raw !== null) {
+    val = raw.parsedValue ?? 0;
+  }
+  if (typeof val !== "number") return 0;
+  return val <= 1 ? Math.round(val * 100) : Math.round(val);
 };
 
 const formatKey = (key) => {
@@ -90,7 +94,11 @@ const extractHallucinationData = (response) => {
   if (categoryScore && categoryScore.score !== undefined) {
     score = normalizeScore(categoryScore.score);
   } else if (metrics.length > 0) {
-    const avgScore = metrics.reduce((sum, m) => sum + (m.score || 0), 0) / metrics.length;
+    const avgScore = metrics.reduce((sum, m) => {
+      const raw = m.score;
+      const val = (typeof raw === 'object' && raw !== null) ? (raw.parsedValue ?? 0) : (raw || 0);
+      return sum + val;
+    }, 0) / metrics.length;
     score = normalizeScore(avgScore);
   }
 
@@ -160,8 +168,8 @@ const MetricCard = ({ metric, index }) => {
   return (
     <div
       className={`rounded-xl p-6 border transition-all ${isPassed
-          ? "bg-white/[0.02] border-white/[0.05] hover:border-white/[0.08]"
-          : "bg-red-950/10 border-red-900/20 hover:border-red-900/30"
+        ? "bg-white/[0.02] border-white/[0.05] hover:border-white/[0.08]"
+        : "bg-red-950/10 border-red-900/20 hover:border-red-900/30"
         }`}
     >
       {/* Header */}
@@ -176,8 +184,8 @@ const MetricCard = ({ metric, index }) => {
         </div>
         <div
           className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${isPassed
-              ? "bg-green-500/10 text-green-400 border border-green-500/20"
-              : "bg-red-500/10 text-red-400 border border-red-500/20"
+            ? "bg-green-500/10 text-green-400 border border-green-500/20"
+            : "bg-red-500/10 text-red-400 border border-red-500/20"
             }`}
         >
           {isPassed ? "PASSED" : "FAILED"}
@@ -336,8 +344,8 @@ const HallucinationOverview = ({ response, onBack }) => {
                 <div className="h-12 w-px bg-gray-800 hidden lg:block" />
                 <div
                   className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${passed
-                      ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                      : "bg-red-500/10 text-red-400 border border-red-500/20"
+                    ? "bg-green-500/10 text-green-400 border border-green-500/20"
+                    : "bg-red-500/10 text-red-400 border border-red-500/20"
                     }`}
                 >
                   {passed ? "CATEGORY PASSED" : "CATEGORY FAILED"}

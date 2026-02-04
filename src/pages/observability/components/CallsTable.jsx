@@ -1,5 +1,5 @@
-import React from 'react';
-import { Upload, Plus, AlertCircle, Brain, Download, Trash2 } from 'lucide-react';
+import React, { useRef, useEffect } from 'react';
+import { Upload, Plus, AlertCircle, Download, Trash2 } from 'lucide-react';
 import Badge from '../../../components/Badge';
 import { extractNoiseFromSessionId, getNoiseProfileBadgeVariant } from '../../../utils/noiseUtils';
 
@@ -10,15 +10,29 @@ const CallsTable = ({
   callsPage,
   callsPerPage,
   onRowClick,
-  onEvaluate,
   onDeleteCall,
   onDownload,
   onAddCalls,
   formatDate,
   getMetricValue,
-  isEvaluating,
-  isDeleting
+  isDeleting,
+  onPageChange // Add this prop to update page
 }) => {
+  // Store the current page in a ref
+  const pageRef = useRef(callsPage);
+
+  // Update ref when page changes
+  useEffect(() => {
+    pageRef.current = callsPage;
+  }, [callsPage]);
+
+  // Restore page on mount if needed
+  useEffect(() => {
+    if (onPageChange && pageRef.current !== callsPage) {
+      onPageChange(pageRef.current);
+    }
+  }, []);
+
   const startIdx = (callsPage - 1) * callsPerPage;
   const endIdx = startIdx + callsPerPage;
   const paginatedCalls = calls.slice(startIdx, endIdx);
@@ -164,17 +178,6 @@ const CallsTable = ({
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEvaluate(call.call_id);
-                      }}
-                      disabled={isEvaluating}
-                      className="p-1.5 bg-teal-500/10 text-teal-400 rounded hover:bg-teal-500/20 transition-colors disabled:opacity-50"
-                      title="Evaluate"
-                    >
-                      <Brain className="w-4 h-4" />
-                    </button>
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

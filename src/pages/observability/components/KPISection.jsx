@@ -9,7 +9,6 @@ import {
   Activity,
   Filter,
   X,
-  DollarSign,
 } from 'lucide-react';
 
 /* ================= CARD ================= */
@@ -312,16 +311,6 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
             count={kpis.gibberish?.count}
             onClick={() => handleMetricClick('gibberish', true)}
             isActive={!!activeFilters.gibberish}
-          />
-
-          {/* Discount Offered */}
-          <MetricCard
-            title="Discount Offered"
-            icon={DollarSign}
-            rate={kpis.disc_offered?.rate}
-            count={kpis.disc_offered?.count}
-            onClick={() => handleMetricClick('disc_offered', true)}
-            isActive={!!activeFilters.disc_offered}
           />
 
           {/* Average Latency */}

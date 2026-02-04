@@ -32,7 +32,6 @@ const CallsTable = ({
             <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Timestamp</th>
             <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Duration</th>
             <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Avg Latency</th>
-            <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Disc Offered</th>
             <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Total Score</th>
             <th className="px-4 py-3 text-left text-sm font-medium text-gray-400">Actions</th>
           </tr>
@@ -40,7 +39,7 @@ const CallsTable = ({
         <tbody>
           {isCallsLoading ? (
             <tr>
-              <td colSpan="7" className="px-4 py-8 text-center text-gray-500">
+              <td colSpan="6" className="px-4 py-8 text-center text-gray-500">
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
                   Loading calls...
@@ -49,7 +48,7 @@ const CallsTable = ({
             </tr>
           ) : error ? (
             <tr>
-              <td colSpan="7" className="px-4 py-8 text-center">
+              <td colSpan="6" className="px-4 py-8 text-center">
                 <div className="flex items-center justify-center gap-2 text-red-400">
                   <AlertCircle className="w-5 h-5" />
                   Error loading calls: {error.message}
@@ -58,7 +57,7 @@ const CallsTable = ({
             </tr>
           ) : calls.length === 0 ? (
             <tr>
-              <td colSpan="7" className="px-4 py-12 text-center">
+              <td colSpan="6" className="px-4 py-12 text-center">
                 <div className="flex flex-col items-center gap-3">
                   <Upload className="w-12 h-12 text-gray-600" />
                   <p className="text-gray-500">No calls found in this directory</p>
@@ -104,19 +103,10 @@ const CallsTable = ({
                     if (latencyMetric?.score !== undefined && latencyMetric?.score !== null) {
                       // Score is normalized 0-1, multiply by threshold or use average from details if available
                       const avgLatency = latencyMetric.score * 1000;
-                      return `${Math.round(avgLatency)}score`;
+                      return `${Math.round(avgLatency)}ms`;
                     }
                     
                     return '--';
-                  })()}
-                </td>
-                <td className="px-4 py-3 text-sm text-gray-300">
-                  {(() => {
-                    const discOffered = call.kpis?.find(kpi => kpi.name === 'disc_offered')?.value;
-                    if (discOffered === undefined || discOffered === null) {
-                      return '--';
-                    }
-                    return discOffered === 'yes' || discOffered === true || discOffered === 'true' ? 'Yes' : 'No';
                   })()}
                 </td>
                 <td className="px-4 py-3">

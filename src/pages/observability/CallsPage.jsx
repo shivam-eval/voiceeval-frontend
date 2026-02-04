@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import AudioUploadModal from '../../components/AudioUploadModal';
@@ -24,6 +24,12 @@ const CallsPage = () => {
   const { workflow } = useWorkflow();
   const { subscribe } = useEvents();
 
+  // Refs to persist page state across navigation
+  const callsPageRef = useRef(1);
+  const agentsPageRef = useRef(1);
+  const directoryRef = useRef('');
+  const viewModeRef = useRef('directories');
+
   // State management
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -31,9 +37,14 @@ const CallsPage = () => {
   const [isEvaluateModalOpen, setIsEvaluateModalOpen] = useState(false);
   const [evalAgentId, setEvalAgentId] = useState(workflow?.assistantId || '');
   const [evalDirectory, setEvalDirectory] = useState('');
-  const [agentsPage, setAgentsPage] = useState(1);
+  const getSafePage = useCallback((value, fallback = 1) => {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  }, []);
+
+  const [agentsPage, setAgentsPage] = useState(() => getSafePage(searchParams.get('agentsPage'), 1));
   const agentsPerPage = 10;
-  const [callsPage, setCallsPage] = useState(1);
+  const [callsPage, setCallsPage] = useState(() => getSafePage(searchParams.get('callsPage'), 1));
   const callsPerPage = 10;
   const [showKPIs, setShowKPIs] = useState(true);
   const [discoveredKPIs, setDiscoveredKPIs] = useState(null);
@@ -81,6 +92,40 @@ const CallsPage = () => {
   const activeKPIData = Object.keys(kpiFilters).length > 0 ? filteredKPIsData : normalized;
   const isLoadingKPIs = Object.keys(kpiFilters).length > 0 ? isLoadingFilteredKPIs : isLoadingNormalizedKPIs;
 
+  // Track if this is the initial mount
+  const isInitialMount = useRef(true);
+
+  // Restore page state from URL params when component mounts
+  useEffect(() => {
+    const urlCallsPage = searchParams.get('callsPage');
+    const urlAgentsPage = searchParams.get('agentsPage');
+    
+    if (urlCallsPage) {
+      const page = getSafePage(urlCallsPage, 1);
+      console.log('Restoring callsPage to:', page);
+      setCallsPage(page);
+      callsPageRef.current = page;
+    }
+    
+    if (urlAgentsPage) {
+      const page = getSafePage(urlAgentsPage, 1);
+      setAgentsPage(page);
+      agentsPageRef.current = page;
+    }
+
+    // Mark that initial mount is complete
+    isInitialMount.current = false;
+  }, []); // Only run on mount
+
+  // Keep refs in sync with current state
+  useEffect(() => {
+    callsPageRef.current = callsPage;
+    agentsPageRef.current = agentsPage;
+    directoryRef.current = directory || '';
+    viewModeRef.current = viewMode;
+    console.log('State synced - callsPage:', callsPage, 'agentsPage:', agentsPage);
+  }, [callsPage, agentsPage, directory, viewMode]);
+
   // Sync session storage with current directory
   useEffect(() => {
     if (directory) {
@@ -106,6 +151,19 @@ const CallsPage = () => {
       return next;
     }, { replace });
   }, [setSearchParams]);
+
+  const handleAgentsPageChange = useCallback((page) => {
+    setAgentsPage(page);
+    agentsPageRef.current = page;
+    updateParams({ agentsPage: String(page) });
+    console.log('Updated agentsPage to:', page);
+  }, [updateParams, agentsPage]);
+
+  const handleCallsPageChange = useCallback((page) => {
+    setCallsPage(page);
+    callsPageRef.current = page;
+    updateParams({ callsPage: String(page) });
+  }, [updateParams, callsPage]);
 
   // Fetch data
   const { data: agentsData } = useAgents();
@@ -310,7 +368,22 @@ const CallsPage = () => {
       call.evaluation?.evaluation?.session_id;
 
     if (evaluationId) {
-      navigate(`/evaluations/report/${evaluationId}?isUploaded=true`);
+      // Store current state in refs (persists across navigation)
+      callsPageRef.current = callsPage;
+      agentsPageRef.current = agentsPage;
+      directoryRef.current = directory;
+      viewModeRef.current = viewMode;
+      
+      // Add return parameters to URL for back navigation
+      const returnParams = new URLSearchParams({
+        returnTo: 'calls',
+        directory: directory || '',
+        callsPage: String(callsPage),
+        agentsPage: String(agentsPage),
+        view: viewMode
+      });
+      
+      navigate(`/evaluations/report/${evaluationId}?isUploaded=true&${returnParams.toString()}`);
       return;
     }
 
@@ -320,7 +393,22 @@ const CallsPage = () => {
     }
 
     if (sessionId) {
-      navigate(`/evaluations/session?sessionId=${sessionId}&isUploaded=true`);
+      // Store current state in refs (persists across navigation)
+      callsPageRef.current = callsPage;
+      agentsPageRef.current = agentsPage;
+      directoryRef.current = directory;
+      viewModeRef.current = viewMode;
+      
+      // Add return parameters to URL for back navigation
+      const returnParams = new URLSearchParams({
+        returnTo: 'calls',
+        directory: directory || '',
+        callsPage: String(callsPage),
+        agentsPage: String(agentsPage),
+        view: viewMode
+      });
+      
+      navigate(`/evaluations/session?sessionId=${sessionId}&isUploaded=true&${returnParams.toString()}`);
       return;
     }
 
@@ -645,14 +733,25 @@ const CallsPage = () => {
 
   // Reset pagination
   useEffect(() => {
+    // Skip on initial mount if we're restoring from URL
+    if (isInitialMount.current) return;
+    
+    console.log('searchTerm changed, resetting agentsPage to 1');
     setAgentsPage(1);
   }, [searchTerm]);
+useEffect(() => {
+  if (isInitialMount.current) return;
 
-  useEffect(() => {
-    setAgentsPage(1);
-    setCallsPage(1);
-  }, [viewMode, directory]);
+  const urlCallsPage = searchParams.get('callsPage');
+  const urlAgentsPage = searchParams.get('agentsPage');
 
+  // Only reset if page NOT coming from URL
+  if (!urlCallsPage) setCallsPage(1);
+  if (!urlAgentsPage) setAgentsPage(1);
+
+}, [viewMode, directory]);
+
+ 
   useEffect(() => {
     if (viewMode === 'calls' && directory) {
       refetch();
@@ -689,7 +788,14 @@ const CallsPage = () => {
         onSearchChange={setSearchTerm}
         directory={directory}
         currentOptions={currentOptions}
-        onDirectoryChange={(val) => updateParams({ directory: val })}
+        onDirectoryChange={(val) =>
+  updateParams({
+    directory: val,
+    callsPage: String(callsPage),
+    agentsPage: String(agentsPage),
+  })
+}
+
         onBackToDirectories={handleBackToDirectories}
         onEvaluateAll={handleEvaluateAll}
         onAddCalls={handleAddCalls}
@@ -733,13 +839,11 @@ const CallsPage = () => {
               callsPage={callsPage}
               callsPerPage={callsPerPage}
               onRowClick={handleRowClick}
-              onEvaluate={handleEvaluate}
               onDeleteCall={handleDeleteCall}
               onDownload={handleDownloadCall}
               onAddCalls={handleAddCalls}
               formatDate={formatDate}
               getMetricValue={getMetricValue}
-              isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
               isDeleting={deleteCall.isPending}
             />
           )}
@@ -752,7 +856,7 @@ const CallsPage = () => {
           currentPage={agentsPage}
           totalItems={displayedAgents.length}
           itemsPerPage={agentsPerPage}
-          onPageChange={setAgentsPage}
+          onPageChange={handleAgentsPageChange}
           itemName="agents"
         />
       )}
@@ -762,7 +866,7 @@ const CallsPage = () => {
           currentPage={callsPage}
           totalItems={calls.length}
           itemsPerPage={callsPerPage}
-          onPageChange={setCallsPage}
+          onPageChange={handleCallsPageChange}
           itemName="calls"
         />
       )}

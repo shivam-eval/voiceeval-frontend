@@ -52,7 +52,7 @@ class ApiClient {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 const message = errorData.detail || `HTTP error! status: ${response.status}`;
-                toast.error(message);
+                // toast.error(message);
                 throw new Error(message);
             }
 

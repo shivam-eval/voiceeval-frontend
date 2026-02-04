@@ -71,7 +71,7 @@ const createApiClient = (timeout = 60000) => {
       } else if (error.response?.status === 404) {
         // Don't show toast for 404, let the component handle it
       } else if (error.response?.status === 500) {
-        toast.error("Server error. Please try again later.");
+        // toast.error("Server error. Please try again later.");
       } else if (error.response?.status >= 400 && error.response?.status < 500) {
         // Show backend error message for client errors (4xx)
         // const message = error.response?.data?.detail || error.response?.data?.message || "An error occurred.";

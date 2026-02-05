@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Phone, MapPin, Briefcase, GraduationCap, IndianRupee, Info, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
+import { User, Phone, MapPin, Briefcase, GraduationCap, IndianRupee, Info, MessageSquare, ChevronDown, ChevronUp, Languages, Volume2, Gauge, Music, Activity } from 'lucide-react';
 
 const PersonaRow = ({ icon: Icon, label, value, className = '' }) => (
   <div className={`flex items-start space-x-2 ${className}`}>
@@ -27,7 +27,12 @@ const TestCaseCard = ({ testCase, isExpanded, onToggle }) => {
       employmentStatus: 'Not specified',
       angry: false,
       interruption: false,
-      language: 'English'
+      language: 'English',
+      dialect: 'N/A',
+      backgroundNoise: 'N/A',
+      pace: 'N/A',
+      pitch: 'N/A',
+      loudness: 'N/A'
     };
   }
 
@@ -81,6 +86,11 @@ const TestCaseCard = ({ testCase, isExpanded, onToggle }) => {
         <PersonaRow icon={GraduationCap} label="Education" value={persona.education} />
         <PersonaRow icon={IndianRupee} label="Income" value={persona.annualIncome} />
         <PersonaRow icon={MessageSquare} label="Language" value={persona.language} />
+        <PersonaRow icon={Languages} label="Dialect" value={persona.dialect} />
+        <PersonaRow icon={Activity} label="Background noise" value={persona.backgroundNoise} />
+        <PersonaRow icon={Gauge} label="Pace" value={persona.pace} />
+        <PersonaRow icon={Music} label="Pitch" value={persona.pitch} />
+        <PersonaRow icon={Volume2} label="Loudness" value={persona.loudness} />
       </div>
 
       {/* Expanded View */}
@@ -93,7 +103,7 @@ const TestCaseCard = ({ testCase, isExpanded, onToggle }) => {
                 <MessageSquare className="mr-2 text-teal-400" size={16} />
                 Test Case Conversation
               </h4>
-              <div className="bg-gray-900 rounded-lg p-4 border border-gray-700">
+              <div className="bg-gray-900 rounded-lg p-4 border border-gray-700 max-h-64 overflow-y-auto">
                 <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono leading-relaxed">
                   {testCase.script}
                 </pre>

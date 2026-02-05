@@ -26,6 +26,9 @@ import EvaluationReportPage from "./pages/evaluation/EvaluationReportPage";
 import AuthScreen from "./pages/auth/AuthScreen";
 import CallsPage from "./pages/observability/CallsPage";
 import LogsPage from "./pages/observability/LogsPage";
+import ObservabilityDashboard from "./pages/observability/ObservabilityDashboard";
+import TracesPage from "./pages/observability/TracesPage";
+import TraceDetailPage from "./pages/observability/TraceDetailPage";
 import Dashboard from "./pages/dasbhboard";
 import WorkspaceLoader from "./pages/workspace/WorkspaceLoader";
 import InboundPage from "./pages/inbound/InboundPage";
@@ -145,6 +148,9 @@ function App() {
         return { section: "observability", tab: "analytics" };
       }
       if (path.includes("/logs")) return { section: "observability", tab: "logs" };
+      if (path.includes("/traces") || path.includes("/dashboard") || path === "/observability") {
+        return { section: "observability", tab: "traces" };
+      }
       return { section: "observability", tab: "calls" };
     }
 
@@ -227,6 +233,10 @@ function App() {
 
                 {/* === OBSERVABILITY SECTION === */}
                 {/* New routes */}
+                <Route path="/observability" element={<ObservabilityDashboard />} />
+                <Route path="/observability/dashboard" element={<ObservabilityDashboard />} />
+                <Route path="/observability/traces" element={<TracesPage />} />
+                <Route path="/observability/traces/:traceId" element={<TraceDetailPage />} />
                 <Route path="/observability/calls" element={<CallsPage />} />
                 <Route path="/observability/logs" element={<LogsPage />} />
 

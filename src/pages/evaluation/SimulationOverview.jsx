@@ -1,34 +1,34 @@
 import React from 'react';
-import { 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import {
+  CheckCircle,
+  XCircle,
+  Clock,
   Activity,
   TrendingUp,
   AlertTriangle
 } from 'lucide-react';
 
 const SimulationOverview = ({ simulationData }) => {
-  const { 
-    simulation_id, 
-    execution_summary, 
+  const {
+    simulation_id,
+    execution_summary,
     timing,
     transcript_results = []
   } = simulationData || {};
 
-  const successRate = execution_summary 
+  const successRate = execution_summary
     ? Math.round((execution_summary.completed_test_cases / execution_summary.total_test_cases) * 100)
     : 0;
 
-  const failRate = execution_summary 
+  const failRate = execution_summary
     ? Math.round((execution_summary.failed_test_cases / execution_summary.total_test_cases) * 100)
     : 0;
 
-  const avgDuration = timing 
+  const avgDuration = timing
     ? (timing.duration_ms / execution_summary.total_test_cases / 1000).toFixed(1)
     : 0;
 
-    
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -39,7 +39,7 @@ const SimulationOverview = ({ simulationData }) => {
               Simulation Overview
             </h2>
           </div>
-          
+
           <div className="flex items-center gap-2 px-4 py-2 bg-green-500/10 border border-green-500/20 rounded-lg">
             <Activity className="w-4 h-4 text-green-400" />
             <span className="text-green-400 font-semibold text-sm">
@@ -118,7 +118,7 @@ const SimulationOverview = ({ simulationData }) => {
           <Clock className="w-5 h-5 text-teal-400" />
           Execution Timeline
         </h3>
-        
+
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-400">Start Time</span>
@@ -126,14 +126,14 @@ const SimulationOverview = ({ simulationData }) => {
               {timing ? new Date(timing.start_time_ms).toLocaleString() : 'N/A'}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-400">End Time</span>
             <span className="text-white font-mono">
               {timing ? new Date(timing.end_time_ms).toLocaleString() : 'N/A'}
             </span>
           </div>
-          
+
           <div className="flex items-center justify-between text-sm pt-3 border-t border-gray-800/50">
             <span className="text-gray-400 font-semibold">Total Duration</span>
             <span className="text-teal-400 font-semibold font-mono">
@@ -150,16 +150,16 @@ const SimulationOverview = ({ simulationData }) => {
             <TrendingUp className="w-5 h-5 text-teal-400" />
             Test Flow
           </h3>
-          
+
           <div className="flex items-center gap-3">
             <div className="px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-lg">
               <p className="text-teal-400 font-mono text-sm">
                 {simulationData.flow_tree_name}
               </p>
             </div>
-            
+
             <div className="flex-1 h-px bg-gradient-to-r from-teal-500/20 to-transparent" />
-            
+
             <span className="text-xs text-gray-500">
               Schema v{simulationData.schema_version || '1.0'}
             </span>

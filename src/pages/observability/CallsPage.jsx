@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import AudioUploadModal from '../../components/AudioUploadModal';
@@ -8,8 +8,7 @@ import { useFlows } from '../../hooks/useFlows';
 import { useAgents } from '../../hooks/useAgents';
 import { useWorkflow } from '../../context/WorkFlowContext';
 import { useEvents } from '../../context/EventsContext';
-import { useAgentKPIs, useDiscoverKPIs } from '../../hooks/useKPIs';
-
+import { useDiscoverKPIs, useNormalizedAgentKPIs, useAgentKPIsAggregated } from '../../hooks/useKPIs';
 // Import modular components
 import CallsPageHeader from './components/CallsPageHeader';
 import CallsSearchBar from './components/CallsSearchBar';
@@ -25,6 +24,12 @@ const CallsPage = () => {
   const { workflow } = useWorkflow();
   const { subscribe } = useEvents();
 
+  // Refs to persist page state across navigation
+  const callsPageRef = useRef(1);
+  const agentsPageRef = useRef(1);
+  const directoryRef = useRef('');
+  const viewModeRef = useRef('directories');
+
   // State management
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -32,13 +37,21 @@ const CallsPage = () => {
   const [isEvaluateModalOpen, setIsEvaluateModalOpen] = useState(false);
   const [evalAgentId, setEvalAgentId] = useState(workflow?.assistantId || '');
   const [evalDirectory, setEvalDirectory] = useState('');
-  const [agentsPage, setAgentsPage] = useState(1);
+  const getSafePage = useCallback((value, fallback = 1) => {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+  }, []);
+
+  const [agentsPage, setAgentsPage] = useState(() => getSafePage(searchParams.get('agentsPage'), 1));
   const agentsPerPage = 10;
-  const [callsPage, setCallsPage] = useState(1);
+  const [callsPage, setCallsPage] = useState(() => getSafePage(searchParams.get('callsPage'), 1));
   const callsPerPage = 10;
   const [showKPIs, setShowKPIs] = useState(true);
   const [discoveredKPIs, setDiscoveredKPIs] = useState(null);
   const [isDiscoveryModalOpen, setIsDiscoveryModalOpen] = useState(false);
+
+  // KPI Filters State
+  const [kpiFilters, setKpiFilters] = useState({});
 
   // Confirmation Modal State
   const [confirmationModal, setConfirmationModal] = useState({
@@ -53,6 +66,65 @@ const CallsPage = () => {
   const directoryParam = searchParams.get('directory');
   const directory = directoryParam;
   const viewMode = searchParams.get('view') || 'directories';
+
+  // Use aggregated KPIs hook with filters
+  const { normalized, isLoading: isLoadingNormalizedKPIs } =
+    useNormalizedAgentKPIs(directory, 30, {
+      enabled: !!directory && Object.keys(kpiFilters).length === 0, // Use basic hook when no filters
+    });
+
+  // Use aggregated KPIs hook WITH filters when filters are active
+  const {
+    data: filteredKPIsData,
+    isLoading: isLoadingFilteredKPIs
+  } = useAgentKPIsAggregated(
+    directory,
+    null, // start_date
+    null, // end_date
+    null, // kpi_types
+    kpiFilters, // filters
+    {
+      enabled: !!directory && Object.keys(kpiFilters).length > 0,
+    }
+  );
+
+  // Determine which KPI data to use
+  const activeKPIData = Object.keys(kpiFilters).length > 0 ? filteredKPIsData : normalized;
+  const isLoadingKPIs = Object.keys(kpiFilters).length > 0 ? isLoadingFilteredKPIs : isLoadingNormalizedKPIs;
+
+  // Track if this is the initial mount
+  const isInitialMount = useRef(true);
+
+  // Restore page state from URL params when component mounts
+  useEffect(() => {
+    const urlCallsPage = searchParams.get('callsPage');
+    const urlAgentsPage = searchParams.get('agentsPage');
+    
+    if (urlCallsPage) {
+      const page = getSafePage(urlCallsPage, 1);
+      console.log('Restoring callsPage to:', page);
+      setCallsPage(page);
+      callsPageRef.current = page;
+    }
+    
+    if (urlAgentsPage) {
+      const page = getSafePage(urlAgentsPage, 1);
+      setAgentsPage(page);
+      agentsPageRef.current = page;
+    }
+
+    // Mark that initial mount is complete
+    isInitialMount.current = false;
+  }, []); // Only run on mount
+
+  // Keep refs in sync with current state
+  useEffect(() => {
+    callsPageRef.current = callsPage;
+    agentsPageRef.current = agentsPage;
+    directoryRef.current = directory || '';
+    viewModeRef.current = viewMode;
+    console.log('State synced - callsPage:', callsPage, 'agentsPage:', agentsPage);
+  }, [callsPage, agentsPage, directory, viewMode]);
 
   // Sync session storage with current directory
   useEffect(() => {
@@ -80,16 +152,39 @@ const CallsPage = () => {
     }, { replace });
   }, [setSearchParams]);
 
+  const handleAgentsPageChange = useCallback((page) => {
+    setAgentsPage(page);
+    agentsPageRef.current = page;
+    updateParams({ agentsPage: String(page) });
+    console.log('Updated agentsPage to:', page);
+  }, [updateParams, agentsPage]);
+
+  const handleCallsPageChange = useCallback((page) => {
+    setCallsPage(page);
+    callsPageRef.current = page;
+    updateParams({ callsPage: String(page) });
+  }, [updateParams, callsPage]);
+
   // Fetch data
   const { data: agentsData } = useAgents();
   const { data: categoriesData, isLoading: isCategoriesLoading, refetch: refetchCategories } = useCallCategories();
+
+  // Build filters for calls query based on KPI filters
+  const callsQueryFilters = useMemo(() => {
+    if (Object.keys(kpiFilters).length === 0) return undefined;
+
+    // Convert KPI filters to call query format
+    return JSON.stringify(kpiFilters);
+  }, [kpiFilters]);
+
   const { data, isLoading: isCallsLoading, error, refetch } = useCalls({
     category: directory,
     directory: directory,
     search: debouncedSearch,
-    include_evaluations: true
+    include_evaluations: true,
+    filters: callsQueryFilters, // Pass filters to calls API
   }, {
-    placeholderData: (previousData) => previousData, // keepPreviousData: true alternative for React Query v5
+    placeholderData: (previousData) => previousData,
   });
 
   // Fetch flows
@@ -97,13 +192,6 @@ const CallsPage = () => {
   const flowId = useMemo(() => {
     return flowsData?.flows?.[0]?.flow_id || null;
   }, [flowsData]);
-
-  // Fetch agent KPIs
-  const { data: agentKPIsData, isLoading: isLoadingKPIs } = useAgentKPIs(
-    directory,
-    30,
-    { enabled: viewMode === 'calls' && !!directory }
-  );
 
   // Hook for discovering new KPIs
   const discoverKPIsMutation = useDiscoverKPIs();
@@ -114,43 +202,28 @@ const CallsPage = () => {
   const uploadCalls = useUploadCalls();
   const deleteCall = useDeleteCall();
 
-  // Process categories
+  // Process categories - now backend returns only active agents
   const filteredCategories = useMemo(() => {
-    let categories = [];
+    // Backend now returns categories from database (active agents only)
+    // Format: [{ id: "agent_id", name: "Agent Name", platform: "vapi", has_agent: true }]
+    
+    if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+      // Extract agent IDs from the new format
+      return categoriesData.categories
+        .filter(cat => cat.has_agent !== false) // Only show agents that exist
+        .map(cat => cat.id)
+        .filter(id => !!id && typeof id === 'string');
+    }
 
+    // Fallback: Try to get from agentsData if categories API fails
     if (agentsData?.agents && Array.isArray(agentsData.agents)) {
-      categories = agentsData.agents
+      return agentsData.agents
         .map(agent => agent.provider_agent_id || agent.agent_id)
         .filter(id => !!id && typeof id === 'string');
     }
 
-    if (categories.length === 0 && categoriesData) {
-      let raw = [];
-      if (Array.isArray(categoriesData)) {
-        raw = categoriesData;
-      } else if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
-        raw = categoriesData.categories;
-      } else if (categoriesData?.data && Array.isArray(categoriesData.data)) {
-        raw = categoriesData.data;
-      } else if (categoriesData?.items && Array.isArray(categoriesData.items)) {
-        raw = categoriesData.items;
-      }
-
-      categories = raw.map(cat => {
-        if (typeof cat === 'string') return cat;
-        if (typeof cat === 'object' && cat !== null) {
-          return cat.name || cat.category || cat.id || String(cat);
-        }
-        return String(cat);
-      }).filter(cat => !!cat && cat !== 'undefined' && cat !== 'null');
-    }
-
-    if (directory && typeof directory === 'string' && !categories.includes(directory)) {
-      categories.push(directory);
-    }
-
-    return categories;
-  }, [agentsData, categoriesData, directory]);
+    return [];
+  }, [agentsData, categoriesData]);
 
   // Process calls
   const calls = useMemo(() => {
@@ -178,15 +251,29 @@ const CallsPage = () => {
     return rawCalls.filter(call => !!call);
   }, [data]);
 
-  // Display agents with search
+  // Display agents with search - use enriched categories data
   const displayedAgents = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
+    
+    // Use categoriesData which now has agent names already
+    if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+      return categoriesData.categories
+        .filter(cat => {
+          if (cat.has_agent === false) return false; // Skip orphaned directories
+          const name = cat.name || cat.id;
+          return name.toLowerCase().includes(searchLower) || 
+                 cat.id.toLowerCase().includes(searchLower);
+        })
+        .map(cat => cat.id);
+    }
+    
+    // Fallback to filteredCategories
     return filteredCategories.filter(cat => {
       const agent = agentsData?.agents?.find(a => a.provider_agent_id === cat || a.agent_id === cat);
       const agentName = agent?.name || agent?.agent_name || `Agent ${cat.substring(0, 8)}`;
       return cat.toLowerCase().includes(searchLower) || agentName.toLowerCase().includes(searchLower);
     });
-  }, [filteredCategories, agentsData, searchTerm]);
+  }, [categoriesData, filteredCategories, agentsData, searchTerm]);
 
   // Agent options for dropdowns
   const agentOptions = useMemo(() => {
@@ -200,134 +287,43 @@ const CallsPage = () => {
 
   // Current options for agent dropdown
   const currentOptions = useMemo(() => {
-    const backendCategories = filteredCategories;
-    const options = backendCategories
-      .filter(cat => typeof cat === 'string')
-      .map(cat => {
-        const agent = agentsData?.agents?.find(a => a.provider_agent_id === cat || a.agent_id === cat);
-        const rawName = agent?.name || agent?.agent_name || cat.replace(/[_-]/g, ' ');
-        const cleanName = rawName.replace(/^Agent\s+/i, '');
+    // Use the new categories format from backend
+    if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+      const options = categoriesData.categories
+        .filter(cat => cat.has_agent !== false)
+        .map(cat => ({
+          label: cat.name || cat.id,
+          value: cat.id,
+          platform: cat.platform
+        }));
 
-        return {
-          label: cleanName,
-          value: cat
-        };
-      });
+      if (options.length === 0) {
+        return [{ label: 'No Agents Available', value: '' }];
+      }
 
-    if (options.length === 0) {
-      return [{ label: 'All Directories', value: '' }];
+      return options;
     }
 
-    return options;
-  }, [filteredCategories, agentsData]);
-
-  // Format KPIs for display
-  const kpisForDisplay = useMemo(() => {
-    if (!agentKPIsData || !agentKPIsData.kpis) return [];
-
-    const kpis = agentKPIsData.kpis;
-    const displayKPIs = [];
-
-    // Add static KPIs
-    if (kpis.static_kpis) {
-      // FCR Rate
-      if (kpis.static_kpis.fcr_rate !== undefined && kpis.static_kpis.fcr_rate !== null) {
-        const fcrValue = kpis.static_kpis.fcr_rate;
-        const normalizedValue = fcrValue > 1 && kpis.static_kpis.fcr_count !== undefined
-          ? (kpis.static_kpis.fcr_count / (agentKPIsData.total_calls || 1)) * 100
-          : fcrValue <= 1 ? fcrValue * 100 : fcrValue;
-
-        displayKPIs.push({
-          kpi_id: 'fcr',
-          name: 'First Call Resolution',
-          value: normalizedValue,
-          unit: '%',
-          data_type: 'float',
-          aggregation_method: 'rate',
-          description: 'Percentage of calls resolved on first contact',
-          is_static: true,
-        });
-      }
-
-      // Conversion Rate
-      if (kpis.static_kpis.conversion_rate !== undefined && kpis.static_kpis.conversion_rate !== null) {
-        const conversionValue = kpis.static_kpis.conversion_rate;
-        const normalizedValue = conversionValue > 1 && kpis.static_kpis.conversion_count !== undefined
-          ? (kpis.static_kpis.conversion_count / (agentKPIsData.total_calls || 1)) * 100
-          : conversionValue <= 1 ? conversionValue * 100 : conversionValue;
-
-        displayKPIs.push({
-          kpi_id: 'conversion',
-          name: 'Conversion Rate',
-          value: normalizedValue,
-          unit: '%',
-          data_type: 'float',
-          aggregation_method: 'rate',
-          description: 'Percentage of calls that resulted in a conversion',
-          is_static: true,
-        });
-      }
-
-      // Transfer Rate
-      if (kpis.static_kpis.transfer_rate !== undefined && kpis.static_kpis.transfer_rate !== null) {
-        const transferValue = kpis.static_kpis.transfer_rate;
-        const normalizedValue = transferValue > 1 && kpis.static_kpis.transfer_count !== undefined
-          ? (kpis.static_kpis.transfer_count / (agentKPIsData.total_calls || 1)) * 100
-          : transferValue <= 1 ? transferValue * 100 : transferValue;
-
-        displayKPIs.push({
-          kpi_id: 'transfer',
-          name: 'Transfer Rate',
-          value: normalizedValue,
-          unit: '%',
-          data_type: 'float',
-          aggregation_method: 'rate',
-          description: 'Percentage of calls transferred to another agent',
-          is_static: true,
-        });
-      }
-
-      // Objection Handling Quality
-      if (kpis.static_kpis.avg_objection_handling_quality !== undefined && kpis.static_kpis.avg_objection_handling_quality !== null) {
-        const objectionValue = kpis.static_kpis.avg_objection_handling_quality;
-        const normalizedValue = objectionValue <= 1 ? objectionValue * 100 : objectionValue;
-
-        displayKPIs.push({
-          kpi_id: 'objection_handling',
-          name: 'Objection Quality',
-          value: normalizedValue,
-          unit: '%',
-          data_type: 'float',
-          aggregation_method: 'avg',
-          description: 'Average quality of objection handling across all calls',
-          is_static: true,
-        });
-      }
+    // Fallback to agentsData
+    if (agentsData?.agents && Array.isArray(agentsData.agents)) {
+      return agentsData.agents.map(agent => ({
+        label: agent.name || agent.agent_name || agent.agent_id,
+        value: agent.provider_agent_id || agent.agent_id,
+        platform: agent.provider
+      }));
     }
 
-    // Add dynamic KPIs
-    if (kpis.dynamic_kpis) {
-      Object.entries(kpis.dynamic_kpis).forEach(([key, kpiData]) => {
-        if (typeof kpiData === 'object' && kpiData !== null) {
-          displayKPIs.push({
-            kpi_id: kpiData.kpi_id || key,
-            name: kpiData.kpi_name || key.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-            value: kpiData.value,
-            unit: kpiData.unit || '',
-            data_type: kpiData.data_type || 'float',
-            aggregation_method: kpiData.aggregation_method || 'avg',
-            description: `Dynamic KPI: ${kpiData.kpi_name || key}`,
-            is_static: false,
-            count: kpiData.count,
-            min: kpiData.min,
-            max: kpiData.max,
-          });
-        }
-      });
-    }
+    return [{ label: 'No Agents Available', value: '' }];
+  }, [categoriesData, agentsData]);
 
-    return displayKPIs;
-  }, [agentKPIsData]);
+  // Handle KPI filter changes
+  const handleKPIFilterChange = useCallback((filters) => {
+    setKpiFilters(filters);
+    setCallsPage(1); // Reset to first page when filters change
+
+    // Show toast notification
+    // No toast notification when KPI filters change
+  }, []);
 
   // Event handlers
   const handleDiscoverKPIs = async () => {
@@ -346,12 +342,14 @@ const CallsPage = () => {
   const handleDirectoryClick = (dir) => {
     updateParams({ directory: dir, view: 'calls' });
     setSearchTerm('');
+    setKpiFilters({}); // Clear filters when changing directory
   };
 
   const handleBackToDirectories = () => {
     sessionStorage.removeItem('last_directory');
     updateParams({ directory: '', view: 'directories' });
     setSearchTerm('');
+    setKpiFilters({}); // Clear filters when going back
   };
 
   const handleRowClick = (call) => {
@@ -370,7 +368,22 @@ const CallsPage = () => {
       call.evaluation?.evaluation?.session_id;
 
     if (evaluationId) {
-      navigate(`/evaluations/report/${evaluationId}?isUploaded=true`);
+      // Store current state in refs (persists across navigation)
+      callsPageRef.current = callsPage;
+      agentsPageRef.current = agentsPage;
+      directoryRef.current = directory;
+      viewModeRef.current = viewMode;
+      
+      // Add return parameters to URL for back navigation
+      const returnParams = new URLSearchParams({
+        returnTo: 'calls',
+        directory: directory || '',
+        callsPage: String(callsPage),
+        agentsPage: String(agentsPage),
+        view: viewMode
+      });
+      
+      navigate(`/evaluations/report/${evaluationId}?isUploaded=true&${returnParams.toString()}`);
       return;
     }
 
@@ -380,7 +393,22 @@ const CallsPage = () => {
     }
 
     if (sessionId) {
-      navigate(`/evaluations/session?sessionId=${sessionId}&isUploaded=true`);
+      // Store current state in refs (persists across navigation)
+      callsPageRef.current = callsPage;
+      agentsPageRef.current = agentsPage;
+      directoryRef.current = directory;
+      viewModeRef.current = viewMode;
+      
+      // Add return parameters to URL for back navigation
+      const returnParams = new URLSearchParams({
+        returnTo: 'calls',
+        directory: directory || '',
+        callsPage: String(callsPage),
+        agentsPage: String(agentsPage),
+        view: viewMode
+      });
+      
+      navigate(`/evaluations/session?sessionId=${sessionId}&isUploaded=true&${returnParams.toString()}`);
       return;
     }
 
@@ -403,36 +431,16 @@ const CallsPage = () => {
     toast.info('🔄 Loading evaluation status...', { autoClose: 2000 });
   };
 
-  const handleDownload = (audioUrl, filename = 'audio.mp3') => {
-    if (!audioUrl) {
-      toast.error('Audio not available');
-      return;
-    }
-
-    // Force browser download
-    const link = document.createElement('a');
-    link.href = audioUrl;
-    link.download = filename || 'audio.mp3';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const handleDownloadCall = (call) => {
-    // Use backend download endpoint which handles GCS streaming
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
     const downloadUrl = `${API_BASE_URL}/calls/${call.call_id}/download`;
 
-    // Open download URL with authentication
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.download = call.filename || `call-${call.call_id}.mp3`;
 
-    // Add auth token to request (if needed, browser will handle it via cookies/session)
-    // For token-based auth, we might need to fetch and create blob
     const authToken = localStorage.getItem('authToken');
     if (authToken) {
-      // Fetch with auth and create blob URL
       fetch(downloadUrl, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
@@ -458,14 +466,11 @@ const CallsPage = () => {
           toast.error('Failed to download audio file');
         });
     } else {
-      // No auth token, try direct link
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     }
   };
-
-
 
   const handleDeleteCall = (callId) => {
     setConfirmationModal({
@@ -658,6 +663,24 @@ const CallsPage = () => {
       }
     }
 
+    // Look in metric_results (primary source for detailed metrics)
+    if (evalObj?.metric_results && Array.isArray(evalObj.metric_results)) {
+      const result = evalObj.metric_results.find(m => {
+        if (!m || !m.metric_name) return false;
+        const name = m.metric_name.toLowerCase().replace(/_/g, ' ');
+        return normalizedAliases.includes(name);
+      });
+
+      if (result) {
+        // Special handling for latency - use average_ms from details
+        if (isLatency && result.details?.average_ms) {
+          return formatScore(result.details.average_ms);
+        }
+        // For other metrics, use score or value
+        return formatScore(result.score !== undefined ? result.score : result.value);
+      }
+    }
+
     for (const alias of aliases) {
       if (evalObj && typeof evalObj === 'object') {
         if (evalObj[alias] !== undefined && evalObj[alias] !== null) {
@@ -710,14 +733,25 @@ const CallsPage = () => {
 
   // Reset pagination
   useEffect(() => {
+    // Skip on initial mount if we're restoring from URL
+    if (isInitialMount.current) return;
+    
+    console.log('searchTerm changed, resetting agentsPage to 1');
     setAgentsPage(1);
   }, [searchTerm]);
+useEffect(() => {
+  if (isInitialMount.current) return;
 
-  useEffect(() => {
-    setAgentsPage(1);
-    setCallsPage(1);
-  }, [viewMode, directory]);
+  const urlCallsPage = searchParams.get('callsPage');
+  const urlAgentsPage = searchParams.get('agentsPage');
 
+  // Only reset if page NOT coming from URL
+  if (!urlCallsPage) setCallsPage(1);
+  if (!urlAgentsPage) setAgentsPage(1);
+
+}, [viewMode, directory]);
+
+ 
   useEffect(() => {
     if (viewMode === 'calls' && directory) {
       refetch();
@@ -731,19 +765,19 @@ const CallsPage = () => {
         viewMode={viewMode}
         directory={directory}
         agentsData={agentsData}
+        agentName={activeKPIData?.agentName}
+        period={activeKPIData?.period}
+        totalCalls={activeKPIData?.totalCalls}
+        isLoading={isLoadingKPIs}
         onBackToDirectories={handleBackToDirectories}
       />
 
-      {/* KPI Summary Section */}
+      {/* KPI Section with Filters */}
       {viewMode === 'calls' && directory && (
         <KPISection
-          kpisForDisplay={kpisForDisplay}
+          normalized={activeKPIData}
           isLoadingKPIs={isLoadingKPIs}
-          agentKPIsData={agentKPIsData}
-          showKPIs={showKPIs}
-          onToggleKPIs={() => setShowKPIs(!showKPIs)}
-          onDiscoverKPIs={handleDiscoverKPIs}
-          isDiscovering={discoverKPIsMutation.isPending}
+          onFilterChange={handleKPIFilterChange}
         />
       )}
 
@@ -754,12 +788,32 @@ const CallsPage = () => {
         onSearchChange={setSearchTerm}
         directory={directory}
         currentOptions={currentOptions}
-        onDirectoryChange={(val) => updateParams({ directory: val })}
+        onDirectoryChange={(val) =>
+  updateParams({
+    directory: val,
+    callsPage: String(callsPage),
+    agentsPage: String(agentsPage),
+  })
+}
+
         onBackToDirectories={handleBackToDirectories}
         onEvaluateAll={handleEvaluateAll}
         onAddCalls={handleAddCalls}
         isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
       />
+
+      {/* Active Filters Indicator */}
+      {Object.keys(kpiFilters).length > 0 && (
+        <div className="mb-4 flex items-center gap-2 text-sm text-teal-400">
+          <span>Filtering by {Object.keys(kpiFilters).length} metric{Object.keys(kpiFilters).length > 1 ? 's' : ''}</span>
+          <button
+            onClick={() => handleKPIFilterChange({})}
+            className="text-xs underline hover:text-teal-300"
+          >
+            Clear all filters
+          </button>
+        </div>
+      )}
 
       {/* Table Container */}
       <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
@@ -785,13 +839,11 @@ const CallsPage = () => {
               callsPage={callsPage}
               callsPerPage={callsPerPage}
               onRowClick={handleRowClick}
-              onEvaluate={handleEvaluate}
               onDeleteCall={handleDeleteCall}
               onDownload={handleDownloadCall}
               onAddCalls={handleAddCalls}
               formatDate={formatDate}
               getMetricValue={getMetricValue}
-              isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
               isDeleting={deleteCall.isPending}
             />
           )}
@@ -804,7 +856,7 @@ const CallsPage = () => {
           currentPage={agentsPage}
           totalItems={displayedAgents.length}
           itemsPerPage={agentsPerPage}
-          onPageChange={setAgentsPage}
+          onPageChange={handleAgentsPageChange}
           itemName="agents"
         />
       )}
@@ -814,7 +866,7 @@ const CallsPage = () => {
           currentPage={callsPage}
           totalItems={calls.length}
           itemsPerPage={callsPerPage}
-          onPageChange={setCallsPage}
+          onPageChange={handleCallsPageChange}
           itemName="calls"
         />
       )}

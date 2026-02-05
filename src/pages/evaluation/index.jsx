@@ -18,6 +18,7 @@ import EndpointingOverview from "./insights/endpointing";
 import PersonaOverview from "./insights/persona";
 import TaskCompletionOverview from "./insights/task_completion";
 import ConversationOverview from "./insights/conversation";
+import GibberishDetection from "./insights/gibberish/GibberishDetection";
 import { useWorkflow } from "../../context/WorkFlowContext";
 import { getSessionTranscript } from "../../api/services/simulation.service";
 import { useSimulationReport } from "../../hooks/useEvaluations";
@@ -33,7 +34,8 @@ const CATEGORY = {
   AUDIO: "audio_quality",
   ENDPOINTING: "endpointing",
   PERSONA: "persona",
-  CONVERSATION: "conversation_quality"
+  CONVERSATION: "conversation_quality",
+  GIBBERISH_DETECTION: "gibberish",
 };
 
 const CATEGORY_TITLES = {
@@ -44,7 +46,8 @@ const CATEGORY_TITLES = {
   [CATEGORY.ENDPOINTING]: "ENDPOINTING OVERVIEW",
   [CATEGORY.PERSONA]: "PERSONA ALIGNMENT OVERVIEW",
   [CATEGORY.TASK_COMPLETION]: "TASK COMPLETION OVERVIEW",
-  [CATEGORY.CONVERSATION]: "CONVERSATION OVERVIEW"
+  [CATEGORY.CONVERSATION]: "CONVERSATION OVERVIEW",
+  [CATEGORY.GIBBERISH_DETECTION]: "GIBBERISH DETECTION OVERVIEW"
 };
 
 const EvaluationDashboard = ({ onBack }) => {
@@ -219,6 +222,11 @@ const EvaluationDashboard = ({ onBack }) => {
       mainText: `${Math.round(getCategoryScore("latency") * 100)}%`,
       successRate: getCategoryScore("latency"),
       sideText: "Latency"
+    },{
+      id:"gibberish",
+      mainText: `${Math.round(getCategoryScore("gibberish_detection") * 100)}%`,
+      successRate: getCategoryScore("gibberish_detection"),
+      sideText: "Gibberish Detection"
     }
   ];
 
@@ -230,15 +238,18 @@ const EvaluationDashboard = ({ onBack }) => {
 
   if (avgScores?.by_category && Object.keys(avgScores.by_category).length > 0) {
     // New format: convert object to array
-    categoryScores = Object.entries(avgScores.by_category).map(([category, score]) => ({
-      category: category,
-      score: Math.round(score * 100),
-      weight: 0 // Weight not provided in new format
-    }));
+
+categoryScores = Object.entries(avgScores.by_category).map(([category, score]) => ({
+  category:category,
+  score: Math.round(score * 100),
+  weight: 0
+}));
+
+
   } else if (Array.isArray(avgCatScores) && avgCatScores.length > 0) {
     // Old format: use existing array
     categoryScores = avgCatScores.map(cat => ({
-      category: cat.category,
+      category:cat.category,
       score: Math.round(cat.average_score * 100),
       weight: cat.average_weight || 0
     }));
@@ -515,6 +526,8 @@ const EvaluationDashboard = ({ onBack }) => {
         return <TaskCompletionOverview data={aggregatedData} onBack={handleBackToOverview} />;
       case CATEGORY.CONVERSATION:
         return <ConversationOverview data={aggregatedData} onBack={handleBackToOverview} />;
+      case CATEGORY.GIBBERISH_DETECTION:
+        return <GibberishDetection data={aggregatedData} onBack={handleBackToOverview} />;
       default:
         return renderOverview();
     }

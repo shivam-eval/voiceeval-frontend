@@ -75,7 +75,12 @@ export const formatKPIValue = (value, dataType, unit = '') => {
                 if (value.outcome !== undefined) {
                     return String(value.outcome).toUpperCase();
                 }
-                // 5. General object fallback - check if it has a 'value' field itself
+                // 5. Abandonment reason object { reason, abandoned }
+                if (value.reason !== undefined) {
+                    const reason = String(value.reason).replace(/_/g, ' ');
+                    return reason.charAt(0).toUpperCase() + reason.slice(1).toLowerCase();
+                }
+                // 6. General object fallback - check if it has a 'value' field itself
                 if (value.value !== undefined) return String(value.value);
 
                 // Final fallback: show count of keys
@@ -94,7 +99,12 @@ export const formatKPIValue = (value, dataType, unit = '') => {
  * @param {string} kpiId - KPI ID (for dynamic KPIs)
  * @returns {React.Component} Lucide icon component
  */
+const NoIcon = () => null;
+
 export const getKPIIcon = (kpiType, kpiId) => {
+    // No icon for abandonment_reason
+    if (kpiType === 'abandonment_reason') return NoIcon;
+
     // Map standard static KPIs
     const staticIconMap = {
         fcr: CheckCircle2,
@@ -113,7 +123,7 @@ export const getKPIIcon = (kpiType, kpiId) => {
     // Map dynamic KPIs based on common keywords
     const kpiLower = (kpiId || kpiType || '').toLowerCase();
 
-    if (kpiLower.includes('payment') || kpiLower.includes('amount') || kpiLower.includes('price')) {
+    if (kpiLower.includes('payment') || kpiLower.includes('amount') || kpiLower.includes('price') || kpiLower.includes('discount') || kpiLower.includes('offered')) {
         return DollarSign;
     }
     if (kpiLower.includes('count') || kpiLower.includes('number') || kpiLower.includes('quantity')) {

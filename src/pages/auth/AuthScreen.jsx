@@ -75,10 +75,6 @@ const AuthScreen = ({ onAuthSuccess }) => {
         toast.error("Invalid email or password. Please try again.");
       } else if (err.response?.status === 404) {
         toast.error("Account not found. Please check your email.");
-      } else if (err.response?.status === 400) {
-        toast.error(errorMessage || "Bad request. Please check your input.");
-      } else {
-        toast.error(errorMessage || "Login failed. Please try again.");
       }
     } finally {
       setLoading(false);

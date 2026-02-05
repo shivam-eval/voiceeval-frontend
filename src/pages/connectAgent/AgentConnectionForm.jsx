@@ -48,6 +48,13 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
           agentIdLabel: 'ElevenLabs Agent ID',
           agentIdPlaceholder: 'Enter your ElevenLabs Agent ID',
         };
+      case 'bolna':
+        return {
+          apiKeyLabel: 'Bolna API Key (Bearer Token)',
+          apiKeyPlaceholder: 'Enter your Bolna API key',
+          agentIdLabel: 'Bolna Agent ID (UUID)',
+          agentIdPlaceholder: 'Enter your Bolna Agent ID',
+        };
       case 'cartesia':
         return {
           apiKeyLabel: 'Cartesia API Key (Bearer Token)',

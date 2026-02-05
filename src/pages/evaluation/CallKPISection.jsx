@@ -8,7 +8,39 @@ import KPIDetailCard from '../../components/KPIDetailCard';
  * Displays call-level KPIs in evaluation reports
  * Groups into Static (standard) and Dynamic (agent-specific) KPIs
  */
-const CallKPISection = ({ kpiResults, evaluation }) => {
+const CallKPISection = ({ kpiResults = [], evaluation = null }) => {
+    const normalizeKey = (value) =>
+        String(value || '')
+            .toLowerCase()
+            .replace(/\s+/g, '_');
+
+    const isAbandonmentReason = (kpi) => {
+        const candidates = [
+            kpi?.kpi_type,
+            kpi?.kpi_name,
+            kpi?.kpi_schema?.name,
+            kpi?.kpi_schema?.kpi_id,
+            kpi?.kpi_schema?.kpi_type,
+        ].map(normalizeKey);
+
+        return candidates.includes('abandonment_reason');
+    };
+
+    const stripGoal = (kpi) => {
+        const kpiSchema =
+            kpi?.kpi_schema && typeof kpi.kpi_schema === 'object'
+                ? { ...kpi.kpi_schema, description: '' }
+                : { description: '' };
+
+        let details = kpi?.details;
+        if (details && typeof details === 'object' && !Array.isArray(details)) {
+            const { goal, description, ...rest } = details;
+            details = rest;
+        }
+
+        return { ...kpi, kpi_schema: kpiSchema, details };
+    };
+
     // Separate static and dynamic KPIs
     const { staticKPIs, dynamicKPIs } = useMemo(() => {
         if (!kpiResults || kpiResults.length === 0) {
@@ -53,9 +85,12 @@ const CallKPISection = ({ kpiResults, evaluation }) => {
                         <span>Standard Metrics</span>
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                        {staticKPIs.map((kpi, index) => (
-                            <KPIDetailCard key={kpi.kpi_type || kpi.kpi_name || index} kpi={kpi} />
-                        ))}
+                        {staticKPIs.map((kpi, index) => {
+                            const safeKpi = isAbandonmentReason(kpi) ? stripGoal(kpi) : kpi;
+                            return (
+                                <KPIDetailCard key={kpi.kpi_type || kpi.kpi_name || index} kpi={safeKpi} />
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -67,9 +102,12 @@ const CallKPISection = ({ kpiResults, evaluation }) => {
                         <span>Agent-Specific Metrics</span>
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-                        {dynamicKPIs.map((kpi, index) => (
-                            <KPIDetailCard key={kpi.kpi_type || kpi.kpi_name || index} kpi={kpi} />
-                        ))}
+                        {dynamicKPIs.map((kpi, index) => {
+                            const safeKpi = isAbandonmentReason(kpi) ? stripGoal(kpi) : kpi;
+                            return (
+                                <KPIDetailCard key={kpi.kpi_type || kpi.kpi_name || index} kpi={safeKpi} />
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -91,11 +129,6 @@ CallKPISection.propTypes = {
         })
     ),
     evaluation: PropTypes.object,
-};
-
-CallKPISection.defaultProps = {
-    kpiResults: [],
-    evaluation: null,
 };
 
 export default CallKPISection;

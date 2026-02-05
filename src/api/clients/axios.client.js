@@ -15,7 +15,7 @@ const createApiClient = (timeout = 60000) => {
       const token = localStorage.getItem("authToken");
       const tokenExpiration = localStorage.getItem("tokenExpiration");
       const rawTenantId = localStorage.getItem("tenantId");
-      
+
       // Normalize tenant ID - use 'default' if not set or invalid
       let tenantId = rawTenantId?.trim();
       if (!tenantId || tenantId === 'undefined' || tenantId === 'null') {
@@ -44,10 +44,10 @@ const createApiClient = (timeout = 60000) => {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-      
+
       // Always send tenant ID header (default to 'default')
       config.headers["X-Tenant-ID"] = tenantId;
-      
+
       return config;
     },
     (error) => Promise.reject(error)
@@ -71,15 +71,15 @@ const createApiClient = (timeout = 60000) => {
       } else if (error.response?.status === 404) {
         // Don't show toast for 404, let the component handle it
       } else if (error.response?.status === 500) {
-        toast.error("Server error. Please try again later.");
+        // toast.error("Server error. Please try again later.");
       } else if (error.response?.status >= 400 && error.response?.status < 500) {
         // Show backend error message for client errors (4xx)
-        const message = error.response?.data?.detail || error.response?.data?.message || "An error occurred.";
-        toast.error(message);
+        // const message = error.response?.data?.detail || error.response?.data?.message || "An error occurred.";
+        // toast.error(message);
       } else if (error.code === 'ECONNABORTED') {
         toast.error("Request timeout. Please check your connection and try again.");
       } else if (!error.response) {
-        toast.error("Network error. Please check your internet connection.");
+        // toast.error("Network error. Please check your internet connection.");
       }
       return Promise.reject(error);
     }

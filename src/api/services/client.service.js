@@ -18,9 +18,9 @@ export const listClients = async () => {
     try {
         return await apiClient.get('/clients');
     } catch (error) {
-        // Fallback to /api/v1/clients if /clients fails
-        console.warn('Fallback to /api/v1/clients');
-        return await apiClient.get('/api/v1/clients');
+        // Fallback to /clients if first attempt fails
+        console.warn('Fallback to /clients');
+        return await apiClient.get('/clients');
     }
 };
 
@@ -28,14 +28,14 @@ export const listClients = async () => {
  * Get client details by ID
  */
 export const getClient = async (clientId) => {
-    return apiClient.get(`/api/v1/clients/${clientId}`);
+    return apiClient.get(`/clients/${clientId}`);
 };
 
 /**
  * Create a new client
  */
 export const createClient = async (data) => {
-    return apiClient.post('/api/v1/clients', data);
+    return apiClient.post('/clients', data);
 };
 
 const clientService = {

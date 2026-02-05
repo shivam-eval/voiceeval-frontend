@@ -207,24 +207,32 @@ const TraceDetailPage = () => {
                       </span>
                     </div>
                     
-                    {span.input && (
+                    {/* Extract input from attributes - check multiple possible keys */}
+                    {(span.attributes?.['langfuse.input'] || span.attributes?.['voiceeval.inputs'] || span.input) && (
                       <div className="mt-3 p-3 bg-dark-800 rounded border border-dark-700">
                         <p className="text-xs text-gray-400 mb-1">Input</p>
-                        <pre className="text-sm text-white overflow-x-auto">
-                          {typeof span.input === 'string' 
-                            ? span.input 
-                            : JSON.stringify(span.input, null, 2)}
+                        <pre className="text-sm text-white overflow-x-auto whitespace-pre-wrap">
+                          {(() => {
+                            const input = span.attributes?.['langfuse.input'] || span.attributes?.['voiceeval.inputs'] || span.input;
+                            return typeof input === 'string' 
+                              ? input 
+                              : JSON.stringify(input, null, 2);
+                          })()}
                         </pre>
                       </div>
                     )}
                     
-                    {span.output && (
+                    {/* Extract output from attributes - check multiple possible keys */}
+                    {(span.attributes?.['langfuse.output'] || span.attributes?.['voiceeval.output'] || span.output) && (
                       <div className="mt-2 p-3 bg-dark-800 rounded border border-dark-700">
                         <p className="text-xs text-gray-400 mb-1">Output</p>
-                        <pre className="text-sm text-white overflow-x-auto">
-                          {typeof span.output === 'string' 
-                            ? span.output 
-                            : JSON.stringify(span.output, null, 2)}
+                        <pre className="text-sm text-white overflow-x-auto whitespace-pre-wrap">
+                          {(() => {
+                            const output = span.attributes?.['langfuse.output'] || span.attributes?.['voiceeval.output'] || span.output;
+                            return typeof output === 'string' 
+                              ? output 
+                              : JSON.stringify(output, null, 2);
+                          })()}
                         </pre>
                       </div>
                     )}

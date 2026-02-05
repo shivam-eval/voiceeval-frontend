@@ -24,21 +24,23 @@ const CallTranscriptPanel = ({ transcriptData }) => {
   };
 
   const copyTranscript = () => {
-    const text = steps.map(step => 
-      `[${formatTime(step.speech_start_ms)}] ${step.turn_role === 'agent' ? 'Agent' : 'User'}: ${step.text}`
-    ).join('\n');
+    const text = steps.map((step, index) => {
+      const ts = step.speech_start_ms != null ? formatTime(step.speech_start_ms) : formatTime(0);
+      return `[${ts}] ${step.turn_role === 'agent' ? 'Agent' : 'User'}: ${step.text || ''}`;
+    }).join('\n');
     navigator.clipboard.writeText(text);
   };
 
-  // Generate waveform segments from steps
+  // Generate waveform segments from steps (use equal width when duration_ms missing)
   const generateWaveform = () => {
     if (steps.length === 0) return [];
-    
     const totalDuration = metadata.duration_ms || 1;
+    const hasDurations = steps.some(s => s.duration_ms != null);
+    const equalWidth = 100 / steps.length;
     return steps.map((step, index) => ({
       id: index,
       color: step.turn_role === 'agent' ? 'bg-purple-400/70' : 'bg-blue-400/70',
-      width: `${(step.duration_ms / totalDuration) * 100}%`
+      width: hasDurations && step.duration_ms != null ? `${(step.duration_ms / totalDuration) * 100}%` : `${equalWidth}%`
     }));
   };
 
@@ -81,7 +83,7 @@ const CallTranscriptPanel = ({ transcriptData }) => {
               >
                 {/* Timestamp */}
                 <div className="text-xs text-gray-500 font-mono w-20 shrink-0 pt-1">
-                  {timestamp}
+                  {step.speech_start_ms != null ? timestamp : `Turn ${step.turn_number}`}
                 </div>
 
                 {/* Avatar */}

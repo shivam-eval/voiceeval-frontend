@@ -68,48 +68,48 @@ export const DEBT_COLLECTION_SIMULATION = {
       session_id: "sess_hp_001",
       status: "completed",
       transcript_result_id: "tr_hp_full_payment_001",
-      duration_ms: 64000,
-      total_turns: 5
+      duration_ms: 124000,
+      total_turns: 13
     },
     {
       test_id: "happy_path_repayment_date",
-      session_id: "sess_hp_002",
+      session_id: "sess_hp_rd_001",
       status: "completed",
-      transcript_result_id: "tr_hp_schedule_002",
-      duration_ms: 70000,
-      total_turns: 5
+      transcript_result_id: "tr_hp_repayment_date_002",
+      duration_ms: 105000,
+      total_turns: 8
     },
     {
       test_id: "edge_case_identity_refusal_detailed",
-      session_id: "sess_edge_003",
+      session_id: "sess_ec_ir_001",
       status: "completed",
-      transcript_result_id: "tr_edge_identity_003",
-      duration_ms: 45000,
-      total_turns: 5
+      transcript_result_id: "tr_ec_identity_refusal_003",
+      duration_ms: 50000,
+      total_turns: 3
     },
     {
       test_id: "edge_case_unknown_information",
-      session_id: "sess_edge_004",
+      session_id: "sess_ec_ui_001",
       status: "completed",
-      transcript_result_id: "tr_edge_unknown_004",
-      duration_ms: 70000,
-      total_turns: 5
+      transcript_result_id: "tr_ec_unknown_info_004",
+      duration_ms: 105000,
+      total_turns: 6
     },
     {
       test_id: "failure_path_angry_escalation",
-      session_id: "sess_fail_005",
+      session_id: "sess_fp_ae_001",
       status: "completed",
-      transcript_result_id: "tr_fail_angry_005",
-      duration_ms: 80000,
-      total_turns: 5
+      transcript_result_id: "tr_fp_angry_escalation_005",
+      duration_ms: 120000,
+      total_turns: 7
     },
     {
       test_id: "failure_path_refusal_payment",
-      session_id: "sess_fail_006",
+      session_id: "sess_fp_rp_001",
       status: "completed",
-      transcript_result_id: "tr_fail_refusal_006",
-      duration_ms: 70000,
-      total_turns: 5
+      transcript_result_id: "tr_fp_refusal_payment_006",
+      duration_ms: 120000,
+      total_turns: 6
     }
   ],
   timing: {
@@ -175,7 +175,7 @@ export const DEBT_COLLECTION_EVALUATION = {
   created_at: "2025-12-25T12:05:00.000Z"
 }
 
-// Transcript Data for all 6 Debt Collection Paths
+// Transcript Data for all 6 Debt Collection Paths (synced with TestCasesScreen)
 export const DEBT_COLLECTION_TRANSCRIPTS = {
   "tr_hp_full_payment_001": {
     transcript_result_id: "tr_hp_full_payment_001",
@@ -184,372 +184,110 @@ export const DEBT_COLLECTION_TRANSCRIPTS = {
     status: "completed",
     timing: {
       start_time_ms: 1766639021000,
-      end_time_ms: 1766639085000,
-      duration_ms: 64000
+      end_time_ms: 1766639145000,
+      duration_ms: 124000
     },
     steps: [
-      {
-        turn_number: 1,
-        kind: "agent_speak",
-        text: "Hello, I'm Riya calling on behalf of ABC Finance. This call is regarding an outstanding payment. May I confirm if I'm speaking with Rajesh?",
-        turn_id: "turn_001",
-        turn_role: "agent",
-        node_id: "start",
-        speech_start_ms: 1766639021200,
-        speech_end_ms: 1766639025200,
-        duration_ms: 4000
-      },
-      {
-        turn_number: 2,
-        kind: "user_speak",
-        text: "Yes, this is Rajesh.",
-        turn_id: "turn_002",
-        turn_role: "user",
-        node_id: "identity_confirmed",
-        speech_start_ms: 1766639027000,
-        speech_end_ms: 1766639030000,
-        duration_ms: 3000
-      },
-      {
-        turn_number: 3,
-        kind: "agent_speak",
-        text: "Thank you for confirming. There is an outstanding amount of ₹8,500 that was due on 10th December.",
-        turn_id: "turn_003",
-        turn_role: "agent",
-        node_id: "identity_confirmed",
-        speech_start_ms: 1766639032000,
-        speech_end_ms: 1766639037000,
-        duration_ms: 5000
-      },
-      {
-        turn_number: 4,
-        kind: "user_speak",
-        text: "Okay, I can make the payment today.",
-        turn_id: "turn_004",
-        turn_role: "user",
-        node_id: "borrower_reaction",
-        speech_start_ms: 1766639039000,
-        speech_end_ms: 1766639043000,
-        duration_ms: 4000
-      },
-      {
-        turn_number: 5,
-        kind: "agent_speak",
-        text: "Thank you. Would you like to pay now through a UPI link, or should I schedule a callback?",
-        turn_id: "turn_005",
-        turn_role: "agent",
-        node_id: "can_pay_today",
-        speech_start_ms: 1766639045000,
-        speech_end_ms: 1766639050000,
-        duration_ms: 5000
-      }
+      { turn_number: 1, kind: "agent_speak", text: "Hello, I'm Riya calling on behalf of ABC Finance. This call is regarding an outstanding payment. May I confirm if I'm speaking with Rajesh? This call may be recorded for service and compliance purposes.", turn_id: "turn_001", turn_role: "agent", node_id: "start" },
+      { turn_number: 2, kind: "user_speak", text: "Yes, this is Rajesh.", turn_id: "turn_002", turn_role: "user", node_id: "identity_confirmed" },
+      { turn_number: 3, kind: "agent_speak", text: "Thank you for confirming, Rajesh. I am calling to inform you that there is an outstanding amount of ₹8,500 on your personal loan account. The payment was due on 10th December. There are no additional penalties beyond what is mentioned in your loan agreement.", turn_id: "turn_003", turn_role: "agent", node_id: "dues_information" },
+      { turn_number: 4, kind: "user_speak", text: "Okay, thanks for informing me.", turn_id: "turn_004", turn_role: "user", node_id: "borrower_acknowledgement" },
+      { turn_number: 5, kind: "agent_speak", text: "You're welcome. Would you like to make the repayment today, or would you prefer to schedule it for another date?", turn_id: "turn_005", turn_role: "agent", node_id: "repayment_attempt" },
+      { turn_number: 6, kind: "user_speak", text: "Yes, I can make the payment today.", turn_id: "turn_006", turn_role: "user", node_id: "can_pay_today" },
+      { turn_number: 7, kind: "agent_speak", text: "Thank you. Would you like to pay now through a UPI link, or should I schedule a call back when you are ready?", turn_id: "turn_007", turn_role: "agent", node_id: "payment_method_offer" },
+      { turn_number: 8, kind: "user_speak", text: "You can send me a UPI link. I will pay now.", turn_id: "turn_008", turn_role: "user", node_id: "payment_method_selected" },
+      { turn_number: 9, kind: "agent_speak", text: "Sure. I am sending a secure UPI payment link to your registered mobile number. Please let me know once the payment is completed.", turn_id: "turn_009", turn_role: "agent", node_id: "payment_link_sent" },
+      { turn_number: 10, kind: "user_speak", text: "Yes, I have completed the payment.", turn_id: "turn_010", turn_role: "user", node_id: "payment_done" },
+      { turn_number: 11, kind: "agent_speak", text: "Thank you. I am checking the system for confirmation. Yes, I can see the payment of ₹8,500 has been received successfully.", turn_id: "turn_011", turn_role: "agent", node_id: "payment_verified" },
+      { turn_number: 12, kind: "user_speak", text: "Great, thanks.", turn_id: "turn_012", turn_role: "user", node_id: "call_wrap_user" },
+      { turn_number: 13, kind: "agent_speak", text: "Thank you for your time. I appreciate your patience. I will update the system with our discussion. Have a good day.", turn_id: "turn_013", turn_role: "agent", node_id: "closing" }
     ],
-    metadata: {
-      total_turns: 5,
-      agent_turns: 3,
-      user_turns: 2,
-      duration_ms: 64000
-    },
+    metadata: { total_turns: 13, agent_turns: 7, user_turns: 6, duration_ms: 124000 },
     error_message: null
   },
-  "tr_hp_schedule_002": {
-    transcript_result_id: "tr_hp_schedule_002",
+  "tr_hp_repayment_date_002": {
+    transcript_result_id: "tr_hp_repayment_date_002",
     test_id: "happy_path_repayment_date",
-    session_id: "sess_hp_002",
+    session_id: "sess_hp_rd_001",
     status: "completed",
-    timing: {
-      start_time_ms: 1766639100000,
-      end_time_ms: 1766639170000,
-      duration_ms: 70000
-    },
+    timing: { start_time_ms: 1766639200000, end_time_ms: 1766639305000, duration_ms: 105000 },
     steps: [
-      {
-        turn_number: 1,
-        kind: "agent_speak",
-        text: "Hello, I'm Riya calling on behalf of ABC Finance. May I confirm if I'm speaking with Neha?",
-        turn_id: "turn_001",
-        turn_role: "agent",
-        node_id: "start"
-      },
-      {
-        turn_number: 2,
-        kind: "user_speak",
-        text: "Yes, speaking.",
-        turn_id: "turn_002",
-        turn_role: "user",
-        node_id: "identity_confirmed"
-      },
-      {
-        turn_number: 3,
-        kind: "agent_speak",
-        text: "There is an outstanding amount of ₹12,000 due on 5th December.",
-        turn_id: "turn_003",
-        turn_role: "agent",
-        node_id: "identity_confirmed"
-      },
-      {
-        turn_number: 4,
-        kind: "user_speak",
-        text: "I need some time. I can pay next Friday.",
-        turn_id: "turn_004",
-        turn_role: "user",
-        node_id: "borrower_reaction"
-      },
-      {
-        turn_number: 5,
-        kind: "agent_speak",
-        text: "No problem. I've noted the repayment date and will send a reminder.",
-        turn_id: "turn_005",
-        turn_role: "agent",
-        node_id: "needs_time"
-      }
+      { turn_number: 1, kind: "agent_speak", text: "Hello, I'm Riya calling on behalf of ABC Finance. This call is regarding an outstanding payment. May I confirm if I'm speaking with Neha Sharma? This call may be recorded for service and compliance purposes.", turn_id: "turn_001", turn_role: "agent", node_id: "start" },
+      { turn_number: 2, kind: "user_speak", text: "Yes, Neha here. Sorry, I was on another call.", turn_id: "turn_002", turn_role: "user", node_id: "identity_confirmed" },
+      { turn_number: 3, kind: "agent_speak", text: "Thank you for confirming. There is an outstanding amount of ₹12,000 due on your personal loan. The payment due date was 5th January.", turn_id: "turn_003", turn_role: "agent", node_id: "dues_info" },
+      { turn_number: 4, kind: "user_speak", text: "Yes I remember. I cannot pay today.", turn_id: "turn_004", turn_role: "user", node_id: "needs_time" },
+      { turn_number: 5, kind: "agent_speak", text: "No problem. What is a realistic date you can commit to? I will note it and send a reminder.", turn_id: "turn_005", turn_role: "agent", node_id: "repayment_date_request" },
+      { turn_number: 6, kind: "user_speak", text: "I can pay by the 15th of this month.", turn_id: "turn_006", turn_role: "user", node_id: "date_commitment" },
+      { turn_number: 7, kind: "agent_speak", text: "Thank you. I have noted 15th as your repayment date. I will send you a reminder before that.", turn_id: "turn_007", turn_role: "agent", node_id: "date_confirmed" },
+      { turn_number: 8, kind: "agent_speak", text: "Thank you for your time. I appreciate your patience. I will update the system with our discussion. Have a good day.", turn_id: "turn_008", turn_role: "agent", node_id: "closing" }
     ],
-    metadata: {
-      total_turns: 5,
-      agent_turns: 3,
-      user_turns: 2,
-      duration_ms: 70000
-    },
+    metadata: { total_turns: 8, agent_turns: 5, user_turns: 3, duration_ms: 105000 },
     error_message: null
   },
-  "tr_edge_identity_003": {
-    transcript_result_id: "tr_edge_identity_003",
+  "tr_ec_identity_refusal_003": {
+    transcript_result_id: "tr_ec_identity_refusal_003",
     test_id: "edge_case_identity_refusal_detailed",
-    session_id: "sess_edge_003",
+    session_id: "sess_ec_ir_001",
     status: "completed",
-    timing: {
-      start_time_ms: 1766639200000,
-      end_time_ms: 1766639245000,
-      duration_ms: 45000
-    },
+    timing: { start_time_ms: 1766639400000, end_time_ms: 1766639450000, duration_ms: 50000 },
     steps: [
-      {
-        turn_number: 1,
-        kind: "agent_speak",
-        text: "Hello, I'm Riya calling regarding an outstanding payment. May I confirm who I'm speaking with?",
-        turn_id: "turn_001",
-        turn_role: "agent",
-        node_id: "start"
-      },
-      {
-        turn_number: 2,
-        kind: "user_speak",
-        text: "I don't want to confirm my identity.",
-        turn_id: "turn_002",
-        turn_role: "user",
-        node_id: "identity_refused"
-      },
-      {
-        turn_number: 3,
-        kind: "agent_speak",
-        text: "I understand. For security reasons, I cannot continue without confirmation. Thank you for your time.",
-        turn_id: "turn_003",
-        turn_role: "agent",
-        node_id: "identity_refused"
-      },
-      {
-        turn_number: 4,
-        kind: "silence",
-        text: "",
-        turn_id: "turn_004",
-        turn_role: "system",
-        node_id: null
-      },
-      {
-        turn_number: 5,
-        kind: "end",
-        text: "",
-        turn_id: "turn_005",
-        turn_role: "system",
-        node_id: "end_call"
-      }
+      { turn_number: 1, kind: "agent_speak", text: "Hello, I'm Riya calling on behalf of ABC Finance. This call is regarding an outstanding payment. Kya main Amit Patel se baat kar raha hoon? Yeh call compliance ke liye record ho sakti hai.", turn_id: "turn_001", turn_role: "agent", node_id: "start" },
+      { turn_number: 2, kind: "user_speak", text: "Aap kaun? Main confirm nahi karunga.", turn_id: "turn_002", turn_role: "user", node_id: "identity_refused" },
+      { turn_number: 3, kind: "agent_speak", text: "I understand. For security reasons, I cannot continue without confirmation. Thank you for your time.", turn_id: "turn_003", turn_role: "agent", node_id: "call_terminate" }
     ],
-    metadata: {
-      total_turns: 5,
-      agent_turns: 2,
-      user_turns: 1,
-      duration_ms: 45000
-    },
+    metadata: { total_turns: 3, agent_turns: 2, user_turns: 1, duration_ms: 50000 },
     error_message: null
   },
-  "tr_edge_unknown_004": {
-    transcript_result_id: "tr_edge_unknown_004",
+  "tr_ec_unknown_info_004": {
+    transcript_result_id: "tr_ec_unknown_info_004",
     test_id: "edge_case_unknown_information",
-    session_id: "sess_edge_004",
+    session_id: "sess_ec_ui_001",
     status: "completed",
-    timing: {
-      start_time_ms: 1766639300000,
-      end_time_ms: 1766639370000,
-      duration_ms: 70000
-    },
+    timing: { start_time_ms: 1766639500000, end_time_ms: 1766639605000, duration_ms: 105000 },
     steps: [
-      {
-        turn_number: 1,
-        kind: "agent_speak",
-        text: "Hello, I'm Riya calling on behalf of ABC Finance.",
-        turn_id: "turn_001",
-        turn_role: "agent",
-        node_id: "start"
-      },
-      {
-        turn_number: 2,
-        kind: "user_speak",
-        text: "Yes, I am the borrower.",
-        turn_id: "turn_002",
-        turn_role: "user",
-        node_id: "identity_confirmed"
-      },
-      {
-        turn_number: 3,
-        kind: "user_speak",
-        text: "Why was this loan approved in the first place?",
-        turn_id: "turn_003",
-        turn_role: "user",
-        node_id: "borrower_reaction"
-      },
-      {
-        turn_number: 4,
-        kind: "agent_speak",
-        text: "I don't have that information right now, but I can connect you with a representative.",
-        turn_id: "turn_004",
-        turn_role: "agent",
-        node_id: "fallback"
-      },
-      {
-        turn_number: 5,
-        kind: "agent_speak",
-        text: "Thank you for your time. I'll update the system accordingly.",
-        turn_id: "turn_005",
-        turn_role: "agent",
-        node_id: "end_call"
-      }
+      { turn_number: 1, kind: "agent_speak", text: "Hello, I'm Riya calling on behalf of ABC Finance. May I confirm if I'm speaking with Priya Reddy? This call may be recorded.", turn_id: "turn_001", turn_role: "agent", node_id: "start" },
+      { turn_number: 2, kind: "user_speak", text: "Yes, Priya speaking.", turn_id: "turn_002", turn_role: "user", node_id: "identity_confirmed" },
+      { turn_number: 3, kind: "agent_speak", text: "There is an outstanding amount of ₹15,000 on your loan account.", turn_id: "turn_003", turn_role: "agent", node_id: "dues_info" },
+      { turn_number: 4, kind: "user_speak", text: "Why was penalty added last month?", turn_id: "turn_004", turn_role: "user", node_id: "unknown_query" },
+      { turn_number: 5, kind: "agent_speak", text: "I don't have that information right now, but I can connect you with a representative who can assist you further.", turn_id: "turn_005", turn_role: "agent", node_id: "fallback_response" },
+      { turn_number: 6, kind: "agent_speak", text: "Thank you for your time. I will update the system with our discussion. Have a good day.", turn_id: "turn_006", turn_role: "agent", node_id: "closing" }
     ],
-    metadata: {
-      total_turns: 5,
-      agent_turns: 3,
-      user_turns: 2,
-      duration_ms: 70000
-    },
+    metadata: { total_turns: 6, agent_turns: 4, user_turns: 2, duration_ms: 105000 },
     error_message: null
   },
-  "tr_fail_angry_005": {
-    transcript_result_id: "tr_fail_angry_005",
+  "tr_fp_angry_escalation_005": {
+    transcript_result_id: "tr_fp_angry_escalation_005",
     test_id: "failure_path_angry_escalation",
-    session_id: "sess_fail_005",
+    session_id: "sess_fp_ae_001",
     status: "completed",
-    timing: {
-      start_time_ms: 1766639400000,
-      end_time_ms: 1766639480000,
-      duration_ms: 80000
-    },
+    timing: { start_time_ms: 1766639700000, end_time_ms: 1766639820000, duration_ms: 120000 },
     steps: [
-      {
-        turn_number: 1,
-        kind: "user_speak",
-        text: "Why do you keep calling me?",
-        turn_id: "turn_001",
-        turn_role: "user",
-        node_id: "borrower_reaction"
-      },
-      {
-        turn_number: 2,
-        kind: "agent_speak",
-        text: "I understand this can be frustrating. I'm here to help, not pressure you.",
-        turn_id: "turn_002",
-        turn_role: "agent",
-        node_id: "angry_user"
-      },
-      {
-        turn_number: 3,
-        kind: "user_speak",
-        text: "This feels like harassment.",
-        turn_id: "turn_003",
-        turn_role: "user",
-        node_id: "angry_user"
-      },
-      {
-        turn_number: 4,
-        kind: "agent_speak",
-        text: "We can take this step by step or I can end the call if you prefer.",
-        turn_id: "turn_004",
-        turn_role: "agent",
-        node_id: "angry_user"
-      },
-      {
-        turn_number: 5,
-        kind: "end",
-        text: "",
-        turn_id: "turn_005",
-        turn_role: "system",
-        node_id: "end_call"
-      }
+      { turn_number: 1, kind: "agent_speak", text: "Hello, I'm Riya calling on behalf of ABC Finance. May I confirm if I'm speaking with Vikram Singh?", turn_id: "turn_001", turn_role: "agent" },
+      { turn_number: 2, kind: "user_speak", text: "Haan bol raha hoon. Roz call karte ho tum log!", turn_id: "turn_002", turn_role: "user" },
+      { turn_number: 3, kind: "agent_speak", text: "I understand this can be frustrating. I am here to help, not to pressure you.", turn_id: "turn_003", turn_role: "agent" },
+      { turn_number: 4, kind: "user_speak", text: "Abhi paise nahi hai. Samjhe?", turn_id: "turn_004", turn_role: "user" },
+      { turn_number: 5, kind: "agent_speak", text: "No problem. Hum step by step kar sakte hain. Aap realistically kab payment kar sakte hain?", turn_id: "turn_005", turn_role: "agent" },
+      { turn_number: 6, kind: "user_speak", text: "Next week try karunga.", turn_id: "turn_006", turn_role: "user" },
+      { turn_number: 7, kind: "agent_speak", text: "Thank you. I will note next week and send a reminder.", turn_id: "turn_007", turn_role: "agent" }
     ],
-    metadata: {
-      total_turns: 5,
-      agent_turns: 2,
-      user_turns: 2,
-      duration_ms: 80000
-    },
+    metadata: { total_turns: 7, agent_turns: 4, user_turns: 3, duration_ms: 120000 },
     error_message: null
   },
-  "tr_fail_refusal_006": {
-    transcript_result_id: "tr_fail_refusal_006",
+  "tr_fp_refusal_payment_006": {
+    transcript_result_id: "tr_fp_refusal_payment_006",
     test_id: "failure_path_refusal_payment",
-    session_id: "sess_fail_006",
+    session_id: "sess_fp_rp_001",
     status: "completed",
-    timing: {
-      start_time_ms: 1766639500000,
-      end_time_ms: 1766639570000,
-      duration_ms: 70000
-    },
+    timing: { start_time_ms: 1766639900000, end_time_ms: 1766640020000, duration_ms: 120000 },
     steps: [
-      {
-        turn_number: 1,
-        kind: "agent_speak",
-        text: "Hello, I'm Riya calling regarding an outstanding payment.",
-        turn_id: "turn_001",
-        turn_role: "agent",
-        node_id: "start"
-      },
-      {
-        turn_number: 2,
-        kind: "user_speak",
-        text: "Yes, but I am not going to pay.",
-        turn_id: "turn_002",
-        turn_role: "user",
-        node_id: "borrower_reaction"
-      },
-      {
-        turn_number: 3,
-        kind: "agent_speak",
-        text: "I understand your decision. I will note this outcome in our system.",
-        turn_id: "turn_003",
-        turn_role: "agent",
-        node_id: "refuse_payment"
-      },
-      {
-        turn_number: 4,
-        kind: "agent_speak",
-        text: "Thank you for your time.",
-        turn_id: "turn_004",
-        turn_role: "agent",
-        node_id: "end_call"
-      },
-      {
-        turn_number: 5,
-        kind: "end",
-        text: "",
-        turn_id: "turn_005",
-        turn_role: "system",
-        node_id: "end_call"
-      }
+      { turn_number: 1, kind: "agent_speak", text: "Hello, I'm Riya calling on behalf of ABC Finance. May I confirm if I'm speaking with Kavita Desai?", turn_id: "turn_001", turn_role: "agent" },
+      { turn_number: 2, kind: "user_speak", text: "Yes… but I lost my job. I can't pay anything right now.", turn_id: "turn_002", turn_role: "user" },
+      { turn_number: 3, kind: "agent_speak", text: "I am sorry to hear that. I am here to help, not to pressure you.", turn_id: "turn_003", turn_role: "agent" },
+      { turn_number: 4, kind: "agent_speak", text: "Would you like me to note this and arrange a follow-up later?", turn_id: "turn_004", turn_role: "agent" },
+      { turn_number: 5, kind: "user_speak", text: "Yes please call next month.", turn_id: "turn_005", turn_role: "user" },
+      { turn_number: 6, kind: "agent_speak", text: "Thank you. I will schedule a follow up next month.", turn_id: "turn_006", turn_role: "agent" }
     ],
-    metadata: {
-      total_turns: 5,
-      agent_turns: 3,
-      user_turns: 1,
-      duration_ms: 70000
-    },
+    metadata: { total_turns: 6, agent_turns: 4, user_turns: 2, duration_ms: 120000 },
     error_message: null
   }
 }

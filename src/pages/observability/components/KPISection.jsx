@@ -9,14 +9,18 @@ import {
   Activity,
   Filter,
   X,
+  Mic,
+  Brain,
+  Volume2,
+  Wrench,
 } from 'lucide-react';
 
 /* ================= CARD ================= */
 const Card = ({ title, icon: Icon, children, className = '' }) => (
-  <div className={`bg-gray-800/30 border border-gray-700/50 rounded-lg p-6 hover:bg-gray-800/40 transition-colors ${className}`}>
-    <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-gray-400 mb-6">
-      {Icon && <Icon className="w-4 h-4" />}
-      <span>{title}</span>
+  <div className={`bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 ${className}`}>
+    <div className="flex items-center gap-3 mb-4">
+      {Icon && <Icon className="w-5 h-5 text-teal-400" />}
+      <h3 className="text-lg font-semibold text-gray-100">{title}</h3>
     </div>
     {children}
   </div>
@@ -25,87 +29,121 @@ const Card = ({ title, icon: Icon, children, className = '' }) => (
 /* ================= METRIC CARD ================= */
 const MetricCard = ({ title, icon, rate, count, onClick, isActive }) => {
   const percentage = rate !== undefined ? Math.round(rate * 100) : 0;
-
   return (
-    <Card
-      title={title}
-      icon={icon}
-      className={`cursor-pointer ${isActive ? 'ring-2 ring-teal-400/50 bg-gray-800/50' : ''}`}
+    <div
+      onClick={onClick}
+      className={`bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border transition-all cursor-pointer ${
+        isActive
+          ? 'border-teal-500/50 bg-teal-500/10 ring-2 ring-teal-500/20'
+          : 'border-gray-700/50 hover:border-teal-500/30 hover:bg-gray-800/70'
+      }`}
     >
-      <div
-        className="flex flex-col items-center justify-center py-6"
-        onClick={onClick}
-      >
-        <div className="text-5xl font-bold text-teal-400 mb-2">
-          {percentage}%
-        </div>
-        <div className="text-sm text-gray-500 uppercase tracking-wider">
+      <div className="flex items-center gap-3 mb-4">
+        {icon}
+        <h3 className="text-sm font-medium text-gray-300">{title}</h3>
+      </div>
+      <div className="space-y-1">
+        <div className="text-3xl font-bold text-teal-400">{percentage}%</div>
+        <p className="text-xs text-gray-400">
           Detected in {count || 0} {(count || 0) === 1 ? 'call' : 'calls'}
+        </p>
+      </div>
+    </div>
+  );
+};
+
+/* ================= ERROR METRIC CARD (NEW STYLE) ================= */
+const ErrorMetricCard = ({ title, icon, count, onClick, isActive }) => {
+  return (
+    <div
+      onClick={onClick}
+      className={`relative overflow-hidden rounded-lg p-4 border transition-all cursor-pointer ${
+        isActive
+          ? 'border-red-500/50 bg-red-500/10 ring-2 ring-red-500/20'
+          : 'border-gray-700/30 bg-gray-800/30 hover:border-red-500/30 hover:bg-gray-800/50'
+      }`}
+    >
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      
+      <div className="relative flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`p-2 rounded-lg ${isActive ? 'bg-red-500/20' : 'bg-gray-700/50'}`}>
+            {icon}
+          </div>
+          <div>
+            <h4 className="text-sm font-medium text-gray-300">{title}</h4>
+            <p className="text-xs text-gray-500 mt-0.5">Errors</p>
+          </div>
+        </div>
+        <div className="text-right">
+          <div className={`text-2xl font-bold ${count > 0 ? 'text-red-400' : 'text-gray-500'}`}>
+            {count || 0}
+          </div>
+          <p className="text-xs text-gray-500">{(count || 0) === 1 ? 'call' : 'calls'}</p>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };
 
 /* ================= FILTER DROPDOWN ================= */
 const FilterDropdown = ({ activeFilters, onFilterChange, onClearFilters }) => {
   const [isOpen, setIsOpen] = React.useState(false);
-
   const hasActiveFilters = Object.keys(activeFilters).length > 0;
 
   return (
     <div className="relative">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${hasActiveFilters
-          ? 'bg-teal-500/10 border-teal-500/30 text-teal-400'
-          : 'bg-gray-800/30 border-gray-700/50 text-gray-400 hover:bg-gray-800/50'
-          }`}
+        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+          hasActiveFilters
+            ? 'bg-teal-500/10 border-teal-500/30 text-teal-400'
+            : 'bg-gray-800/30 border-gray-700/50 text-gray-400 hover:bg-gray-800/50'
+        }`}
       >
         <Filter className="w-4 h-4" />
-        <span className="text-sm font-medium">
-          Filters {hasActiveFilters && `(${Object.keys(activeFilters).length})`}
-        </span>
+        Filters {hasActiveFilters && `(${Object.keys(activeFilters).length})`}
       </button>
 
       {isOpen && (
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-10"
+            className="fixed inset-0 z-40"
             onClick={() => setIsOpen(false)}
           />
 
           {/* Dropdown Menu */}
-          <div className="absolute right-0 mt-2 w-80 bg-gray-900 border border-gray-700/50 rounded-lg shadow-2xl z-20">
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-white">Active Filters</h3>
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => {
-                      onClearFilters();
-                      setIsOpen(false);
-                    }}
-                    className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
-                  >
-                    Clear All
-                  </button>
-                )}
-              </div>
+          <div className="absolute top-full mt-2 right-0 w-80 bg-gray-800 border border-gray-700 rounded-xl shadow-2xl z-50 overflow-hidden">
+            <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-100">Active Filters</h3>
+              {hasActiveFilters && (
+                <button
+                  onClick={() => {
+                    onClearFilters();
+                    setIsOpen(false);
+                  }}
+                  className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
 
+            <div className="p-4 max-h-96 overflow-y-auto">
               {hasActiveFilters ? (
                 <div className="space-y-2">
                   {Object.entries(activeFilters).map(([key, value]) => (
                     <div
                       key={key}
-                      className="flex items-center justify-between p-3 bg-gray-800/50 rounded-lg border border-gray-700/30"
+                      className="flex items-center justify-between bg-gray-700/30 rounded-lg p-3"
                     >
-                      <div className="flex-1">
-                        <div className="text-xs text-gray-400 uppercase tracking-wide mb-1">
+                      <div>
+                        <div className="text-sm font-medium text-gray-200">
                           {key.replace(/_/g, ' ')}
                         </div>
-                        <div className="text-sm text-white font-medium">
+                        <div className="text-xs text-gray-400 mt-1">
                           {typeof value === 'object'
                             ? `${Object.keys(value)[0]}: ${Object.values(value)[0]}`
                             : value}
@@ -125,10 +163,10 @@ const FilterDropdown = ({ activeFilters, onFilterChange, onClearFilters }) => {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <Filter className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No active filters</p>
-                  <p className="text-xs mt-1">Click on metrics to filter calls</p>
+                <div className="text-center py-8">
+                  <Filter className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-400 text-sm">No active filters</p>
+                  <p className="text-gray-500 text-xs mt-1">Click on metrics to filter calls</p>
                 </div>
               )}
             </div>
@@ -156,6 +194,11 @@ const DUMMY_DATA = {
         other: 1,
       },
     },
+    // New error breakdown metrics
+    stt_errors: { count: 2 },
+    llm_errors: { count: 1 },
+    tts_errors: { count: 3 },
+    tool_errors: { count: 1 },
   },
 };
 
@@ -184,6 +227,10 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
       // For latency, filter by range
       else if (metricKey === 'avg_latency') {
         newFilters[metricKey] = { gt: value };
+      }
+      // For error metrics (stt_errors, llm_errors, tts_errors, tool_errors)
+      else if (['stt_errors', 'llm_errors', 'tts_errors', 'tool_errors'].includes(metricKey)) {
+        newFilters[metricKey] = { eq: true };
       }
     }
 
@@ -220,37 +267,29 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
   /* ---------- LOADING ---------- */
   if (isLoadingKPIs) {
     return (
-      <div className="mb-10">
+      <div className="space-y-6">
         {/* Filter Dropdown Skeleton */}
-        <div className="flex justify-end mb-4">
-          <div className="h-10 w-32 bg-gray-800/30 border border-gray-700/50 rounded-lg animate-pulse" />
+        <div className="flex justify-end">
+          <div className="h-10 w-24 bg-gray-700/30 rounded-lg animate-pulse" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left side - 2x2 grid */}
-          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div
-                key={i}
-                className="h-[180px] bg-gray-800/30 border border-gray-700/50 rounded-lg animate-pulse"
-              >
-                <div className="p-6">
-                  <div className="h-4 bg-gray-700 rounded w-1/2 mb-6"></div>
-                  <div className="h-12 bg-gray-700 rounded w-3/4 mx-auto mb-2"></div>
-                  <div className="h-3 bg-gray-700 rounded w-1/2 mx-auto"></div>
-                </div>
-              </div>
+              <div key={i} className="h-40 bg-gray-700/30 rounded-xl animate-pulse" />
             ))}
           </div>
+
           {/* Right side - Large pie chart */}
-          <div className="h-full bg-gray-800/30 border border-gray-700/50 rounded-lg animate-pulse">
-            <div className="p-6">
-              <div className="h-4 bg-gray-700 rounded w-1/2 mb-6"></div>
-              <div className="flex items-center justify-center h-[300px]">
-                <div className="h-48 w-48 bg-gray-700 rounded-full"></div>
-              </div>
-            </div>
-          </div>
+          <div className="h-96 bg-gray-700/30 rounded-xl animate-pulse" />
+        </div>
+
+        {/* Error metrics skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-24 bg-gray-700/30 rounded-lg animate-pulse" />
+          ))}
         </div>
       </div>
     );
@@ -270,9 +309,9 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
 
   /* ---------- RENDER ---------- */
   return (
-    <div className="mb-10">
+    <div className="space-y-6">
       {/* Filter Dropdown */}
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end">
         <FilterDropdown
           activeFilters={activeFilters}
           onFilterChange={setActiveFilters}
@@ -282,11 +321,11 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left side - 2x2 grid of metrics */}
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Issue Resolved */}
           <MetricCard
             title="Issue Resolved"
-            icon={CheckCircle}
+            icon={<CheckCircle className="w-5 h-5 text-teal-400" />}
             rate={kpis.issue_resolved?.rate}
             count={kpis.issue_resolved?.count}
             onClick={() => handleMetricClick('issue_resolved', true)}
@@ -296,7 +335,7 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
           {/* Hallucination */}
           <MetricCard
             title="Hallucination"
-            icon={AlertTriangle}
+            icon={<AlertTriangle className="w-5 h-5 text-teal-400" />}
             rate={kpis.hallucination?.rate}
             count={kpis.hallucination?.count}
             onClick={() => handleMetricClick('hallucination', true)}
@@ -306,7 +345,7 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
           {/* Gibberish */}
           <MetricCard
             title="Gibberish"
-            icon={MessageSquare}
+            icon={<MessageSquare className="w-5 h-5 text-teal-400" />}
             rate={kpis.gibberish?.rate}
             count={kpis.gibberish?.count}
             onClick={() => handleMetricClick('gibberish', true)}
@@ -314,40 +353,47 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
           />
 
           {/* Average Latency */}
-          <Card
-            title="Avg Latency"
-            icon={Zap}
-            className={`cursor-pointer ${activeFilters.avg_latency ? 'ring-2 ring-teal-400/50 bg-gray-800/50' : ''}`}
+          <div
+            className={`bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border transition-all cursor-pointer ${
+              activeFilters.avg_latency
+                ? 'border-teal-500/50 bg-teal-500/10 ring-2 ring-teal-500/20'
+                : 'border-gray-700/50 hover:border-teal-500/30 hover:bg-gray-800/70'
+            }`}
+            onClick={() => handleMetricClick('avg_latency', kpis.avg_latency?.value ?? 0)}
           >
-            <div
-              className="flex flex-col items-center justify-center py-6"
-              onClick={() => handleMetricClick('avg_latency', kpis.avg_latency?.value ?? 0)}
-            >
-              <div className="text-5xl font-bold text-teal-400 mb-2">
-                {kpis.avg_latency?.value ?? 0}
-                <span className="text-2xl text-gray-400 ml-2">ms</span>
-              </div>
-              <div className="text-sm text-gray-500 uppercase tracking-wider">
-                Across {kpis.avg_latency?.count || 0} calls
-              </div>
+            <div className="flex items-center gap-3 mb-4">
+              <Zap className="w-5 h-5 text-teal-400" />
+              <h3 className="text-sm font-medium text-gray-300">Average Latency</h3>
             </div>
-          </Card>
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-teal-400">
+                {kpis.avg_latency?.value ?? 0} <span className="text-xl">ms</span>
+              </div>
+              <p className="text-xs text-gray-400">
+                Across {kpis.avg_latency?.count || 0} calls
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Right side - Large Abandonment Reason Pie Chart */}
-        <Card title="Abandonment Reason" icon={TrendingDown} className="h-full">
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 relative">
+          <div className="flex items-center gap-3 mb-4">
+            <TrendingDown className="w-5 h-5 text-teal-400" />
+            <h3 className="text-lg font-semibold text-gray-100">Abandonment Reason</h3>
+          </div>
+
           {abandonmentData.length > 0 ? (
-            <div className="flex flex-col items-center justify-center h-full">
-              <div className="relative w-[240px] h-[240px]">
+            <>
+              <div className="h-64 relative">
                 <ResponsivePie
                   data={abandonmentData}
+                  colors={TEAL_COLORS}
                   innerRadius={0.6}
                   padAngle={2}
                   cornerRadius={4}
-                  activeOuterRadiusOffset={10}
-                  colors={TEAL_COLORS}
+                  activeOuterRadiusOffset={8}
                   borderWidth={0}
-                  enableArcLabels={true}
                   arcLabel={(d) => `${d.value}`}
                   arcLabelsTextColor="#ffffff"
                   arcLabelsSkipAngle={10}
@@ -375,67 +421,103 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
                     },
                   }}
                   tooltip={({ datum }) => (
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: datum.color }}
-                      />
-                      <span className="font-medium">{datum.label}</span>
-                      <span className="text-gray-400">·</span>
-                      <span>{datum.value} {datum.value === 1 ? 'call' : 'calls'}</span>
-
+                    <div className="px-3 py-2">
+                      <strong>{datum.label}</strong> · {datum.value} {datum.value === 1 ? 'call' : 'calls'}
                     </div>
                   )}
                 />
+
                 {/* Center label showing total */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="text-center">
-                    <div className="text-5xl font-bold text-teal-400">{totalAbandonment}</div>
-                    <div className="text-sm text-gray-500 uppercase tracking-wide mt-2">Total</div>
-                  </div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <div className="text-3xl font-bold text-teal-400">{totalAbandonment}</div>
+                  <div className="text-xs text-gray-400 mt-1">Total</div>
                 </div>
               </div>
+
               {/* Legend below chart */}
-              <div className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-2 max-w-[240px]">
+              <div className="flex flex-wrap gap-2 mt-4">
                 {abandonmentData.map((item, index) => {
                   const isActive = activeFilters.abandonment_reason?.eq === item.id;
                   return (
                     <button
                       key={item.id}
                       onClick={() => handleAbandonmentClick(item.id)}
-                      className={`flex items-center gap-2 px-2 py-1 rounded transition-all ${isActive
-                        ? 'bg-teal-500/20 ring-1 ring-teal-400/50'
-                        : 'hover:bg-gray-700/30'
-                        }`}
+                      className={`flex items-center gap-2 px-2 py-1 rounded transition-all ${
+                        isActive
+                          ? 'bg-teal-500/20 ring-1 ring-teal-400/50'
+                          : 'hover:bg-gray-700/30'
+                      }`}
                     >
                       <div
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: TEAL_COLORS[index % TEAL_COLORS.length] }}
                       />
-                      <span className={`text-sm ${isActive ? 'text-teal-400' : 'text-gray-400'}`}>
-                        {item.label}
-                      </span>
+                      <span className="text-xs text-gray-300">{item.label}</span>
                     </button>
                   );
                 })}
               </div>
-            </div>
+            </>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-gray-500">
-              <TrendingDown className="w-16 h-16 mb-3 opacity-50" />
-              <p className="text-sm">No data available</p>
+            <div className="h-64 flex items-center justify-center">
+              <p className="text-gray-500">No data available</p>
             </div>
           )}
-        </Card>
+        </div>
+      </div>
+
+      {/* Error Breakdown Section - NEW */}
+      <div className="bg-gray-800/30 backdrop-blur-sm rounded-xl p-6 border border-gray-700/30">
+        <div className="flex items-center gap-3 mb-4">
+          <Activity className="w-5 h-5 text-red-400" />
+          <h3 className="text-lg font-semibold text-gray-100">Error Breakdown</h3>
+          <span className="text-xs text-gray-500 ml-auto">Click to filter calls</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* STT Errors */}
+          <ErrorMetricCard
+            title="STT Errors"
+            icon={<Mic className="w-5 h-5 text-red-400" />}
+            count={kpis.stt_errors?.count}
+            onClick={() => handleMetricClick('stt_errors', true)}
+            isActive={!!activeFilters.stt_errors}
+          />
+
+          {/* LLM Errors */}
+          <ErrorMetricCard
+            title="LLM Errors"
+            icon={<Brain className="w-5 h-5 text-red-400" />}
+            count={kpis.llm_errors?.count}
+            onClick={() => handleMetricClick('llm_errors', true)}
+            isActive={!!activeFilters.llm_errors}
+          />
+
+          {/* TTS Errors */}
+          <ErrorMetricCard
+            title="TTS Errors"
+            icon={<Volume2 className="w-5 h-5 text-red-400" />}
+            count={kpis.tts_errors?.count}
+            onClick={() => handleMetricClick('tts_errors', true)}
+            isActive={!!activeFilters.tts_errors}
+          />
+
+          {/* Tool Call Errors */}
+          <ErrorMetricCard
+            title="Tool Errors"
+            icon={<Wrench className="w-5 h-5 text-red-400" />}
+            count={kpis.tool_errors?.count}
+            onClick={() => handleMetricClick('tool_errors', true)}
+            isActive={!!activeFilters.tool_errors}
+          />
+        </div>
       </div>
 
       {/* Sample Data Indicator */}
       {!normalized && (
-        <div className="mt-6 text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500/10 border border-teal-500/20 rounded-full text-teal-400 text-sm">
-            <Activity className="w-4 h-4" />
-            <span>Showing sample data</span>
-          </div>
+        <div className="text-center text-xs text-gray-500 mt-4">
+          <Activity className="w-4 h-4 inline-block mr-2" />
+          Showing sample data
         </div>
       )}
     </div>

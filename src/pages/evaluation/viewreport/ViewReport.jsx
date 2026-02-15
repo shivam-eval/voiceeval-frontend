@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useContext } from 'react';
+﻿import React, { useState, useEffect, useMemo, useContext } from 'react';
 import {
   ArrowLeft,
   Activity,
@@ -27,6 +27,7 @@ import TaskCompletionOverview from '../insights/task_completion';
 import ConversationOverview from '../insights/conversation';
 import GibberishDetection from '../insights/gibberish/GibberishDetection';
 import HallucinationOverview from '../insights/hallucination';
+import PronunciationOverview from '../insights/pronunciation';
 import CallKPISection from '../CallKPISection';
 
 const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack, isUploaded }) => {
@@ -114,6 +115,27 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         score: normalizedScore
       };
     }).filter(Boolean);
+  }, [evaluationData?.category_scores]);
+
+  const insightCategoryScores = useMemo(() => {
+    if (!Array.isArray(evaluationData?.category_scores)) return [];
+
+    const scores = evaluationData.category_scores.map(cat => {
+      const score = cat.score || 0;
+      const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
+
+      return {
+        category: cat.category,
+        score: normalizedScore,
+        weight: cat.weight || 0
+      };
+    });
+
+    if (!scores.some(c => c.category === 'pronunciation')) {
+      scores.push({ category: 'pronunciation', score: 100, weight: 0 });
+    }
+
+    return scores;
   }, [evaluationData?.category_scores]);
 
   // Extract latency data from metrics
@@ -219,6 +241,10 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         if (mName === 'hallucination') {
           category = 'hallucination';
         }
+        // Special override: ensure pronunciation is its own category
+        if (mName === 'pronunciation_accuracy') {
+          category = 'pronunciation';
+        }
 
         if (!category) return;
 
@@ -287,6 +313,9 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
       
       case 'hallucination':
         return <HallucinationOverview response={categoryMap.hallucination} onBack={handleBackToOverview} />;
+
+      case 'pronunciation':
+        return <PronunciationOverview response={categoryMap.pronunciation} onBack={handleBackToOverview} />;
 
       default:
         return null;
@@ -364,16 +393,7 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
         <InsightTabs
           activeCategory={activeCategory}
           onChange={handleCategoryChange}
-          categoryScores={evaluationData.category_scores.map(cat => {
-            const score = cat.score || 0;
-            const normalizedScore = score <= 1 ? Math.round(score * 100) : Math.round(score);
-
-            return {
-              category: cat.category,
-              score: normalizedScore,
-              weight: cat.weight || 0
-            };
-          })}
+          categoryScores={insightCategoryScores}
           clickable={true}
         />
       )}

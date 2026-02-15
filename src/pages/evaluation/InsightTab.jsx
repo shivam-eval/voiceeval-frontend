@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
 const CATEGORY_LABELS = {
   accuracy: "Accuracy",
@@ -8,6 +8,7 @@ const CATEGORY_LABELS = {
   conversation_quality: "Conversation",
   endpointing: "Endpointing",
   persona: "Persona",
+  pronunciation: "Pronunciation",
 };
 
 const titleize = (s) => {
@@ -31,7 +32,7 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = 
     : Object.entries(CATEGORY_LABELS).map(([key, label]) => ({ key, label, score: 0, raw: null }));
 
   return (
-    <div className="w-full grid grid-cols-7 gap-3">
+    <div className="w-full grid grid-cols-8 gap-3">
       {items.map(({ key, label, score, raw }) => {
         const statusColor =
           score >= 85
@@ -70,7 +71,7 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = 
                 transition-opacity rounded-xl
               ">
                 <span className="text-teal-300 text-sm font-medium">
-                  View details →
+                 View details →
                 </span>
               </div>
             )}

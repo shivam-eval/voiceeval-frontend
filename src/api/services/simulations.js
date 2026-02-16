@@ -121,6 +121,13 @@ export const getSimulationProgress = async (simulationId) => {
     return apiClient.get(`${BASE_PATH}/${simulationId}/progress`);
 };
 
+/**
+ * Get simulation categories (agents with simulation counts)
+ */
+export const getSimulationCategories = async () => {
+    return apiClient.get(`${BASE_PATH}/categories`);
+};
+
 const simulationsService = {
     getSimulations,
     getSimulation,
@@ -133,7 +140,8 @@ const simulationsService = {
     exportSimulationResults,
     getSimulationStatus,
     runInboundSimulation,
-    getSimulationProgress
+    getSimulationProgress,
+    getSimulationCategories
 };
 
 export default simulationsService;

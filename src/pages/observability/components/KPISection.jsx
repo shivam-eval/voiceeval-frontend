@@ -224,7 +224,23 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
               enableArcLabels
               arcLabel={d => d.value}
               enableArcLinkLabels={false}
+              activeOuterRadiusOffset={6}
               onClick={d => toggleFilter('abandonment_reason', { eq: d.id })}
+              tooltip={({ datum }) => (
+                <div className="bg-[#020617] px-3 py-2 rounded-lg border border-gray-700 text-xs">
+                  <div className="text-gray-400">{datum.label}</div>
+                  <div className="text-teal-300 font-semibold">{datum.value} calls</div>
+                </div>
+              )}
+              theme={{
+                tooltip: {
+                  container: {
+                    background: '#020617',
+                    color: '#fff',
+                    fontSize: 12,
+                  },
+                },
+              }}
             />
           </div>
         </Card>

@@ -778,6 +778,7 @@ useEffect(() => {
           normalized={activeKPIData}
           isLoadingKPIs={isLoadingKPIs}
           onFilterChange={handleKPIFilterChange}
+          agentId={directory}
         />
       )}
 

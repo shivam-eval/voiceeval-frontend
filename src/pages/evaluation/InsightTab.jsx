@@ -9,6 +9,7 @@ const CATEGORY_LABELS = {
   endpointing: "Endpointing",
   persona: "Persona",
   pronunciation: "Pronunciation",
+  hallucination: "Hallucination",
 };
 
 const titleize = (s) => {

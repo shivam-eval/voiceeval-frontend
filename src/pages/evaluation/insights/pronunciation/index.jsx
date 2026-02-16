@@ -1,91 +1,6 @@
 ﻿import { ArrowLeft, Mic } from "lucide-react";
 
 /* =========================
-   HARDCODED SAMPLE DATA
-========================= */
-
-const PRONUNCIATION_SAMPLE = {
-  metric_results: [
-    {
-      metric_name: "pronunciation_accuracy",
-      category: "pronunciation",
-      score: 1.0,
-      status: "passed",
-      details: {
-        entities_extracted: [
-          {
-            name: "Ravi",
-            type: "PERSON"
-          },
-          {
-            name: "MS Sleep",
-            type: "ORGANIZATION"
-          },
-          {
-            name: "Emma Hybrid Mattress",
-            type: "PRODUCT"
-          },
-          {
-            name: "Revi 50",
-            type: "PRODUCT"
-          },
-          {
-            name: "RAV 15",
-            type: "PRODUCT"
-          }
-        ],
-        total_entities_evaluated: 5,
-        mispronounced_count: 0,
-        per_entity_evaluations: [
-          {
-            proper_noun: "Ravi",
-            found_in_audio: true,
-            correctly_pronounced: true,
-            spoken_as: "",
-            reasoning: "The agent pronounced 'Ravi' correctly."
-          },
-          {
-            proper_noun: "MS Sleep",
-            found_in_audio: true,
-            correctly_pronounced: true,
-            spoken_as: "",
-            reasoning: "The agent pronounced 'MS Sleep' correctly."
-          },
-          {
-            proper_noun: "Emma Hybrid Mattress",
-            found_in_audio: true,
-            correctly_pronounced: true,
-            spoken_as: "",
-            reasoning: "The agent pronounced 'Emma Hybrid Mattress' correctly."
-          },
-          {
-            proper_noun: "Revi 50",
-            found_in_audio: true,
-            correctly_pronounced: true,
-            spoken_as: "",
-            reasoning: "The agent pronounced 'Revi 50' correctly."
-          },
-          {
-            proper_noun: "RAV 15",
-            found_in_audio: true,
-            correctly_pronounced: true,
-            spoken_as: "",
-            reasoning: "The agent pronounced 'RAV 15' correctly."
-          }
-        ],
-        llm_calls_made: 2,
-        value: 1.0,
-        threshold: 0.8,
-        passed: true,
-        execution_time_ms: 17628.38315963745,
-        reasoning:
-          "Pronunciation score (1.00) meets threshold (0.80). Agent correctly pronounced 5/5 entities."
-      }
-    }
-  ]
-};
-
-/* =========================
    HELPERS
 ========================= */
 
@@ -224,11 +139,6 @@ const extractPronunciationData = (response, data) => {
         if (score === 0) score = cat.average_score || cat.score || 0;
       }
     }
-  }
-
-  if (!metrics || metrics.length === 0) {
-    metrics = PRONUNCIATION_SAMPLE.metric_results;
-    score = PRONUNCIATION_SAMPLE.metric_results[0]?.score || 0;
   }
 
   if (categoryScore) {

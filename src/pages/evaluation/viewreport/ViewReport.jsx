@@ -131,10 +131,6 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
       };
     });
 
-    if (!scores.some(c => c.category === 'pronunciation')) {
-      scores.push({ category: 'pronunciation', score: 100, weight: 0 });
-    }
-
     return scores;
   }, [evaluationData?.category_scores]);
 

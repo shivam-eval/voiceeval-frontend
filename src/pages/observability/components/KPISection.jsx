@@ -9,9 +9,13 @@ import {
   Activity,
   Filter,
   X,
+  FileText,
+  Calendar,
+  Loader2,
 } from 'lucide-react';
-import { Download } from 'lucide-react';
-import { exportKPIsToPDF } from '../../../utils/exportKPIsToPDF';
+import { toast } from 'react-toastify';
+import { useReportData } from '../../../hooks/useKPIs';
+import { exportReportPDF } from '../../../utils/exportReportPDF';
 
 
 /* ================= CONSTANTS ================= */
@@ -134,9 +138,136 @@ const FilterDropdown = ({ filters, onRemove, onClear }) => {
   );
 };
 
+/* ================= DATE RANGE PICKER MODAL ================= */
+const DateRangePickerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
+  const today = new Date().toISOString().split('T')[0];
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0];
+
+  const [startDate, setStartDate] = useState(thirtyDaysAgo);
+  const [endDate, setEndDate] = useState(today);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = () => {
+    if (!startDate || !endDate) {
+      toast.error('Please select both start and end dates');
+      return;
+    }
+    if (new Date(startDate) > new Date(endDate)) {
+      toast.error('Start date must be before end date');
+      return;
+    }
+    onSubmit(startDate, endDate);
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/60 z-40"
+        onClick={onClose}
+      />
+      {/* Modal */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="bg-[#1a1a1a] border border-gray-800 rounded-xl shadow-2xl w-full max-w-md">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-800">
+            <div className="flex items-center gap-3">
+              <Calendar className="w-5 h-5 text-teal-400" />
+              <h3 className="text-lg font-semibold text-white">Generate Report</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-white transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Body */}
+          <div className="p-6 space-y-5">
+            <p className="text-sm text-gray-400">
+              Select a date range to generate a comprehensive PDF report with
+              KPI metrics, early termination details, and hallucination analysis.
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
+                  Start Date
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  max={today}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-full bg-[#2a2a2a] border border-gray-700 rounded-lg px-3 py-2.5
+                             text-white text-sm focus:outline-none focus:border-teal-500
+                             transition [color-scheme:dark]"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-400 mb-2 uppercase tracking-wide">
+                  End Date
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  max={today}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="w-full bg-[#2a2a2a] border border-gray-700 rounded-lg px-3 py-2.5
+                             text-white text-sm focus:outline-none focus:border-teal-500
+                             transition [color-scheme:dark]"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-800">
+            <button
+              onClick={onClose}
+              disabled={isLoading}
+              className="px-5 py-2.5 rounded-lg border border-gray-700 text-gray-400
+                         hover:bg-gray-800 transition text-sm font-medium
+                         disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-lg
+                         bg-teal-500/20 border border-teal-500/40 text-teal-400
+                         hover:bg-teal-500/30 transition text-sm font-bold
+                         disabled:opacity-50"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <FileText className="w-4 h-4" />
+                  Download Report
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
 /* ================= KPI SECTION ================= */
-const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
+const KPISection = ({ normalized, isLoadingKPIs, onFilterChange, agentId }) => {
   const [filters, setFilters] = useState({});
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const reportMutation = useReportData();
 
   const data = normalized?.kpis ? normalized : DUMMY_DATA;
   const { kpis } = data;
@@ -148,6 +279,26 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
       onFilterChange?.(updated);
       return updated;
     });
+  };
+
+  const handleGetReport = async (startDate, endDate) => {
+    if (!agentId) {
+      toast.error('No agent selected');
+      return;
+    }
+
+    try {
+      const reportData = await reportMutation.mutateAsync({
+        agentId,
+        startDate,
+        endDate,
+      });
+      exportReportPDF(reportData);
+      toast.success('Report downloaded successfully');
+      setIsReportModalOpen(false);
+    } catch (error) {
+      toast.error(`Failed to generate report: ${error?.response?.data?.detail || error.message}`);
+    }
   };
 
   const abandonmentData = useMemo(() => {
@@ -172,16 +323,23 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
         />
 
         <button
-          onClick={() => exportKPIsToPDF(data, filters)}
+          onClick={() => setIsReportModalOpen(true)}
           className="flex items-center gap-2 px-4 py-2 rounded-lg
-                     bg-gray-800/30 border border-gray-700/50
-                     text-gray-400 hover:bg-gray-800/50
+                     bg-teal-500/10 border border-teal-500/30
+                     text-teal-400 hover:bg-teal-500/20
                      transition"
         >
-          <Download className="w-4 h-4" />
-          <span className="text-sm font-medium">Download</span>
+          <FileText className="w-4 h-4" />
+          <span className="text-sm font-medium">Get Report</span>
         </button>
       </div>
+
+      <DateRangePickerModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        onSubmit={handleGetReport}
+        isLoading={reportMutation.isPending}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* METRICS */}

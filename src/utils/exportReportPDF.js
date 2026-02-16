@@ -208,58 +208,7 @@ export const exportReportPDF = (data, username = 'User') => {
   }
 
   /* ================= EARLY TERMINATION DETAILS ================= */
-
-  if (earlyTermination.calls && earlyTermination.calls.length > 0) {
-    // Check if we need a new page
-    const prevY = doc.lastAutoTable?.finalY ?? tableY;
-    const spaceNeeded = earlyTermination.calls.length * 12 + 30;
-    let etY;
-
-    if (pageHeight - prevY - 20 < spaceNeeded) {
-      doc.addPage();
-      doc.setFillColor(17, 24, 39);
-      doc.rect(0, 0, pageWidth, pageHeight, 'F');
-      doc.setFillColor(20, 184, 166);
-      doc.rect(0, 0, pageWidth, 12, 'F');
-      doc.setFontSize(14);
-      doc.setTextColor(255, 255, 255);
-      doc.setFont('helvetica', 'bold');
-      doc.text('VoiceEval', 14, 8);
-      doc.setFontSize(11);
-      doc.setFont('helvetica', 'normal');
-      doc.text(username, pageWidth - 14, 8, { align: 'right' });
-      etY = 25;
-    } else {
-      etY = prevY + 12;
-    }
-
-    doc.setFontSize(12);
-    doc.setTextColor(239, 68, 68);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`Early Termination Details (${earlyTermination.count} calls)`, 14, etY);
-
-    const etRows = earlyTermination.calls.map((c) => [
-      c.call_id || '--',
-      (c.reasoning || 'No reasoning provided').substring(0, 120),
-    ]);
-
-    autoTable(doc, {
-      startY: etY + 5,
-      head: [['Call ID', 'Reasoning']],
-      body: etRows,
-      theme: 'grid',
-      headStyles: { fillColor: [153, 27, 27], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
-      bodyStyles: { fillColor: [30, 41, 59], textColor: [229, 231, 235], fontSize: 8 },
-      alternateRowStyles: { fillColor: [31, 41, 55] },
-      margin: { left: 14, right: 14 },
-      tableLineColor: [55, 65, 81],
-      tableLineWidth: 0.5,
-      columnStyles: {
-        0: { cellWidth: 40 },
-        1: { cellWidth: 'auto' },
-      },
-    });
-  }
+  // Intentionally omitted from PDF: we only keep the summary metric card/row.
 
   /* ================= HALLUCINATION DETAILS ================= */
 
@@ -293,16 +242,12 @@ export const exportReportPDF = (data, username = 'User') => {
 
     const halRows = hallucinations.items.map((item) => {
       const texts = (item.hallucination_texts || []).join('; ').substring(0, 150) || '--';
-      return [
-        item.call_id || '--',
-        texts,
-        (item.reasoning || '').substring(0, 100),
-      ];
+      return [texts];
     });
 
     autoTable(doc, {
       startY: halY + 5,
-      head: [['Call ID', 'Hallucinations', 'Reasoning']],
+      head: [['Hallucinations']],
       body: halRows,
       theme: 'grid',
       headStyles: { fillColor: [180, 83, 9], textColor: [255, 255, 255], fontSize: 10, fontStyle: 'bold' },
@@ -311,11 +256,6 @@ export const exportReportPDF = (data, username = 'User') => {
       margin: { left: 14, right: 14 },
       tableLineColor: [55, 65, 81],
       tableLineWidth: 0.5,
-      columnStyles: {
-        0: { cellWidth: 35 },
-        1: { cellWidth: 80 },
-        2: { cellWidth: 'auto' },
-      },
     });
   }
 

@@ -190,7 +190,7 @@ const DateRangePickerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
           <div className="p-6 space-y-5">
             <p className="text-sm text-gray-400">
               Select a date range to generate a comprehensive PDF report with
-              KPI metrics, early termination details, and hallucination analysis.
+              KPI metrics and hallucination analysis.
             </p>
 
             <div className="grid grid-cols-2 gap-4">
@@ -202,7 +202,20 @@ const DateRangePickerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                   type="date"
                   value={startDate}
                   max={today}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!value) {
+                      setStartDate('');
+                      return;
+                    }
+                    // Prevent selecting future dates (extra safety beyond max)
+                    if (value > today) return;
+                    setStartDate(value);
+                    // Ensure end date is never before start date
+                    if (endDate && new Date(value) > new Date(endDate)) {
+                      setEndDate(value);
+                    }
+                  }}
                   className="w-full bg-[#2a2a2a] border border-gray-700 rounded-lg px-3 py-2.5
                              text-white text-sm focus:outline-none focus:border-teal-500
                              transition [color-scheme:dark]"
@@ -215,8 +228,21 @@ const DateRangePickerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
                 <input
                   type="date"
                   value={endDate}
+                  min={startDate || undefined}
                   max={today}
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (!value) {
+                      setEndDate('');
+                      return;
+                    }
+                    // End date cannot be before start date
+                    if (startDate && value < startDate) {
+                      setEndDate(startDate);
+                      return;
+                    }
+                    setEndDate(value);
+                  }}
                   className="w-full bg-[#2a2a2a] border border-gray-700 rounded-lg px-3 py-2.5
                              text-white text-sm focus:outline-none focus:border-teal-500
                              transition [color-scheme:dark]"

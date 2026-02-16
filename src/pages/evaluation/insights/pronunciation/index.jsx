@@ -284,23 +284,23 @@ const MetricCard = ({ metric }) => {
       }`}
     >
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <span className="text-[10px] uppercase tracking-widest text-gray-400">
             {label}
           </span>
-          <span className={`text-3xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"}`}>
+          <div className={`text-2xl font-bold ${isPassed ? "text-teal-400" : "text-red-400"}`}>
             {metricScore}%
-          </span>
+          </div>
         </div>
         <div
-          className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest ${
+          className={`px-4 py-1 rounded-full text-[10px] font-bold uppercase ${
             isPassed
               ? "bg-green-500/10 text-green-400 border border-green-500/20"
               : "bg-red-500/10 text-red-400 border border-red-500/20"
           }`}
         >
-          {isPassed ? "PASSED" : "FAILED"}
+          {isPassed ? "\u2713 PASSED" : "\u2717 FAILED"}
         </div>
       </div>
 
@@ -378,12 +378,6 @@ const MetricCard = ({ metric }) => {
 const PronunciationOverview = ({ response, data, onBack }) => {
   const { metrics, score, passed, weight } = extractPronunciationData(response, data);
   const normalizedScore = normalizeScore(score);
-  const scoreColor =
-    normalizedScore >= 90
-      ? "text-green-400"
-      : normalizedScore >= 70
-        ? "text-yellow-400"
-        : "text-red-400";
 
   if (!metrics || metrics.length === 0) {
     return (
@@ -391,13 +385,13 @@ const PronunciationOverview = ({ response, data, onBack }) => {
         {onBack && (
           <button
             onClick={onBack}
-            className="px-4 py-2 bg-[#0b1220] hover:bg-[#0b1220]/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+            className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
             Back to Overview
           </button>
         )}
-        <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-12 text-center">
+        <div className="bg-dark-panel border border-gray-800/50 rounded-xl p-12 text-center">
           <Mic className="w-12 h-12 text-gray-600 mx-auto mb-3" />
           <p className="text-gray-400 text-sm">No pronunciation metrics available</p>
         </div>
@@ -413,7 +407,7 @@ const PronunciationOverview = ({ response, data, onBack }) => {
       {onBack && (
         <button
           onClick={onBack}
-          className="px-4 py-2 bg-[#0b1220] hover:bg-[#0b1220]/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
+          className="px-4 py-2 bg-dark-input hover:bg-dark-input/80 border border-gray-700 text-gray-300 rounded-lg text-sm font-medium flex items-center gap-2 transition-all"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Overview
@@ -421,76 +415,40 @@ const PronunciationOverview = ({ response, data, onBack }) => {
       )}
 
       {/* Header Card */}
-      <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-8 shadow-lg">
-        <div className="flex items-center justify-between flex-wrap gap-6">
-          <div className="flex items-start gap-4">
-            <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-teal-500/10 border border-teal-500/20">
-              <Mic className="w-7 h-7 text-teal-400" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-white mb-1">Pronunciation Accuracy</h2>
-              <p className="text-gray-400 text-sm max-w-lg">
-                Measures correct pronunciation of proper nouns, brands, and product names in agent speech
-              </p>
-            </div>
+      <div className="bg-[#0b1220] border border-gray-800/50 rounded-xl p-6 flex items-center justify-between shadow-lg">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-teal-500/10 border border-teal-500/20 text-teal-400">
+            <Mic size={28} />
           </div>
-
-          <div className="flex items-center gap-8 flex-wrap">
-            {/* Overall Score */}
-            <div className="flex flex-col items-end gap-1">
-              <span className={`text-5xl font-bold ${scoreColor}`}>{normalizedScore}%</span>
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                Overall Score
-              </span>
-            </div>
-
-            <div className="h-12 w-px bg-gray-800 hidden lg:block" />
-
-            {/* Pass/Fail Stats */}
-            <div className="flex gap-8 text-sm">
-              <div className="flex flex-col items-end gap-1">
-                <div className="text-2xl font-bold text-green-400">{passedCount}</div>
-                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Passed</div>
-              </div>
-              <div className="flex flex-col items-end gap-1">
-                <div className="text-2xl font-bold text-red-400">{failedCount}</div>
-                <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Failed</div>
-              </div>
-            </div>
-
-            {/* Category Status */}
-            {passed !== null && (
-              <>
-                <div className="h-12 w-px bg-gray-800 hidden lg:block" />
-                <div
-                  className={`px-5 py-2 rounded-full text-xs font-bold uppercase tracking-widest ${
-                    passed
-                      ? "bg-green-500/10 text-green-400 border border-green-500/20"
-                      : "bg-red-500/10 text-red-400 border border-red-500/20"
-                  }`}
-                >
-                  {passed ? "CATEGORY PASSED" : "CATEGORY FAILED"}
-                </div>
-              </>
-            )}
+          <div>
+            <h2 className="text-2xl font-bold text-white">Pronunciation Accuracy</h2>
+            <p className="text-gray-400 text-sm mt-1">
+              Measures correct pronunciation of proper nouns, brands, and product names in agent speech
+            </p>
           </div>
         </div>
 
-        {/* Weight Indicator */}
-        {weight !== null && weight !== undefined && (
-          <div className="mt-6 pt-6 border-t border-gray-800/50 flex items-center gap-3">
-            <span className="text-xs text-gray-500 uppercase tracking-wider">Category Weight:</span>
-            <div className="flex-1 max-w-xs">
-              <div className="h-2 bg-gray-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-teal-500 to-teal-400 transition-all"
-                  style={{ width: `${weight * 100}%` }}
-                />
-              </div>
-            </div>
-            <span className="text-sm font-semibold text-gray-300">{(weight * 100).toFixed(0)}%</span>
+        <div className="flex items-center gap-6">
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-4xl font-bold text-teal-400">{normalizedScore}%</span>
+            <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
+              Overall Score
+            </span>
           </div>
-        )}
+
+          <div className="h-10 w-px bg-gray-800" />
+
+          <div className="flex gap-6 text-sm">
+            <div className="flex flex-col items-end">
+              <div className="text-2xl font-bold text-white">{passedCount}</div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Passed</div>
+            </div>
+            <div className="flex flex-col items-end">
+              <div className="text-2xl font-bold text-white">{failedCount}</div>
+              <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Failed</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Metrics Grid */}

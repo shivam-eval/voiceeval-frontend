@@ -33,7 +33,7 @@ const InsightTabs = ({ onChange, activeCategory, categoryScores = [], enabled = 
     : Object.entries(CATEGORY_LABELS).map(([key, label]) => ({ key, label, score: 0, raw: null }));
 
   return (
-    <div className="w-full grid grid-cols-8 gap-3">
+    <div className="w-full grid gap-3" style={{ gridTemplateColumns: `repeat(${Math.min(items.length, 10)}, minmax(0, 1fr))` }}>
       {items.map(({ key, label, score, raw }) => {
         const statusColor =
           score >= 85

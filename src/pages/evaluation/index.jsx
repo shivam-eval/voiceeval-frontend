@@ -19,6 +19,7 @@ import PersonaOverview from "./insights/persona";
 import TaskCompletionOverview from "./insights/task_completion";
 import ConversationOverview from "./insights/conversation";
 import PronunciationOverview from "./insights/pronunciation";
+import HallucinationOverview from "./insights/hallucination";
 import GibberishDetection from "./insights/gibberish/GibberishDetection";
 import { useWorkflow } from "../../context/WorkFlowContext";
 import { getSessionTranscript } from "../../api/services/simulation.service";
@@ -37,6 +38,7 @@ const CATEGORY = {
   PERSONA: "persona",
   CONVERSATION: "conversation_quality",
   PRONUNCIATION: "pronunciation",
+  HALLUCINATION: "hallucination",
   GIBBERISH_DETECTION: "gibberish",
 };
 
@@ -50,6 +52,7 @@ const CATEGORY_TITLES = {
   [CATEGORY.TASK_COMPLETION]: "TASK COMPLETION OVERVIEW",
   [CATEGORY.CONVERSATION]: "CONVERSATION OVERVIEW",
   [CATEGORY.PRONUNCIATION]: "PRONUNCIATION OVERVIEW",
+  [CATEGORY.HALLUCINATION]: "HALLUCINATION OVERVIEW",
   [CATEGORY.GIBBERISH_DETECTION]: "GIBBERISH DETECTION OVERVIEW"
 };
 
@@ -535,6 +538,8 @@ categoryScores = Object.entries(avgScores.by_category).map(([category, score]) =
         return <ConversationOverview data={aggregatedData} onBack={handleBackToOverview} />;
       case CATEGORY.PRONUNCIATION:
         return <PronunciationOverview data={aggregatedData} onBack={handleBackToOverview} />;
+      case CATEGORY.HALLUCINATION:
+        return <HallucinationOverview data={aggregatedData} onBack={handleBackToOverview} />;
       case CATEGORY.GIBBERISH_DETECTION:
         return <GibberishDetection data={aggregatedData} onBack={handleBackToOverview} />;
       default:

@@ -17,6 +17,7 @@ import AgentsTable from './components/AgentsTable';
 import CallsTable from './components/CallsTable';
 import Pagination from './components/Pagination';
 import { EvaluateModal, KPIDiscoveryModal } from './components/CallsModals';
+import AgentDirectoriesView from '../../components/AgentDirectoriesView';
 
 const CallsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -782,94 +783,78 @@ useEffect(() => {
         />
       )}
 
-      {/* Search Bar */}
-      <CallsSearchBar
-        viewMode={viewMode}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        directory={directory}
-        currentOptions={currentOptions}
-        onDirectoryChange={(val) =>
-  updateParams({
-    directory: val,
-    callsPage: String(callsPage),
-    agentsPage: String(agentsPage),
-  })
-}
+      {/* Render Agent Directories View or Calls View */}
+      {viewMode === 'directories' ? (
+        <AgentDirectoriesView 
+          onAgentSelect={handleDirectoryClick}
+          showHeader={true}
+        />
+      ) : (
+        <>
+          {/* Search Bar */}
+          <CallsSearchBar
+            viewMode={viewMode}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            directory={directory}
+            currentOptions={currentOptions}
+            onDirectoryChange={(val) =>
+              updateParams({
+                directory: val,
+                callsPage: String(callsPage),
+                agentsPage: String(agentsPage),
+              })
+            }
+            onBackToDirectories={handleBackToDirectories}
+            onEvaluateAll={handleEvaluateAll}
+            onAddCalls={handleAddCalls}
+            isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
+          />
 
-        onBackToDirectories={handleBackToDirectories}
-        onEvaluateAll={handleEvaluateAll}
-        onAddCalls={handleAddCalls}
-        isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
-      />
+          {/* Active Filters Indicator */}
+          {Object.keys(kpiFilters).length > 0 && (
+            <div className="mb-4 flex items-center gap-2 text-sm text-teal-400">
+              <span>Filtering by {Object.keys(kpiFilters).length} metric{Object.keys(kpiFilters).length > 1 ? 's' : ''}</span>
+              <button
+                onClick={() => handleKPIFilterChange({})}
+                className="text-xs underline hover:text-teal-300"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
 
-      {/* Active Filters Indicator */}
-      {Object.keys(kpiFilters).length > 0 && (
-        <div className="mb-4 flex items-center gap-2 text-sm text-teal-400">
-          <span>Filtering by {Object.keys(kpiFilters).length} metric{Object.keys(kpiFilters).length > 1 ? 's' : ''}</span>
-          <button
-            onClick={() => handleKPIFilterChange({})}
-            className="text-xs underline hover:text-teal-300"
-          >
-            Clear all filters
-          </button>
-        </div>
-      )}
+          {/* Table Container */}
+          <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
+            <div className="overflow-x-auto custom-scrollbar">
+              <CallsTable
+                calls={calls}
+                isCallsLoading={isCallsLoading}
+                error={error}
+                callsPage={callsPage}
+                callsPerPage={callsPerPage}
+                onRowClick={handleRowClick}
+                onDeleteCall={handleDeleteCall}
+                onDownload={handleDownloadCall}
+                onAddCalls={handleAddCalls}
+                formatDate={formatDate}
+                getMetricValue={getMetricValue}
+                isDeleting={deleteCall.isPending}
+              />
+            </div>
+          </div>
 
-      {/* Table Container */}
-      <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
-        <div className="overflow-x-auto custom-scrollbar">
-          {viewMode === 'directories' ? (
-            <AgentsTable
-              filteredCategories={filteredCategories}
-              isCategoriesLoading={isCategoriesLoading}
-              displayedAgents={displayedAgents}
-              agentsPage={agentsPage}
-              agentsPerPage={agentsPerPage}
-              agentsData={agentsData}
-              onDirectoryClick={handleDirectoryClick}
-              onEvaluateAll={handleEvaluateAll}
-              onAddCalls={handleAddCalls}
-              isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
-            />
-          ) : (
-            <CallsTable
-              calls={calls}
-              isCallsLoading={isCallsLoading}
-              error={error}
-              callsPage={callsPage}
-              callsPerPage={callsPerPage}
-              onRowClick={handleRowClick}
-              onDeleteCall={handleDeleteCall}
-              onDownload={handleDownloadCall}
-              onAddCalls={handleAddCalls}
-              formatDate={formatDate}
-              getMetricValue={getMetricValue}
-              isDeleting={deleteCall.isPending}
+          {/* Pagination */}
+          {calls.length > 0 && (
+            <Pagination
+              currentPage={callsPage}
+              totalItems={calls.length}
+              itemsPerPage={callsPerPage}
+              onPageChange={handleCallsPageChange}
+              itemName="calls"
             />
           )}
-        </div>
-      </div>
-
-      {/* Pagination */}
-      {viewMode === 'directories' && filteredCategories.length > 0 && (
-        <Pagination
-          currentPage={agentsPage}
-          totalItems={displayedAgents.length}
-          itemsPerPage={agentsPerPage}
-          onPageChange={handleAgentsPageChange}
-          itemName="agents"
-        />
-      )}
-
-      {viewMode === 'calls' && calls.length > 0 && (
-        <Pagination
-          currentPage={callsPage}
-          totalItems={calls.length}
-          itemsPerPage={callsPerPage}
-          onPageChange={handleCallsPageChange}
-          itemName="calls"
-        />
+        </>
       )}
 
       {/* Modals */}

@@ -215,7 +215,7 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
 
         {/* ABANDONMENT PIE */}
         <Card title="Abandonment Reason" icon={TrendingDown}>
-          <div className="h-[260px]">
+          <div className="h-[260px] relative">
             <ResponsivePie
               data={abandonmentData}
               innerRadius={0.6}
@@ -242,6 +242,13 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange }) => {
                 },
               }}
             />
+            {/* Total calls in donut center */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <div className="text-2xl font-bold text-white">
+                {abandonmentData.reduce((sum, d) => sum + d.value, 0)}
+              </div>
+              <div className="text-xs text-gray-400">Total Calls</div>
+            </div>
           </div>
         </Card>
       </div>

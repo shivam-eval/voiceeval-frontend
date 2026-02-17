@@ -522,6 +522,12 @@ const CallsPage = () => {
     return opt?.label || '';
   }, [directory, currentOptions]);
 
+  const currentAgentBolnaId = useMemo(() => {
+    if (!directory) return null;
+    const agent = agentsData?.agents?.find(a => a.agent_id === directory);
+    return agent?.metadata?.external_id || null;
+  }, [directory, agentsData]);
+
   const handleEvaluate = async (targetCallId) => {
     try {
       if (targetCallId) {
@@ -890,6 +896,7 @@ useEffect(() => {
         isOpen={isBolnaImportOpen}
         onClose={() => setIsBolnaImportOpen(false)}
         agentId={directory}
+        bolnaAgentId={currentAgentBolnaId}
         agentName={currentAgentName}
         onImportComplete={handleBolnaImportComplete}
       />

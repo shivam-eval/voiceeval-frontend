@@ -3,7 +3,7 @@ import { toast } from "react-toastify";
 import { X, Download, Calendar, Phone, ExternalLink, Loader2 } from "lucide-react";
 import { useFetchBolnaCalls, useImportBolnaCalls } from "../hooks/useCalls";
 
-const BolnaImportModal = ({ isOpen, onClose, agentId, agentName, onImportComplete }) => {
+const BolnaImportModal = ({ isOpen, onClose, agentId, bolnaAgentId, agentName, onImportComplete }) => {
   const today = new Date().toISOString().split("T")[0];
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     .toISOString()
@@ -33,7 +33,7 @@ const BolnaImportModal = ({ isOpen, onClose, agentId, agentName, onImportComplet
 
     try {
       const result = await fetchBolnaCalls.mutateAsync({
-        agent_id: agentId,
+        agent_id: bolnaAgentId || agentId,
         from_date: new Date(startDate + "T00:00:00").toISOString(),
         to_date: new Date(endDate + "T23:59:59").toISOString(),
       });

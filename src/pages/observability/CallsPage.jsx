@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import AudioUploadModal from '../../components/AudioUploadModal';
+import BolnaImportModal from '../../components/BolnaImportModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvaluateAudio, useDeleteCall } from '../../hooks/useCalls';
 import { useFlows } from '../../hooks/useFlows';
@@ -35,6 +36,7 @@ const CallsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBolnaImportOpen, setIsBolnaImportOpen] = useState(false);
   const [isEvaluateModalOpen, setIsEvaluateModalOpen] = useState(false);
   const [evalAgentId, setEvalAgentId] = useState(workflow?.assistantId || '');
   const [evalDirectory, setEvalDirectory] = useState('');
@@ -505,6 +507,21 @@ const CallsPage = () => {
     setIsModalOpen(true);
   };
 
+  const handleImportBolna = () => {
+    setIsBolnaImportOpen(true);
+  };
+
+  const handleBolnaImportComplete = () => {
+    refetch();
+    refetchCategories();
+  };
+
+  const currentAgentName = useMemo(() => {
+    if (!directory) return '';
+    const opt = currentOptions.find((o) => o.value === directory);
+    return opt?.label || '';
+  }, [directory, currentOptions]);
+
   const handleEvaluate = async (targetCallId) => {
     try {
       if (targetCallId) {
@@ -808,6 +825,7 @@ useEffect(() => {
             onBackToDirectories={handleBackToDirectories}
             onEvaluateAll={handleEvaluateAll}
             onAddCalls={handleAddCalls}
+            onImportBolna={handleImportBolna}
             isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
           />
 
@@ -866,6 +884,14 @@ useEffect(() => {
         mode="calls"
         agents={agentOptions}
         defaultAgentId={directory || workflow?.assistantId || ''}
+      />
+
+      <BolnaImportModal
+        isOpen={isBolnaImportOpen}
+        onClose={() => setIsBolnaImportOpen(false)}
+        agentId={directory}
+        agentName={currentAgentName}
+        onImportComplete={handleBolnaImportComplete}
       />
 
       <EvaluateModal

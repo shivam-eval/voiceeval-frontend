@@ -109,3 +109,27 @@ export const useDeleteCall = () => {
         },
     });
 };
+
+/**
+ * Hook to fetch calls from Bolna API
+ */
+export const useFetchBolnaCalls = () => {
+    return useMutation({
+        mutationFn: (data) => callsApi.fetchBolnaCalls(data),
+    });
+};
+
+/**
+ * Hook to import selected Bolna calls
+ */
+export const useImportBolnaCalls = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (data) => callsApi.importBolnaCalls(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: callKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: callKeys.categories() });
+        },
+    });
+};

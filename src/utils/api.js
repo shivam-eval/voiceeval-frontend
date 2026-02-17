@@ -120,6 +120,7 @@ export const agentsApi = {
     test: (id) => apiClient.post(`/agents/${id}/test`, {}),
     clone: (id) => apiClient.post(`/agents/${id}/clone`, {}),
     reExtract: (data) => apiClient.post('/extract/re-extract', data),
+    listBolnaAgents: (data) => apiClient.post('/agents/bolna/list-agents', data),
 };
 
 
@@ -215,6 +216,8 @@ export const callsApi = {
         });
     },
     categories: () => apiClient.get('/calls/categories'),
+    fetchBolnaCalls: (data) => apiClient.post('/calls/bolna/fetch-calls', data),
+    importBolnaCalls: (data) => apiClient.post('/calls/bolna/import-calls', data),
 };
 
 export default apiClient;

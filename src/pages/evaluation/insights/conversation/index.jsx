@@ -462,7 +462,6 @@ const ConversationOverview = ({ response, data, transcriptData, onBack }) => {
             const turnData =
               metric.details?.turn_data ||
               metric.details?.turn_breakdown ||
-              metric.details?.per_turn_sentiment ||
               null;
 
             const details = Object.entries(metric.details || {}).filter(
@@ -476,17 +475,11 @@ const ConversationOverview = ({ response, data, transcriptData, onBack }) => {
                   "error_message",
                   "turn_data",
                   "turn_breakdown",
-                  "per_turn_sentiment",
-                  "inflection_points",
                   "agent_sentences",
                   "repetition_count",
                   "repetitions"
                 ].includes(key)
             );
-
-            const hasInflectionPoints =
-              metric.details?.inflection_points &&
-              Array.isArray(metric.details.inflection_points);
 
             const isRepetitionMetric = (metric.name || metric.metric_name) === 'repetition_count';
             const hasRepetitions = isRepetitionMetric && metric.details?.repetitions && Array.isArray(metric.details.repetitions);
@@ -658,8 +651,6 @@ const ConversationOverview = ({ response, data, transcriptData, onBack }) => {
                         if (mName === "words_per_minute") {
                           isIdeal = turn.wpm >= 120 && turn.wpm <= 150;
                           displayValue = `WPM: ${Math.round(turn.wpm)}`;
-                        } else if (mName === "text_sentiment") {
-                          displayValue = turn.emotion || "Unknown";
                         }
 
                         return (
@@ -693,9 +684,7 @@ const ConversationOverview = ({ response, data, transcriptData, onBack }) => {
                                 <span
                                   className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${isIdeal || turnStatus === "passed"
                                     ? "bg-green-500/20 text-green-400"
-                                    : mName === "text_sentiment"
-                                      ? "bg-teal-500/20 text-teal-400"
-                                      : "bg-red-500/20 text-red-400"
+                                    : "bg-red-500/20 text-red-400"
                                     }`}
                                 >
                                   {displayValue}
@@ -749,42 +738,6 @@ const ConversationOverview = ({ response, data, transcriptData, onBack }) => {
                   </div>
                 )}
 
-                {/* Inflection Points (for sentiment metrics) */}
-                {hasInflectionPoints && (
-                  <div className="pt-4 border-t border-gray-800/50">
-                    <div className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-3">
-                      Sentiment Inflection Points
-                    </div>
-                    <div className="space-y-3">
-                      {metric.details.inflection_points.map((inf, iIdx) => (
-                        <div
-                          key={iIdx}
-                          className={`flex items-center justify-between p-4 rounded-lg border ${inf.direction === "positive"
-                            ? "bg-green-950/20 border-green-900/40"
-                            : "bg-red-950/20 border-red-900/40"
-                            }`}
-                        >
-                          <div className="text-sm text-gray-300">
-                            Turn #{inf.turn_index + 1}
-                          </div>
-                          <div className="flex items-center gap-4 text-sm">
-                            <span className="text-gray-400">
-                              Δ {Math.round(inf.change_magnitude * 100)}%
-                            </span>
-                            <span
-                              className={`text-[10px] px-2 py-1 rounded font-bold uppercase ${inf.direction === "positive"
-                                ? "bg-green-500/20 text-green-400"
-                                : "bg-red-500/20 text-red-400"
-                                }`}
-                            >
-                              {inf.direction}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             );
           })}

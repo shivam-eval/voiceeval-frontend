@@ -614,7 +614,6 @@ const CallsPage = () => {
     if (!call) return '--';
 
     const isLatency = metricName === 'avg_latency';
-    const isSentiment = metricName === 'sentiment_score';
     const isIssues = metricName === 'issues_found';
 
     const formatScore = (score) => {
@@ -626,10 +625,6 @@ const CallsPage = () => {
       if (isLatency) {
         const val = numScore > 100 ? numScore / 1000 : numScore;
         return val.toFixed(2) + 's';
-      }
-
-      if (isSentiment) {
-        return numScore.toFixed(2);
       }
 
       if (isIssues) {
@@ -653,7 +648,6 @@ const CallsPage = () => {
       'task_completion_rate': ['task_completion', 'completion', 'success_rate', 'sequential_task_accuracy', 'flow_path_coverage', 'task_completion_rate'],
       'audio_quality': ['audio', 'audio_quality', 'signal_to_noise', 'audio_quality_score'],
       'persona_score': ['persona', 'tone', 'voice_match', 'persona_score', 'tone_score'],
-      'sentiment_score': ['sentiment', 'mood', 'sentiment_score'],
       'avg_latency': ['avg_latency', 'response_latency', 'latency', 'average_latency']
     };
 

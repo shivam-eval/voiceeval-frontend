@@ -22,7 +22,7 @@ const CallsSearchBar = ({
     }, [directory, currentOptions]);
 
     return (
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-4 mb-8">
             <div className="flex items-center gap-3 w-full md:w-auto">
                 {viewMode === 'calls' && (
                     <button

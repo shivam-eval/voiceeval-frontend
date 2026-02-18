@@ -9,7 +9,13 @@ import {
   BarChart3,
   Zap,
   DollarSign,
-  MessageSquare
+  MessageSquare,
+  GitBranch,
+  AlertTriangle,
+  Mic,
+  Brain,
+  Volume2,
+  Database
 } from 'lucide-react';
 import { TopBarContext } from '../../main';
 import CallTranscriptPanel from "./CallTranscription";
@@ -29,10 +35,12 @@ import GibberishDetection from '../insights/gibberish/GibberishDetection';
 import HallucinationOverview from '../insights/hallucination';
 import PronunciationOverview from '../insights/pronunciation';
 import CallKPISection from '../CallKPISection';
+import TraceViewer from './TraceViewer';
 
 const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack, isUploaded }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [activeCategory, setActiveCategory] = useState('');
+  const [showTraces, setShowTraces] = useState(false);
   const topBarContext = useContext(TopBarContext);
   const transcriptData = initialTranscriptData;
 
@@ -98,7 +106,8 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
 
   const tabs = [
     { id: 'overview', label: 'Overview', icon: Activity },
-    { id: 'transcript', label: 'Transcript', icon: MessageSquare }
+    { id: 'transcript', label: 'Transcript', icon: MessageSquare },
+    { id: 'issues', label: 'Issues', icon: AlertTriangle }
   ];
 
   // Prepare radar chart data from actual category scores
@@ -318,12 +327,33 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
     }
   };
 
+  // Handle trace view navigation
+  if (showTraces) {
+    return (
+      <TraceViewer 
+        traceData={evaluation?.trace_data || report?.trace_data} 
+        onBack={() => setShowTraces(false)}
+      />
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
-      {/* Title */}
-      <h2 className="text-3xl font-bold text-white flex-shrink-0">
-        Call Analysis
-      </h2>
+      {/* Title and View Traces Button */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold text-white flex-shrink-0">
+          Call Analysis
+        </h2>
+        
+        {/* View Traces Button - Always visible */}
+        <button
+          onClick={() => setShowTraces(true)}
+          className="flex items-center gap-2 px-6 py-2.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 hover:border-teal-500/50 rounded-lg text-teal-400 hover:text-teal-300 transition-all shadow-lg"
+        >
+          <GitBranch className="w-5 h-5" />
+          <span className="text-sm font-semibold">View Traces</span>
+        </button>
+      </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-5 gap-4">
@@ -499,6 +529,82 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
                 </div>
               )}
             </>
+          )}
+
+          {activeTab === 'issues' && (
+            <div className="space-y-4">
+              {/* Group issues by hardcoded component type */}
+              {[
+                {
+                  component: 'STT (Speech-to-Text)',
+                  icon: Mic,
+                  colorClass: 'yellow',
+                  issues: [
+                    { message: 'Potential mis-transcription of "account balances" as "accounting balance"', severity: 'medium' },
+                    { message: 'Background noise detected causing STT confidence drop', severity: 'low' }
+                  ]
+                },
+                {
+                  component: 'Tool Call',
+                  icon: Database,
+                  colorClass: 'blue',
+                  issues: [
+                    { message: 'Weather API tool took longer than 2.5s (threshold: 2s)', severity: 'medium' },
+                    { message: 'Tool parameters lacked optional "unit" field causing redundant defaults', severity: 'low' }
+                  ]
+                },
+                {
+                  component: 'LLM (Language Model)',
+                  icon: Brain,
+                  colorClass: 'purple',
+                  issues: [
+                    { message: 'Minor script adherence deviation at Turn 4', severity: 'low' },
+                    { message: 'Agent repeated closure script twice erroneously', severity: 'medium' }
+                  ]
+                },
+                {
+                  component: 'TTS (Text-to-Speech)',
+                  icon: Volume2,
+                  colorClass: 'orange',
+                  issues: [
+                    { message: 'Synthesized voice intonation felt robotic at Turn 2', severity: 'medium' },
+                    { message: 'Noticeable latency (800ms) between LLM output and TTS play', severity: 'high' }
+                  ]
+                }
+              ].map(({ component, icon: Icon, colorClass, issues }) => (
+                <div key={component} className="bg-[#030712] border border-teal-500/20 rounded-xl overflow-hidden">
+                  {/* Component Header */}
+                  <div className={`flex items-center gap-3 px-6 py-4 bg-${colorClass}-500/5 border-b border-${colorClass}-500/20`}>
+                    <Icon className={`w-5 h-5 text-${colorClass}-400`} />
+                    <h4 className="text-base font-semibold text-white">{component}</h4>
+                    <span className={`ml-auto px-2.5 py-1 bg-${colorClass}-500/10 border border-${colorClass}-500/30 rounded-full text-xs font-semibold text-${colorClass}-400`}>
+                      {issues.length} {issues.length === 1 ? 'Issue' : 'Issues'}
+                    </span>
+                  </div>
+
+                  {/* Issues List */}
+                  <div className="divide-y divide-gray-800/30">
+                    {issues.map((issue, idx) => (
+                      <div key={idx} className="px-6 py-4 hover:bg-gray-800/20 transition-colors">
+                        <div className="flex items-start gap-3">
+                          <div className={`w-2 h-2 rounded-full bg-${colorClass}-400 mt-2 flex-shrink-0`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-gray-300 mb-1">{issue.message}</p>
+                            <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                              issue.severity === 'high' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                              issue.severity === 'medium' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                              'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                            }`}>
+                              {issue.severity}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       )}

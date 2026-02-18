@@ -9,6 +9,10 @@ import {
   Activity,
   Filter,
   X,
+  Mic,
+  Brain,
+  Volume2,
+  Wrench,
   FileText,
   Calendar,
   Loader2,
@@ -44,6 +48,11 @@ const DUMMY_DATA = {
         other: 1,
       },
     },
+    // New error breakdown metrics
+    stt_errors: { count: 2 },
+    llm_errors: { count: 1 },
+    tts_errors: { count: 3 },
+    tool_errors: { count: 1 },
   },
 };
 
@@ -74,6 +83,37 @@ const MetricCard = ({ title, icon, rate, count, active, onClick }) => (
       </div>
     </div>
   </Card>
+);
+
+/* ================= ERROR METRIC CARD ================= */
+const ErrorMetricCard = ({ title, icon, count, active, onClick }) => (
+  <div
+    onClick={onClick}
+    className={`group relative overflow-hidden rounded-lg p-4 border transition-all cursor-pointer ${
+      active
+        ? 'border-red-500/50 bg-red-500/10 ring-2 ring-red-500/20'
+        : 'border-gray-700/30 bg-gray-800/30 hover:border-red-500/30 hover:bg-gray-800/50'
+    }`}
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className="relative flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-lg ${active ? 'bg-red-500/20' : 'bg-gray-700/50'}`}>
+          {icon}
+        </div>
+        <div>
+          <h4 className="text-sm font-medium text-gray-300">{title}</h4>
+          <p className="text-xs text-gray-500 mt-0.5">Errors</p>
+        </div>
+      </div>
+      <div className="text-right">
+        <div className={`text-2xl font-bold ${count > 0 ? 'text-red-400' : 'text-gray-500'}`}>
+          {count ?? 0}
+        </div>
+        <p className="text-xs text-gray-500">{count === 1 ? 'call' : 'calls'}</p>
+      </div>
+    </div>
+  </div>
 );
 
 /* ================= FILTER DROPDOWN ================= */
@@ -307,6 +347,20 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange, agentId }) => {
     });
   };
 
+  const handleAbandonmentClick = (reason) => {
+    if (!reason) return;
+    setFilters(prev => {
+      const updated = { ...prev };
+      if (updated.abandonment_reason?.eq === reason) {
+        delete updated.abandonment_reason;
+      } else {
+        updated.abandonment_reason = { eq: reason };
+      }
+      onFilterChange?.(updated);
+      return updated;
+    });
+  };
+
   const handleGetReport = async (startDate, endDate) => {
     if (!agentId) {
       toast.error('No agent selected');
@@ -337,15 +391,22 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange, agentId }) => {
       }));
   }, [kpis]);
 
+  const totalAbandonment = useMemo(() => {
+    return abandonmentData.reduce((sum, item) => sum + item.value, 0);
+  }, [abandonmentData]);
+
   if (isLoadingKPIs) return <div className="h-64 animate-pulse bg-gray-800/30 rounded-lg" />;
 
   return (
-    <div className="mb-10">
+    <div className="space-y-6">
       <div className="flex justify-end gap-3 mb-4">
         <FilterDropdown
           filters={filters}
           onRemove={key => toggleFilter(key)}
-          onClear={() => setFilters({})}
+          onClear={() => {
+            setFilters({});
+            onFilterChange?.({});
+          }}
         />
 
         <button
@@ -391,50 +452,75 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange, agentId }) => {
                 {kpis.avg_latency?.value} ms
               </div>
               <div className="text-sm text-gray-500 mt-2">
-                Across {kpis.avg_latency?.count} calls
+                Across {kpis.avg_latency?.count ?? 0} {kpis.avg_latency?.count === 1 ? 'call' : 'calls'}
               </div>
             </div>
           </Card>
         </div>
 
-        {/* ABANDONMENT PIE */}
-        <Card title="Abandonment Reason" icon={TrendingDown}>
-          <div className="h-[260px] relative">
-            <ResponsivePie
-              data={abandonmentData}
-              innerRadius={0.6}
-              padAngle={2}
-              colors={TEAL_COLORS}
-              enableArcLabels
-              arcLabel={d => d.value}
-              enableArcLinkLabels={false}
-              activeOuterRadiusOffset={6}
-              onClick={d => toggleFilter('abandonment_reason', { eq: d.id })}
-              tooltip={({ datum }) => (
-                <div className="bg-[#020617] px-3 py-2 rounded-lg border border-gray-700 text-xs">
-                  <div className="text-gray-400">{datum.label}</div>
-                  <div className="text-teal-300 font-semibold">{datum.value} calls</div>
+        {/* Right side - Large Abandonment Reason Pie Chart */}
+        <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700/50 relative">
+          <div className="flex items-center gap-3 mb-4">
+            <TrendingDown className="w-5 h-5 text-teal-400" />
+            <h3 className="text-lg font-semibold text-gray-100">Abandonment Reason</h3>
+          </div>
+
+          {abandonmentData.length > 0 ? (
+            <>
+              <div className="h-64 relative">
+                <ResponsivePie
+                  data={abandonmentData}
+                  colors={TEAL_COLORS}
+                  innerRadius={0.6}
+                  padAngle={2}
+                  cornerRadius={4}
+                  activeOuterRadiusOffset={8}
+                  borderWidth={0}
+                  arcLabel={(d) => `${d.value}`}
+                  arcLabelsTextColor="#ffffff"
+                  arcLabelsSkipAngle={10}
+                  enableArcLinkLabels={false}
+                  margin={{ top: 10, right: 10, bottom: 10, left: 10 }}
+                  onClick={(node) => handleAbandonmentClick(node.id)}
+                  theme={{
+                    labels: {
+                      text: {
+                        fontSize: 18,
+                        fontWeight: 700,
+                        fill: '#ffffff',
+                      },
+                    },
+                    tooltip: {
+                      container: {
+                        background: '#1f2937',
+                        color: '#fff',
+                        fontSize: 13,
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+                        border: '1px solid #374151',
+                        padding: '10px 14px',
+                      },
+                    },
+                  }}
+                  tooltip={({ datum }) => (
+                    <div className="px-3 py-2">
+                      <strong>{datum.label}</strong> · {datum.value} {datum.value === 1 ? 'call' : 'calls'}
+                    </div>
+                  )}
+                />
+
+                {/* Center label showing total */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <div className="text-3xl font-bold text-teal-400">{totalAbandonment}</div>
+                  <div className="text-xs text-gray-400 mt-1">Total</div>
                 </div>
-              )}
-              theme={{
-                tooltip: {
-                  container: {
-                    background: '#020617',
-                    color: '#fff',
-                    fontSize: 12,
-                  },
-                },
-              }}
-            />
-            {/* Total calls in donut center */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <div className="text-2xl font-bold text-white">
-                {abandonmentData.reduce((sum, d) => sum + d.value, 0)}
               </div>
               <div className="text-xs text-gray-400">Total Calls</div>
-            </div>
-          </div>
-        </Card>
+            </>
+          ) : (
+            <div className="text-sm text-gray-500">No abandonment data yet</div>
+          )}
+        </div>
       </div>
 
       {!normalized && (

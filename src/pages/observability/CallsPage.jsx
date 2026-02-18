@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import AudioUploadModal from '../../components/AudioUploadModal';
 import BolnaImportModal from '../../components/BolnaImportModal';
+import TraceImportModal from '../../components/TraceImportModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvaluateAudio, useDeleteCall } from '../../hooks/useCalls';
 import { useFlows } from '../../hooks/useFlows';
@@ -37,6 +38,7 @@ const CallsPage = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBolnaImportOpen, setIsBolnaImportOpen] = useState(false);
+  const [isTraceImportOpen, setIsTraceImportOpen] = useState(false);
   const [isEvaluateModalOpen, setIsEvaluateModalOpen] = useState(false);
   const [evalAgentId, setEvalAgentId] = useState(workflow?.assistantId || '');
   const [evalDirectory, setEvalDirectory] = useState('');
@@ -511,6 +513,10 @@ const CallsPage = () => {
     setIsBolnaImportOpen(true);
   };
 
+  const handleImportTrace = () => {
+    setIsTraceImportOpen(true);
+  };
+
   const handleBolnaImportComplete = () => {
     refetch();
     refetchCategories();
@@ -826,6 +832,7 @@ useEffect(() => {
             onEvaluateAll={handleEvaluateAll}
             onAddCalls={handleAddCalls}
             onImportBolna={handleImportBolna}
+            onImportTrace={handleImportTrace}
             isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
           />
 
@@ -893,6 +900,12 @@ useEffect(() => {
         bolnaAgentId={currentAgentBolnaId}
         agentName={currentAgentName}
         onImportComplete={handleBolnaImportComplete}
+      />
+
+      <TraceImportModal
+        isOpen={isTraceImportOpen}
+        onClose={() => setIsTraceImportOpen(false)}
+        agentId={directory}
       />
 
       <EvaluateModal

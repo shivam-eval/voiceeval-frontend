@@ -174,6 +174,16 @@ class ObservabilityService {
     const response = await api.get(`/observability/sync/history?limit=${limit}`);
     return response.data;
   }
+
+  /**
+   * Search for a Langfuse trace by call_id extracted from audio filename
+   */
+  async searchTraceByCallId(callId) {
+    const response = await api.post('/observability/traces/search-by-call', {
+      call_id: callId
+    });
+    return response.data;
+  }
 }
 
 export default new ObservabilityService();

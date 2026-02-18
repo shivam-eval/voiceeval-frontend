@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Search, ChevronLeft, Plus, Brain, Download } from 'lucide-react';
+import { Search, ChevronLeft, Plus, Brain, Download, Upload } from 'lucide-react';
 import GenericDropdown from '../../../components/DropDown';
 
 const CallsSearchBar = ({
@@ -13,6 +13,7 @@ const CallsSearchBar = ({
     onEvaluateAll,
     onAddCalls,
     onImportBolna,
+    onImportTrace,
     isEvaluating
 }) => {
     const isBolnaAgent = useMemo(() => {
@@ -66,6 +67,15 @@ const CallsSearchBar = ({
                     >
                         <Download className="w-5 h-5" />
                         Import from Bolna
+                    </button>
+                )}
+                {viewMode === 'calls' && (
+                    <button
+                        onClick={onImportTrace}
+                        className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/30 text-blue-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-blue-500/20 transition-colors shadow-[0_0_15px_rgba(59,130,246,0.1)]"
+                    >
+                        <Upload className="w-5 h-5" />
+                        Import Trace
                     </button>
                 )}
                 {viewMode === 'calls' && (

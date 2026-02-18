@@ -85,6 +85,37 @@ const MetricCard = ({ title, icon, rate, count, active, onClick }) => (
   </Card>
 );
 
+/* ================= ERROR METRIC CARD ================= */
+const ErrorMetricCard = ({ title, icon, count, active, onClick }) => (
+  <div
+    onClick={onClick}
+    className={`group relative overflow-hidden rounded-lg p-4 border transition-all cursor-pointer ${
+      active
+        ? 'border-red-500/50 bg-red-500/10 ring-2 ring-red-500/20'
+        : 'border-gray-700/30 bg-gray-800/30 hover:border-red-500/30 hover:bg-gray-800/50'
+    }`}
+  >
+    <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+    <div className="relative flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-lg ${active ? 'bg-red-500/20' : 'bg-gray-700/50'}`}>
+          {icon}
+        </div>
+        <div>
+          <h4 className="text-sm font-medium text-gray-300">{title}</h4>
+          <p className="text-xs text-gray-500 mt-0.5">Errors</p>
+        </div>
+      </div>
+      <div className="text-right">
+        <div className={`text-2xl font-bold ${count > 0 ? 'text-red-400' : 'text-gray-500'}`}>
+          {count ?? 0}
+        </div>
+        <p className="text-xs text-gray-500">{count === 1 ? 'call' : 'calls'}</p>
+      </div>
+    </div>
+  </div>
+);
+
 /* ================= FILTER DROPDOWN ================= */
 const FilterDropdown = ({ filters, onRemove, onClear }) => {
   const [open, setOpen] = useState(false);
@@ -316,6 +347,20 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange, agentId }) => {
     });
   };
 
+  const handleAbandonmentClick = (reason) => {
+    if (!reason) return;
+    setFilters(prev => {
+      const updated = { ...prev };
+      if (updated.abandonment_reason?.eq === reason) {
+        delete updated.abandonment_reason;
+      } else {
+        updated.abandonment_reason = { eq: reason };
+      }
+      onFilterChange?.(updated);
+      return updated;
+    });
+  };
+
   const handleGetReport = async (startDate, endDate) => {
     if (!agentId) {
       toast.error('No agent selected');
@@ -346,15 +391,22 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange, agentId }) => {
       }));
   }, [kpis]);
 
+  const totalAbandonment = useMemo(() => {
+    return abandonmentData.reduce((sum, item) => sum + item.value, 0);
+  }, [abandonmentData]);
+
   if (isLoadingKPIs) return <div className="h-64 animate-pulse bg-gray-800/30 rounded-lg" />;
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end gap-3">
+      <div className="flex justify-end gap-3 mb-4">
         <FilterDropdown
           filters={filters}
           onRemove={key => toggleFilter(key)}
-          onClear={() => setFilters({})}
+          onClear={() => {
+            setFilters({});
+            onFilterChange?.({});
+          }}
         />
 
         <button
@@ -400,10 +452,10 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange, agentId }) => {
                 {kpis.avg_latency?.value} ms
               </div>
               <div className="text-sm text-gray-500 mt-2">
-                Across {kpis.avg_latency?.count} calls
+                Across {kpis.avg_latency?.count ?? 0} {kpis.avg_latency?.count === 1 ? 'call' : 'calls'}
               </div>
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Right side - Large Abandonment Reason Pie Chart */}
@@ -464,9 +516,11 @@ const KPISection = ({ normalized, isLoadingKPIs, onFilterChange, agentId }) => {
                 </div>
               </div>
               <div className="text-xs text-gray-400">Total Calls</div>
-            </div>
-          </div>
-        </Card>
+            </>
+          ) : (
+            <div className="text-sm text-gray-500">No abandonment data yet</div>
+          )}
+        </div>
       </div>
 
       {!normalized && (

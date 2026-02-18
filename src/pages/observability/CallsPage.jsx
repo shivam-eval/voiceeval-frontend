@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import AudioUploadModal from '../../components/AudioUploadModal';
+import BolnaImportModal from '../../components/BolnaImportModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import { useCalls, useEvaluateCall, useUploadCalls, useCallCategories, useEvaluateAudio, useDeleteCall } from '../../hooks/useCalls';
 import { useFlows } from '../../hooks/useFlows';
@@ -17,6 +18,7 @@ import AgentsTable from './components/AgentsTable';
 import CallsTable from './components/CallsTable';
 import Pagination from './components/Pagination';
 import { EvaluateModal, KPIDiscoveryModal } from './components/CallsModals';
+import AgentDirectoriesView from '../../components/AgentDirectoriesView';
 
 const CallsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -34,6 +36,7 @@ const CallsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBolnaImportOpen, setIsBolnaImportOpen] = useState(false);
   const [isEvaluateModalOpen, setIsEvaluateModalOpen] = useState(false);
   const [evalAgentId, setEvalAgentId] = useState(workflow?.assistantId || '');
   const [evalDirectory, setEvalDirectory] = useState('');
@@ -504,6 +507,27 @@ const CallsPage = () => {
     setIsModalOpen(true);
   };
 
+  const handleImportBolna = () => {
+    setIsBolnaImportOpen(true);
+  };
+
+  const handleBolnaImportComplete = () => {
+    refetch();
+    refetchCategories();
+  };
+
+  const currentAgentName = useMemo(() => {
+    if (!directory) return '';
+    const opt = currentOptions.find((o) => o.value === directory);
+    return opt?.label || '';
+  }, [directory, currentOptions]);
+
+  const currentAgentBolnaId = useMemo(() => {
+    if (!directory) return null;
+    const agent = agentsData?.agents?.find(a => a.agent_id === directory);
+    return agent?.metadata?.external_id || null;
+  }, [directory, agentsData]);
+
   const handleEvaluate = async (targetCallId) => {
     try {
       if (targetCallId) {
@@ -778,97 +802,83 @@ useEffect(() => {
           normalized={activeKPIData}
           isLoadingKPIs={isLoadingKPIs}
           onFilterChange={handleKPIFilterChange}
+          agentId={directory}
         />
       )}
 
-      {/* Search Bar */}
-      <CallsSearchBar
-        viewMode={viewMode}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        directory={directory}
-        currentOptions={currentOptions}
-        onDirectoryChange={(val) =>
-  updateParams({
-    directory: val,
-    callsPage: String(callsPage),
-    agentsPage: String(agentsPage),
-  })
-}
+      {/* Render Agent Directories View or Calls View */}
+      {viewMode === 'directories' ? (
+        <AgentDirectoriesView 
+          onAgentSelect={handleDirectoryClick}
+          showHeader={true}
+        />
+      ) : (
+        <>
+          {/* Search Bar */}
+          <CallsSearchBar
+            viewMode={viewMode}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            directory={directory}
+            currentOptions={currentOptions}
+            onDirectoryChange={(val) =>
+              updateParams({
+                directory: val,
+                callsPage: String(callsPage),
+                agentsPage: String(agentsPage),
+              })
+            }
+            onBackToDirectories={handleBackToDirectories}
+            onEvaluateAll={handleEvaluateAll}
+            onAddCalls={handleAddCalls}
+            onImportBolna={handleImportBolna}
+            isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
+          />
 
-        onBackToDirectories={handleBackToDirectories}
-        onEvaluateAll={handleEvaluateAll}
-        onAddCalls={handleAddCalls}
-        isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
-      />
+          {/* Active Filters Indicator */}
+          {Object.keys(kpiFilters).length > 0 && (
+            <div className="mb-4 flex items-center gap-2 text-sm text-teal-400">
+              <span>Filtering by {Object.keys(kpiFilters).length} metric{Object.keys(kpiFilters).length > 1 ? 's' : ''}</span>
+              <button
+                onClick={() => handleKPIFilterChange({})}
+                className="text-xs underline hover:text-teal-300"
+              >
+                Clear all filters
+              </button>
+            </div>
+          )}
 
-      {/* Active Filters Indicator */}
-      {Object.keys(kpiFilters).length > 0 && (
-        <div className="mb-4 flex items-center gap-2 text-sm text-teal-400">
-          <span>Filtering by {Object.keys(kpiFilters).length} metric{Object.keys(kpiFilters).length > 1 ? 's' : ''}</span>
-          <button
-            onClick={() => handleKPIFilterChange({})}
-            className="text-xs underline hover:text-teal-300"
-          >
-            Clear all filters
-          </button>
-        </div>
-      )}
+          {/* Table Container */}
+          <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
+            <div className="overflow-x-auto custom-scrollbar">
+              <CallsTable
+                calls={calls}
+                isCallsLoading={isCallsLoading}
+                error={error}
+                callsPage={callsPage}
+                callsPerPage={callsPerPage}
+                onRowClick={handleRowClick}
+                onDeleteCall={handleDeleteCall}
+                onDownload={handleDownloadCall}
+                onAddCalls={handleAddCalls}
+                formatDate={formatDate}
+                getMetricValue={getMetricValue}
+                isDeleting={deleteCall.isPending}
+              />
+            </div>
+          </div>
 
-      {/* Table Container */}
-      <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
-        <div className="overflow-x-auto custom-scrollbar">
-          {viewMode === 'directories' ? (
-            <AgentsTable
-              filteredCategories={filteredCategories}
-              isCategoriesLoading={isCategoriesLoading}
-              displayedAgents={displayedAgents}
-              agentsPage={agentsPage}
-              agentsPerPage={agentsPerPage}
-              agentsData={agentsData}
-              onDirectoryClick={handleDirectoryClick}
-              onEvaluateAll={handleEvaluateAll}
-              onAddCalls={handleAddCalls}
-              isEvaluating={evaluateAudio.isPending || evaluateCall.isPending}
-            />
-          ) : (
-            <CallsTable
-              calls={calls}
-              isCallsLoading={isCallsLoading}
-              error={error}
-              callsPage={callsPage}
-              callsPerPage={callsPerPage}
-              onRowClick={handleRowClick}
-              onDeleteCall={handleDeleteCall}
-              onDownload={handleDownloadCall}
-              onAddCalls={handleAddCalls}
-              formatDate={formatDate}
-              getMetricValue={getMetricValue}
-              isDeleting={deleteCall.isPending}
+          {/* Pagination */}
+          {calls.length > 0 && (
+            <Pagination
+              currentPage={callsPage}
+              totalItems={calls.length}
+              itemsPerPage={callsPerPage}
+              onPageChange={handleCallsPageChange}
+              itemName="calls"
             />
           )}
-        </div>
-      </div>
-
-      {/* Pagination */}
-      {viewMode === 'directories' && filteredCategories.length > 0 && (
-        <Pagination
-          currentPage={agentsPage}
-          totalItems={displayedAgents.length}
-          itemsPerPage={agentsPerPage}
-          onPageChange={handleAgentsPageChange}
-          itemName="agents"
-        />
-      )}
-
-      {viewMode === 'calls' && calls.length > 0 && (
-        <Pagination
-          currentPage={callsPage}
-          totalItems={calls.length}
-          itemsPerPage={callsPerPage}
-          onPageChange={handleCallsPageChange}
-          itemName="calls"
-        />
+        </>
       )}
 
       {/* Modals */}
@@ -880,6 +890,15 @@ useEffect(() => {
         mode="calls"
         agents={agentOptions}
         defaultAgentId={directory || workflow?.assistantId || ''}
+      />
+
+      <BolnaImportModal
+        isOpen={isBolnaImportOpen}
+        onClose={() => setIsBolnaImportOpen(false)}
+        agentId={directory}
+        bolnaAgentId={currentAgentBolnaId}
+        agentName={currentAgentName}
+        onImportComplete={handleBolnaImportComplete}
       />
 
       <EvaluateModal

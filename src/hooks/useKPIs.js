@@ -235,3 +235,27 @@ export const useClearKPISchemas = () => {
     },
   });
 };
+
+/**
+ * Hook to fetch report data for PDF generation (date-range based)
+ * @returns mutation with mutateAsync({ agentId, startDate, endDate })
+ */
+export const useReportData = () => {
+  return useMutation({
+    mutationFn: async ({ agentId, startDate, endDate }) => {
+      if (!agentId) throw new Error('Agent ID is required');
+      if (!startDate || !endDate) throw new Error('Date range is required');
+
+      const params = new URLSearchParams({
+        start_date: startDate,
+        end_date: endDate,
+      });
+
+      const response = await api.get(
+        `/agents/${agentId}/kpis/report?${params.toString()}`
+      );
+
+      return response.data;
+    },
+  });
+};

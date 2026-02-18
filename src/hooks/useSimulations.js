@@ -212,3 +212,15 @@ export const useSimulationWithLiveUpdates = (simulationId) => {
 
     return useSimulation(simulationId);
 };
+
+/**
+ * Hook to fetch simulation categories (agents with simulation counts)
+ */
+export const useSimulationCategories = () => {
+    return useQuery({
+        queryKey: ['simulations', 'categories'],
+        queryFn: () => simulationsApi.getSimulationCategories(),
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        refetchOnWindowFocus: false,
+    });
+};

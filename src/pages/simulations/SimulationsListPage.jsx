@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Play, Eye, StopCircle, RefreshCw, Download, Trash2, Search, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Play, Eye, StopCircle, RefreshCw, Download, Trash2, Search, ChevronDown, ChevronLeft } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { useSimulations, useDeleteSimulation, useRerunSimulation, useCancelSimulation } from '../../hooks/useSimulations';
 import Badge from '../../components/Badge';
@@ -8,9 +8,19 @@ import Button from '../../components/Button';
 import RunSimulationModal from '../../components/RunSimulationModal';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import GenericDropdown from '../../components/DropDown';
+import SimulationAgentDirectoriesView from '../../components/SimulationAgentDirectoriesView';
+import TestSuitesListView from '../../components/TestSuitesListView';
 
 const SimulationsListPage = () => {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+    
+    // View state - either 'agents', 'test-suites', or 'simulations'
+    const viewMode = searchParams.get('view') || 'agents';
+    const selectedAgent = searchParams.get('agent') || '';
+    const selectedTestSuite = searchParams.get('testSuite') || '';
+    const testSuiteName = searchParams.get('testSuiteName') || '';
+    
     const [selectedSimulations, setSelectedSimulations] = useState([]);
     const [showRunModal, setShowRunModal] = useState(false);
     const [confirmModal, setConfirmModal] = useState({
@@ -25,11 +35,56 @@ const SimulationsListPage = () => {
         search: '',
         status: '',
         skip: 0,
-        limit: 20
+        limit: 20,
+        agentId: selectedAgent || undefined,
+        testSuiteId: selectedTestSuite || undefined
     });
 
-    // Fetch simulations with filters
-    const { data, isLoading, error, refetch } = useSimulations(filters);
+    // Update URL params
+    const updateParams = (updates) => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            Object.entries(updates).forEach(([key, value]) => {
+                if (value) next.set(key, value);
+                else next.delete(key);
+            });
+            return next;
+        });
+    };
+
+    // Handle agent selection
+    const handleAgentSelect = (agentId) => {
+        updateParams({ view: 'simulations', agent: agentId, testSuite: '', testSuiteName: '' });
+        setFilters({ ...filters, agentId, testSuiteId: undefined, skip: 0 });
+    };
+
+    // Handle back to agents
+    const handleBackToAgents = () => {
+        updateParams({ view: 'agents', agent: '', testSuite: '', testSuiteName: '' });
+        setFilters({ ...filters, agentId: undefined, testSuiteId: undefined, search: '', status: '', skip: 0 });
+    };
+
+    // Handle back to test suites
+    const handleBackToTestSuites = () => {
+        updateParams({ testSuite: '', testSuiteName: '' });
+        setFilters({ ...filters, testSuiteId: undefined, search: '', skip: 0 });
+    };
+
+    // Sync filters when URL params change
+    useEffect(() => {
+        if (viewMode === 'simulations') {
+            setFilters(prev => ({ 
+                ...prev, 
+                agentId: selectedAgent || undefined,
+                testSuiteId: selectedTestSuite || undefined 
+            }));
+        }
+    }, [selectedAgent, selectedTestSuite, viewMode]);
+
+    // Fetch simulations with filters (only when in simulations view with test suite selected)
+    const { data, isLoading, error, refetch } = useSimulations(filters, {
+        enabled: viewMode === 'simulations' && !!selectedTestSuite,
+    });
     const deleteSimulation = useDeleteSimulation();
     const rerunSimulation = useRerunSimulation();
     const cancelSimulation = useCancelSimulation();
@@ -162,11 +217,289 @@ const SimulationsListPage = () => {
     });
     const filteredTotal = filteredSimulations.length;
 
+    // Show agents view if no agent is selected
+    if (viewMode === 'agents') {
+        return (
+            <div className="p-8 bg-dark-bg min-h-screen text-white">
+                <div className="w-full max-w-screen-2xl mx-auto">
+                    <div className="mb-8">
+                        <h1 className="text-4xl font-bold text-white mb-2">
+                            Outbound Sessions - Select Agent
+                        </h1>
+                        <p className="text-gray-400">
+                            Choose an agent to view test suites and run simulations
+                        </p>
+                    </div>
+                    
+                    <SimulationAgentDirectoriesView 
+                        onAgentSelect={handleAgentSelect}
+                        showHeader={true}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    // Show test suites view for selected agent (when no test suite selected)
+    if (viewMode === 'simulations' && selectedAgent && !selectedTestSuite) {
+        return (
+            <div className="p-8 bg-dark-bg min-h-screen text-white">
+                <div className="w-full max-w-screen-2xl mx-auto">
+                    {/* Back button */}
+                    <button
+                        onClick={handleBackToAgents}
+                        className="flex items-center gap-2 text-gray-400 hover:text-teal-400 transition-colors mb-4"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span>Back to Agents</span>
+                    </button>
+                    
+                    {/* Header */}
+                    <div className="mb-8">
+                        <h1 className="text-4xl font-bold text-white mb-2">Test Suites</h1>
+                        <p className="text-gray-400">Select a test suite to view simulations or run a new one</p>
+                    </div>
+
+                    <TestSuitesListView 
+                        agentId={selectedAgent}
+                        showRunSimulation={true}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    // Show simulations list for selected test suite
+    if (viewMode === 'simulations' && selectedAgent && selectedTestSuite) {
+        return (
+            <div className="p-8 bg-dark-bg min-h-screen text-white">
+                <div className="w-full max-w-screen-2xl mx-auto">
+                    {/* Breadcrumb navigation */}
+                    <div className="flex items-center gap-2 text-sm mb-6">
+                        <button
+                            onClick={handleBackToAgents}
+                            className="text-gray-400 hover:text-teal-400 transition-colors"
+                        >
+                            Agents
+                        </button>
+                        <span className="text-gray-600">/</span>
+                        <button
+                            onClick={handleBackToTestSuites}
+                            className="text-gray-400 hover:text-teal-400 transition-colors"
+                        >
+                            Test Suites
+                        </button>
+                        <span className="text-gray-600">/</span>
+                        <span className="text-teal-400">{testSuiteName || 'Simulations'}</span>
+                    </div>
+
+                    {/* Header */}
+                    <div className="mb-8 flex items-center justify-between">
+                        <div>
+                            <h1 className="text-4xl font-bold text-white mb-2">
+                                {testSuiteName || 'Test Suite'} Simulations
+                            </h1>
+                            <p className="text-gray-400">View and manage simulation runs for this test suite</p>
+                        </div>
+                        <button
+                            onClick={() => setShowRunModal(true)}
+                            className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                        >
+                            <Play className="w-5 h-5" />
+                            Run New Simulation
+                        </button>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="flex items-center gap-4 mb-6">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                            <input
+                                type="text"
+                                placeholder="Search simulations..."
+                                value={filters.search}
+                                onChange={handleSearch}
+                                className="w-full pl-12 pr-4 py-3 bg-dark-panel border border-gray-800 rounded-lg focus:outline-none focus:border-teal-500 transition-colors text-white"
+                            />
+                        </div>
+                        <div className="w-56">
+                            <GenericDropdown
+                                options={[
+                                    { label: "All Statuses", value: "" },
+                                    { label: "Running", value: "running" },
+                                    { label: "Completed", value: "completed" },
+                                    { label: "Failed", value: "failed" },
+                                    { label: "Cancelled", value: "cancelled" },
+                                ]}
+                                value={filters.status}
+                                onChange={handleStatusFilter}
+                                placeholder="Filter by status"
+                                className="w-full"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Simulations Table */}
+                    {isLoading ? (
+                        <div className="bg-dark-panel rounded-xl p-12 text-center border border-gray-800">
+                            <div className="w-8 h-8 border-3 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                            <p className="text-gray-400">Loading simulations...</p>
+                        </div>
+                    ) : error ? (
+                        <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-6">
+                            <h3 className="text-red-400 font-semibold mb-2">Error loading simulations</h3>
+                            <p className="text-gray-400">{error.message}</p>
+                            <Button onClick={() => refetch()} className="mt-4">
+                                Retry
+                            </Button>
+                        </div>
+                    ) : filteredSimulations.length === 0 ? (
+                        <div className="bg-dark-panel rounded-xl p-12 text-center border border-gray-800">
+                            <Play className="w-12 h-12 mx-auto mb-4 text-gray-600" />
+                            <p className="text-gray-400 mb-4">
+                                {filters.search ? `No simulations found matching "${filters.search}"` : 'No simulations yet for this test suite'}
+                            </p>
+                            <button
+                                onClick={() => setShowRunModal(true)}
+                                className="bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                            >
+                                Run First Simulation
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800">
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead className="bg-gray-900/50 border-b border-gray-800">
+                                        <tr>
+                                            <th className="text-left p-4 text-sm font-semibold text-gray-400 uppercase">Simulation ID</th>
+                                            <th className="text-left p-4 text-sm font-semibold text-gray-400 uppercase">Status</th>
+                                            <th className="text-left p-4 text-sm font-semibold text-gray-400 uppercase">Started</th>
+                                            <th className="text-left p-4 text-sm font-semibold text-gray-400 uppercase">Duration</th>
+                                            <th className="text-right p-4 text-sm font-semibold text-gray-400 uppercase">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {filteredSimulations.map((sim) => (
+                                            <tr
+                                                key={sim.simulation_id}
+                                                onClick={() => handleRowClick(sim.simulation_id)}
+                                                className="border-b border-gray-800 hover:bg-gray-800/50 cursor-pointer transition-colors"
+                                            >
+                                                <td className="p-4">
+                                                    <code className="text-xs text-teal-400 bg-teal-500/10 px-2 py-1 rounded">
+                                                        {sim.simulation_id?.slice(0, 12)}...
+                                                    </code>
+                                                </td>
+                                                <td className="p-4">
+                                                    <Badge variant={
+                                                        sim.status === 'completed' ? 'success' :
+                                                        sim.status === 'running' ? 'info' :
+                                                        sim.status === 'failed' ? 'danger' : 'warning'
+                                                    }>
+                                                        {sim.status}
+                                                    </Badge>
+                                                </td>
+                                                <td className="p-4 text-gray-300 text-sm">
+                                                    {sim.timestamps?.started_at ? new Date(sim.timestamps.started_at).toLocaleString() : '-'}
+                                                </td>
+                                                <td className="p-4 text-gray-300 text-sm">
+                                                    {sim.metrics?.total_duration_ms ? `${(sim.metrics.total_duration_ms / 1000).toFixed(1)}s` : '-'}
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            onClick={(e) => handleRerun(e, sim.simulation_id)}
+                                                            className="p-2 text-gray-400 hover:text-teal-400 hover:bg-gray-800 rounded transition-colors"
+                                                            title="Rerun"
+                                                        >
+                                                            <RefreshCw className="w-4 h-4" />
+                                                        </button>
+                                                        {sim.status === 'running' && (
+                                                            <button
+                                                                onClick={(e) => handleCancel(e, sim.simulation_id)}
+                                                                className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded transition-colors"
+                                                                title="Cancel"
+                                                            >
+                                                                <StopCircle className="w-4 h-4" />
+                                                            </button>
+                                                        )}
+                                                        <button
+                                                            onClick={(e) => handleDelete(e, sim.simulation_id)}
+                                                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-800 rounded transition-colors"
+                                                            title="Delete"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Pagination */}
+                            {filteredTotal > filters.limit && (
+                                <div className="flex items-center justify-between p-4 bg-gray-900/30 border-t border-gray-800">
+                                    <p className="text-sm text-gray-400">
+                                        Showing {filters.skip + 1} to {Math.min(filters.skip + filters.limit, filteredTotal)} of {filteredTotal} simulations
+                                    </p>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => handlePageChange(Math.max(0, filters.skip - filters.limit))}
+                                            disabled={filters.skip === 0}
+                                            className="px-4 py-2 bg-dark-panel border border-gray-800 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Previous
+                                        </button>
+                                        <button
+                                            onClick={() => handlePageChange(filters.skip + filters.limit)}
+                                            disabled={filters.skip + filters.limit >= filteredTotal}
+                                            className="px-4 py-2 bg-dark-panel border border-gray-800 rounded-lg hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            Next
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Modals */}
+                    <RunSimulationModal
+                        isOpen={showRunModal}
+                        onClose={() => setShowRunModal(false)}
+                        preSelectedTestSuite={selectedTestSuite}
+                        preSelectedAgent={selectedAgent}
+                        onSuccess={(data) => {
+                            setShowRunModal(false);
+                            if (data?.simulation_id) {
+                                navigate(`/simulation/runs/${data.simulation_id}`);
+                            }
+                        }}
+                    />
+
+                    <ConfirmationModal
+                        isOpen={confirmModal.isOpen}
+                        onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                        onConfirm={confirmModal.onConfirm}
+                        title={confirmModal.title}
+                        message={confirmModal.message}
+                        confirmText={confirmModal.confirmText}
+                        variant={confirmModal.variant}
+                        isLoading={deleteSimulation.isPending || rerunSimulation.isPending || cancelSimulation.isPending}
+                    />
+                </div>
+            </div>
+        );
+    }
+
     if (error) {
         return (
             <div className="p-8">
                 <div className="bg-red-900/20 border border-red-500/50 rounded-lg p-6">
-                    <h3 className="text-red-400 font-semibold mb-2">Error loading simulations</h3>
+                    <h3 className="text-red-400 font-semibold mb-2">Error loading data</h3>
                     <p className="text-gray-400">{error.message}</p>
                     <Button onClick={() => refetch()} className="mt-4">
                         Retry
@@ -176,252 +509,36 @@ const SimulationsListPage = () => {
         );
     }
 
+    // Fallback - should not reach here in normal flow
     return (
         <div className="p-8 bg-dark-bg min-h-screen text-white">
             <div className="w-full max-w-screen-2xl mx-auto">
-                {/* Header */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                    <div>
-                        <h1 className="text-4xl font-bold text-white mb-2">Sessions</h1>
-                        <p className="text-gray-400">View and manage all simulation sessions</p>
-                    </div>
-                    <button
-                        onClick={() => setShowRunModal(true)}
-                        className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.1)]"
-                    >
-                        <Play className="w-5 h-5" />
-                        Create New Session
-                    </button>
+                <div className="mb-8">
+                    <h1 className="text-4xl font-bold text-white mb-2">
+                        Outbound Sessions
+                    </h1>
+                    <p className="text-gray-400">
+                        Select an agent to view test suites
+                    </p>
                 </div>
-
-                {/* Filters */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                    <div className="flex items-center gap-3 w-full md:w-auto">
-                        <div className="relative flex-1 md:w-64">
-                            <input
-                                type="text"
-                                placeholder="Search sessions..."
-                                value={filters.search}
-                                onChange={handleSearch}
-                                className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 px-5 text-base focus:outline-none focus:border-teal-500 transition-colors text-white placeholder-gray-500"
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-56">
-                            <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Status:</span>
-                            <GenericDropdown
-                                options={[
-                                    { label: "All Statuses", value: "" },
-                                    { label: "Running", value: "running" },
-                                    { label: "Completed", value: "completed" },
-                                    { label: "Failed", value: "failed" },
-                                    { label: "Queued", value: "queued" }
-                                ]}
-                                value={filters.status || ""}
-                                onChange={(val) => handleStatusFilter(val)}
-                                className="flex-1"
-                            />
-                        </div>
-
-                        <button className="bg-dark-panel border border-gray-800 text-white px-8 py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition-colors shadow-lg">
-                            Search
-                        </button>
-                    </div>
-                </div>
-
-                {/* Table Container */}
-                <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
-                    {isLoading ? (
-                        <div className="p-12 text-center text-gray-500">
-                            <div className="flex flex-col items-center gap-3">
-                                <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                                Loading sessions...
-                            </div>
-                        </div>
-                    ) : !data || filteredSimulations.length === 0 ? (
-                        <div className="p-12 text-center">
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="p-4 bg-gray-800/30 rounded-full border border-gray-700/50">
-                                    <Play className="w-8 h-8 text-gray-500" />
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <p className="text-gray-400 text-lg font-medium">No sessions found</p>
-                                    <p className="text-gray-500 text-sm">Run your first simulation to see results here</p>
-                                </div>
-                                <button
-                                    onClick={() => setShowRunModal(true)}
-                                    className="mt-2 flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors"
-                                >
-                                    <Play className="w-5 h-5" />
-                                    Create Your First Session
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <>
-                            <div className="overflow-x-auto custom-scrollbar">
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
-                                        <th className="px-4 py-3">Simulation ID</th>
-                                        <th className="px-4 py-3">Test Suite</th>
-                                        <th className="px-4 py-3">Started</th>
-                                        <th className="px-4 py-3">Duration</th>
-                                        <th className="px-4 py-3">Status</th>
-                                        <th className="px-4 py-3">Progress</th>
-                                        <th className="px-4 py-3 text-center">Success Rate</th>
-                                        <th className="px-4 py-3 text-center">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="text-sm text-gray-300">
-                                    {filteredSimulations.map((sim) => (
-                                        <tr
-                                            key={sim.simulation_id}
-                                            onClick={() => handleRowClick(sim.simulation_id)}
-                                            className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors cursor-pointer group"
-                                        >
-                                            <td className="px-4 py-3">
-                                                <code className="text-xs text-teal-400 bg-teal-500/5 px-2 py-1 rounded border border-teal-500/10 group-hover:border-teal-500/30 transition-colors">
-                                                    {truncateId(sim.simulation_id)}
-                                                </code>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex flex-col">
-                                                    <span className="text-white font-semibold text-sm">
-                                                        {sim.metadata?.test_suite_name || sim.metadata?.flow_tree_name || sim.test_suite_id}
-                                                    </span>
-                                                    {sim.metadata?.agent_name && (
-                                                        <span className="text-gray-500 text-xs mt-0.5">
-                                                            Agent: {sim.metadata.agent_name}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-gray-400">
-                                                {formatDateTime(sim.timestamps?.started_at || sim.timestamps?.created_at)}
-                                            </td>
-                                            <td className="px-4 py-3 text-gray-400">
-                                                {formatDuration(sim.metrics?.total_duration_ms)}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <Badge variant={getStatusBadgeVariant(sim.status)}>
-                                                    <span className="flex items-center gap-1.5">
-                                                        {sim.status === 'running' && (
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse"></span>
-                                                        )}
-                                                        {sim.status}
-                                                    </span>
-                                                </Badge>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex flex-col gap-1.5 min-w-[120px]">
-                                                    <div className="flex items-center justify-between text-[10px] text-gray-500">
-                                                        <span>{Math.round(sim.progress?.percentage || 0)}%</span>
-                                                        <span>{sim.progress?.completed || 0}/{sim.progress?.total_sessions || 0}</span>
-                                                    </div>
-                                                    <div className="w-full bg-gray-800/50 rounded-full h-1.5 overflow-hidden border border-gray-700/30">
-                                                        <div
-                                                            className="bg-teal-500 h-full rounded-full transition-all duration-500 shadow-[0_0_8px_rgba(20,184,166,0.4)]"
-                                                            style={{ width: `${sim.progress?.percentage || 0}%` }}
-                                                        ></div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                {sim.progress?.total_sessions > 0 ? (
-                                                    (() => {
-                                                        const percentage = (sim.progress.completed / sim.progress.total_sessions);
-                                                        return (
-                                                            <span className={`font-bold ${percentage >= 0.9 ? 'text-green-400' :
-                                                                percentage >= 0.7 ? 'text-yellow-400' :
-                                                                    'text-red-400'
-                                                                }`}>
-                                                                {Math.round(percentage * 100)}%
-                                                            </span>
-                                                        );
-                                                    })()
-                                                ) : (
-                                                    <span className="text-gray-600">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleRowClick(sim.simulation_id);
-                                                        }}
-                                                        className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-teal-400 transition-colors"
-                                                        title="View Details"
-                                                    >
-                                                        <Eye className="w-4 h-4" />
-                                                    </button>
-                                                    {sim.status === 'running' ? (
-                                                        <button
-                                                            onClick={(e) => handleCancel(e, sim.simulation_id)}
-                                                            className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-red-400 transition-colors"
-                                                            title="Cancel Simulation"
-                                                        >
-                                                            <StopCircle className="w-4 h-4" />
-                                                        </button>
-                                                    ) : (
-                                                        <>
-                                                            <button
-                                                                onClick={(e) => handleRerun(e, sim.simulation_id)}
-                                                                className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-purple-400 transition-colors"
-                                                                title="Rerun Simulation"
-                                                            >
-                                                                <RefreshCw className="w-4 h-4" />
-                                                            </button>
-                                                            <button
-                                                                onClick={(e) => handleDelete(e, sim.simulation_id)}
-                                                                className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-red-400 transition-colors"
-                                                                title="Delete Simulation"
-                                                            >
-                                                                <Trash2 className="w-4 h-4" />
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-
-                            {/* Pagination */}
-                            {filteredTotal > filters.limit && (
-                                <div className="px-6 py-4 bg-gray-800/30 border-t border-gray-800 flex items-center justify-between">
-                                    <div className="text-sm text-gray-400">
-                                        Showing {filters.skip + 1} to {Math.min(filters.skip + filters.limit, filteredTotal)} of {filteredTotal} sessions
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <Button
-                                            onClick={() => handlePageChange(Math.max(0, filters.skip - filters.limit))}
-                                            disabled={filters.skip === 0}
-                                            className="disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Previous
-                                        </Button>
-                                        <Button
-                                            onClick={() => handlePageChange(filters.skip + filters.limit)}
-                                            disabled={filters.skip + filters.limit >= data.total}
-                                            className="disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            Next
-                                        </Button>
-                                    </div>
-                                </div>
-                            )}
-                        </>
-                    )}
-                </div>
+                <button
+                    onClick={handleBackToAgents}
+                    className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors"
+                >
+                    View Agents
+                </button>
             </div>
 
+            {/* Modals */}
             <RunSimulationModal
                 isOpen={showRunModal}
                 onClose={() => setShowRunModal(false)}
+                onSuccess={(data) => {
+                    setShowRunModal(false);
+                    if (data?.simulation_id) {
+                        navigate(`/simulation/runs/${data.simulation_id}`);
+                    }
+                }}
             />
 
             <ConfirmationModal
@@ -432,7 +549,7 @@ const SimulationsListPage = () => {
                 message={confirmModal.message}
                 confirmText={confirmModal.confirmText}
                 variant={confirmModal.variant}
-                isLoading={deleteSimulation.isLoading || rerunSimulation.isLoading || cancelSimulation.isLoading}
+                isLoading={deleteSimulation.isPending || rerunSimulation.isPending || cancelSimulation.isPending}
             />
         </div>
     );

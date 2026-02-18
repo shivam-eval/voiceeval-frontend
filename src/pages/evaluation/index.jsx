@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+﻿import { useEffect, useState, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import {
@@ -18,6 +18,8 @@ import EndpointingOverview from "./insights/endpointing";
 import PersonaOverview from "./insights/persona";
 import TaskCompletionOverview from "./insights/task_completion";
 import ConversationOverview from "./insights/conversation";
+import PronunciationOverview from "./insights/pronunciation";
+import HallucinationOverview from "./insights/hallucination";
 import GibberishDetection from "./insights/gibberish/GibberishDetection";
 import { useWorkflow } from "../../context/WorkFlowContext";
 import { getSessionTranscript } from "../../api/services/simulation.service";
@@ -35,6 +37,8 @@ const CATEGORY = {
   ENDPOINTING: "endpointing",
   PERSONA: "persona",
   CONVERSATION: "conversation_quality",
+  PRONUNCIATION: "pronunciation",
+  HALLUCINATION: "hallucination",
   GIBBERISH_DETECTION: "gibberish",
 };
 
@@ -47,6 +51,8 @@ const CATEGORY_TITLES = {
   [CATEGORY.PERSONA]: "PERSONA ALIGNMENT OVERVIEW",
   [CATEGORY.TASK_COMPLETION]: "TASK COMPLETION OVERVIEW",
   [CATEGORY.CONVERSATION]: "CONVERSATION OVERVIEW",
+  [CATEGORY.PRONUNCIATION]: "PRONUNCIATION OVERVIEW",
+  [CATEGORY.HALLUCINATION]: "HALLUCINATION OVERVIEW",
   [CATEGORY.GIBBERISH_DETECTION]: "GIBBERISH DETECTION OVERVIEW"
 };
 
@@ -263,6 +269,10 @@ categoryScores = Object.entries(avgScores.by_category).map(([category, score]) =
         weight: cat.weight || 0
       }));
     }
+  }
+
+  if (!categoryScores.some(c => c.category === 'pronunciation')) {
+    categoryScores.push({ category: 'pronunciation', score: 100, weight: 0 });
   }
 
   // Generate improvements from ALL evaluations
@@ -526,6 +536,10 @@ categoryScores = Object.entries(avgScores.by_category).map(([category, score]) =
         return <TaskCompletionOverview data={aggregatedData} onBack={handleBackToOverview} />;
       case CATEGORY.CONVERSATION:
         return <ConversationOverview data={aggregatedData} onBack={handleBackToOverview} />;
+      case CATEGORY.PRONUNCIATION:
+        return <PronunciationOverview data={aggregatedData} onBack={handleBackToOverview} />;
+      case CATEGORY.HALLUCINATION:
+        return <HallucinationOverview data={aggregatedData} onBack={handleBackToOverview} />;
       case CATEGORY.GIBBERISH_DETECTION:
         return <GibberishDetection data={aggregatedData} onBack={handleBackToOverview} />;
       default:

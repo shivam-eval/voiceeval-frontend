@@ -94,7 +94,6 @@ export const EVALUATION_METRICS = [
     { id: 'error_handling', label: 'Error Handling', description: 'Test error recovery capabilities' },
     { id: 'intent_recognition', label: 'Intent Recognition', description: 'Verify intent classification' },
     { id: 'entity_extraction', label: 'Entity Extraction', description: 'Check entity detection accuracy' },
-    { id: 'sentiment_analysis', label: 'Sentiment Analysis', description: 'Analyze conversation sentiment' },
     { id: 'call_completion', label: 'Call Completion', description: 'Track successful call outcomes' },
     { id: 'task_completion', label: 'Task Completion', description: 'Verify task completion rate' },
     { id: 'flow_coverage', label: 'Flow Coverage', description: 'Measure conversation path coverage' },

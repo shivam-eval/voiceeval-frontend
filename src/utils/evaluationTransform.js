@@ -125,7 +125,6 @@ export const transformEvaluationData = (api) => {
       conversionRate: overallScorePct,
       avgCallDuration,
       complianceScore,
-      sentimentImprovement: 0
     },
 
     testCases: [
@@ -153,7 +152,5 @@ export const transformEvaluationData = (api) => {
           }
         ]
       : [],
-
-    sentimentData: []
   }
 }

@@ -4,7 +4,6 @@ export const EVALUATION_DATA = {
     conversionRate: 100,
     avgCallDuration: "1:06",
     complianceScore: 100,
-    sentimentImprovement: 0.0
   },
   testCases: [
     { id: 1, title: "Happy Path - Full Payment", score: 85, duration: "1:04", outcome: "Payment Made", status: "success" },
@@ -48,7 +47,6 @@ export const EVALUATION_DATA = {
       ]
     }
   ],
-  sentimentData: [7, 8, 6, 7, 5, 6]
 }
 
 // Debt Collection Use Case - Real Data from path_1.json to path_6.json
@@ -571,12 +569,10 @@ export const TEST_CASE_1_DETAILS = {
     { name: "Conversational Quality", score: 76, target: 80, status: "NEEDS_POLISH" },
     { name: "Technical Performance", score: 96, target: 90, status: "PASS" },
     { name: "Compliance", score: 100, target: 100, status: "PASS" },
-    { name: "Sentiment Change", score: 0.13, target: 0, status: "POSITIVE", isSentiment: true }
   ],
   strengths: [
     "Smooth call flow and appointment booking",
     "Perfect compliance (100%) and technical stability (96%)",
-    "Positive sentiment improvement (+0.13)",
     "Clear offer presentation and professional tone"
   ],
   weaknesses: [
@@ -619,7 +615,6 @@ export const TEST_CASE_1_DETAILS = {
     technicalPerformance: 96,
     compliance: 100,
     timingEfficiency: 82,
-    sentimentManagement: 83
   },
   finalVerdict: {
     status: "PASS",
@@ -712,12 +707,6 @@ export const INSIGHT_TABS = [
     label: "Speech Analysis",
     description: "WPM & talk ratio",
     color: "from-violet-400 to-purple-400",
-  },
-  {
-    id: "sentiment",
-    label: "Sentiment",
-    description: "Tone & customer satisfaction",
-    color: "from-rose-400 to-pink-400",
   },
 ];
 export const DUMMY_EVALUATION_DATA = {

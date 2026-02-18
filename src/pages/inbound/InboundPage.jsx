@@ -102,7 +102,7 @@ const PhoneNumberModal = ({ isOpen, phoneNumber, testSuiteId, onClose }) => {
 const CreateInboundSessionModal = ({ isOpen, onClose, onSuccess }) => {
   const runInbound = useRunInboundSimulation();
   const { data: clientsData, isLoading: clientsLoading } = useClients();
-  const { data: testSuitesData, isLoading: suitesLoading } = useTestSuites();
+  const { data: testSuitesData, isLoading: suitesLoading } = useTestSuites({ exclude_audio: true });
 
   const [formData, setFormData] = useState({
     client_id: "",

@@ -34,6 +34,7 @@ const TestCasesPage = () => {
     const { data, isLoading, error } = useTestSuites({
         search: searchQuery,
         agent_id: agentFilter,
+        exclude_audio: true,
     });
 
     // Fetch agents for filter dropdown

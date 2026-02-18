@@ -1,23 +1,35 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { X, Play, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // Added import
+import { useNavigate } from 'react-router-dom';
 import { useTestSuites } from '../hooks/useTestSuites';
 import { useAgents } from '../hooks/useAgents';
 import { useRunSimulation } from '../hooks/useSimulations';
 import Button from './Button';
 import Badge from './Badge';
 
-const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, preSelectedAgentId = null }) => {
+
+const RunSimulationModal = ({ 
+    isOpen, 
+    onClose, 
+    preSelectedTestSuiteId = null, 
+    preSelectedAgentId = null,
+    onSuccess = null,
+}) => {
     const navigate = useNavigate();
     const [selectedAgentId, setSelectedAgentId] = useState(preSelectedAgentId || '');
     const [selectedTestSuiteId, setSelectedTestSuiteId] = useState(preSelectedTestSuiteId || '');
     const [phoneNumber, setPhoneNumber] = useState('');
 
+    // Determine what is locked (pre-filled fields should not be changeable)
+    const isAgentLocked = !!preSelectedAgentId;
+    const isTestSuiteLocked = !!preSelectedTestSuiteId;
+
     // Fetch agents and test suites
     const { data: agentsData, isLoading: agentsLoading } = useAgents();
     const { data: testSuitesData, isLoading: testSuitesLoading } = useTestSuites({
-        agent_id: selectedAgentId || undefined
+        agent_id: selectedAgentId || undefined,
+        exclude_audio: true,
     });
 
     const runSimulation = useRunSimulation();
@@ -40,6 +52,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
         if (isOpen) {
             setSelectedAgentId(preSelectedAgentId || '');
             setSelectedTestSuiteId(preSelectedTestSuiteId || '');
+            setPhoneNumber('');
         }
     }, [isOpen, preSelectedAgentId, preSelectedTestSuiteId]);
 
@@ -70,8 +83,11 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
         }, {
             onSuccess: (result) => {
                 toast.success('Simulation started successfully!');
-                // Navigate to simulation detail
-                navigate(`/simulation/runs/${result.simulation_id}`);
+                if (onSuccess) {
+                    onSuccess(result);
+                } else {
+                    navigate(`/simulation/runs/${result.simulation_id}`);
+                }
             }
         });
     };
@@ -110,8 +126,10 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                                 setSelectedAgentId(e.target.value);
                                 setSelectedTestSuiteId(''); // Reset test suite when agent changes
                             }}
-                            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                            disabled={agentsLoading}
+                            className={`w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400 ${
+                                isAgentLocked ? 'opacity-70 cursor-not-allowed' : ''
+                            }`}
+                            disabled={agentsLoading || isAgentLocked}
                         >
                             <option value="">Choose an agent...</option>
                             {agents.map(agent => (
@@ -130,8 +148,10 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                         <select
                             value={selectedTestSuiteId}
                             onChange={(e) => setSelectedTestSuiteId(e.target.value)}
-                            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                            disabled={testSuitesLoading || !selectedAgentId}
+                            className={`w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400 ${
+                                isTestSuiteLocked ? 'opacity-70 cursor-not-allowed' : ''
+                            }`}
+                            disabled={testSuitesLoading || !selectedAgentId || isTestSuiteLocked}
                         >
                             <option value="">
                                 {selectedAgentId ? 'Choose a test suite...' : 'Select an agent first...'}
@@ -184,6 +204,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                             placeholder="+1234567890"
                             className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
                             required
+                            autoFocus={isTestSuiteLocked}
                         />
                         <p className="text-xs text-gray-500 mt-1">
                             Phone number to test the agent (automatically filled from selected agent)

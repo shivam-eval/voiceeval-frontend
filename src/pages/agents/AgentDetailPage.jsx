@@ -33,7 +33,7 @@ const AgentDetailPage = () => {
     const flows = flowsData?.flows || [];
 
     // Fetch test suites for this agent
-    const { data: testSuitesData, isLoading: testSuitesLoading } = useTestSuites({ agent_id: agentId });
+    const { data: testSuitesData, isLoading: testSuitesLoading } = useTestSuites({ agent_id: agentId, exclude_audio: true });
     const testSuites = testSuitesData?.test_suites || [];
 
     // Mutations

@@ -385,9 +385,10 @@ const CallsPage = () => {
         directory: directory || '',
         callsPage: String(callsPage),
         agentsPage: String(agentsPage),
-        view: viewMode
+        view: viewMode,
+        callId: call.call_id || '',
       });
-      
+
       navigate(`/evaluations/report/${evaluationId}?isUploaded=true&${returnParams.toString()}`);
       return;
     }
@@ -410,9 +411,10 @@ const CallsPage = () => {
         directory: directory || '',
         callsPage: String(callsPage),
         agentsPage: String(agentsPage),
-        view: viewMode
+        view: viewMode,
+        callId: call.call_id || '',
       });
-      
+
       navigate(`/evaluations/session?sessionId=${sessionId}&isUploaded=true&${returnParams.toString()}`);
       return;
     }

@@ -647,7 +647,7 @@ const MOCK_TRACE_DATA = {
  * Displays trace data in an expandable hierarchical tree structure with side panel
  * Similar to Langfuse's trace viewer but with consistent dark theme
  */
-const TraceViewer = ({ traceData, onBack }) => {
+const TraceViewer = ({ traceData, onBack, issues }) => {
   const [expandedNodes, setExpandedNodes] = useState(new Set());
   const [selectedNode, setSelectedNode] = useState(null);
   const [sidePanelOpen, setSidePanelOpen] = useState(false);
@@ -1089,6 +1089,45 @@ const TraceViewer = ({ traceData, onBack }) => {
               <p className="text-xs text-gray-300">{new Date(trace.timestamp).toLocaleString()}</p>
             </div>
           </div>
+
+          {/* Issues Section */}
+          {issues && issues.length > 0 && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <AlertCircle className="w-4 h-4 text-red-400" />
+                <h3 className="text-sm font-semibold text-red-400">
+                  {issues.length} Issue{issues.length !== 1 ? 's' : ''} Detected
+                </h3>
+              </div>
+              <div className="space-y-2">
+                {issues.map((issue, idx) => (
+                  <div key={idx} className="flex items-start gap-3 bg-gray-900/50 rounded-lg p-3">
+                    <span className={`flex-shrink-0 text-xs px-2 py-0.5 rounded font-medium ${
+                      issue.severity === 'high'
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'bg-yellow-500/20 text-yellow-400'
+                    }`}>
+                      {issue.severity}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-gray-300">{issue.component}</span>
+                        {issue.spanName && (
+                          <span className="text-xs text-gray-500 font-mono">→ {issue.spanName}</span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-0.5">{issue.message}</p>
+                    </div>
+                    {issue.latencyMs != null && (
+                      <span className="flex-shrink-0 text-xs font-mono text-red-400">
+                        {issue.latencyMs}ms
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Observation Tree */}
           <div className="bg-[#030712] border border-teal-500/20 rounded-xl overflow-hidden">

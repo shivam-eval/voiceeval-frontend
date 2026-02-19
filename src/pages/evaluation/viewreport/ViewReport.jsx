@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo, useContext } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import {
   ArrowLeft,
   Activity,
@@ -36,13 +36,181 @@ import HallucinationOverview from '../insights/hallucination';
 import PronunciationOverview from '../insights/pronunciation';
 import CallKPISection from '../CallKPISection';
 import TraceViewer from './TraceViewer';
+import { useCallTrace, useCallIssues } from '../../../hooks/useCalls';
 
-const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack, isUploaded }) => {
+// ---------------------------------------------------------------------------
+// Component config: maps component name → icon + colour
+// ---------------------------------------------------------------------------
+const COMPONENT_CONFIG = {
+  STT: { label: 'STT (Speech-to-Text)', icon: Mic, colorClass: 'yellow' },
+  TTS: { label: 'TTS (Text-to-Speech)', icon: Volume2, colorClass: 'orange' },
+  LLM: { label: 'LLM (Language Model)', icon: Brain, colorClass: 'purple' },
+  'Tool Call': { label: 'Tool Call', icon: Database, colorClass: 'blue' },
+  General: { label: 'General', icon: AlertTriangle, colorClass: 'red' },
+};
+
+/**
+ * IssuesTab — renders trace-based issues and metric issues from the API.
+ * Keeps the same visual style as the old hardcoded version.
+ */
+const IssuesTab = ({ callId, issuesData, isLoading }) => {
+  if (isLoading) {
+    return (
+      <div className="bg-[#030712] border border-teal-500/20 rounded-xl p-12 text-center">
+        <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-gray-400 text-sm">Loading issues…</p>
+      </div>
+    );
+  }
+
+  if (!callId) {
+    return (
+      <div className="bg-[#030712] border border-teal-500/20 rounded-xl p-12 text-center">
+        <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-400 text-sm">Issues analysis is available only for uploaded call recordings with a linked trace.</p>
+      </div>
+    );
+  }
+
+  const traceIssues = issuesData?.issues || [];
+  const metricIssues = issuesData?.metric_issues || [];
+  const hasTrace = issuesData?.has_trace ?? false;
+
+  // Group trace issues by component
+  const grouped = {};
+  traceIssues.forEach((issue) => {
+    const key = issue.component || 'General';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(issue);
+  });
+
+  const hasAnyIssues = traceIssues.length > 0 || metricIssues.length > 0;
+
+  if (!hasTrace) {
+    return (
+      <div className="bg-[#030712] border border-teal-500/20 rounded-xl p-12 text-center">
+        <GitBranch className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+        <p className="text-gray-400 text-sm">No Langfuse trace found for this call recording. Issues analysis requires a linked trace.</p>
+      </div>
+    );
+  }
+
+  if (!hasAnyIssues) {
+    return (
+      <div className="bg-[#030712] border border-teal-500/20 rounded-xl p-12 text-center">
+        <CheckCircle className="w-12 h-12 text-teal-500/60 mx-auto mb-3" />
+        <p className="text-gray-300 text-sm font-medium">No issues detected</p>
+        <p className="text-gray-500 text-xs mt-1">All STT, TTS, and LLM components are within normal thresholds.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Trace-based component issues */}
+      {Object.entries(grouped).map(([component, issues]) => {
+        const cfg = COMPONENT_CONFIG[component] || COMPONENT_CONFIG.General;
+        const Icon = cfg.icon;
+        const c = cfg.colorClass;
+        return (
+          <div key={component} className="bg-[#030712] border border-teal-500/20 rounded-xl overflow-hidden">
+            <div className={`flex items-center gap-3 px-6 py-4 bg-${c}-500/5 border-b border-${c}-500/20`}>
+              <Icon className={`w-5 h-5 text-${c}-400`} />
+              <h4 className="text-base font-semibold text-white">{cfg.label}</h4>
+              <span className={`ml-auto px-2.5 py-1 bg-${c}-500/10 border border-${c}-500/30 rounded-full text-xs font-semibold text-${c}-400`}>
+                {issues.length} {issues.length === 1 ? 'Issue' : 'Issues'}
+              </span>
+            </div>
+            <div className="divide-y divide-gray-800/30">
+              {issues.map((issue, idx) => (
+                <div key={idx} className="px-6 py-4 hover:bg-gray-800/20 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <div className={`w-2 h-2 rounded-full bg-${c}-400 mt-2 flex-shrink-0`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-300 mb-1">{issue.message}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                          issue.severity === 'high' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                          issue.severity === 'medium' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                          'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        }`}>
+                          {issue.severity}
+                        </span>
+                        {issue.latency_ms != null && (
+                          <span className="text-[10px] text-gray-500 font-mono">
+                            {issue.latency_ms}ms
+                            {issue.threshold_ms != null && ` (threshold: ${issue.threshold_ms}ms)`}
+                          </span>
+                        )}
+                        {issue.span_name && (
+                          <span className="text-[10px] text-gray-600 font-mono">{issue.span_name}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Metric issues (from evaluation engine) */}
+      {metricIssues.length > 0 && (
+        <div className="bg-[#030712] border border-teal-500/20 rounded-xl overflow-hidden">
+          <div className="flex items-center gap-3 px-6 py-4 bg-red-500/5 border-b border-red-500/20">
+            <AlertTriangle className="w-5 h-5 text-red-400" />
+            <h4 className="text-base font-semibold text-white">Metric Issues</h4>
+            <span className="ml-auto px-2.5 py-1 bg-red-500/10 border border-red-500/30 rounded-full text-xs font-semibold text-red-400">
+              {metricIssues.length} {metricIssues.length === 1 ? 'Issue' : 'Issues'}
+            </span>
+          </div>
+          <div className="divide-y divide-gray-800/30">
+            {metricIssues.map((issue, idx) => (
+              <div key={idx} className="px-6 py-4 hover:bg-gray-800/20 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className="w-2 h-2 rounded-full bg-red-400 mt-2 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-300 mb-1">{issue.description}</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
+                        issue.severity === 'critical' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                        issue.severity === 'major' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
+                        'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                      }`}>
+                        {issue.severity}
+                      </span>
+                      {issue.metric_name && (
+                        <span className="text-[10px] text-gray-500 capitalize">{issue.metric_name.replace(/_/g, ' ')}</span>
+                      )}
+                      {issue.category && (
+                        <span className="text-[10px] text-gray-600 capitalize">{issue.category.replace(/_/g, ' ')}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptData, simulationData, onBack, isUploaded, callId }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [activeCategory, setActiveCategory] = useState('');
   const [showTraces, setShowTraces] = useState(false);
   const topBarContext = useContext(TopBarContext);
   const transcriptData = initialTranscriptData;
+
+  // Fetch trace data and issues when callId is available
+  const { data: traceData, isLoading: isTraceLoading } = useCallTrace(callId);
+  const { data: issuesData, isLoading: isIssuesLoading } = useCallIssues(callId);
+
+  // Trace exists if we have a callId and the fetch returned data (not null/404)
+  const hasTrace = !!callId && !!traceData;
 
   // Update TopBar with back button when this component mounts, and restore previous state on unmount
   useEffect(() => {
@@ -328,10 +496,10 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
   };
 
   // Handle trace view navigation
-  if (showTraces) {
+  if (showTraces && hasTrace) {
     return (
-      <TraceViewer 
-        traceData={evaluation?.trace_data || report?.trace_data} 
+      <TraceViewer
+        traceData={traceData}
         onBack={() => setShowTraces(false)}
       />
     );
@@ -345,14 +513,16 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
           Call Analysis
         </h2>
         
-        {/* View Traces Button - Always visible */}
-        <button
-          onClick={() => setShowTraces(true)}
-          className="flex items-center gap-2 px-6 py-2.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 hover:border-teal-500/50 rounded-lg text-teal-400 hover:text-teal-300 transition-all shadow-lg"
-        >
-          <GitBranch className="w-5 h-5" />
-          <span className="text-sm font-semibold">View Traces</span>
-        </button>
+        {/* View Traces Button - only when a Langfuse trace exists for this call */}
+        {hasTrace && (
+          <button
+            onClick={() => setShowTraces(true)}
+            className="flex items-center gap-2 px-6 py-2.5 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 hover:border-teal-500/50 rounded-lg text-teal-400 hover:text-teal-300 transition-all shadow-lg"
+          >
+            <GitBranch className="w-5 h-5" />
+            <span className="text-sm font-semibold">View Traces</span>
+          </button>
+        )}
       </div>
 
       {/* Summary Cards */}
@@ -532,79 +702,11 @@ const TestReportView = ({ report, evaluation, transcriptData: initialTranscriptD
           )}
 
           {activeTab === 'issues' && (
-            <div className="space-y-4">
-              {/* Group issues by hardcoded component type */}
-              {[
-                {
-                  component: 'STT (Speech-to-Text)',
-                  icon: Mic,
-                  colorClass: 'yellow',
-                  issues: [
-                    { message: 'Potential mis-transcription of "account balances" as "accounting balance"', severity: 'medium' },
-                    { message: 'Background noise detected causing STT confidence drop', severity: 'low' }
-                  ]
-                },
-                {
-                  component: 'Tool Call',
-                  icon: Database,
-                  colorClass: 'blue',
-                  issues: [
-                    { message: 'Weather API tool took longer than 2.5s (threshold: 2s)', severity: 'medium' },
-                    { message: 'Tool parameters lacked optional "unit" field causing redundant defaults', severity: 'low' }
-                  ]
-                },
-                {
-                  component: 'LLM (Language Model)',
-                  icon: Brain,
-                  colorClass: 'purple',
-                  issues: [
-                    { message: 'Minor script adherence deviation at Turn 4', severity: 'low' },
-                    { message: 'Agent repeated closure script twice erroneously', severity: 'medium' }
-                  ]
-                },
-                {
-                  component: 'TTS (Text-to-Speech)',
-                  icon: Volume2,
-                  colorClass: 'orange',
-                  issues: [
-                    { message: 'Synthesized voice intonation felt robotic at Turn 2', severity: 'medium' },
-                    { message: 'Noticeable latency (800ms) between LLM output and TTS play', severity: 'high' }
-                  ]
-                }
-              ].map(({ component, icon: Icon, colorClass, issues }) => (
-                <div key={component} className="bg-[#030712] border border-teal-500/20 rounded-xl overflow-hidden">
-                  {/* Component Header */}
-                  <div className={`flex items-center gap-3 px-6 py-4 bg-${colorClass}-500/5 border-b border-${colorClass}-500/20`}>
-                    <Icon className={`w-5 h-5 text-${colorClass}-400`} />
-                    <h4 className="text-base font-semibold text-white">{component}</h4>
-                    <span className={`ml-auto px-2.5 py-1 bg-${colorClass}-500/10 border border-${colorClass}-500/30 rounded-full text-xs font-semibold text-${colorClass}-400`}>
-                      {issues.length} {issues.length === 1 ? 'Issue' : 'Issues'}
-                    </span>
-                  </div>
-
-                  {/* Issues List */}
-                  <div className="divide-y divide-gray-800/30">
-                    {issues.map((issue, idx) => (
-                      <div key={idx} className="px-6 py-4 hover:bg-gray-800/20 transition-colors">
-                        <div className="flex items-start gap-3">
-                          <div className={`w-2 h-2 rounded-full bg-${colorClass}-400 mt-2 flex-shrink-0`} />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-300 mb-1">{issue.message}</p>
-                            <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded uppercase ${
-                              issue.severity === 'high' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
-                              issue.severity === 'medium' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
-                              'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                            }`}>
-                              {issue.severity}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <IssuesTab
+              callId={callId}
+              issuesData={issuesData}
+              isLoading={isIssuesLoading}
+            />
           )}
         </div>
       )}

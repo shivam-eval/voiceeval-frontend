@@ -133,3 +133,44 @@ export const useImportBolnaCalls = () => {
         },
     });
 };
+
+/**
+ * Hook to fetch the Langfuse trace for a call recording.
+ * Returns null if the call has no associated trace (404).
+ */
+export const useCallTrace = (callId) => {
+    return useQuery({
+        queryKey: [...callKeys.detail(callId), 'trace'],
+        queryFn: async () => {
+            try {
+                return await callsApi.getTrace(callId);
+            } catch (err) {
+                if (err.message && err.message.includes('404')) return null;
+                throw err;
+            }
+        },
+        enabled: !!callId,
+        staleTime: 60000,
+        retry: false,
+    });
+};
+
+/**
+ * Hook to fetch trace-based issues and metric issues for a call recording.
+ */
+export const useCallIssues = (callId) => {
+    return useQuery({
+        queryKey: [...callKeys.detail(callId), 'issues'],
+        queryFn: async () => {
+            try {
+                return await callsApi.getIssues(callId);
+            } catch (err) {
+                if (err.message && err.message.includes('404')) return null;
+                throw err;
+            }
+        },
+        enabled: !!callId,
+        staleTime: 60000,
+        retry: false,
+    });
+};

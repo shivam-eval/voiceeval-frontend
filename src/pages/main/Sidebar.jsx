@@ -50,8 +50,7 @@ const Sidebar = ({
       label: "Observability",
       icon: <Eye className="w-5 h-5" />,
       tabs: [
-        { id: "dashboard", label: "Dashboard", path: "/observability/dashboard" },
-        // { id: "traces", label: "Traces", path: "/observability/traces" },
+        { id: "traces", label: "Traces", path: "/observability/traces" },
         { id: "calls", label: "Calls", path: "/observability/calls" },
       ],
     },

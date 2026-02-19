@@ -254,8 +254,9 @@ const EvaluationReportPage = () => {
     );
   }
 
-  // Read isUploaded flag from URL
+  // Read flags from URL
   const isUploadedFromUrl = searchParams.get('isUploaded') === 'true';
+  const callIdFromUrl = searchParams.get('callId') || null;
   const report = transformSessionToReport(evaluation);
 
   return (
@@ -266,6 +267,7 @@ const EvaluationReportPage = () => {
         transcriptData={transcriptData}
         onBack={handleBack}
         isUploaded={isUploadedFromUrl}
+        callId={callIdFromUrl}
       />
     </div>
   );

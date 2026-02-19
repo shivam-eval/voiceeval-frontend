@@ -218,6 +218,8 @@ export const callsApi = {
     categories: () => apiClient.get('/calls/categories'),
     fetchBolnaCalls: (data) => apiClient.post('/calls/bolna/fetch-calls', data),
     importBolnaCalls: (data) => apiClient.post('/calls/bolna/import-calls', data),
+    getTrace: (id) => apiClient.get(`/calls/${id}/trace`),
+    getIssues: (id) => apiClient.get(`/calls/${id}/issues`),
 };
 
 export default apiClient;

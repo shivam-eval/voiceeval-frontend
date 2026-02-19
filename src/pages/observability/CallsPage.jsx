@@ -906,6 +906,9 @@ useEffect(() => {
         isOpen={isTraceImportOpen}
         onClose={() => setIsTraceImportOpen(false)}
         agentId={directory}
+        agents={agentOptions}
+        onSubmit={handleModalSubmit}
+        isLoading={uploadCalls.isPending}
       />
 
       <EvaluateModal

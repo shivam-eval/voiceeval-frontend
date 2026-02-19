@@ -30,7 +30,6 @@ uv add voiceeval-sdk`}
 
 client = Client(
     api_key="your_api_key_here",
-    project_name="my_livekit_agent"  # Required: identifies your project
 )`}
         </CodeBlock>
 
@@ -39,7 +38,6 @@ client = Client(
             <p className="text-gray-400 text-sm mb-4">You can also provide configuration via environment variables:</p>
             <ul className="list-disc list-inside space-y-2 text-sm text-gray-300 ml-2 mb-4">
                 <li><code className="text-teal-400">VOICE_EVAL_API_KEY</code>: Your API key.</li>
-                <li><code className="text-teal-400">VOICE_EVAL_PROJECT_NAME</code>: Your project identifier.</li>
             </ul>
             <p className="text-gray-400 text-sm mb-2">If environment variables are set, you can initialize the client with minimal arguments:</p>
             <CodeBlock language="python">{`client = Client(project_name="my_livekit_agent")`}</CodeBlock>
@@ -107,8 +105,8 @@ def build_context(docs: list):
                 </li>
                 <li className="flex gap-2">
                     <span className="font-mono text-[#b61249]">project_name</span>
-                    <span className="text-gray-500">(str, required)</span>:
-                    <span>Project identifier for grouping traces. This is mandatory.</span>
+                    <span className="text-gray-500">(str, optional)</span>:
+                    <span>Project identifier for grouping traces. If omitted, a default project will be used.</span>
                 </li>
             </ul>
         </div>

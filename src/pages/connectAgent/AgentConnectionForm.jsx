@@ -12,6 +12,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
   const [phoneNumber, setPhoneNumber] = useState("")
   const [direction, setDirection] = useState("inbound")
   const [focusedField, setFocusedField] = useState(null)
+  const [params, setParams] = useState([])
 
   // Bolna-specific state
   const [bolnaAgents, setBolnaAgents] = useState([])
@@ -21,8 +22,59 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
 
   const isBolna = platform === 'bolna'
 
+  const handleAddParam = () => {
+    setParams([...params, { key: '', value_type: 'string', description: '' }])
+  }
+
+  const handleRemoveParam = (index) => {
+    setParams(params.filter((_, i) => i !== index))
+  }
+
+  const handleParamChange = (index, field, value) => {
+    const updatedParams = [...params]
+    updatedParams[index] = { ...updatedParams[index], [field]: value }
+    setParams(updatedParams)
+  }
+
+  const getParamValidationErrors = () => {
+    const errors = []
+    const keys = new Set()
+
+    params.forEach((param, index) => {
+      if (!param.key.trim()) {
+        errors.push(`Param ${index + 1}: Key is required`)
+      }
+      if (!param.value_type) {
+        errors.push(`Param ${index + 1}: Value type is required`)
+      }
+      if (param.key.trim() && keys.has(param.key.trim())) {
+        errors.push(`Param ${index + 1}: Duplicate key "${param.key.trim()}"`)
+      }
+      if (param.key.trim()) {
+        keys.add(param.key.trim())
+      }
+    })
+
+    return errors
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
+
+    const paramErrors = getParamValidationErrors()
+    if (paramErrors.length > 0) {
+      toast.error(paramErrors[0])
+      return
+    }
+
+    // Normalize params: filter out empty ones and keep only key, value_type, description
+    const normalizedParams = params
+      .filter(p => p.key.trim() && p.value_type)
+      .map(p => ({
+        key: p.key.trim(),
+        value_type: p.value_type,
+        description: p.description.trim() || undefined
+      }))
 
     if (isBolna && selectedBolnaAgent) {
       onConnect({
@@ -32,6 +84,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
         name: name || selectedBolnaAgent.agent_name || "Bolna Agent",
         direction,
         phoneNumber: direction === "inbound" ? phoneNumber : "",
+        params: normalizedParams,
       })
       return
     }
@@ -44,6 +97,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
       customPrompt: platform === 'custom' ? customPrompt : "",
       direction,
       phoneNumber: direction === "inbound" ? phoneNumber : "",
+      params: normalizedParams,
     })
   }
 
@@ -309,6 +363,76 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
         />
       )}
 
+      {/* Parameters Section - Only for Outbound */}
+      {direction === "outbound" && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-gray-300 ml-1">Parameters</label>
+            {params.length > 0 && (
+              <span className="text-xs text-gray-500">({params.length})</span>
+            )}
+          </div>
+
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {params.map((param, index) => (
+              <div
+                key={index}
+                className="bg-dark-input border border-gray-700 rounded-lg p-3 space-y-2"
+              >
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={param.key}
+                    onChange={(e) => handleParamChange(index, 'key', e.target.value)}
+                    placeholder="Parameter key (e.g., customer_type)"
+                    className="flex-1 px-3 py-2 bg-gray-950 border border-gray-700 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
+                    disabled={isConnecting}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveParam(index)}
+                    className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                    disabled={isConnecting}
+                    title="Remove parameter"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+
+                <input
+                  type="text"
+                  value={param.value_type}
+                  onChange={(e) => handleParamChange(index, 'value_type', e.target.value)}
+                  placeholder="Value type (e.g., string, number, boolean)"
+                  className="w-full px-3 py-2 bg-gray-950 border border-gray-700 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
+                  disabled={isConnecting}
+                />
+
+                <input
+                  type="text"
+                  value={param.description}
+                  onChange={(e) => handleParamChange(index, 'description', e.target.value)}
+                  placeholder="Description (optional)"
+                  className="w-full px-3 py-2 bg-gray-950 border border-gray-700 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
+                  disabled={isConnecting}
+                />
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleAddParam}
+            className="w-full px-3 py-2 text-sm text-teal-400 hover:text-teal-300 border border-teal-400/30 hover:border-teal-400/50 rounded-lg transition-colors"
+            disabled={isConnecting}
+          >
+            + Add Parameter
+          </button>
+        </div>
+      )}
+
       <PrimaryButton
         onClick={handleSubmit}
         loading={isConnecting}
@@ -430,6 +554,76 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
                   disabled={isConnecting}
                   required
                 />
+              )}
+
+              {/* Parameters Section - Only for Outbound */}
+              {direction === "outbound" && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-gray-300 ml-1">Parameters</label>
+                    {params.length > 0 && (
+                      <span className="text-xs text-gray-500">({params.length})</span>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {params.map((param, index) => (
+                      <div
+                        key={index}
+                        className="bg-dark-input border border-gray-700 rounded-lg p-3 space-y-2"
+                      >
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={param.key}
+                            onChange={(e) => handleParamChange(index, 'key', e.target.value)}
+                            placeholder="Parameter key (e.g., customer_type)"
+                            className="flex-1 px-3 py-2 bg-gray-950 border border-gray-700 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
+                            disabled={isConnecting}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveParam(index)}
+                            className="p-2 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded transition-colors"
+                            disabled={isConnecting}
+                            title="Remove parameter"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+
+                        <input
+                          type="text"
+                          value={param.value_type}
+                          onChange={(e) => handleParamChange(index, 'value_type', e.target.value)}
+                          placeholder="Value type (e.g., string, number, boolean)"
+                          className="w-full px-3 py-2 bg-gray-950 border border-gray-700 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
+                          disabled={isConnecting}
+                        />
+
+                        <input
+                          type="text"
+                          value={param.description}
+                          onChange={(e) => handleParamChange(index, 'description', e.target.value)}
+                          placeholder="Description (optional)"
+                          className="w-full px-3 py-2 bg-gray-950 border border-gray-700 rounded text-sm text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
+                          disabled={isConnecting}
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleAddParam}
+                    className="w-full px-3 py-2 text-sm text-teal-400 hover:text-teal-300 border border-teal-400/30 hover:border-teal-400/50 rounded-lg transition-colors"
+                    disabled={isConnecting}
+                  >
+                    + Add Parameter
+                  </button>
+                </div>
               )}
 
               <PrimaryButton

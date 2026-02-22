@@ -209,26 +209,51 @@ const SimulationsListPage = () => {
         return id.length > 12 ? `${id.substring(0, 12)}...` : id;
     };
 
-    // Filter out inbound sessions from the general sessions list so inbound runs
-    // are only visible on the Inbound page.
+    // Filter out inbound sessions and audio-based simulations from the general list.
     const filteredSimulations = (data?.simulations || []).filter((sim) => {
         const callMode = (sim.call_mode || sim.metadata?.call_mode || '').toString().toLowerCase();
-        return !callMode.includes('inbound');
+        const isInbound = callMode.includes('inbound');
+        const isAudioBased = sim.simulation_id?.startsWith('sim_audio');
+        return !isInbound && !isAudioBased;
     });
     const filteredTotal = filteredSimulations.length;
 
-    // Show agents view if no agent is selected
+    // Determine the modal pre-fill context based on view
+    const getModalPreselection = () => {
+        if (viewMode === 'simulations' && selectedAgent && selectedTestSuite) {
+            // Inside a test suite: pre-fill agent + test suite
+            return { agentId: selectedAgent, testSuiteId: selectedTestSuite };
+        }
+        if (viewMode === 'simulations' && selectedAgent) {
+            // Inside an agent: pre-fill agent only
+            return { agentId: selectedAgent, testSuiteId: null };
+        }
+        // Landing page: nothing pre-filled
+        return { agentId: null, testSuiteId: null };
+    };
+
+    const modalPreselection = getModalPreselection();
+
     if (viewMode === 'agents') {
         return (
             <div className="p-8 bg-dark-bg min-h-screen text-white">
                 <div className="w-full max-w-screen-2xl mx-auto">
-                    <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-white mb-2">
-                            Outbound Sessions - Select Agent
-                        </h1>
-                        <p className="text-gray-400">
-                            Choose an agent to view test suites and run simulations
-                        </p>
+                    <div className="mb-8 flex items-center justify-between">
+                        <div>
+                            <h1 className="text-4xl font-bold text-white mb-2">
+                                Outbound Sessions - Select Agent
+                            </h1>
+                            <p className="text-gray-400">
+                                Choose an agent to view test suites and run simulations
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setShowRunModal(true)}
+                            className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-lg shadow-teal-500/20"
+                        >
+                            <Play className="w-5 h-5" />
+                            Run Simulation
+                        </button>
                     </div>
                     
                     <SimulationAgentDirectoriesView 
@@ -236,11 +261,24 @@ const SimulationsListPage = () => {
                         showHeader={true}
                     />
                 </div>
+
+                {/* Modal — nothing pre-filled */}
+                <RunSimulationModal
+                    isOpen={showRunModal}
+                    onClose={() => setShowRunModal(false)}
+                    preSelectedAgentId={modalPreselection.agentId}
+                    preSelectedTestSuiteId={modalPreselection.testSuiteId}
+                    onSuccess={(data) => {
+                        setShowRunModal(false);
+                        if (data?.simulation_id) {
+                            navigate(`/simulation/runs/${data.simulation_id}`);
+                        }
+                    }}
+                />
             </div>
         );
     }
 
-    // Show test suites view for selected agent (when no test suite selected)
     if (viewMode === 'simulations' && selectedAgent && !selectedTestSuite) {
         return (
             <div className="p-8 bg-dark-bg min-h-screen text-white">
@@ -255,9 +293,18 @@ const SimulationsListPage = () => {
                     </button>
                     
                     {/* Header */}
-                    <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-white mb-2">Test Suites</h1>
-                        <p className="text-gray-400">Select a test suite to view simulations or run a new one</p>
+                    <div className="mb-8 flex items-center justify-between">
+                        <div>
+                            <h1 className="text-4xl font-bold text-white mb-2">Test Suites</h1>
+                            <p className="text-gray-400">Select a test suite to view simulations or run a new one</p>
+                        </div>
+                        <button
+                            onClick={() => setShowRunModal(true)}
+                            className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-lg shadow-teal-500/20"
+                        >
+                            <Play className="w-5 h-5" />
+                            Run Simulation
+                        </button>
                     </div>
 
                     <TestSuitesListView 
@@ -265,6 +312,20 @@ const SimulationsListPage = () => {
                         showRunSimulation={true}
                     />
                 </div>
+
+                {/* Modal — agent pre-filled */}
+                <RunSimulationModal
+                    isOpen={showRunModal}
+                    onClose={() => setShowRunModal(false)}
+                    preSelectedAgentId={modalPreselection.agentId}
+                    preSelectedTestSuiteId={modalPreselection.testSuiteId}
+                    onSuccess={(data) => {
+                        setShowRunModal(false);
+                        if (data?.simulation_id) {
+                            navigate(`/simulation/runs/${data.simulation_id}`);
+                        }
+                    }}
+                />
             </div>
         );
     }
@@ -303,7 +364,7 @@ const SimulationsListPage = () => {
                         </div>
                         <button
                             onClick={() => setShowRunModal(true)}
-                            className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+                            className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-lg shadow-teal-500/20"
                         >
                             <Play className="w-5 h-5" />
                             Run New Simulation
@@ -466,12 +527,12 @@ const SimulationsListPage = () => {
                         </div>
                     )}
 
-                    {/* Modals */}
+                    {/* Modal — agent + test suite pre-filled */}
                     <RunSimulationModal
                         isOpen={showRunModal}
                         onClose={() => setShowRunModal(false)}
-                        preSelectedTestSuite={selectedTestSuite}
-                        preSelectedAgent={selectedAgent}
+                        preSelectedAgentId={modalPreselection.agentId}
+                        preSelectedTestSuiteId={modalPreselection.testSuiteId}
                         onSuccess={(data) => {
                             setShowRunModal(false);
                             if (data?.simulation_id) {
@@ -513,13 +574,22 @@ const SimulationsListPage = () => {
     return (
         <div className="p-8 bg-dark-bg min-h-screen text-white">
             <div className="w-full max-w-screen-2xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-white mb-2">
-                        Outbound Sessions
-                    </h1>
-                    <p className="text-gray-400">
-                        Select an agent to view test suites
-                    </p>
+                <div className="mb-8 flex items-center justify-between">
+                    <div>
+                        <h1 className="text-4xl font-bold text-white mb-2">
+                            Outbound Sessions
+                        </h1>
+                        <p className="text-gray-400">
+                            Select an agent to view test suites
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setShowRunModal(true)}
+                        className="flex items-center gap-2 bg-teal-500 hover:bg-teal-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-lg shadow-teal-500/20"
+                    >
+                        <Play className="w-5 h-5" />
+                        Run Simulation
+                    </button>
                 </div>
                 <button
                     onClick={handleBackToAgents}
@@ -529,7 +599,7 @@ const SimulationsListPage = () => {
                 </button>
             </div>
 
-            {/* Modals */}
+            {/* Modal — nothing pre-filled */}
             <RunSimulationModal
                 isOpen={showRunModal}
                 onClose={() => setShowRunModal(false)}

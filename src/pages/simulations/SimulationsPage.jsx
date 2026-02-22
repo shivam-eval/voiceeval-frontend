@@ -16,10 +16,14 @@ const SimulationsPage = () => {
         status: statusFilter || undefined
     });
 
-    // Filter out inbound_loopback simulations (they belong to InboundPage)
+    // Filter out inbound_loopback and audio-based simulations
     const simulations = useMemo(() => {
         const allSims = simulationsData?.simulations || [];
-        return allSims.filter(sim => sim.call_mode !== 'inbound_loopback');
+        return allSims.filter(sim => {
+            const isInbound = sim.call_mode === 'inbound_loopback';
+            const isAudioBased = sim.simulation_id?.startsWith('sim_audio');
+            return !isInbound && !isAudioBased;
+        });
     }, [simulationsData]);
     
     const hasSimulations = simulations.length > 0;

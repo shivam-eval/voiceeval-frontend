@@ -20,14 +20,16 @@ export const simulationKeys = {
 
 /**
  * Hook to fetch list of simulations with filters
- * Note: Refetches on mount and after mutations (create, delete, etc.)
+ * @param {Object} filters - Query filters (agentId, testSuiteId, status, etc.)
+ * @param {Object} options - React Query options (e.g. { enabled: false })
  */
-export const useSimulations = (filters = {}) => {
+export const useSimulations = (filters = {}, options = {}) => {
     return useQuery({
         queryKey: simulationKeys.list(filters),
         queryFn: () => simulationsApi.getSimulations(filters),
         staleTime: Infinity, // No auto-refresh
         refetchOnWindowFocus: false,
+        ...options,
     });
 };
 

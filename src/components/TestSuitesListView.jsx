@@ -27,12 +27,13 @@ const TestSuitesListView = ({
   const [page, setPage] = useState(() => getSafePage(searchParams.get('testSuitesPage'), 1));
   const itemsPerPage = 10;
 
-  // Fetch test suites filtered by agent_id
+  // Fetch test suites filtered by agent_id (exclude audio-generated)
   const { data: testSuitesData, isLoading, refetch } = useTestSuites({
     agent_id: agentId,
     search: searchTerm,
     skip: (page - 1) * itemsPerPage,
     limit: itemsPerPage,
+    exclude_audio: true,
   });
 
   const testSuites = useMemo(() => {
@@ -217,8 +218,8 @@ const TestSuitesListView = ({
             setShowRunModal(false);
             setSelectedTestSuite(null);
           }}
-          preSelectedTestSuite={selectedTestSuite.test_suite_id}
-          preSelectedAgent={agentId}
+          preSelectedTestSuiteId={selectedTestSuite.test_suite_id}
+          preSelectedAgentId={agentId}
         />
       )}
     </div>

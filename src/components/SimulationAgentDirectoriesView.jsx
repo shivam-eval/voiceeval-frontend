@@ -11,6 +11,7 @@ import { useAgents } from '../hooks/useAgents';
 const SimulationAgentDirectoriesView = ({ 
   onAgentSelect,
   showHeader = true,
+  showAllAgents = false, // when true, list all tenant agents from useAgents()
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   
@@ -29,29 +30,40 @@ const SimulationAgentDirectoriesView = ({
   const { data: categoriesData, isLoading: isCategoriesLoading } = useSimulationCategories();
   const { data: agentsData } = useAgents();
 
-  // Process categories from simulation categories endpoint
+  // When showAllAgents=true, use agents list from useAgents()
   const filteredCategories = useMemo(() => {
-    if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
-      return categoriesData.categories
-        .filter(cat => cat.has_agent !== false && cat.simulation_count > 0)
-        .map(cat => ({
-          id: cat.id,
-          name: cat.name,
-          platform: cat.platform,
-          count: cat.simulation_count
-        }));
+    if (!showAllAgents) {
+      if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+        return categoriesData.categories
+          .filter(cat => cat.has_agent !== false && cat.simulation_count > 0)
+          .map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            platform: cat.platform,
+            count: cat.simulation_count
+          }));
+      }
+      return [];
     }
-    return [];
-  }, [categoriesData]);
+
+    // Map agentsData to same shape
+    const agents = agentsData?.agents || [];
+    return agents.map(agent => ({
+      id: agent.agent_id || agent.provider_agent_id || agent.id,
+      name: agent.name || agent.agent_name || agent.agent_id,
+      platform: agent.platform || agent.provider || '',
+      count: agent.simulation_count || 0,
+    }));
+  }, [categoriesData, agentsData, showAllAgents]);
 
   // Display agents with search
   const displayedAgents = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
-    
+
     return filteredCategories.filter(cat => {
       const name = cat.name || cat.id;
       return name.toLowerCase().includes(searchLower) || 
-             cat.id.toLowerCase().includes(searchLower);
+             (cat.id && cat.id.toLowerCase().includes(searchLower));
     });
   }, [filteredCategories, searchTerm]);
 

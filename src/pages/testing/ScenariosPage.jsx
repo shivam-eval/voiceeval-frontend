@@ -3,7 +3,7 @@ import Button from "../../components/Button";
 
 const ScenariosPage = () => {
     const breadcrumbItems = [
-        { label: "Testing", path: "/testing/suites" },
+        { label: "Testing", path: "/testing/test-cases" },
         { label: "Scenarios" },
     ];
 

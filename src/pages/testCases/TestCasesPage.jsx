@@ -1,40 +1,22 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { Search, Plus, Filter, MoreVertical, Trash2, Eye, ChevronDown } from 'lucide-react';
-import { useTestSuites, useDeleteTestSuite, useCreateTestSuite } from "../../hooks/useTestSuites";
+import { Trash2 } from 'lucide-react';
+import { useTestCases } from "../../hooks/useTestCases";
 import { useAgents } from "../../hooks/useAgents";
 import Table from "../../components/Table";
 import Badge from "../../components/Badge";
-import Button from "../../components/Button";
-import ConfirmationModal from "../../components/ConfirmationModal";
-import CreateTestSuiteModal from "../../components/CreateTestSuiteModal";
 import GenericDropdown from "../../components/DropDown";
+import SimulationAgentDirectoriesView from "../../components/SimulationAgentDirectoriesView";
 
 const TestCasesPage = () => {
     const navigate = useNavigate();
 
-    // Filters and search
     const [searchQuery, setSearchQuery] = useState("");
     const [agentFilter, setAgentFilter] = useState("");
     const [selectedRows, setSelectedRows] = useState([]);
 
-    // Modal state
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [confirmModal, setConfirmModal] = useState({
-        isOpen: false,
-        title: '',
-        message: '',
-        onConfirm: () => { },
-        variant: 'danger',
-        confirmText: 'Confirm'
-    });
-
-    // Fetch test suites
-    const { data, isLoading, error } = useTestSuites({
-        search: searchQuery,
-        agent_id: agentFilter,
-    });
+    // Fetch test cases for selected agent
+    const { data, isLoading, error } = useTestCases(agentFilter);
 
     // Fetch agents for filter dropdown
     const { data: agentsData } = useAgents({ limit: 100 });
@@ -47,147 +29,107 @@ const TestCasesPage = () => {
         })) || [])
     ], [agentsData]);
 
-    // Mutations
-    const deleteTestSuite = useDeleteTestSuite();
-    const createTestSuite = useCreateTestSuite();
-
-    const handleCreateSuite = (formData) => {
-        // Close modal immediately
-        setShowCreateModal(false);
-
-        createTestSuite.mutate(formData, {
-            onSuccess: () => {
-                toast.success("Test suite created successfully");
-            }
+    // Filter by search query
+    const filteredData = useMemo(() => {
+        if (!data) return [];
+        if (!searchQuery) return data;
+        const q = searchQuery.toLowerCase();
+        return data.filter(tc => {
+            const sc = tc.scenario_config || {};
+            return (
+                (sc.config_name || "").toLowerCase().includes(q) ||
+                (sc.objective || "").toLowerCase().includes(q) ||
+                (sc.speaker_name || "").toLowerCase().includes(q) ||
+                (tc.tc_id || "").toLowerCase().includes(q)
+            );
         });
-    };
-
-
-    const handleDelete = async (id) => {
-        setConfirmModal({
-            isOpen: true,
-            title: "Delete Test Suite",
-            message: "Are you sure you want to delete this test suite?",
-            confirmText: "Delete",
-            variant: "danger",
-            onConfirm: async () => {
-                try {
-                    await deleteTestSuite.mutateAsync(id);
-                    toast.success("Test suite deleted successfully");
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                } catch (error) {
-                    // Error handled by global interceptor
-                }
-            }
-        });
-    };
-
-    const handleBulkDelete = async () => {
-        setConfirmModal({
-            isOpen: true,
-            title: "Bulk Delete",
-            message: `Are you sure you want to delete ${selectedRows.length} test suites?`,
-            confirmText: "Delete",
-            variant: "danger",
-            onConfirm: async () => {
-                try {
-                    await Promise.all(selectedRows.map(id => deleteTestSuite.mutateAsync(id)));
-                    setSelectedRows([]);
-                    toast.success(`${selectedRows.length} test suites deleted successfully`);
-                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                } catch (error) {
-                    // Error handled by global interceptor
-                }
-            }
-        });
-    };
+    }, [data, searchQuery]);
 
     // Table columns
     const columns = [
         {
-            key: "name",
-            label: "Name",
-            sortable: true,
-            render: (value, row) => (
-                <div>
-                    <div className="font-medium text-white">{value}</div>
-                    {row.description && (
-                        <div className="text-xs text-gray-500 truncate max-w-md">{row.description}</div>
-                    )}
-                </div>
-            ),
-        },
-        {
-            key: "owner",
-            label: "Owner",
-            sortable: true,
-            render: (value) => value || "-",
-        },
-        {
-            key: "metadata",
-            label: "Records",
+            key: "scenario_config",
+            label: "Scenario",
             sortable: false,
-            render: (value) => (
-                <span className="text-teal-400 font-medium">
-                    {value?.total_cases || 0}
-                </span>
-            ),
-        },
-        {
-            key: "simulation_summary",
-            label: "Last Run",
-            sortable: false,
-            render: (value) => {
-                if (!value) {
-                    return <Badge variant="default" size="sm">Not Tested</Badge>;
-                }
-                if (value.has_active) {
-                    return (
-                        <Badge variant="warning" size="sm">
-                            <span className="flex items-center gap-1">
-                                <span className="animate-pulse">●</span> Running
-                            </span>
-                        </Badge>
-                    );
-                }
-                if (value.last_status === 'completed') {
-                    const passed = value.completed || 0;
-                    const total = value.total_sessions || 0;
-                    const allPassed = value.failed === 0;
-                    const percentage = total > 0 ? Math.round((passed / total) * 100) : 0;
-                    return (
-                        <Badge variant={allPassed ? "success" : "warning"} size="sm">
-                            {passed}/{total} Passed ({percentage}%)
-                        </Badge>
-                    );
-                }
-                if (value.last_status === 'failed') {
-                    return <Badge variant="danger" size="sm">Failed</Badge>;
-                }
-                return <Badge variant="default" size="sm">{value.last_status || 'Unknown'}</Badge>;
+            render: (sc, row) => {
+                const config = sc || {};
+                return (
+                    <div>
+                        <div className="font-medium text-white">{config.config_name || "-"}</div>
+                        {config.objective && (
+                            <div className="text-xs text-gray-500 truncate max-w-md">{config.objective}</div>
+                        )}
+                    </div>
+                );
             },
         },
         {
-            key: "created_at",
-            label: "Created",
-            sortable: true,
-            render: (value) => new Date(value).toLocaleDateString(),
+            key: "scenario_config",
+            label: "Speaker",
+            sortable: false,
+            render: (sc) => (sc && sc.speaker_name) || "-",
         },
         {
-            key: "updated_at",
-            label: "Last Updated",
-            sortable: true,
-            render: (value) => new Date(value).toLocaleDateString(),
+            key: "scenario_config",
+            label: "Language",
+            sortable: false,
+            render: (sc) => {
+                if (!sc) return "-";
+                const parts = [sc.primary_language || ""];
+                if (sc.code_switching && sc.secondary_language) {
+                    parts.push(sc.secondary_language);
+                }
+                return parts.filter(Boolean).join(" / ") || "-";
+            },
+        },
+        {
+            key: "bg_noise_config",
+            label: "Noise Profile",
+            sortable: false,
+            render: (cfg) => {
+                if (!cfg || !cfg.profile) return "-";
+                return (
+                    <Badge variant="default" size="sm">
+                        {cfg.profile}
+                    </Badge>
+                );
+            },
+        },
+        {
+            key: "tc_id",
+            label: "Test Case ID",
+            sortable: false,
+            render: (value) => <div className="text-xs text-gray-500 font-mono truncate max-w-xs">{value}</div>,
         },
     ];
+
+    // If no agent selected, show agents directory
+    if (!agentFilter) {
+        return (
+            <div className="p-8 bg-dark-bg min-h-screen text-white">
+                <div className="w-full max-w-screen-2xl mx-auto">
+                    <div className="mb-8">
+                        <h1 className="text-4xl font-bold text-white mb-2">Test Cases</h1>
+                        <p className="text-gray-400">Select an agent to view its test cases</p>
+                    </div>
+
+                    <SimulationAgentDirectoriesView
+                        onAgentSelect={(agentId) => setAgentFilter(agentId)}
+                        showHeader={true}
+                        showAllAgents={true}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 bg-dark-bg min-h-screen text-white">
             <div className="w-full max-w-screen-2xl mx-auto">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-white mb-2">Test Suites</h1>
-                    <p className="text-gray-400">Create and manage test suites for your agents</p>
+                    <h1 className="text-4xl font-bold text-white mb-2">Test Cases</h1>
+                    <p className="text-gray-400">Test cases for agent: {agentFilter}</p>
                 </div>
 
                 {/* Header Controls */}
@@ -196,7 +138,7 @@ const TestCasesPage = () => {
                         <div className="relative flex-1 md:w-64">
                             <input
                                 type="text"
-                                placeholder="Search test suites..."
+                                placeholder="Search test cases..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 px-5 text-base focus:outline-none focus:border-teal-500 transition-colors text-white placeholder-gray-500"
@@ -217,25 +159,6 @@ const TestCasesPage = () => {
                             Search
                         </button>
                     </div>
-
-                    <div className="flex items-center gap-3">
-                        {selectedRows.length > 0 && (
-                            <button
-                                onClick={handleBulkDelete}
-                                className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-red-500/20 transition-colors shadow-[0_0_15px_rgba(239,68,68,0.1)]"
-                            >
-                                <Trash2 className="w-5 h-5" />
-                                Delete Selected ({selectedRows.length})
-                            </button>
-                        )}
-                        <button
-                            onClick={() => setShowCreateModal(true)}
-                            className="flex items-center gap-2 bg-teal-500/10 border border-teal-500/30 text-teal-400 px-6 py-3 rounded-lg text-base font-bold hover:bg-teal-500/20 transition-colors shadow-[0_0_15px_rgba(20,184,166,0.1)]"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Create Test Set
-                        </button>
-                    </div>
                 </div>
 
                 {/* Error State */}
@@ -244,7 +167,7 @@ const TestCasesPage = () => {
                         <div className="p-2 bg-red-500/10 rounded-full">
                             <Trash2 className="w-5 h-5" />
                         </div>
-                        <p>Error loading test suites: {error.message}</p>
+                        <p>Error loading test cases: {error.message}</p>
                     </div>
                 )}
 
@@ -252,61 +175,20 @@ const TestCasesPage = () => {
                 <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
                     <Table
                         columns={columns}
-                        data={data?.test_suites || []}
+                        data={filteredData}
                         loading={isLoading}
                         selectable
                         selectedRows={selectedRows}
                         onSelectionChange={setSelectedRows}
-                        primaryKey="test_suite_id"
-                        onRowClick={(row) => navigate(`/test-cases/${row.test_suite_id}`)}
-                        emptyMessage="No test suites found. Create your first test suite to get started!"
-                        actions={(row) => (
-                            <div className="flex items-center justify-center gap-2">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        navigate(`/test-cases/${row.test_suite_id}`);
-                                    }}
-                                    className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-teal-400 transition-colors"
-                                    title="View/Edit"
-                                >
-                                    <Eye className="w-5 h-5" />
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleDelete(row.test_suite_id);
-                                    }}
-                                    className="p-2 rounded hover:bg-gray-800 text-gray-400 hover:text-red-400 transition-colors"
-                                    title="Delete Test Suite"
-                                >
-                                    <Trash2 className="w-5 h-5" />
-                                </button>
-                            </div>
-                        )}
+                        primaryKey="tc_id"
+                        onRowClick={(row) => {
+                            const configId = row.scenario_config?.config_id || row.scenario_config_id;
+                            if (configId) navigate(`/testing/scenario-configs/${configId}`);
+                        }}
+                        emptyMessage="No test cases found for the selected agent."
                     />
                 </div>
             </div>
-
-            {/* Create Test Suite Modal */}
-            <CreateTestSuiteModal
-                isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                onSubmit={handleCreateSuite}
-                isLoading={createTestSuite.isPending}
-                agents={agentsData?.agents || []}
-            />
-
-            <ConfirmationModal
-                isOpen={confirmModal.isOpen}
-                onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-                onConfirm={confirmModal.onConfirm}
-                title={confirmModal.title}
-                message={confirmModal.message}
-                confirmText={confirmModal.confirmText}
-                variant={confirmModal.variant}
-                isLoading={deleteTestSuite.isPending}
-            />
         </div>
     );
 };

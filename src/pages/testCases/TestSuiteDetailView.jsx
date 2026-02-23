@@ -94,7 +94,7 @@ const LoadingState = () => (
     <div className="p-8 flex items-center justify-center min-h-screen">
         <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-teal-400 mb-4"></div>
-            <p className="text-gray-400">Loading test suite...</p>
+            <p className="text-gray-400">Loading test case...</p>
         </div>
     </div>
 );
@@ -102,9 +102,9 @@ const LoadingState = () => (
 const ErrorState = ({ message, onBack }) => (
     <div className="p-8">
         <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-6">
-            <p className="text-red-400">Error loading test suite: {message || "Not found"}</p>
+            <p className="text-red-400">Error loading test case: {message || "Not found"}</p>
             <Button className="mt-4" onClick={onBack}>
-                Back to Test Sets
+                Back to Test Cases
             </Button>
         </div>
     </div>
@@ -470,16 +470,16 @@ const TestSuiteDetailView = () => {
     const handleDelete = async () => {
         setConfirmModal({
             isOpen: true,
-            title: "Delete Test Suite",
-            message: "Are you sure you want to delete this test suite?",
+            title: "Delete Test Case",
+            message: "Are you sure you want to delete this test case?",
             confirmText: "Delete",
             variant: "danger",
-            onConfirm: async () => {
+                onConfirm: async () => {
                 try {
                     await deleteSuite.mutateAsync(suiteId);
-                    toast.success("Test suite deleted successfully");
+                    toast.success("Test case deleted successfully");
                     setConfirmModal(prev => ({ ...prev, isOpen: false }));
-                    navigate("/test-cases");
+                    navigate("/testing/test-cases");
                 } catch (error) {
                     // Error handled by global interceptor
                 }
@@ -575,7 +575,7 @@ const TestSuiteDetailView = () => {
 
 
     if (error || !suite) {
-        return <ErrorState message={error?.message} onBack={() => navigate("/test-cases")} />;
+        return <ErrorState message={error?.message} onBack={() => navigate("/testing/test-cases")} />;
     }
 
 
@@ -588,7 +588,7 @@ const TestSuiteDetailView = () => {
                 <div className="mb-8">
                     <div className="flex items-center gap-3 mb-4">
                         <button
-                            onClick={() => navigate("/test-cases")}
+                            onClick={() => navigate("/testing/test-cases")}
                             className="p-2 rounded-lg bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -602,7 +602,7 @@ const TestSuiteDetailView = () => {
                             onEdit={() => setEditingName(true)}
                             onSave={(value) => handleInlineEdit('name', value)}
                             onCancel={() => setEditingName(false)}
-                            placeholder="Test Suite Name"
+                            placeholder="Test Case Name"
                         />
 
 

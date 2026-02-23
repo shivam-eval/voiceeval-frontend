@@ -227,7 +227,7 @@ const SimulationsListPage = () => {
                             Outbound Sessions - Select Agent
                         </h1>
                         <p className="text-gray-400">
-                            Choose an agent to view test suites and run simulations
+                            Choose an agent to view test cases and run simulations
                         </p>
                     </div>
                     
@@ -256,8 +256,8 @@ const SimulationsListPage = () => {
                     
                     {/* Header */}
                     <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-white mb-2">Test Suites</h1>
-                        <p className="text-gray-400">Select a test suite to view simulations or run a new one</p>
+                        <h1 className="text-4xl font-bold text-white mb-2">Test Cases</h1>
+                        <p className="text-gray-400">Select a test case to view simulations or run a new one</p>
                     </div>
 
                     <TestSuitesListView 
@@ -287,7 +287,7 @@ const SimulationsListPage = () => {
                             onClick={handleBackToTestSuites}
                             className="text-gray-400 hover:text-teal-400 transition-colors"
                         >
-                            Test Suites
+                            Test Cases
                         </button>
                         <span className="text-gray-600">/</span>
                         <span className="text-teal-400">{testSuiteName || 'Simulations'}</span>
@@ -297,9 +297,9 @@ const SimulationsListPage = () => {
                     <div className="mb-8 flex items-center justify-between">
                         <div>
                             <h1 className="text-4xl font-bold text-white mb-2">
-                                {testSuiteName || 'Test Suite'} Simulations
+                                {testSuiteName || 'Test Case'} Simulations
                             </h1>
-                            <p className="text-gray-400">View and manage simulation runs for this test suite</p>
+                            <p className="text-gray-400">View and manage simulation runs for this test case</p>
                         </div>
                         <button
                             onClick={() => setShowRunModal(true)}
@@ -356,8 +356,8 @@ const SimulationsListPage = () => {
                     ) : filteredSimulations.length === 0 ? (
                         <div className="bg-dark-panel rounded-xl p-12 text-center border border-gray-800">
                             <Play className="w-12 h-12 mx-auto mb-4 text-gray-600" />
-                            <p className="text-gray-400 mb-4">
-                                {filters.search ? `No simulations found matching "${filters.search}"` : 'No simulations yet for this test suite'}
+                                <p className="text-gray-400 mb-4">
+                                {filters.search ? `No simulations found matching "${filters.search}"` : 'No simulations yet for this test case'}
                             </p>
                             <button
                                 onClick={() => setShowRunModal(true)}
@@ -518,7 +518,7 @@ const SimulationsListPage = () => {
                         Outbound Sessions
                     </h1>
                     <p className="text-gray-400">
-                        Select an agent to view test suites
+                        Select an agent to view test cases
                     </p>
                 </div>
                 <button

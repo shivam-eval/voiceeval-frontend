@@ -50,7 +50,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
         e.preventDefault();
 
         if (!selectedTestSuiteId || !phoneNumber) {
-            toast.warning('Please select a test suite and enter a phone number');
+            toast.warning('Please select a test case and enter a phone number');
             return;
         }
 
@@ -82,11 +82,11 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-gray-900 rounded-xl border border-gray-800 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-800">
+        <div className="flex items-center justify-between p-6 border-b border-gray-800">
                     <div>
                         <h2 className="text-2xl font-bold text-white">Run New Simulation</h2>
                         <p className="text-gray-400 text-sm mt-1">
-                            Execute test suite against your voice agent
+                            Execute test case against your voice agent
                         </p>
                     </div>
                     <button
@@ -125,7 +125,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                     {/* Test Suite Selection */}
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">
-                            Select Test Suite
+                            Select Test Case
                         </label>
                         <select
                             value={selectedTestSuiteId}
@@ -134,7 +134,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                             disabled={testSuitesLoading || !selectedAgentId}
                         >
                             <option value="">
-                                {selectedAgentId ? 'Choose a test suite...' : 'Select an agent first...'}
+                                {selectedAgentId ? 'Choose a test case...' : 'Select an agent first...'}
                             </option>
                             {testSuites.map(suite => (
                                 <option key={suite.test_suite_id} value={suite.test_suite_id}>
@@ -196,7 +196,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                             <AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
                             <div>
                                 <p className="text-yellow-400 font-medium text-sm">
-                                    Test suite is not marked as ready
+                                    Test case is not marked as ready
                                 </p>
                                 <p className="text-yellow-200/70 text-xs mt-1">
                                     You can still run it, but results may not be optimal.

@@ -6,6 +6,7 @@ import { usePersonas } from "../hooks/usePersonas";
 import { useTestProfiles } from "../hooks/useTestProfiles";
 import { useAgentFlows } from "../hooks/useFlows";
 import { API_BASE_URL } from "../config/constants";
+import { scenarioConfigsApi } from "../utils/api";
 
 const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, defaultAgentId }) => {
     const [currentStep, setCurrentStep] = useState(1);
@@ -179,7 +180,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
 
         // Close modal immediately and show progress toast
         onClose();
-        toast.info('Creating test suite...');
+        toast.info('Creating test case...');
 
         // If audio type, upload files first
         if (formData.testCaseType === 'audio' && formData.audioFiles.length > 0) {
@@ -203,7 +204,20 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                             default_persona_id: formData.persona_id,
                         }
                     };
-                    onSubmit(suiteData);
+                    // Call backend generation endpoint with hardcoded payload (for now)
+                    try {
+                        const payload = {
+                            agent_id: formData.agent_id || defaultAgentId,
+                            demography: "india",
+                            count: 5,
+                            dry_run: false,
+                        };
+                        await scenarioConfigsApi.generate(payload);
+                        toast.success("Scenario configs generation requested");
+                    } catch (err) {
+                        console.error("Scenario generation failed:", err);
+                        toast.error("Failed to request scenario generation");
+                    }
                 } else {
                     toast.error('Audio upload failed. Please try again.');
                 }
@@ -232,7 +246,20 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                     })
                 }
             };
-            onSubmit(suiteData);
+            // Call backend generation endpoint with hardcoded payload (for now)
+            try {
+                const payload = {
+                    agent_id: formData.agent_id || defaultAgentId,
+                    demography: "india",
+                    count: 5,
+                    dry_run: false,
+                };
+                await scenarioConfigsApi.generate(payload);
+                toast.success("Scenario configs generation requested");
+            } catch (err) {
+                console.error("Scenario generation failed:", err);
+                toast.error("Failed to request scenario generation");
+            }
         }
     };
 
@@ -255,8 +282,8 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
             <div className="bg-gray-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden border border-gray-800">
                 {/* Header */}
                 <div className="p-6 border-b border-gray-800">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-2xl font-bold text-white">Create Test Suite</h2>
+                <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-2xl font-bold text-white">Create Test Case</h2>
                         <button
                             onClick={onClose}
                             className="w-10 h-10 rounded-full bg-gray-800 hover:bg-gray-700 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
@@ -296,13 +323,13 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                         <div className="space-y-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                                    Suite Name <span className="text-red-400">*</span>
+                                    Case Name <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) => handleInputChange('name', e.target.value)}
-                                    placeholder="e.g., Customer Support Test Suite"
+                                    placeholder="e.g., Customer Support Test Case"
                                     className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
                                     required
                                 />
@@ -315,7 +342,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => handleInputChange('description', e.target.value)}
-                                    placeholder="Brief description of this test suite..."
+                                    placeholder="Brief description of this test case..."
                                     rows={3}
                                     className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-teal-400 resize-none"
                                 />
@@ -391,22 +418,15 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
 
                                 {/* Region */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                                        Region <span className="text-red-400">*</span>
-                                    </label>
-                                    <select
-                                        value={formData.region}
-                                        onChange={(e) => handleInputChange('region', e.target.value)}
-                                        className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                                    >
-                                        <option value="apac_india">APAC - India</option>
-                                        <option value="na">North America</option>
-                                        <option value="eu">Europe</option>
-                                        <option value="default">Default</option>
-                                    </select>
-                                    <p className="text-xs text-gray-400 mt-1">
-                                        Personas will be assigned based on this region
-                                    </p>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Region <span className="text-red-400">*</span>
+                                </label>
+                                <div className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white">
+                                    India
+                                </div>
+                                <p className="text-xs text-gray-400 mt-1">
+                                    Personas will be assigned based on this region
+                                </p>
                                 </div>
 
                                 {/* Max Paths */}
@@ -498,7 +518,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                                 loading={isLoading || isUploading}
                                 disabled={!isStepValid() || isUploading}
                             >
-                                {isUploading ? 'Uploading...' : 'Create Suite'}
+                                {isUploading ? 'Uploading...' : 'Create Case'}
                             </Button>
                         )}
                     </div>

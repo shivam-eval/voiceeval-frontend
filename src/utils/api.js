@@ -142,6 +142,20 @@ export const testSuitesApi = {
     getSimulationSummary: (id) => apiClient.get(`/test-suites/${id}/simulation-summary`),
 };
 
+// Scenario Configs API endpoints
+export const scenarioConfigsApi = {
+    // List all scenario configs for a given agent
+    listByAgent: (agentId, params = {}) => apiClient.get(`/scenario-configs/agent/${agentId}`, params),
+    get: (id) => apiClient.get(`/scenario-configs/${id}`),
+    // Generate scenario configs (server-side generation)
+    generate: (data) => apiClient.post('/scenario-configs/generate', data),
+};
+
+// Test Cases (v2) API endpoints
+export const testCasesApi = {
+    listByAgent: (agentId) => apiClient.get(`/test-cases/agent/${agentId}`),
+};
+
 // Persona API endpoints
 export const personasApi = {
     list: (params) => apiClient.get('/personas', params),

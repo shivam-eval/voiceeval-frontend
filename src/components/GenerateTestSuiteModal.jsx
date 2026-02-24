@@ -9,7 +9,7 @@ const GenerateTestSuiteModal = ({ isOpen, onClose, flowId, agentId, onTestSuiteG
     const [callType, setCallType] = useState("inbound");
     const [maxPaths, setMaxPaths] = useState(10);
     const [includeEdgeCases, setIncludeEdgeCases] = useState(true);
-    const [region, setRegion] = useState("apac_india");
+    const [region] = useState("apac_india");
     const [generationStep, setGenerationStep] = useState(0); // 0: config, 1: generating, 2: review
     const [testSuiteData, setTestSuiteData] = useState(null);
 
@@ -29,7 +29,7 @@ const GenerateTestSuiteModal = ({ isOpen, onClose, flowId, agentId, onTestSuiteG
             });
             setTestSuiteData(result);
             setGenerationStep(2);
-            toast.success("Test suite generated successfully");
+            toast.success("Test case generated successfully");
         } catch (error) {
             // Error handled by global interceptor
             setGenerationStep(0);
@@ -51,8 +51,6 @@ const GenerateTestSuiteModal = ({ isOpen, onClose, flowId, agentId, onTestSuiteG
 
     if (!isOpen) return null;
 
-    const regions = personasData?.regions || ["apac_india", "na", "eu", "default"];
-
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
             <div className="bg-gray-900 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden border border-gray-800">
@@ -60,7 +58,7 @@ const GenerateTestSuiteModal = ({ isOpen, onClose, flowId, agentId, onTestSuiteG
                 <div className="p-6 border-b border-gray-800">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-2xl font-bold text-white mb-1">Generate Test Suite</h2>
+                            <h2 className="text-2xl font-bold text-white mb-1">Generate Test Case</h2>
                             <p className="text-gray-400">Create test paths with AI-assigned personas</p>
                         </div>
                         <button
@@ -130,17 +128,9 @@ const GenerateTestSuiteModal = ({ isOpen, onClose, flowId, agentId, onTestSuiteG
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
                                     Region for Persona Assignment
                                 </label>
-                                <select
-                                    value={region}
-                                    onChange={(e) => setRegion(e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
-                                >
-                                    {regions.map((r) => (
-                                        <option key={r} value={r}>
-                                            {r.replace('_', ' ').toUpperCase()}
-                                        </option>
-                                    ))}
-                                </select>
+                                <div className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white">
+                                    India
+                                </div>
                             </div>
 
                             {/* Include Edge Cases */}

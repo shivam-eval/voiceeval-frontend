@@ -10,6 +10,7 @@ import { useOutboundAgents } from '../hooks/useSimulations';
 const SimulationAgentDirectoriesView = ({
   onAgentSelect,
   showHeader = true,
+  showAllAgents = false, // when true, list all tenant agents from useAgents()
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -25,29 +26,43 @@ const SimulationAgentDirectoriesView = ({
   const agentsPerPage = 10;
 
   // Fetch data
-  const { data: outboundAgentsData, isLoading: isAgentsLoading } = useOutboundAgents();
+  const { data: categoriesData, isLoading: isCategoriesLoading } = useSimulationCategories();
+  const { data: agentsData } = useAgents();
 
-  // Process agents from outbound agents endpoint
-  const filteredAgents = useMemo(() => {
-    if (outboundAgentsData?.agents && Array.isArray(outboundAgentsData.agents)) {
-      return outboundAgentsData.agents
-        .map(agent => ({
-          id: agent.id,
-          name: agent.name,
-          count: agent.folder_count
-        }));
+  // When showAllAgents=true, use agents list from useAgents()
+  const filteredCategories = useMemo(() => {
+    if (!showAllAgents) {
+      if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+        return categoriesData.categories
+          .filter(cat => cat.has_agent !== false && cat.simulation_count > 0)
+          .map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            platform: cat.platform,
+            count: cat.simulation_count
+          }));
+      }
+      return [];
     }
-    return [];
-  }, [outboundAgentsData]);
+
+    // Map agentsData to same shape
+    const agents = agentsData?.agents || [];
+    return agents.map(agent => ({
+      id: agent.agent_id || agent.provider_agent_id || agent.id,
+      name: agent.name || agent.agent_name || agent.agent_id,
+      platform: agent.platform || agent.provider || '',
+      count: agent.simulation_count || 0,
+    }));
+  }, [categoriesData, agentsData, showAllAgents]);
 
   // Display agents with search
   const displayedAgents = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
 
-    return filteredAgents.filter(agent => {
-      const name = agent.name || agent.id;
-      return name.toLowerCase().includes(searchLower) ||
-             agent.id.toLowerCase().includes(searchLower);
+    return filteredCategories.filter(cat => {
+      const name = cat.name || cat.id;
+      return name.toLowerCase().includes(searchLower) || 
+             (cat.id && cat.id.toLowerCase().includes(searchLower));
     });
   }, [filteredAgents, searchTerm]);
 

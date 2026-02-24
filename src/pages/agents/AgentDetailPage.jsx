@@ -44,16 +44,6 @@ const AgentDetailPage = () => {
 
 
     // Handler functions
-    const handleTestConnection = async () => {
-        try {
-            toast.info("Testing connection...");
-            // Placeholder for real test connection logic
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            toast.success("Connection test successful!");
-        } catch (error) {
-            toast.error("Connection test failed");
-        }
-    };
 
     const handleReExtract = async () => {
         if (confirm("Re-extract agent configuration? This will fetch the latest configuration from the platform.")) {
@@ -144,7 +134,7 @@ const AgentDetailPage = () => {
     const tabs = [
         { id: "overview", label: "Overview", icon: <BarChart3 className="w-4 h-4" /> },
         { id: "configuration", label: "Configuration", icon: <Settings className="w-4 h-4" /> },
-        { id: "test-suites", label: "Test Suites", icon: <FileText className="w-4 h-4" /> },
+        { id: "test-cases", label: "Test Cases", icon: <FileText className="w-4 h-4" /> },
     ];
 
     if (isLoading) {
@@ -281,12 +271,12 @@ const AgentDetailPage = () => {
                             </div>
 
                             <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                                <div className="text-sm text-gray-400 mb-2">Test Suites</div>
+                                <div className="text-sm text-gray-400 mb-2">Test Cases</div>
                                 <div className="text-2xl font-bold text-teal-400 mb-2">
                                     {testSuitesLoading ? "..." : testSuites.length}
                                 </div>
                                 <button
-                                    onClick={() => setActiveTab("test-suites")}
+                                    onClick={() => setActiveTab("test-cases")}
                                     className="text-sm text-gray-500 hover:text-teal-400 transition-colors"
                                 >
                                     View all →
@@ -328,8 +318,6 @@ const AgentDetailPage = () => {
                                     <div className="text-white">{new Date(agent.created_at).toLocaleString()}</div>
                                 </div>
                                 <div>
-                                    <div className="text-sm text-gray-400 mb-1">Last Updated</div>
-                                    <div className="text-white">{new Date(agent.updated_at).toLocaleString()}</div>
                                 </div>
                             </div>
                         </div>
@@ -338,14 +326,6 @@ const AgentDetailPage = () => {
                         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
                             <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                                <Button
-                                    variant="outline"
-                                    className="w-full"
-                                    onClick={handleTestConnection}
-                                >
-                                    Test Connection
-                                </Button>
-
                                 <Button
                                     variant="outline"
                                     className="w-full"
@@ -501,28 +481,30 @@ const AgentDetailPage = () => {
                             )}
                         </div>
 
-                        {/* Model Configuration */}
-                        <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                            <h3 className="text-lg font-semibold text-white mb-4">Model Configuration</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <div className="text-sm text-gray-400 mb-1">Model</div>
-                                    <div className="text-white">{config.model || agent.model_type || "Not specified"}</div>
-                                </div>
-                                <div>
-                                    <div className="text-sm text-gray-400 mb-1">Temperature</div>
-                                    <div className="text-white">{config.temperature ?? "Default"}</div>
-                                </div>
-                                <div>
-                                    <div className="text-sm text-gray-400 mb-1">Max Tokens</div>
-                                    <div className="text-white">{config.max_tokens || "Default"}</div>
-                                </div>
-                                <div>
-                                    <div className="text-sm text-gray-400 mb-1">Provider</div>
-                                    <div className="text-white capitalize">{config.provider || agent.platform}</div>
+                        {/* Model Configuration (hide if no configuration from backend) */}
+                        {config && Object.keys(config).length > 0 && (
+                            <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                                <h3 className="text-lg font-semibold text-white mb-4">Model Configuration</h3>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <div className="text-sm text-gray-400 mb-1">Model</div>
+                                        <div className="text-white">{config.model || agent.model_type || "Not specified"}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-gray-400 mb-1">Temperature</div>
+                                        <div className="text-white">{config.temperature ?? "Default"}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-gray-400 mb-1">Max Tokens</div>
+                                        <div className="text-white">{config.max_tokens || "Default"}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-sm text-gray-400 mb-1">Provider</div>
+                                        <div className="text-white capitalize">{config.provider || agent.platform}</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Voice Settings */}
                         {(agent.platform === "elevenlabs" || agent.platform === "cartesia" || config.voice) && (
@@ -545,14 +527,14 @@ const AgentDetailPage = () => {
                     </div>
                 )}
 
-                {activeTab === "test-suites" && (
+                        {activeTab === "test-cases" && (
                     <div className="space-y-6">
                         {testSuitesLoading ? (
                             <DashboardLoader message="Loading test suites..." />
                         ) : testSuites.length > 0 ? (
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-xl font-semibold text-white">Test Suites for this Agent</h3>
+                                    <h3 className="text-xl font-semibold text-white">Test Cases for this Agent</h3>
                                     <Button size="sm" onClick={() => setShowCreateTestSuiteModal(true)}>
                                         Create Test Suite
                                     </Button>
@@ -560,7 +542,7 @@ const AgentDetailPage = () => {
                                 {testSuites.map((suite) => (
                                     <div
                                         key={suite.test_suite_id}
-                                        onClick={() => navigate(`/test-cases/${suite.test_suite_id}`)}
+                                        onClick={() => navigate(`/testing/test-cases/${suite.test_suite_id}`)}
                                         className="bg-gray-900 rounded-xl p-6 border border-gray-800 hover:border-teal-400/50 transition-all cursor-pointer"
                                     >
                                         <div className="flex items-start justify-between">
@@ -596,7 +578,7 @@ const AgentDetailPage = () => {
                         ) : (
                             <div className="text-center py-12">
                                 <div className="text-6xl mb-4">📋</div>
-                                <h3 className="text-xl font-semibold text-white mb-2">No Test Suites</h3>
+                                <h3 className="text-xl font-semibold text-white mb-2">No Test Cases</h3>
                                 <p className="text-gray-400 mb-6">
                                     Create test suites to evaluate this agent
                                 </p>

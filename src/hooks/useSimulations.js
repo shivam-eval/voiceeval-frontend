@@ -224,3 +224,15 @@ export const useSimulationCategories = () => {
         refetchOnWindowFocus: false,
     });
 };
+
+/**
+ * Hook to fetch outbound agents (agents with folder counts)
+ */
+export const useOutboundAgents = () => {
+    return useQuery({
+        queryKey: ['simulations', 'outbound-agents'],
+        queryFn: () => simulationsApi.getOutboundAgents(),
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        refetchOnWindowFocus: false,
+    });
+};

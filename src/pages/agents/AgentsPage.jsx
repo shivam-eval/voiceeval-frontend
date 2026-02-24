@@ -74,7 +74,7 @@ const AgentsPage = () => {
         setSelectedPlatform(platformId);
     };
 
-    const handleConnect = async ({ apiKey, agentId, name, customPrompt, direction, phoneNumber }) => {
+    const handleConnect = async ({ apiKey, agentId, name, customPrompt, direction, phoneNumber, params }) => {
         // ... existing handleConnect logic ...
         try {
             const result = await createAgent.mutateAsync({
@@ -84,7 +84,8 @@ const AgentsPage = () => {
                 name: name || undefined,
                 direction: direction || "both",
                 phone_number: phoneNumber || undefined,
-                custom_prompt: selectedPlatform === 'custom' ? customPrompt : undefined
+                custom_prompt: selectedPlatform === 'custom' ? customPrompt : undefined,
+                params: params || undefined
             });
 
             // Store the agentId (assistant ID) in global context

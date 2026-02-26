@@ -14,6 +14,7 @@ import FlowsPage from "./pages/agents/FlowsPage";
 import AgentConfigurationPage from "./pages/agents/AgentConfigurationPage";
 import TestCasesPage from "./pages/testCases/TestCasesPage";
 import TestSuiteDetailView from "./pages/testCases/TestSuiteDetailView";
+import ScenarioConfigDetail from "./pages/testCases/ScenarioConfigDetail";
 import PersonasPage from "./pages/personas/PersonasPage";
 import ScenariosPage from "./pages/testing/ScenariosPage";
 import SimulationsListPage from "./pages/simulations/SimulationsListPage";
@@ -121,10 +122,10 @@ function App() {
     if (path.startsWith("/testing")) {
       if (path.includes("/personas")) return { section: "test-cases", tab: "personas" };
       if (path.includes("/scenarios")) return { section: "test-cases", tab: "scenarios" };
-      return { section: "test-cases", tab: "test-suites" };
+      return { section: "test-cases", tab: "test-cases" };
     }
     // Legacy routes
-    if (path.startsWith("/test-cases")) return { section: "test-cases", tab: "test-suites" };
+    if (path.startsWith("/test-cases")) return { section: "test-cases", tab: "test-cases" };
     if (path.startsWith("/personas")) return { section: "test-cases", tab: "personas" };
 
     // Inbound section
@@ -188,12 +189,13 @@ function App() {
 
                 {/* === TESTING SECTION === */}
                 {/* New routes */}
-                <Route path="/testing/suites" element={<TestCasesPage />} />
-                <Route path="/testing/suites/:suiteId" element={<TestSuiteDetailView />} />
+                <Route path="/testing/test-cases" element={<TestCasesPage />} />
+                <Route path="/testing/scenario-configs/:configId" element={<ScenarioConfigDetail />} />
+                <Route path="/testing/test-cases/:suiteId" element={<TestSuiteDetailView />} />
                 <Route path="/testing/personas" element={<PersonasPage />} />
 
                 {/* Legacy routes - redirect to new structure */}
-                <Route path="/test-cases" element={<TestCasesPage />} />
+                <Route path="/test-cases" element={<Navigate to="/testing/test-cases" replace />} />
                 <Route path="/test-cases/:suiteId" element={<TestSuiteDetailView />} />
                 <Route path="/personas" element={<PersonasPage />} />
 

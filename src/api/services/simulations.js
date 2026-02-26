@@ -128,6 +128,32 @@ export const getSimulationCategories = async () => {
     return apiClient.get(`${BASE_PATH}/categories`);
 };
 
+/**
+ * Get outbound agents with folder counts
+ */
+export const getOutboundAgents = async () => {
+    return apiClient.get(`${BASE_PATH}/outbound/agents`);
+};
+
+/**
+ * Get list of folders (simulation batches) for an agent
+ */
+export const getFolders = (params) => {
+    const queryParams = {
+        ...params,
+        agent_id: params.agentId,
+    };
+    delete queryParams.agentId;
+    return apiClient.get(`${BASE_PATH}/outbound/folders`, { params: queryParams });
+};
+
+/**
+ * Get calls in a folder
+ */
+export const getFolderCalls = (folderId, params = {}) => {
+    return apiClient.get(`${BASE_PATH}/outbound/folders/${folderId}/calls`, { params });
+};
+
 const simulationsService = {
     getSimulations,
     getSimulation,
@@ -141,7 +167,10 @@ const simulationsService = {
     getSimulationStatus,
     runInboundSimulation,
     getSimulationProgress,
-    getSimulationCategories
+    getSimulationCategories,
+    getOutboundAgents,
+    getFolders,
+    getFolderCalls
 };
 
 export default simulationsService;

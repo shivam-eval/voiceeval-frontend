@@ -1,19 +1,19 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Folder, ChevronRight, Play, Plus, Search } from 'lucide-react';
-import { useSimulationCategories } from '../hooks/useSimulations';
-import { useAgents } from '../hooks/useAgents';
+import { Folder, Search } from 'lucide-react';
+import { useOutboundAgents } from '../hooks/useSimulations';
 
 /**
- * SimulationAgentDirectoriesView - Shows agent directories for simulations
- * Uses the /simulation/categories endpoint
+ * SimulationAgentDirectoriesView - Shows agent directories for outbound simulations
+ * Uses the /simulation/outbound-agents endpoint
  */
-const SimulationAgentDirectoriesView = ({ 
+const SimulationAgentDirectoriesView = ({
   onAgentSelect,
   showHeader = true,
+  showAllAgents = false, // when true, list all tenant agents from useAgents()
 }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  
+
   // State management
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -29,31 +29,42 @@ const SimulationAgentDirectoriesView = ({
   const { data: categoriesData, isLoading: isCategoriesLoading } = useSimulationCategories();
   const { data: agentsData } = useAgents();
 
-  // Process categories from simulation categories endpoint
+  // When showAllAgents=true, use agents list from useAgents()
   const filteredCategories = useMemo(() => {
-    if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
-      return categoriesData.categories
-        .filter(cat => cat.has_agent !== false && cat.simulation_count > 0)
-        .map(cat => ({
-          id: cat.id,
-          name: cat.name,
-          platform: cat.platform,
-          count: cat.simulation_count
-        }));
+    if (!showAllAgents) {
+      if (categoriesData?.categories && Array.isArray(categoriesData.categories)) {
+        return categoriesData.categories
+          .filter(cat => cat.has_agent !== false && cat.simulation_count > 0)
+          .map(cat => ({
+            id: cat.id,
+            name: cat.name,
+            platform: cat.platform,
+            count: cat.simulation_count
+          }));
+      }
+      return [];
     }
-    return [];
-  }, [categoriesData]);
+
+    // Map agentsData to same shape
+    const agents = agentsData?.agents || [];
+    return agents.map(agent => ({
+      id: agent.agent_id || agent.provider_agent_id || agent.id,
+      name: agent.name || agent.agent_name || agent.agent_id,
+      platform: agent.platform || agent.provider || '',
+      count: agent.simulation_count || 0,
+    }));
+  }, [categoriesData, agentsData, showAllAgents]);
 
   // Display agents with search
   const displayedAgents = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
-    
+
     return filteredCategories.filter(cat => {
       const name = cat.name || cat.id;
       return name.toLowerCase().includes(searchLower) || 
-             cat.id.toLowerCase().includes(searchLower);
+             (cat.id && cat.id.toLowerCase().includes(searchLower));
     });
-  }, [filteredCategories, searchTerm]);
+  }, [filteredAgents, searchTerm]);
 
   const updateParams = useCallback((updates, replace = false) => {
     setSearchParams(prev => {
@@ -114,12 +125,11 @@ const SimulationAgentDirectoriesView = ({
             <thead>
               <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
                 <th className="px-4 py-3">Agent Name</th>
-                <th className="px-4 py-3 text-center">Simulations</th>
-                <th className="px-4 py-3 text-center">Actions</th>
+                <th className="px-4 py-3 text-center">Simulation Runs</th>
               </tr>
             </thead>
             <tbody className="text-sm text-gray-300">
-              {isCategoriesLoading ? (
+              {isAgentsLoading ? (
                 <tr>
                   <td colSpan="3" className="px-4 py-8 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-3">
@@ -128,24 +138,24 @@ const SimulationAgentDirectoriesView = ({
                     </div>
                   </td>
                 </tr>
-              ) : filteredCategories.length === 0 ? (
+              ) : filteredAgents.length === 0 ? (
                 <tr>
                   <td colSpan="3" className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-4">
                       <div className="p-4 bg-gray-800/30 rounded-full border border-gray-700/50">
                         <Folder className="w-8 h-8 text-gray-500" />
                       </div>
-                      <p className="text-gray-400 text-lg font-medium">No agents with simulations found</p>
-                      <p className="text-gray-500 text-sm">Create a simulation to see agents here</p>
+                      <p className="text-gray-400 text-lg font-medium">No agents with simulation runs found</p>
+                      <p className="text-gray-500 text-sm">Run an outbound simulation to see agents here</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                paginatedAgents.map(cat => (
+                paginatedAgents.map(agent => (
                   <tr
-                    key={cat.id}
+                    key={agent.id}
                     className="border-b border-gray-800/30 hover:bg-gray-800/20 transition-colors cursor-pointer group"
-                    onClick={() => handleDirectoryClick(cat.id)}
+                    onClick={() => handleDirectoryClick(agent.id)}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
@@ -154,30 +164,16 @@ const SimulationAgentDirectoriesView = ({
                         </div>
                         <div className="flex flex-col">
                           <span className="text-white font-semibold text-sm">
-                            {cat.name}
+                            {agent.name}
                           </span>
-                          <span className="text-gray-500 text-xs font-mono">{cat.id}</span>
+                          <span className="text-gray-500 text-xs font-mono">{agent.id}</span>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span className="inline-flex items-center justify-center px-2.5 py-1 bg-teal-500/10 border border-teal-500/30 rounded-full text-teal-400 text-xs font-semibold">
-                        {cat.count}
+                        {agent.count}
                       </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDirectoryClick(cat.id);
-                          }}
-                          className="flex items-center gap-1.5 text-gray-400 hover:text-teal-400 transition-colors px-2 py-1.5"
-                        >
-                          <span className="text-xs font-medium">View Sessions</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
                     </td>
                   </tr>
                 ))
@@ -188,7 +184,7 @@ const SimulationAgentDirectoriesView = ({
       </div>
 
       {/* Pagination */}
-      {filteredCategories.length > 0 && totalPages > 1 && (
+      {filteredAgents.length > 0 && totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-400">
             Showing <span className="font-medium text-white">{startIdx + 1}</span> to{' '}

@@ -10,14 +10,18 @@ import ConfirmationModal from '../../components/ConfirmationModal';
 import GenericDropdown from '../../components/DropDown';
 import SimulationAgentDirectoriesView from '../../components/SimulationAgentDirectoriesView';
 import TestSuitesListView from '../../components/TestSuitesListView';
+import FoldersListView from '../../components/FoldersListView';
+import CallsInFolderView from '../../components/CallsInFolderView';
 
 const SimulationsListPage = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     
-    // View state - either 'agents', 'test-suites', or 'simulations'
+    // View state - either 'agents', 'folders', 'test-suites', or 'simulations'
     const viewMode = searchParams.get('view') || 'agents';
     const selectedAgent = searchParams.get('agent') || '';
+    const selectedFolder = searchParams.get('folder') || '';
+    const folderName = searchParams.get('folderName') || '';
     const selectedTestSuite = searchParams.get('testSuite') || '';
     const testSuiteName = searchParams.get('testSuiteName') || '';
     
@@ -58,9 +62,24 @@ const SimulationsListPage = () => {
         setFilters({ ...filters, agentId, testSuiteId: undefined, skip: 0 });
     };
 
+    // Handle folder view select
+    const handleFolderViewSelect = (agentId) => {
+        updateParams({ view: 'folders', agent: agentId, folder: '', folderName: '' });
+    };
+
+    // Handle folder selection
+    const handleFolderSelect = (folderId, folderName) => {
+        updateParams({ folder: folderId, folderName });
+    };
+
+    // Handle back to folders
+    const handleBackToFolders = () => {
+        updateParams({ folder: '', folderName: '' });
+    };
+
     // Handle back to agents
     const handleBackToAgents = () => {
-        updateParams({ view: 'agents', agent: '', testSuite: '', testSuiteName: '' });
+        updateParams({ view: 'agents', agent: '', testSuite: '', testSuiteName: '', folder: '', folderName: '' });
         setFilters({ ...filters, agentId: undefined, testSuiteId: undefined, search: '', status: '', skip: 0 });
     };
 
@@ -227,14 +246,81 @@ const SimulationsListPage = () => {
                             Outbound Sessions - Select Agent
                         </h1>
                         <p className="text-gray-400">
-                            Choose an agent to view test suites and run simulations
+                            Choose an agent to view test cases and run simulations
                         </p>
                     </div>
-                    
-                    <SimulationAgentDirectoriesView 
-                        onAgentSelect={handleAgentSelect}
+
+                    <SimulationAgentDirectoriesView
+                        onAgentSelect={handleFolderViewSelect}
                         showHeader={true}
                     />
+                </div>
+            </div>
+        );
+    }
+
+    // Show folders view for selected agent (when in folders mode and no folder selected)
+    if (viewMode === 'folders' && selectedAgent && !selectedFolder) {
+        return (
+            <div className="p-8 bg-dark-bg min-h-screen text-white">
+                <div className="w-full max-w-screen-2xl mx-auto">
+                    {/* Back button */}
+                    <button
+                        onClick={handleBackToAgents}
+                        className="flex items-center gap-2 text-gray-400 hover:text-teal-400 transition-colors mb-4"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span>Back to Agents</span>
+                    </button>
+
+                    {/* Header */}
+                    <div className="mb-8">
+                        <h1 className="text-4xl font-bold text-white mb-2">Simulation Runs</h1>
+                        <p className="text-gray-400">Select a simulation run to view individual calls</p>
+                    </div>
+
+                    <FoldersListView
+                        agentId={selectedAgent}
+                        onFolderSelect={handleFolderSelect}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    // Show calls view for selected folder
+    if (viewMode === 'folders' && selectedAgent && selectedFolder) {
+        return (
+            <div className="p-8 bg-dark-bg min-h-screen text-white">
+                <div className="w-full max-w-screen-2xl mx-auto">
+                    {/* Breadcrumb navigation */}
+                    <div className="flex items-center gap-2 text-sm mb-6">
+                        <button
+                            onClick={handleBackToAgents}
+                            className="text-gray-400 hover:text-teal-400 transition-colors"
+                        >
+                            Agents
+                        </button>
+                        <span className="text-gray-600">/</span>
+                        <button
+                            onClick={handleBackToFolders}
+                            className="text-gray-400 hover:text-teal-400 transition-colors"
+                        >
+                            Sim Runs
+                        </button>
+                        <span className="text-gray-600">/</span>
+                        <span className="text-teal-400">{folderName || 'Calls'}</span>
+                    </div>
+
+                    {/* Header */}
+                    <div className="mb-8">
+                        <h1 className="text-4xl font-bold text-white mb-2">
+                            {folderName || 'Simulation Run'} - Calls
+                        </h1>
+                        <p className="text-gray-400">View individual calls and their evaluation results</p>
+                    </div>
+
+                    <CallsInFolderView folderId={selectedFolder} />
                 </div>
             </div>
         );
@@ -256,8 +342,8 @@ const SimulationsListPage = () => {
                     
                     {/* Header */}
                     <div className="mb-8">
-                        <h1 className="text-4xl font-bold text-white mb-2">Test Suites</h1>
-                        <p className="text-gray-400">Select a test suite to view simulations or run a new one</p>
+                        <h1 className="text-4xl font-bold text-white mb-2">Test Cases</h1>
+                        <p className="text-gray-400">Select a test case to view simulations or run a new one</p>
                     </div>
 
                     <TestSuitesListView 
@@ -287,7 +373,7 @@ const SimulationsListPage = () => {
                             onClick={handleBackToTestSuites}
                             className="text-gray-400 hover:text-teal-400 transition-colors"
                         >
-                            Test Suites
+                            Test Cases
                         </button>
                         <span className="text-gray-600">/</span>
                         <span className="text-teal-400">{testSuiteName || 'Simulations'}</span>
@@ -297,9 +383,9 @@ const SimulationsListPage = () => {
                     <div className="mb-8 flex items-center justify-between">
                         <div>
                             <h1 className="text-4xl font-bold text-white mb-2">
-                                {testSuiteName || 'Test Suite'} Simulations
+                                {testSuiteName || 'Test Case'} Simulations
                             </h1>
-                            <p className="text-gray-400">View and manage simulation runs for this test suite</p>
+                            <p className="text-gray-400">View and manage simulation runs for this test case</p>
                         </div>
                         <button
                             onClick={() => setShowRunModal(true)}
@@ -356,8 +442,8 @@ const SimulationsListPage = () => {
                     ) : filteredSimulations.length === 0 ? (
                         <div className="bg-dark-panel rounded-xl p-12 text-center border border-gray-800">
                             <Play className="w-12 h-12 mx-auto mb-4 text-gray-600" />
-                            <p className="text-gray-400 mb-4">
-                                {filters.search ? `No simulations found matching "${filters.search}"` : 'No simulations yet for this test suite'}
+                                <p className="text-gray-400 mb-4">
+                                {filters.search ? `No simulations found matching "${filters.search}"` : 'No simulations yet for this test case'}
                             </p>
                             <button
                                 onClick={() => setShowRunModal(true)}
@@ -518,7 +604,7 @@ const SimulationsListPage = () => {
                         Outbound Sessions
                     </h1>
                     <p className="text-gray-400">
-                        Select an agent to view test suites
+                        Select an agent to view test cases
                     </p>
                 </div>
                 <button

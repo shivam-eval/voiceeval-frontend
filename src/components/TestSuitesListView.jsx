@@ -84,7 +84,7 @@ const TestSuitesListView = ({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
           <input
             type="text"
-            placeholder="Search test suites..."
+            placeholder="Search test cases..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:border-teal-500 text-white"
@@ -98,7 +98,7 @@ const TestSuitesListView = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
-                <th className="px-4 py-3">Test Suite Name</th>
+                <th className="px-4 py-3">Test Case Name</th>
                 <th className="px-4 py-3 text-center">Test Cases</th>
                 <th className="px-4 py-3 text-center">Created</th>
                 {showRunSimulation && <th className="px-4 py-3 text-center">Actions</th>}
@@ -110,7 +110,7 @@ const TestSuitesListView = ({
                   <td colSpan={showRunSimulation ? "4" : "3"} className="px-4 py-8 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-8 h-8 border-2 border-teal-500 border-t-transparent rounded-full animate-spin"></div>
-                      Loading test suites...
+                      Loading test cases...
                     </div>
                   </td>
                 </tr>
@@ -121,9 +121,9 @@ const TestSuitesListView = ({
                       <div className="p-4 bg-gray-800/30 rounded-full border border-gray-700/50">
                         <FileText className="w-8 h-8 text-gray-500" />
                       </div>
-                      <p className="text-gray-400 text-lg font-medium">No test suites found</p>
+                      <p className="text-gray-400 text-lg font-medium">No test cases found</p>
                       <p className="text-gray-500 text-sm">
-                        {searchTerm ? 'Try adjusting your search' : 'Create a test suite to get started'}
+                        {searchTerm ? 'Try adjusting your search' : 'Create a test case to get started'}
                       </p>
                     </div>
                   </td>
@@ -142,7 +142,7 @@ const TestSuitesListView = ({
                         </div>
                         <div className="flex flex-col">
                           <span className="text-white font-semibold text-sm">
-                            {suite.name || 'Untitled Test Suite'}
+                            {suite.name || 'Untitled Test Case'}
                           </span>
                           {suite.description && (
                             <span className="text-gray-500 text-xs mt-0.5">
@@ -185,10 +185,10 @@ const TestSuitesListView = ({
       {/* Pagination */}
       {testSuites.length > 0 && totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-400">
+            <p className="text-sm text-gray-400">
             Showing <span className="font-medium text-white">{(page - 1) * itemsPerPage + 1}</span> to{' '}
             <span className="font-medium text-white">{Math.min(page * itemsPerPage, totalCount)}</span> of{' '}
-            <span className="font-medium text-white">{totalCount}</span> test suites
+            <span className="font-medium text-white">{totalCount}</span> test cases
           </p>
           <div className="flex gap-2">
             <button

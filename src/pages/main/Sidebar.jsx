@@ -42,7 +42,7 @@ const Sidebar = ({
         { id: "personas", label: "Personas", path: "/testing/personas" },
         { id: "inbound", label: "Inbound", path: "/inbound/runs" },
         { id: "outbound", label: "Outbound", path: "/simulations/runs" },
-        { id: "overview", label: "Evaluations", path: "/evaluations/overview" },
+        { id: "evaluations", label: "Evaluations", path: "/testing/evaluations" },
       ],
     },
     {

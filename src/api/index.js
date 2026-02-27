@@ -12,17 +12,11 @@ const API_LONG = axios.create({
   timeout: 180000,
 });
 
-// AUTH & TENANT
+// AUTH — backend extracts tenant_id directly from the signed JWT
 const addHeaders = (config) => {
   const token = localStorage.getItem("authToken");
-  const rawTenantId = localStorage.getItem("tenantId");
-  const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
-  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-  }
-  if (tenantId) {
-    config.headers["X-Tenant-ID"] = tenantId;
   }
   return config;
 };

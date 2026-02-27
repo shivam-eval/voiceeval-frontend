@@ -152,7 +152,7 @@ const formatPersonaField = (value) => {
         .join(' ');
 };
 // utils/formatters.js
-export const formatLabel = (value) => {
+const formatLabel = (value) => {
   if (!value) return '-';
 
   return value

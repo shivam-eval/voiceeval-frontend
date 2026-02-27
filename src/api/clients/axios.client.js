@@ -14,14 +14,6 @@ const createApiClient = (timeout = 60000) => {
     (config) => {
       const token = localStorage.getItem("authToken");
       const tokenExpiration = localStorage.getItem("tokenExpiration");
-      const rawTenantId = localStorage.getItem("tenantId");
-
-      // Normalize tenant ID - use 'default' if not set or invalid
-      let tenantId = rawTenantId?.trim();
-      if (!tenantId || tenantId === 'undefined' || tenantId === 'null') {
-        tenantId = 'default';
-      }
-
       // Check if token has expired
       if (token && tokenExpiration) {
         const now = Date.now();
@@ -44,9 +36,6 @@ const createApiClient = (timeout = 60000) => {
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
-
-      // Always send tenant ID header (default to 'default')
-      config.headers["X-Tenant-ID"] = tenantId;
 
       return config;
     },

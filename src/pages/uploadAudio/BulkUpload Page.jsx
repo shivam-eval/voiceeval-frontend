@@ -83,11 +83,8 @@ const BulkUploadPage = () => {
             });
 
             const token = localStorage.getItem("authToken");
-            const rawTenantId = localStorage.getItem("tenantId");
-            const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
             const headers = {};
             if (token) headers["Authorization"] = `Bearer ${token}`;
-            if (tenantId) headers["X-Tenant-ID"] = tenantId;
 
             const response = await fetch(`${API_BASE_URL}/audio/bulk-upload?category=${category}`, {
                 method: 'POST',

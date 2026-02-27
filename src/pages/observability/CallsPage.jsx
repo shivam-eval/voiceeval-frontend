@@ -451,7 +451,6 @@ const CallsPage = () => {
       fetch(downloadUrl, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
-          'X-Tenant-ID': localStorage.getItem('tenantId') || '',
         }
       })
         .then(response => {

@@ -24,6 +24,8 @@ import SessionReportPage from "./pages/simulations/SessionReportPage";
 import EvaluationsPage from './pages/simulations/EvaluationsPage';
 import EvaluationDashboard from "./pages/evaluation";
 import EvaluationReportPage from "./pages/evaluation/EvaluationReportPage";
+import V2EvaluationsPage from "./pages/evaluations/V2EvaluationsPage";
+import V2EvalDetailPage from "./pages/evaluations/V2EvalDetailPage";
 import AuthScreen from "./pages/auth/AuthScreen";
 import CallsPage from "./pages/observability/CallsPage";
 import LogsPage from "./pages/observability/LogsPage";
@@ -120,6 +122,7 @@ function App() {
 
     // Testing section
     if (path.startsWith("/testing")) {
+      if (path.includes("/evaluations")) return { section: "test-cases", tab: "evaluations" };
       if (path.includes("/personas")) return { section: "test-cases", tab: "personas" };
       if (path.includes("/scenarios")) return { section: "test-cases", tab: "scenarios" };
       return { section: "test-cases", tab: "test-cases" };
@@ -193,6 +196,8 @@ function App() {
                 <Route path="/testing/scenario-configs/:configId" element={<ScenarioConfigDetail />} />
                 <Route path="/testing/test-cases/:suiteId" element={<TestSuiteDetailView />} />
                 <Route path="/testing/personas" element={<PersonasPage />} />
+                <Route path="/testing/evaluations" element={<V2EvaluationsPage />} />
+                <Route path="/testing/evaluations/call/:callId" element={<V2EvalDetailPage />} />
 
                 {/* Legacy routes - redirect to new structure */}
                 <Route path="/test-cases" element={<Navigate to="/testing/test-cases" replace />} />

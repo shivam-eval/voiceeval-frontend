@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Folder, Search } from 'lucide-react';
-import { useOutboundAgents } from '../hooks/useSimulations';
+import { useSimulationCategories } from '../hooks/useSimulations';
+import { useAgents } from '../hooks/useAgents';
 
 /**
  * SimulationAgentDirectoriesView - Shows agent directories for outbound simulations
@@ -27,7 +28,7 @@ const SimulationAgentDirectoriesView = ({
 
   // Fetch data
   const { data: categoriesData, isLoading: isCategoriesLoading } = useSimulationCategories();
-  const { data: agentsData } = useAgents();
+  const { data: agentsData, isLoading: isAgentsLoading } = useAgents();
 
   // When showAllAgents=true, use agents list from useAgents()
   const filteredCategories = useMemo(() => {
@@ -64,7 +65,7 @@ const SimulationAgentDirectoriesView = ({
       return name.toLowerCase().includes(searchLower) || 
              (cat.id && cat.id.toLowerCase().includes(searchLower));
     });
-  }, [filteredAgents, searchTerm]);
+  }, [filteredCategories, searchTerm]);
 
   const updateParams = useCallback((updates, replace = false) => {
     setSearchParams(prev => {
@@ -129,7 +130,7 @@ const SimulationAgentDirectoriesView = ({
               </tr>
             </thead>
             <tbody className="text-sm text-gray-300">
-              {isAgentsLoading ? (
+          { (showAllAgents ? isAgentsLoading : isCategoriesLoading) ? (
                 <tr>
                   <td colSpan="3" className="px-4 py-8 text-center text-gray-500">
                     <div className="flex flex-col items-center gap-3">
@@ -138,7 +139,7 @@ const SimulationAgentDirectoriesView = ({
                     </div>
                   </td>
                 </tr>
-              ) : filteredAgents.length === 0 ? (
+              ) : displayedAgents.length === 0 ? (
                 <tr>
                   <td colSpan="3" className="px-4 py-12 text-center">
                     <div className="flex flex-col items-center gap-4">
@@ -184,7 +185,7 @@ const SimulationAgentDirectoriesView = ({
       </div>
 
       {/* Pagination */}
-      {filteredAgents.length > 0 && totalPages > 1 && (
+      {displayedAgents.length > 0 && totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-400">
             Showing <span className="font-medium text-white">{startIdx + 1}</span> to{' '}

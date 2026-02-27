@@ -51,14 +51,10 @@ export const EventsProvider = ({ children }) => {
 
             console.log(`🔌 [${connectionId}] Connecting to SSE`, eventsUrl);
 
-            // Build headers object
+            // Build headers — backend extracts tenant from JWT
             const headers = {
                 'Authorization': `Bearer ${token}`
             };
-
-            if (tenantId) {
-                headers['X-Tenant-ID'] = tenantId;
-            }
 
             const startTime = Date.now();
             eventSource = new EventSourcePolyfill(eventsUrl, {

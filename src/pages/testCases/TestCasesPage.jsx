@@ -1,12 +1,254 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2 } from 'lucide-react';
+import { Trash2, Play, X, CheckSquare, Square } from 'lucide-react';
 import { useTestCases } from "../../hooks/useTestCases";
 import { useAgents } from "../../hooks/useAgents";
+import { outboundSimApi } from "../../utils/api";
 import Table from "../../components/Table";
 import Badge from "../../components/Badge";
+import Button from "../../components/Button";
 import GenericDropdown from "../../components/DropDown";
 import SimulationAgentDirectoriesView from "../../components/SimulationAgentDirectoriesView";
+
+// ---------- Run Simulations Modal ----------
+
+const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => {
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [endpoint, setEndpoint] = useState("");
+    const [apiKey, setApiKey] = useState("");
+    const [isRunning, setIsRunning] = useState(false);
+    const [results, setResults] = useState(null);
+    const [error, setError] = useState(null);
+
+    // Pre-populate selection when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedIds(
+                preSelected.length > 0
+                    ? preSelected
+                    : allTestCases.map(tc => tc.tc_id)
+            );
+            setResults(null);
+            setError(null);
+        }
+    }, [isOpen]);
+
+    const allSelected = selectedIds.length === allTestCases.length;
+    const toggleAll = () =>
+        setSelectedIds(allSelected ? [] : allTestCases.map(tc => tc.tc_id));
+    const toggleOne = (id) =>
+        setSelectedIds(prev =>
+            prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+        );
+
+    const handleClose = () => {
+        setEndpoint("");
+        setApiKey("");
+        setIsRunning(false);
+        setResults(null);
+        setError(null);
+        onClose();
+    };
+
+    const handleRun = async () => {
+        if (!endpoint.trim() || selectedIds.length === 0) return;
+
+        setIsRunning(true);
+        setError(null);
+        setResults(null);
+
+        try {
+            const resp = await outboundSimApi.run({
+                test_case_ids: selectedIds,
+                endpoint: endpoint.trim(),
+                ...(apiKey.trim() && { api_key: apiKey.trim() }),
+                auth_type: "bearer",
+            });
+            setResults(resp);
+        } catch (err) {
+            setError(err.message || "Failed to trigger simulations");
+        } finally {
+            setIsRunning(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-gray-900 rounded-2xl w-full max-w-lg border border-gray-800 shadow-xl">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-800">
+                    <h3 className="text-xl font-bold text-white">Run Simulations</h3>
+                    <button onClick={handleClose} className="text-gray-500 hover:text-white transition-colors">
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div className="p-6 space-y-5">
+                    {!results ? (
+                        <>
+                            {/* Test case selection list */}
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-sm font-medium text-gray-300">
+                                        Select Test Cases
+                                    </label>
+                                    <button
+                                        onClick={toggleAll}
+                                        className="flex items-center gap-1.5 text-xs text-teal-400 hover:text-teal-300 transition-colors"
+                                        disabled={isRunning}
+                                    >
+                                        {allSelected
+                                            ? <><CheckSquare className="w-3.5 h-3.5" /> Deselect all</>
+                                            : <><Square className="w-3.5 h-3.5" /> Select all</>
+                                        }
+                                    </button>
+                                </div>
+                                <div className="bg-dark-bg rounded-lg border border-gray-800 divide-y divide-gray-800/60 max-h-52 overflow-y-auto">
+                                    {allTestCases.map(tc => {
+                                        const checked = selectedIds.includes(tc.tc_id);
+                                        const name = tc.scenario_config?.config_name || tc.tc_id;
+                                        const objective = tc.scenario_config?.objective;
+                                        return (
+                                            <label
+                                                key={tc.tc_id}
+                                                className={`flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-800/40 transition-colors ${isRunning ? "pointer-events-none opacity-60" : ""}`}
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={checked}
+                                                    onChange={() => toggleOne(tc.tc_id)}
+                                                    className="mt-0.5 accent-teal-500 w-4 h-4 flex-shrink-0"
+                                                />
+                                                <div className="min-w-0">
+                                                    <div className="text-sm text-white font-medium truncate">{name}</div>
+                                                    {objective && (
+                                                        <div className="text-xs text-gray-500 truncate">{objective}</div>
+                                                    )}
+                                                </div>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1.5">
+                                    {selectedIds.length} of {allTestCases.length} selected
+                                </p>
+                            </div>
+
+                            {/* Endpoint input */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Call Trigger Endpoint
+                                </label>
+                                <input
+                                    type="text"
+                                    value={endpoint}
+                                    onChange={e => setEndpoint(e.target.value)}
+                                    placeholder="https://your-agent-endpoint/outbound"
+                                    className="w-full bg-dark-bg border border-gray-700 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-teal-500 transition-colors"
+                                    disabled={isRunning}
+                                />
+                                <p className="text-xs text-gray-600 mt-1.5">
+                                    Each test case's params will be resolved and POSTed to this URL.
+                                </p>
+                            </div>
+
+                            {/* API Key input */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    API Key <span className="text-gray-600 font-normal">(optional)</span>
+                                </label>
+                                <input
+                                    type="password"
+                                    value={apiKey}
+                                    onChange={e => setApiKey(e.target.value)}
+                                    placeholder="Bearer token or API key"
+                                    className="w-full bg-dark-bg border border-gray-700 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-teal-500 transition-colors"
+                                    disabled={isRunning}
+                                />
+                                <p className="text-xs text-gray-600 mt-1.5">
+                                    Sent as <span className="font-mono">Authorization: Bearer &lt;key&gt;</span> on every call.
+                                </p>
+                            </div>
+
+                            {/* Error */}
+                            {error && (
+                                <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-sm text-red-400">
+                                    {error}
+                                </div>
+                            )}
+
+                            {/* Actions */}
+                            <div className="flex justify-end gap-3 pt-1">
+                                <Button variant="outline" onClick={handleClose} disabled={isRunning}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    variant="primary"
+                                    onClick={handleRun}
+                                    disabled={!endpoint.trim() || isRunning || selectedIds.length === 0}
+                                    loading={isRunning}
+                                    icon={!isRunning && <Play className="w-4 h-4" />}
+                                >
+                                    {isRunning ? "Triggering calls..." : `Run ${selectedIds.length > 0 ? `(${selectedIds.length})` : ""}`}
+                                </Button>
+                            </div>
+                        </>
+                    ) : (
+                        /* Results view */
+                        <>
+                            <div className="grid grid-cols-3 gap-3 text-center">
+                                <div className="bg-dark-bg rounded-lg p-3 border border-gray-800">
+                                    <div className="text-2xl font-bold text-white">{results.total}</div>
+                                    <div className="text-xs text-gray-500 mt-1">Total</div>
+                                </div>
+                                <div className="bg-dark-bg rounded-lg p-3 border border-teal-500/20">
+                                    <div className="text-2xl font-bold text-teal-400">{results.triggered_count}</div>
+                                    <div className="text-xs text-gray-500 mt-1">Triggered</div>
+                                </div>
+                                <div className="bg-dark-bg rounded-lg p-3 border border-red-500/20">
+                                    <div className="text-2xl font-bold text-red-400">{results.failed_count}</div>
+                                    <div className="text-xs text-gray-500 mt-1">Failed</div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                                {results.results.map(r => (
+                                    <div
+                                        key={r.tc_id}
+                                        className={`flex items-start gap-3 rounded-lg p-3 border text-sm ${
+                                            r.call_triggered
+                                                ? "bg-teal-500/5 border-teal-500/20"
+                                                : "bg-red-500/5 border-red-500/20"
+                                        }`}
+                                    >
+                                        <div className={`mt-0.5 w-2 h-2 rounded-full flex-shrink-0 ${r.call_triggered ? "bg-teal-400" : "bg-red-400"}`} />
+                                        <div className="min-w-0 flex-1">
+                                            <div className="font-mono text-gray-400 text-xs truncate">{r.tc_id}</div>
+                                            {r.error && <div className="text-red-400 text-xs mt-0.5">{r.error}</div>}
+                                            {r.call_triggered && (
+                                                <div className="text-gray-500 text-xs mt-0.5">
+                                                    HTTP {r.call_response_status}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-end pt-1">
+                                <Button variant="outline" onClick={handleClose}>Close</Button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ---------- Main Page ----------
 
 const TestCasesPage = () => {
     const navigate = useNavigate();
@@ -14,22 +256,30 @@ const TestCasesPage = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [agentFilter, setAgentFilter] = useState("");
     const [selectedRows, setSelectedRows] = useState([]);
+    const [showRunModal, setShowRunModal] = useState(false);
 
-    // Fetch test cases for selected agent
     const { data, isLoading, error } = useTestCases(agentFilter);
 
-    // Fetch agents for filter dropdown
     const { data: agentsData } = useAgents({ limit: 100 });
 
     const agentOptions = useMemo(() => [
         { label: "All Agents", value: "" },
         ...(agentsData?.agents?.map(agent => ({
-            label: (agent?.name || agent?.agent_name) ? `${agent?.name || agent?.agent_name} (${agent?.agent_id})` : agent?.agent_id,
-            value: agent.agent_id
+            label: (agent?.name || agent?.agent_name)
+                ? `${agent?.name || agent?.agent_name} (${agent?.agent_id})`
+                : agent?.agent_id,
+            value: agent.agent_id,
         })) || [])
     ], [agentsData]);
 
-    // Filter by search query
+    const selectedAgentName = useMemo(() => {
+        if (!agentFilter || !agentsData?.agents) return agentFilter;
+        const agent = agentsData.agents.find(
+            a => a.agent_id === agentFilter || a.provider_agent_id === agentFilter
+        );
+        return agent?.name || agent?.agent_name || agentFilter;
+    }, [agentFilter, agentsData]);
+
     const filteredData = useMemo(() => {
         if (!data) return [];
         if (!searchQuery) return data;
@@ -45,13 +295,12 @@ const TestCasesPage = () => {
         });
     }, [data, searchQuery]);
 
-    // Table columns
     const columns = [
         {
             key: "scenario_config",
             label: "Scenario",
             sortable: false,
-            render: (sc, row) => {
+            render: (sc) => {
                 const config = sc || {};
                 return (
                     <div>
@@ -64,21 +313,20 @@ const TestCasesPage = () => {
             },
         },
         {
-            key: "scenario_config",
+            key: "scenario_config_speaker",
             label: "Speaker",
             sortable: false,
-            render: (sc) => (sc && sc.speaker_name) || "-",
+            render: (_, row) => (row.scenario_config && row.scenario_config.speaker_name) || "-",
         },
         {
-            key: "scenario_config",
+            key: "scenario_config_language",
             label: "Language",
             sortable: false,
-            render: (sc) => {
+            render: (_, row) => {
+                const sc = row.scenario_config;
                 if (!sc) return "-";
                 const parts = [sc.primary_language || ""];
-                if (sc.code_switching && sc.secondary_language) {
-                    parts.push(sc.secondary_language);
-                }
+                if (sc.code_switching && sc.secondary_language) parts.push(sc.secondary_language);
                 return parts.filter(Boolean).join(" / ") || "-";
             },
         },
@@ -86,24 +334,20 @@ const TestCasesPage = () => {
             key: "bg_noise_config",
             label: "Noise Profile",
             sortable: false,
-            render: (cfg) => {
-                if (!cfg || !cfg.profile) return "-";
-                return (
-                    <Badge variant="default" size="sm">
-                        {cfg.profile}
-                    </Badge>
-                );
-            },
+            render: (cfg) => cfg?.profile
+                ? <Badge variant="default" size="sm">{cfg.profile}</Badge>
+                : "-",
         },
         {
             key: "tc_id",
             label: "Test Case ID",
             sortable: false,
-            render: (value) => <div className="text-xs text-gray-500 font-mono truncate max-w-xs">{value}</div>,
+            render: (value) => (
+                <div className="text-xs text-gray-500 font-mono truncate max-w-xs">{value}</div>
+            ),
         },
     ];
 
-    // If no agent selected, show agents directory
     if (!agentFilter) {
         return (
             <div className="p-8 bg-dark-bg min-h-screen text-white">
@@ -112,7 +356,6 @@ const TestCasesPage = () => {
                         <h1 className="text-4xl font-bold text-white mb-2">Test Cases</h1>
                         <p className="text-gray-400">Select an agent to view its test cases</p>
                     </div>
-
                     <SimulationAgentDirectoriesView
                         onAgentSelect={(agentId) => setAgentFilter(agentId)}
                         showHeader={true}
@@ -127,12 +370,23 @@ const TestCasesPage = () => {
         <div className="p-8 bg-dark-bg min-h-screen text-white">
             <div className="w-full max-w-screen-2xl mx-auto">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-bold text-white mb-2">Test Cases</h1>
-                    <p className="text-gray-400">Test cases for agent: {agentFilter}</p>
+                <div className="mb-8 flex items-start justify-between">
+                    <div>
+                        <h1 className="text-4xl font-bold text-white mb-2">Test Cases</h1>
+                        <p className="text-gray-400">Test cases for agent: {selectedAgentName}</p>
+                    </div>
+                    {filteredData.length > 0 && (
+                        <Button
+                            variant="primary"
+                            icon={<Play className="w-4 h-4" />}
+                            onClick={() => setShowRunModal(true)}
+                        >
+                            Run Simulations{selectedRows.length > 0 ? ` (${selectedRows.length})` : ""}
+                        </Button>
+                    )}
                 </div>
 
-                {/* Header Controls */}
+                {/* Controls */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <div className="flex items-center gap-3 w-full md:w-auto">
                         <div className="relative flex-1 md:w-64">
@@ -144,7 +398,6 @@ const TestCasesPage = () => {
                                 className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 px-5 text-base focus:outline-none focus:border-teal-500 transition-colors text-white placeholder-gray-500"
                             />
                         </div>
-
                         <div className="flex items-center gap-2 bg-dark-panel border border-gray-800 rounded-lg px-4 py-2 w-72">
                             <span className="text-gray-500 text-sm font-medium whitespace-nowrap">Agent:</span>
                             <GenericDropdown
@@ -154,14 +407,16 @@ const TestCasesPage = () => {
                                 className="flex-1"
                             />
                         </div>
-
-                        <button className="bg-dark-panel border border-gray-800 text-white px-8 py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition-colors shadow-lg">
+                        <button
+                            onClick={() => {}}
+                            className="bg-dark-panel border border-gray-800 text-white px-8 py-3 rounded-lg text-base font-semibold hover:bg-gray-800 transition-colors shadow-lg"
+                        >
                             Search
                         </button>
                     </div>
                 </div>
 
-                {/* Error State */}
+                {/* Error */}
                 {error && (
                     <div className="mb-6 bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-center gap-3 text-red-400">
                         <div className="p-2 bg-red-500/10 rounded-full">
@@ -171,7 +426,7 @@ const TestCasesPage = () => {
                     </div>
                 )}
 
-                {/* Table Container */}
+                {/* Table */}
                 <div className="bg-dark-panel rounded-xl overflow-hidden border border-gray-800/50 shadow-2xl">
                     <Table
                         columns={columns}
@@ -189,6 +444,13 @@ const TestCasesPage = () => {
                     />
                 </div>
             </div>
+
+            <RunSimulationsModal
+                isOpen={showRunModal}
+                onClose={() => setShowRunModal(false)}
+                allTestCases={filteredData}
+                preSelected={selectedRows.map(r => r.tc_id)}
+            />
         </div>
     );
 };

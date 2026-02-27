@@ -119,11 +119,8 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
             });
 
             const token = localStorage.getItem("authToken");
-            const rawTenantId = localStorage.getItem("tenantId");
-            const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
             const headers = {};
             if (token) headers["Authorization"] = `Bearer ${token}`;
-            if (tenantId) headers["X-Tenant-ID"] = tenantId;
 
             const response = await fetch(
                 `${API_BASE_URL}/audio/bulk-upload?category=test_suites`,
@@ -209,7 +206,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                         const payload = {
                             agent_id: formData.agent_id || defaultAgentId,
                             demography: "india",
-                            count: 5,
+                            count: 1,
                             dry_run: false,
                         };
                         await scenarioConfigsApi.generate(payload);
@@ -251,7 +248,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                 const payload = {
                     agent_id: formData.agent_id || defaultAgentId,
                     demography: "india",
-                    count: 5,
+                    count: 1,
                     dry_run: false,
                 };
                 await scenarioConfigsApi.generate(payload);

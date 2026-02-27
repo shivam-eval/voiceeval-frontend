@@ -15,16 +15,10 @@ class ApiClient {
             headers['Content-Type'] = 'application/json';
         }
 
-        // Add auth token and tenant ID
+        // Add auth token — backend extracts tenant_id directly from the JWT
         const token = localStorage.getItem("authToken");
-        const rawTenantId = localStorage.getItem("tenantId");
-        const tenantId = (rawTenantId === 'undefined' || rawTenantId === 'null') ? null : rawTenantId;
-
         if (token) {
             headers['Authorization'] = `Bearer ${token}`;
-        }
-        if (tenantId) {
-            headers['X-Tenant-ID'] = tenantId;
         }
 
         const config = {
@@ -156,6 +150,11 @@ export const testCasesApi = {
     listByAgent: (agentId) => apiClient.get(`/test-cases/agent/${agentId}`),
 };
 
+// Outbound simulation API
+export const outboundSimApi = {
+    run: (data) => apiClient.post('/simulation/outbound', data),
+};
+
 // Persona API endpoints
 export const personasApi = {
     list: (params) => apiClient.get('/personas', params),
@@ -234,6 +233,24 @@ export const callsApi = {
     importBolnaCalls: (data) => apiClient.post('/calls/bolna/import-calls', data),
     getTrace: (id) => apiClient.get(`/calls/${id}/trace`),
     getIssues: (id) => apiClient.get(`/calls/${id}/issues`),
+};
+
+// V2 Folders API endpoints
+export const v2FoldersApi = {
+    listByAgent: (agentId) => apiClient.get(`/v2-folders/agent/${agentId}`),
+};
+
+// V2 Calls API endpoints
+export const v2CallsApi = {
+    listByFolder: (folderId) => apiClient.get(`/v2-calls/folder/${folderId}`),
+    get: (callId) => apiClient.get(`/v2-calls/${callId}`),
+};
+
+// V2 Evaluations API endpoints
+export const v2EvalsApi = {
+    listByFolder: (folderId) => apiClient.get(`/v2-evals/folder/${folderId}`),
+    get: (evalId) => apiClient.get(`/v2-evals/${evalId}`),
+    getByCall: (callId) => apiClient.get(`/v2-evals/call/${callId}`),
 };
 
 export default apiClient;

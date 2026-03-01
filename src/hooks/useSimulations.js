@@ -78,18 +78,19 @@ export const useRunSimulation = () => {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: ({ test_suite_id, phone_number, agent_id, metadata, parallel_execution, max_concurrency }) =>
+        mutationFn: ({ test_suite_id, phone_number, agent_id, folder_name, metadata, parallel_execution, max_concurrency }) =>
             simulationsApi.runSimulation({
                 test_suite_id,
                 phone_number,
                 agent_id,
+                folder_name,
                 metadata,
                 parallel_execution,
                 max_concurrency
             }),
         onSuccess: (data) => {
             queryClient.invalidateQueries({ queryKey: simulationKeys.lists() });
-            // Optionally prefetch the new simulation details
+            queryClient.invalidateQueries({ queryKey: ['simulations', 'categories'] });
             if (data.simulation_id) {
                 queryClient.invalidateQueries({ queryKey: simulationKeys.detail(data.simulation_id) });
             }
@@ -111,6 +112,7 @@ export const useRunInboundSimulation = () => {
         onSuccess: (data) => {
             // Invalidate lists so server state is refreshed
             queryClient.invalidateQueries({ queryKey: simulationKeys.lists() });
+            queryClient.invalidateQueries({ queryKey: ['simulations', 'categories'] });
 
             // If the API returned the created simulation object, ensure it's marked
             // as inbound in any cached lists so the main sessions page can filter it out
@@ -220,8 +222,7 @@ export const useSimulationCategories = () => {
     return useQuery({
         queryKey: ['simulations', 'categories'],
         queryFn: () => simulationsApi.getSimulationCategories(),
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        refetchOnWindowFocus: false,
+        staleTime: 30000,
     });
 };
 

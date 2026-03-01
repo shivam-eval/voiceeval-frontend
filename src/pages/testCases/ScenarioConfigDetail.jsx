@@ -92,6 +92,7 @@ const ScenarioConfigDetail = () => {
                                     <div><strong className="text-gray-300">Secondary Language:</strong> {cfg.secondary_language || "-"}</div>
                                 )}
                                 <div><strong className="text-gray-300">Demography:</strong> {metadata.demography || "-"}</div>
+                                <div><strong className="text-gray-300">Interruption:</strong> {cfg.interruption_config || "-"}</div>
                                 {cfg.error && <div className="text-red-400">Error: {String(cfg.error)}</div>}
                             </div>
                         </div>

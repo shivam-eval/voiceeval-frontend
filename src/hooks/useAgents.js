@@ -83,6 +83,20 @@ export const useDeleteAgent = () => {
 };
 
 /**
+ * Hook to bulk delete agents
+ */
+export const useBulkDeleteAgents = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (agentIds) => agentsApi.bulkDelete(agentIds),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: agentKeys.lists() });
+        },
+    });
+};
+
+/**
  * Hook to test agent connection
  */
 export const useTestAgent = () => {

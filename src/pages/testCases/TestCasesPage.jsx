@@ -1,14 +1,16 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2, Play, X, CheckSquare, Square } from 'lucide-react';
+import { Trash2, Play, Plus, X, CheckSquare, Square } from 'lucide-react';
 import { useTestCases } from "../../hooks/useTestCases";
 import { useAgents } from "../../hooks/useAgents";
+import { useCreateTestSuite } from "../../hooks/useTestSuites";
 import { outboundSimApi } from "../../utils/api";
 import Table from "../../components/Table";
 import Badge from "../../components/Badge";
 import Button from "../../components/Button";
 import GenericDropdown from "../../components/DropDown";
 import SimulationAgentDirectoriesView from "../../components/SimulationAgentDirectoriesView";
+import CreateTestCaseModal from "../../components/CreateTestCaseModal";
 
 // ---------- Run Simulations Modal ----------
 
@@ -16,6 +18,9 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
     const [selectedIds, setSelectedIds] = useState([]);
     const [endpoint, setEndpoint] = useState("");
     const [apiKey, setApiKey] = useState("");
+    const [authType, setAuthType] = useState("api_key");
+    const [payloadFormat, setPayloadFormat] = useState("");
+    const [payloadError, setPayloadError] = useState(null);
     const [isRunning, setIsRunning] = useState(false);
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
@@ -44,6 +49,9 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
     const handleClose = () => {
         setEndpoint("");
         setApiKey("");
+        setAuthType("api_key");
+        setPayloadFormat("");
+        setPayloadError(null);
         setIsRunning(false);
         setResults(null);
         setError(null);
@@ -58,11 +66,22 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
         setResults(null);
 
         try {
+            let parsedPayload = null;
+            if (payloadFormat.trim()) {
+                try {
+                    parsedPayload = JSON.parse(payloadFormat.trim());
+                } catch {
+                    setError("Invalid JSON in Payload Format");
+                    setIsRunning(false);
+                    return;
+                }
+            }
             const resp = await outboundSimApi.run({
                 test_case_ids: selectedIds,
                 endpoint: endpoint.trim(),
                 ...(apiKey.trim() && { api_key: apiKey.trim() }),
-                auth_type: "bearer",
+                ...(parsedPayload && { sample_payload: parsedPayload }),
+                auth_type: authType,
             });
             setResults(resp);
         } catch (err) {
@@ -154,22 +173,69 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
                                 </p>
                             </div>
 
-                            {/* API Key input */}
+                            {/* API Key + Auth Type */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
                                     API Key <span className="text-gray-600 font-normal">(optional)</span>
                                 </label>
-                                <input
-                                    type="password"
-                                    value={apiKey}
-                                    onChange={e => setApiKey(e.target.value)}
-                                    placeholder="Bearer token or API key"
-                                    className="w-full bg-dark-bg border border-gray-700 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-teal-500 transition-colors"
+                                <div className="flex gap-2">
+                                    <input
+                                        type="password"
+                                        value={apiKey}
+                                        onChange={e => setApiKey(e.target.value)}
+                                        placeholder="Your API key"
+                                        className="flex-1 bg-dark-bg border border-gray-700 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-teal-500 transition-colors"
+                                        disabled={isRunning}
+                                    />
+                                    <select
+                                        value={authType}
+                                        onChange={e => setAuthType(e.target.value)}
+                                        className="bg-dark-bg border border-gray-700 rounded-lg px-3 py-3 text-white text-sm focus:outline-none focus:border-teal-500 transition-colors"
+                                        disabled={isRunning}
+                                    >
+                                        <option value="api_key">X-API-Key</option>
+                                        <option value="bearer">Bearer</option>
+                                    </select>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1.5">
+                                    Sent as <span className="font-mono">{authType === "bearer" ? "Authorization: Bearer <key>" : "X-API-Key: <key>"}</span> on every call.
+                                </p>
+                            </div>
+
+                            {/* Sample Payload */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Sample Payload <span className="text-gray-600 font-normal">(optional)</span>
+                                </label>
+                                <textarea
+                                    value={payloadFormat}
+                                    onChange={e => {
+                                        setPayloadFormat(e.target.value);
+                                        if (e.target.value.trim()) {
+                                            try {
+                                                JSON.parse(e.target.value.trim());
+                                                setPayloadError(null);
+                                            } catch {
+                                                setPayloadError("Invalid JSON");
+                                            }
+                                        } else {
+                                            setPayloadError(null);
+                                        }
+                                    }}
+                                    placeholder={'{\n  "customer_phone": "9876543210",\n  "name": "John Doe",\n  "campaign": "sales"\n}'}
+                                    rows={5}
+                                    className={`w-full bg-dark-bg border rounded-lg px-4 py-3 text-white text-sm font-mono placeholder-gray-600 focus:outline-none transition-colors resize-y ${
+                                        payloadError ? "border-red-500/60 focus:border-red-500" : "border-gray-700 focus:border-teal-500"
+                                    }`}
                                     disabled={isRunning}
                                 />
-                                <p className="text-xs text-gray-600 mt-1.5">
-                                    Sent as <span className="font-mono">Authorization: Bearer &lt;key&gt;</span> on every call.
-                                </p>
+                                {payloadError ? (
+                                    <p className="text-xs text-red-400 mt-1.5">{payloadError}</p>
+                                ) : (
+                                    <p className="text-xs text-gray-600 mt-1.5">
+                                        Paste a sample JSON payload with real values. An AI will map fields to your test case parameters automatically.
+                                    </p>
+                                )}
                             </div>
 
                             {/* Error */}
@@ -187,7 +253,7 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
                                 <Button
                                     variant="primary"
                                     onClick={handleRun}
-                                    disabled={!endpoint.trim() || isRunning || selectedIds.length === 0}
+                                    disabled={!endpoint.trim() || isRunning || selectedIds.length === 0 || !!payloadError}
                                     loading={isRunning}
                                     icon={!isRunning && <Play className="w-4 h-4" />}
                                 >
@@ -257,10 +323,12 @@ const TestCasesPage = () => {
     const [agentFilter, setAgentFilter] = useState("");
     const [selectedRows, setSelectedRows] = useState([]);
     const [showRunModal, setShowRunModal] = useState(false);
+    const [showCreateTestCaseModal, setShowCreateTestCaseModal] = useState(false);
 
-    const { data, isLoading, error } = useTestCases(agentFilter);
+    const { data, isLoading, error, refetch: refetchTestCases } = useTestCases(agentFilter);
 
     const { data: agentsData } = useAgents({ limit: 100 });
+    const createTestSuite = useCreateTestSuite();
 
     const agentOptions = useMemo(() => [
         { label: "All Agents", value: "" },
@@ -339,6 +407,16 @@ const TestCasesPage = () => {
                 : "-",
         },
         {
+            key: "interruption_config",
+            label: "Interruption",
+            sortable: false,
+            render: (value) => {
+                const variantMap = { low: "success", medium: "warning", high: "danger" };
+                const level = value || "medium";
+                return <Badge variant={variantMap[level] || "default"} size="sm">{level}</Badge>;
+            },
+        },
+        {
             key: "tc_id",
             label: "Test Case ID",
             sortable: false,
@@ -375,15 +453,24 @@ const TestCasesPage = () => {
                         <h1 className="text-4xl font-bold text-white mb-2">Test Cases</h1>
                         <p className="text-gray-400">Test cases for agent: {selectedAgentName}</p>
                     </div>
-                    {filteredData.length > 0 && (
+                    <div className="flex items-center gap-3">
                         <Button
-                            variant="primary"
-                            icon={<Play className="w-4 h-4" />}
-                            onClick={() => setShowRunModal(true)}
+                            variant="outline"
+                            icon={<Plus className="w-4 h-4" />}
+                            onClick={() => setShowCreateTestCaseModal(true)}
                         >
-                            Run Simulations{selectedRows.length > 0 ? ` (${selectedRows.length})` : ""}
+                            Create Test Case
                         </Button>
-                    )}
+                        {filteredData.length > 0 && (
+                            <Button
+                                variant="primary"
+                                icon={<Play className="w-4 h-4" />}
+                                onClick={() => setShowRunModal(true)}
+                            >
+                                Run Simulations{selectedRows.length > 0 ? ` (${selectedRows.length})` : ""}
+                            </Button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Controls */}
@@ -450,6 +537,21 @@ const TestCasesPage = () => {
                 onClose={() => setShowRunModal(false)}
                 allTestCases={filteredData}
                 preSelected={selectedRows.map(r => r.tc_id)}
+            />
+
+            <CreateTestCaseModal
+                isOpen={showCreateTestCaseModal}
+                onClose={() => setShowCreateTestCaseModal(false)}
+                agentId={agentFilter}
+                agents={agentsData?.agents || []}
+                onSubmitAI={async (suiteData) => {
+                    await createTestSuite.mutateAsync(suiteData);
+                    setShowCreateTestCaseModal(false);
+                }}
+                isLoadingAI={createTestSuite.isPending}
+                onCreated={() => {
+                    refetchTestCases?.();
+                }}
             />
         </div>
     );

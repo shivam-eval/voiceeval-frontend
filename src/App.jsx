@@ -195,7 +195,7 @@ function App() {
                 <Route path="/testing/test-cases" element={<TestCasesPage />} />
                 <Route path="/testing/scenario-configs/:configId" element={<ScenarioConfigDetail />} />
                 <Route path="/testing/test-cases/:suiteId" element={<TestSuiteDetailView />} />
-                <Route path="/testing/personas" element={<PersonasPage />} />
+                {/* <Route path="/testing/personas" element={<PersonasPage />} /> */}
                 <Route path="/testing/evaluations" element={<V2EvaluationsPage />} />
                 <Route path="/testing/evaluations/call/:callId" element={<V2EvalDetailPage />} />
 
@@ -208,9 +208,9 @@ function App() {
                 {/* Workspace */}
                 <Route path="/workspace" element={<WorkspaceLoader />} />
 
-                {/* === INBOUND SECTION === */}
-                <Route path="/inbound/runs" element={<InboundPage />} />
-                <Route path="/inbound/runs/:simulationId" element={<SimulationDetailPage />} />
+                {/* === INBOUND SECTION (commented out for now) === */}
+                {/* <Route path="/inbound/runs" element={<InboundPage />} /> */}
+                {/* <Route path="/inbound/runs/:simulationId" element={<SimulationDetailPage />} /> */}
 
                 {/* === SIMULATIONS SECTION === */}
                 {/* New routes */}

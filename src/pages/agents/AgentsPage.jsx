@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Search, Plus, Trash2 } from "lucide-react";
-import { useAgents, useDeleteAgent, useTestAgent, useCloneAgent, useCreateAgent } from "../../hooks/useAgents";
+import { useAgents, useDeleteAgent, useTestAgent, useCloneAgent, useCreateAgent, useBulkDeleteAgents } from "../../hooks/useAgents";
 import Table from "../../components/Table";
 import Badge from "../../components/Badge";
 import Button from "../../components/Button";
@@ -64,6 +64,7 @@ const AgentsPage = () => {
 
     // Mutations
     const deleteAgent = useDeleteAgent();
+    const bulkDeleteAgents = useBulkDeleteAgents();
     // ... other hooks ...
     const testAgent = useTestAgent();
     const cloneAgent = useCloneAgent();
@@ -165,14 +166,11 @@ const AgentsPage = () => {
             onConfirm: async () => {
                 setConfirmationModal(prev => ({ ...prev, isLoading: true }));
                 try {
-                    console.log("🚀 Executing bulk delete for:", selectedRows);
-                    await Promise.all(selectedRows.map(id => deleteAgent.mutateAsync(id)));
+                    await bulkDeleteAgents.mutateAsync(selectedRows);
                     setSelectedRows([]);
                     setConfirmationModal(prev => ({ ...prev, isOpen: false }));
                     toast.success(`${selectedRows.length} agents deleted successfully`);
-                    console.log("✅ Bulk delete successful");
                 } catch (error) {
-                    console.error("❌ Bulk delete failed:", error);
                     // Error handled by global interceptor
                     setConfirmationModal(prev => ({ ...prev, isLoading: false }));
                 }

@@ -61,7 +61,7 @@ const FoldersListView = ({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
           <input
             type="text"
-            placeholder="Search folders..."
+            placeholder="Search simulations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-dark-panel border border-gray-800 rounded-lg py-3 pl-10 pr-4 focus:outline-none focus:border-teal-500 text-white"
@@ -75,7 +75,7 @@ const FoldersListView = ({
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
-                <th className="px-4 py-3">Folder Name</th>
+                <th className="px-4 py-3">Simulation</th>
                 <th className="px-4 py-3 text-center">Created</th>
               </tr>
             </thead>
@@ -96,9 +96,9 @@ const FoldersListView = ({
                       <div className="p-4 bg-gray-800/30 rounded-full border border-gray-700/50">
                         <Folder className="w-8 h-8 text-gray-500" />
                       </div>
-                      <p className="text-gray-400 text-lg font-medium">No folders found</p>
+                      <p className="text-gray-400 text-lg font-medium">No simulations found</p>
                       <p className="text-gray-500 text-sm">
-                        {searchTerm ? 'Try adjusting your search' : 'Run a simulation to create folders'}
+                        {searchTerm ? 'Try adjusting your search' : 'Run a simulation to see it here'}
                       </p>
                     </div>
                   </td>

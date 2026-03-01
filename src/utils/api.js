@@ -115,6 +115,7 @@ export const agentsApi = {
     clone: (id) => apiClient.post(`/agents/${id}/clone`, {}),
     reExtract: (data) => apiClient.post('/extract/re-extract', data),
     listBolnaAgents: (data) => apiClient.post('/agents/bolna/list-agents', data),
+    bulkDelete: (agentIds) => apiClient.post('/agents/bulk-delete', { agent_ids: agentIds }),
 };
 
 
@@ -143,6 +144,7 @@ export const scenarioConfigsApi = {
     get: (id) => apiClient.get(`/scenario-configs/${id}`),
     // Generate scenario configs (server-side generation)
     generate: (data) => apiClient.post('/scenario-configs/generate', data),
+    createManual: (data) => apiClient.post('/scenario-configs/create-manual', data),
 };
 
 // Test Cases (v2) API endpoints

@@ -13,6 +13,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
     const [selectedAgentId, setSelectedAgentId] = useState(preSelectedAgentId || '');
     const [selectedTestSuiteId, setSelectedTestSuiteId] = useState(preSelectedTestSuiteId || '');
     const [phoneNumber, setPhoneNumber] = useState('');
+    const [folderName, setFolderName] = useState('');
 
     // Fetch agents and test suites
     const { data: agentsData, isLoading: agentsLoading } = useAgents();
@@ -40,6 +41,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
         if (isOpen) {
             setSelectedAgentId(preSelectedAgentId || '');
             setSelectedTestSuiteId(preSelectedTestSuiteId || '');
+            setFolderName('');
         }
     }, [isOpen, preSelectedAgentId, preSelectedTestSuiteId]);
 
@@ -62,6 +64,7 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
             test_suite_id: selectedTestSuiteId,
             phone_number: phoneNumber,
             agent_id: selectedAgentId || undefined,
+            folder_name: folderName.trim() || undefined,
             metadata: {
                 agent_name: selectedAgentId,
                 test_suite_name: selectedTestSuite?.name,
@@ -170,6 +173,23 @@ const RunSimulationModal = ({ isOpen, onClose, preSelectedTestSuiteId = null, pr
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Simulation Name */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Simulation Name <span className="text-gray-500 font-normal">(optional)</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={folderName}
+                            onChange={(e) => setFolderName(e.target.value)}
+                            placeholder="e.g. Regression Run — March 2026"
+                            className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-teal-400"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                            Give this simulation a name to identify it in your runs history.
+                        </p>
                     </div>
 
                     {/* Phone Number */}

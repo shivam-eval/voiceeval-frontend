@@ -39,8 +39,8 @@ const Sidebar = ({
       icon: <FileText className="w-5 h-5" />,
       tabs: [
         { id: "test-cases", label: "Test Cases", path: "/testing/test-cases" },
-        { id: "personas", label: "Personas", path: "/testing/personas" },
-        { id: "inbound", label: "Inbound", path: "/inbound/runs" },
+        // { id: "personas", label: "Personas", path: "/testing/personas" },
+        // { id: "inbound", label: "Inbound", path: "/inbound/runs" },
         { id: "outbound", label: "Outbound", path: "/simulations/runs" },
         { id: "evaluations", label: "Evaluations", path: "/testing/evaluations" },
       ],

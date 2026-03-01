@@ -14,7 +14,7 @@ import { outboundSimApi } from "../../utils/api";
 import DashboardLoader from "../../components/DashboardLoader";
 import GenerateFlowModal from "../../components/GenerateFlowModal";
 import GenerateTestSuiteModal from "../../components/GenerateTestSuiteModal";
-import CreateTestSuiteModal from "../../components/CreateTestSuiteModal";
+import CreateTestCaseModal from "../../components/CreateTestCaseModal";
 import FlowDiagramModal from "../../components/FlowDiagramModal";
 import { useCreateTestSuite } from "../../hooks/useTestSuites";
 
@@ -150,7 +150,7 @@ const AgentDetailPage = () => {
     const [activeTab, setActiveTab] = useState("overview");
     const [showGenerateFlowModal, setShowGenerateFlowModal] = useState(false);
     const [showGenerateTestSuiteModal, setShowGenerateTestSuiteModal] = useState(false);
-    const [showCreateTestSuiteModal, setShowCreateTestSuiteModal] = useState(false);
+    const [showCreateTestCaseModal, setShowCreateTestCaseModal] = useState(false);
     const [selectedFlowForTestGen, setSelectedFlowForTestGen] = useState(null);
     const [showFlowDiagramModal, setShowFlowDiagramModal] = useState(false);
     const [selectedFlowForDiagram, setSelectedFlowForDiagram] = useState(null);
@@ -166,7 +166,7 @@ const AgentDetailPage = () => {
     const { data: agentParams, isLoading: paramsLoading } = useAgentParams(agentId);
 
     // Fetch v2 test cases for this agent
-    const { data: testCasesData, isLoading: testCasesLoading, error: testCasesError } = useTestCases(agentId);
+    const { data: testCasesData, isLoading: testCasesLoading, error: testCasesError, refetch: refetchTestCases } = useTestCases(agentId);
     const testCases = testCasesData || [];
     const [tcSearchQuery, setTcSearchQuery] = useState("");
     const [selectedTcRows, setSelectedTcRows] = useState([]);
@@ -253,7 +253,7 @@ const AgentDetailPage = () => {
                 agent_id: agentId,
                 test_cases: [],
             });
-            setShowCreateTestSuiteModal(false);
+            setShowCreateTestCaseModal(false);
             toast.success("Test suite created successfully");
         } catch (error) {
             // Error handled by global interceptor
@@ -482,10 +482,10 @@ const AgentDetailPage = () => {
                                 <Button
                                     variant="outline"
                                     className="w-full"
-                                    onClick={() => setShowCreateTestSuiteModal(true)}
+                                    onClick={() => setShowCreateTestCaseModal(true)}
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
-                                    Create Test Suite
+                                    Create Test Case
                                 </Button>
                             </div>
                         </div>
@@ -708,15 +708,24 @@ const AgentDetailPage = () => {
                                 <h3 className="text-xl font-semibold text-white mb-1">Test Cases</h3>
                                 <p className="text-gray-400 text-sm">{testCases.length} test case{testCases.length !== 1 ? "s" : ""} for this agent</p>
                             </div>
-                            {testCases.length > 0 && (
+                            <div className="flex items-center gap-3">
                                 <Button
-                                    variant="primary"
-                                    icon={<Play className="w-4 h-4" />}
-                                    onClick={() => setShowRunModal(true)}
+                                    variant="outline"
+                                    icon={<Plus className="w-4 h-4" />}
+                                    onClick={() => setShowCreateTestCaseModal(true)}
                                 >
-                                    Run Simulations{selectedTcRows.length > 0 ? ` (${selectedTcRows.length})` : ""}
+                                    Create Test Case
                                 </Button>
-                            )}
+                                {testCases.length > 0 && (
+                                    <Button
+                                        variant="primary"
+                                        icon={<Play className="w-4 h-4" />}
+                                        onClick={() => setShowRunModal(true)}
+                                    >
+                                        Run Simulations{selectedTcRows.length > 0 ? ` (${selectedTcRows.length})` : ""}
+                                    </Button>
+                                )}
+                            </div>
                         </div>
 
                         {/* Search */}
@@ -841,14 +850,17 @@ const AgentDetailPage = () => {
                 />
             )}
 
-            {/* Create Test Suite Modal */}
-            <CreateTestSuiteModal
-                isOpen={showCreateTestSuiteModal}
-                onClose={() => setShowCreateTestSuiteModal(false)}
-                onSubmit={handleCreateTestSuite}
-                isLoading={createTestSuite.isPending}
+            {/* Create Test Case Modal (unified: AI or Manual) */}
+            <CreateTestCaseModal
+                isOpen={showCreateTestCaseModal}
+                onClose={() => setShowCreateTestCaseModal(false)}
+                agentId={agentId}
                 agents={[agent]}
-                defaultAgentId={agentId}
+                onSubmitAI={handleCreateTestSuite}
+                isLoadingAI={createTestSuite.isPending}
+                onCreated={() => {
+                    refetchTestCases?.();
+                }}
             />
 
             {/* Flow Diagram Modal */}

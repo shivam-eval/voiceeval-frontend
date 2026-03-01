@@ -274,7 +274,7 @@ const V2EvaluationsPage = () => {
           </button>
           <div>
             <h1 className="text-2xl font-bold">{agentName}</h1>
-            <p className="text-gray-400 text-sm">Evaluation folders</p>
+            <p className="text-gray-400 text-sm">Simulations</p>
           </div>
         </div>
 
@@ -283,7 +283,7 @@ const V2EvaluationsPage = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-900/50 text-gray-400 text-xs font-semibold border-b border-gray-800/50">
-                  <th className="px-4 py-3">Folder Name</th>
+                  <th className="px-4 py-3">Simulation</th>
                   <th className="px-4 py-3 text-center">Calls</th>
                   <th className="px-4 py-3 text-center">Avg Score</th>
                   <th className="px-4 py-3 text-center">Pass Rate</th>
@@ -305,8 +305,8 @@ const V2EvaluationsPage = () => {
                     <td colSpan="5" className="px-4 py-12 text-center">
                       <div className="flex flex-col items-center gap-4">
                         <Folder className="w-8 h-8 text-gray-500" />
-                        <p className="text-gray-400 text-lg font-medium">No evaluation folders found</p>
-                        <p className="text-gray-500 text-sm">Run evaluations to see folders here</p>
+                        <p className="text-gray-400 text-lg font-medium">No simulations found</p>
+                        <p className="text-gray-500 text-sm">Run a simulation to see results here</p>
                       </div>
                     </td>
                   </tr>

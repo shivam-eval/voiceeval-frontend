@@ -443,6 +443,21 @@ const TestCasesPage = () => {
                 <div className="text-xs text-gray-500 font-mono truncate max-w-xs">{value}</div>
             ),
         },
+        {
+            key: "created_at",
+            label: "Generated",
+            sortable: false,
+            render: (value) => {
+                if (!value) return <span className="text-gray-600">—</span>;
+                const d = new Date(value);
+                return (
+                    <div className="text-xs text-gray-400 whitespace-nowrap">
+                        <div>{d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</div>
+                        <div className="text-gray-600">{d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}</div>
+                    </div>
+                );
+            },
+        },
     ];
 
     if (!agentFilter) {

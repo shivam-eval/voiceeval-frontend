@@ -143,7 +143,11 @@ export const scenarioConfigsApi = {
     listByAgent: (agentId, params = {}) => apiClient.get(`/scenario-configs/agent/${agentId}`, params),
     get: (id) => apiClient.get(`/scenario-configs/${id}`),
     // Generate scenario configs (server-side generation)
-    generate: (data) => apiClient.post('/scenario-configs/generate', data),
+    // Always force count = 1 for now regardless of caller input
+    generate: (data) => apiClient.post('/scenario-configs/generate', {
+        ...data,
+        count: 1,
+    }),
     createManual: (data) => apiClient.post('/scenario-configs/create-manual', data),
 };
 

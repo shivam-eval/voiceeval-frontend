@@ -1,4 +1,4 @@
-import { apiClient } from '../clients/axios.client';
+import { apiClient, longRunningApiClient } from '../clients/axios.client';
 
 /**
  * Generate flow from text
@@ -6,7 +6,7 @@ import { apiClient } from '../clients/axios.client';
  * @returns {Promise} API response
  */
 export const generateFlow = (payload) =>
-  apiClient.post('/generate/flow', payload);
+  longRunningApiClient.post('/generate/flow', payload);
 
 /**
  * Generate flow in Mermaid format
@@ -14,7 +14,7 @@ export const generateFlow = (payload) =>
  * @returns {Promise} API response
  */
 export const generateFlowMermaid = (payload) =>
-  apiClient.post('/generate/flow/mermaid', payload);
+  longRunningApiClient.post('/generate/flow/mermaid', payload);
 
 /**
  * Generate test cases

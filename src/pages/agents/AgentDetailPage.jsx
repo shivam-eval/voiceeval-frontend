@@ -21,8 +21,12 @@ import { useCreateTestSuite } from "../../hooks/useTestSuites";
 // ---------- Run Simulations Modal (same as TestCasesPage) ----------
 const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => {
     const [selectedIds, setSelectedIds] = useState([]);
+    const [simulationName, setSimulationName] = useState("");
     const [endpoint, setEndpoint] = useState("");
     const [apiKey, setApiKey] = useState("");
+    const [authType, setAuthType] = useState("api_key");
+    const [payloadFormat, setPayloadFormat] = useState("");
+    const [payloadError, setPayloadError] = useState(null);
     const [isRunning, setIsRunning] = useState(false);
     const [results, setResults] = useState(null);
     const [error, setError] = useState(null);
@@ -40,18 +44,41 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
     const toggleOne = (id) => setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
     const handleClose = () => {
-        setEndpoint(""); setApiKey(""); setIsRunning(false); setResults(null); setError(null); onClose();
+        setSimulationName("");
+        setEndpoint("");
+        setApiKey("");
+        setAuthType("api_key");
+        setPayloadFormat("");
+        setPayloadError(null);
+        setIsRunning(false);
+        setResults(null);
+        setError(null);
+        onClose();
     };
 
     const handleRun = async () => {
         if (!endpoint.trim() || selectedIds.length === 0) return;
-        setIsRunning(true); setError(null); setResults(null);
+        setIsRunning(true);
+        setError(null);
+        setResults(null);
         try {
+            let parsedPayload = null;
+            if (payloadFormat.trim()) {
+                try {
+                    parsedPayload = JSON.parse(payloadFormat.trim());
+                } catch {
+                    setError("Invalid JSON in Payload Format");
+                    setIsRunning(false);
+                    return;
+                }
+            }
             const resp = await outboundSimApi.run({
                 test_case_ids: selectedIds,
                 endpoint: endpoint.trim(),
                 ...(apiKey.trim() && { api_key: apiKey.trim() }),
-                auth_type: "bearer",
+                ...(parsedPayload && { sample_payload: parsedPayload }),
+                ...(simulationName.trim() && { folder_name: simulationName.trim() }),
+                auth_type: authType,
             });
             setResults(resp);
         } catch (err) {
@@ -65,7 +92,7 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
 
     return (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-900 rounded-2xl w-full max-w-lg border border-gray-800 shadow-xl">
+            <div className="bg-gray-900 rounded-2xl w-full max-w-lg border border-gray-800 shadow-xl max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b border-gray-800">
                     <h3 className="text-xl font-bold text-white">Run Simulations</h3>
                     <button onClick={handleClose} className="text-gray-500 hover:text-white transition-colors">
@@ -75,6 +102,7 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
                 <div className="p-6 space-y-5">
                     {!results ? (
                         <>
+                            {/* Test case selection list */}
                             <div>
                                 <div className="flex items-center justify-between mb-2">
                                     <label className="text-sm font-medium text-gray-300">Select Test Cases</label>
@@ -98,20 +126,99 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
                                 </div>
                                 <p className="text-xs text-gray-600 mt-1.5">{selectedIds.length} of {allTestCases.length} selected</p>
                             </div>
+
+                            {/* Simulation Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Simulation Name <span className="text-gray-600 font-normal">(optional)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={simulationName}
+                                    onChange={e => setSimulationName(e.target.value)}
+                                    placeholder="e.g. Regression Run — March 2026"
+                                    className="w-full bg-dark-bg border border-gray-700 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-teal-500 transition-colors"
+                                    disabled={isRunning}
+                                />
+                                <p className="text-xs text-gray-600 mt-1.5">Give this simulation run a name to identify it in your history.</p>
+                            </div>
+
+                            {/* Endpoint */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">Call Trigger Endpoint</label>
                                 <input type="text" value={endpoint} onChange={e => setEndpoint(e.target.value)} placeholder="https://your-agent-endpoint/outbound" className="w-full bg-dark-bg border border-gray-700 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-teal-500 transition-colors" disabled={isRunning} />
                                 <p className="text-xs text-gray-600 mt-1.5">Each test case's params will be resolved and POSTed to this URL.</p>
                             </div>
+
+                            {/* API Key + Auth Type */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">API Key <span className="text-gray-600 font-normal">(optional)</span></label>
-                                <input type="password" value={apiKey} onChange={e => setApiKey(e.target.value)} placeholder="Bearer token or API key" className="w-full bg-dark-bg border border-gray-700 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-teal-500 transition-colors" disabled={isRunning} />
-                                <p className="text-xs text-gray-600 mt-1.5">Sent as <span className="font-mono">Authorization: Bearer &lt;key&gt;</span> on every call.</p>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    API Key <span className="text-gray-600 font-normal">(optional)</span>
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="password"
+                                        value={apiKey}
+                                        onChange={e => setApiKey(e.target.value)}
+                                        placeholder="Your API key"
+                                        className="flex-1 bg-dark-bg border border-gray-700 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-teal-500 transition-colors"
+                                        disabled={isRunning}
+                                    />
+                                    <select
+                                        value={authType}
+                                        onChange={e => setAuthType(e.target.value)}
+                                        className="bg-dark-bg border border-gray-700 rounded-lg px-3 py-3 text-white text-sm focus:outline-none focus:border-teal-500 transition-colors"
+                                        disabled={isRunning}
+                                    >
+                                        <option value="api_key">X-API-Key</option>
+                                        <option value="bearer">Bearer</option>
+                                    </select>
+                                </div>
+                                <p className="text-xs text-gray-600 mt-1.5">
+                                    Sent as <span className="font-mono">{authType === "bearer" ? "Authorization: Bearer <key>" : "X-API-Key: <key>"}</span> on every call.
+                                </p>
                             </div>
+
+                            {/* Sample Payload */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Sample Payload <span className="text-gray-600 font-normal">(optional)</span>
+                                </label>
+                                <textarea
+                                    value={payloadFormat}
+                                    onChange={e => {
+                                        setPayloadFormat(e.target.value);
+                                        if (e.target.value.trim()) {
+                                            try {
+                                                JSON.parse(e.target.value.trim());
+                                                setPayloadError(null);
+                                            } catch {
+                                                setPayloadError("Invalid JSON");
+                                            }
+                                        } else {
+                                            setPayloadError(null);
+                                        }
+                                    }}
+                                    placeholder={'{\n  "customer_phone": "9876543210",\n  "name": "John Doe",\n  "campaign": "sales"\n}'}
+                                    rows={5}
+                                    className={`w-full bg-dark-bg border rounded-lg px-4 py-3 text-white text-sm font-mono placeholder-gray-600 focus:outline-none transition-colors resize-y ${
+                                        payloadError ? "border-red-500/60 focus:border-red-500" : "border-gray-700 focus:border-teal-500"
+                                    }`}
+                                    disabled={isRunning}
+                                />
+                                {payloadError ? (
+                                    <p className="text-xs text-red-400 mt-1.5">{payloadError}</p>
+                                ) : (
+                                    <p className="text-xs text-gray-600 mt-1.5">
+                                        Paste a sample JSON payload with real values. An AI will map fields to your test case parameters automatically.
+                                    </p>
+                                )}
+                            </div>
+
                             {error && <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-sm text-red-400">{error}</div>}
                             <div className="flex justify-end gap-3 pt-1">
                                 <Button variant="outline" onClick={handleClose} disabled={isRunning}>Cancel</Button>
-                                <Button variant="primary" onClick={handleRun} disabled={!endpoint.trim() || isRunning || selectedIds.length === 0} loading={isRunning} icon={!isRunning && <Play className="w-4 h-4" />}>
+                                <Button variant="primary" onClick={handleRun} disabled={!endpoint.trim() || isRunning || selectedIds.length === 0 || !!payloadError} loading={isRunning} icon={!isRunning && <Play className="w-4 h-4" />}>
                                     {isRunning ? "Triggering calls..." : `Run ${selectedIds.length > 0 ? `(${selectedIds.length})` : ""}`}
                                 </Button>
                             </div>
@@ -587,11 +694,11 @@ const AgentDetailPage = () => {
                         </div>
 
                         {/* Tools & Functions */}
-                        <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                            <h3 className="text-lg font-semibold text-white mb-4">
-                                Tools & Functions ({tools.length})
-                            </h3>
-                            {tools.length > 0 ? (
+                        {tools && tools.length > 0 && (
+                            <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
+                                <h3 className="text-lg font-semibold text-white mb-4">
+                                    Tools & Functions ({tools.length})
+                                </h3>
                                 <div className="space-y-3">
                                     {tools.map((tool, index) => (
                                         <div key={index} className="bg-gray-950 rounded-lg p-4">
@@ -610,12 +717,8 @@ const AgentDetailPage = () => {
                                         </div>
                                     ))}
                                 </div>
-                            ) : (
-                                <div className="text-center py-8 text-gray-500">
-                                    No tools configured
-                                </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
 
                         {/* Input Parameters */}
                         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">

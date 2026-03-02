@@ -16,6 +16,7 @@ import CreateTestCaseModal from "../../components/CreateTestCaseModal";
 
 const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => {
     const [selectedIds, setSelectedIds] = useState([]);
+    const [simulationName, setSimulationName] = useState("");
     const [endpoint, setEndpoint] = useState("");
     const [apiKey, setApiKey] = useState("");
     const [authType, setAuthType] = useState("api_key");
@@ -47,6 +48,7 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
         );
 
     const handleClose = () => {
+        setSimulationName("");
         setEndpoint("");
         setApiKey("");
         setAuthType("api_key");
@@ -81,6 +83,7 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
                 endpoint: endpoint.trim(),
                 ...(apiKey.trim() && { api_key: apiKey.trim() }),
                 ...(parsedPayload && { sample_payload: parsedPayload }),
+                ...(simulationName.trim() && { folder_name: simulationName.trim() }),
                 auth_type: authType,
             });
             setResults(resp);
@@ -153,6 +156,22 @@ const RunSimulationsModal = ({ isOpen, onClose, allTestCases, preSelected }) => 
                                 <p className="text-xs text-gray-600 mt-1.5">
                                     {selectedIds.length} of {allTestCases.length} selected
                                 </p>
+                            </div>
+
+                            {/* Simulation Name */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Simulation Name <span className="text-gray-600 font-normal">(optional)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={simulationName}
+                                    onChange={e => setSimulationName(e.target.value)}
+                                    placeholder="e.g. Regression Run — March 2026"
+                                    className="w-full bg-dark-bg border border-gray-700 rounded-lg px-4 py-3 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-teal-500 transition-colors"
+                                    disabled={isRunning}
+                                />
+                                <p className="text-xs text-gray-600 mt-1.5">Give this simulation run a name to identify it in your history.</p>
                             </div>
 
                             {/* Endpoint input */}

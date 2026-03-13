@@ -1,12 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { BarChart3, Settings, FileText, Bot, Plus, Play, X, CheckSquare, Square } from "lucide-react";
+import { BarChart3, Settings, FileText, Bot, Plus, Play, X, CheckSquare, Square, Pencil, Trash2 } from "lucide-react";
 import Button from "../../components/Button";
 import Badge from "../../components/Badge";
 import Table from "../../components/Table";
 import { useAgent, useDeleteAgent, useReExtractAgent } from "../../hooks/useAgents";
-import { useAgentParams } from "../../hooks/useParams";
+import { useAgentParams, useCreateParam, useUpdateParam, useDeleteParam } from "../../hooks/useParams";
 import { useTestSuites } from "../../hooks/useTestSuites";
 import { useTestCases } from "../../hooks/useTestCases";
 import { useAgentFlows, useDeleteFlow } from "../../hooks/useFlows";
@@ -279,11 +279,18 @@ const AgentDetailPage = () => {
     const [selectedTcRows, setSelectedTcRows] = useState([]);
     const [showRunModal, setShowRunModal] = useState(false);
 
+    // Param modal state: null = closed, 'add' = new, object = editing
+    const [paramModal, setParamModal] = useState(null);
+    const [paramForm, setParamForm] = useState({ key: "", value_type: "string", description: "" });
+
     // Mutations
     const deleteAgent = useDeleteAgent();
     const deleteFlow = useDeleteFlow();
     const createTestSuite = useCreateTestSuite();
     const reExtractAgent = useReExtractAgent();
+    const createParam = useCreateParam(agentId);
+    const updateParam = useUpdateParam(agentId);
+    const deleteParam = useDeleteParam(agentId);
 
 
     // Handler functions
@@ -722,9 +729,21 @@ const AgentDetailPage = () => {
 
                         {/* Input Parameters */}
                         <div className="bg-gray-900 rounded-xl p-6 border border-gray-800">
-                            <h3 className="text-lg font-semibold text-white mb-4">
-                                Input Parameters ({agentParams?.length ?? 0})
-                            </h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-white">
+                                    Input Parameters ({agentParams?.length ?? 0})
+                                </h3>
+                                <button
+                                    onClick={() => {
+                                        setParamForm({ key: "", value_type: "string", description: "" });
+                                        setParamModal("add");
+                                    }}
+                                    className="flex items-center gap-1.5 text-sm text-teal-400 hover:text-teal-300 transition-colors"
+                                >
+                                    <Plus size={15} />
+                                    Add Parameter
+                                </button>
+                            </div>
                             {paramsLoading ? (
                                 <div className="text-center py-6 text-gray-500">Loading...</div>
                             ) : agentParams?.length > 0 ? (
@@ -735,16 +754,44 @@ const AgentDetailPage = () => {
                                                 <th className="text-left pb-2 pr-4">Key</th>
                                                 <th className="text-left pb-2 pr-4">Type</th>
                                                 <th className="text-left pb-2">Description</th>
+                                                <th className="pb-2" />
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-800">
                                             {agentParams.map((param) => (
-                                                <tr key={param.param_id}>
+                                                <tr key={param.param_id} className="group">
                                                     <td className="py-2 pr-4 font-mono text-teal-400">{param.key}</td>
                                                     <td className="py-2 pr-4">
                                                         <Badge variant="info" size="sm">{param.value_type}</Badge>
                                                     </td>
                                                     <td className="py-2 text-gray-400">{param.description || "—"}</td>
+                                                    <td className="py-2 pl-4">
+                                                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setParamForm({ key: param.key, value_type: param.value_type, description: param.description || "" });
+                                                                    setParamModal(param);
+                                                                }}
+                                                                className="text-gray-400 hover:text-white transition-colors"
+                                                            >
+                                                                <Pencil size={14} />
+                                                            </button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    if (!confirm(`Delete parameter "${param.key}"?`)) return;
+                                                                    try {
+                                                                        await deleteParam.mutateAsync(param.param_id);
+                                                                        toast.success("Parameter deleted");
+                                                                    } catch {
+                                                                        toast.error("Failed to delete parameter");
+                                                                    }
+                                                                }}
+                                                                className="text-gray-400 hover:text-red-400 transition-colors"
+                                                            >
+                                                                <Trash2 size={14} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
@@ -756,6 +803,83 @@ const AgentDetailPage = () => {
                                 </div>
                             )}
                         </div>
+
+                        {/* Add / Edit Param Modal */}
+                        {paramModal !== null && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+                                <div className="bg-gray-900 border border-gray-700 rounded-xl p-6 w-full max-w-md shadow-xl">
+                                    <div className="flex items-center justify-between mb-5">
+                                        <h3 className="text-lg font-semibold text-white">
+                                            {paramModal === "add" ? "Add Parameter" : "Edit Parameter"}
+                                        </h3>
+                                        <button onClick={() => setParamModal(null)} className="text-gray-400 hover:text-white">
+                                            <X size={18} />
+                                        </button>
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm text-gray-400 mb-1">Key <span className="text-red-400">*</span></label>
+                                            <input
+                                                type="text"
+                                                value={paramForm.key}
+                                                onChange={(e) => setParamForm((f) => ({ ...f, key: e.target.value }))}
+                                                placeholder="e.g. customer_name"
+                                                disabled={paramModal !== "add"}
+                                                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-teal-400 disabled:opacity-50"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-gray-400 mb-1">Type <span className="text-red-400">*</span></label>
+                                            <select
+                                                value={paramForm.value_type}
+                                                onChange={(e) => setParamForm((f) => ({ ...f, value_type: e.target.value }))}
+                                                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-teal-400"
+                                            >
+                                                <option value="string">string</option>
+                                                <option value="number">number</option>
+                                                <option value="boolean">boolean</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm text-gray-400 mb-1">Description</label>
+                                            <input
+                                                type="text"
+                                                value={paramForm.description}
+                                                onChange={(e) => setParamForm((f) => ({ ...f, description: e.target.value }))}
+                                                placeholder="Optional description"
+                                                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm placeholder-gray-500 focus:outline-none focus:border-teal-400"
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-end gap-3 mt-6">
+                                        <button onClick={() => setParamModal(null)} className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors">
+                                            Cancel
+                                        </button>
+                                        <Button
+                                            size="sm"
+                                            onClick={async () => {
+                                                if (!paramForm.key.trim()) { toast.error("Key is required"); return; }
+                                                try {
+                                                    if (paramModal === "add") {
+                                                        await createParam.mutateAsync({ key: paramForm.key.trim(), value_type: paramForm.value_type, description: paramForm.description.trim() || undefined });
+                                                        toast.success("Parameter added");
+                                                    } else {
+                                                        await updateParam.mutateAsync({ paramId: paramModal.param_id, data: { value_type: paramForm.value_type, description: paramForm.description.trim() || undefined } });
+                                                        toast.success("Parameter updated");
+                                                    }
+                                                    setParamModal(null);
+                                                } catch {
+                                                    toast.error(paramModal === "add" ? "Failed to add parameter" : "Failed to update parameter");
+                                                }
+                                            }}
+                                            disabled={createParam.isPending || updateParam.isPending}
+                                        >
+                                            {createParam.isPending || updateParam.isPending ? "Saving..." : "Save"}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Model Configuration (hide if no configuration from backend) */}
                         {config && Object.keys(config).length > 0 && (

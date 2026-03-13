@@ -28,7 +28,7 @@ const V2EvaluationsPage = () => {
   const folderName = useMemo(() => {
     if (!folderId || !foldersData) return folderId;
     const folders = Array.isArray(foldersData) ? foldersData : foldersData?.folders || [];
-    const folder = folders.find((f) => (f.id || f._id || f.folder_id) === folderId);
+    const folder = folders.find((f) => (f.folder_id || f.id || f._id) === folderId);
     return folder?.name || folder?.folder_name || folderId;
   }, [folderId, foldersData]);
 
@@ -312,7 +312,7 @@ const V2EvaluationsPage = () => {
                   </tr>
                 ) : (
                   folders.map((folder) => {
-                    const id = folder.id || folder._id || folder.folder_id;
+                    const id = folder.folder_id || folder.id || folder._id;
                     const name = folder.name || folder.folder_name || id;
                     return (
                       <tr

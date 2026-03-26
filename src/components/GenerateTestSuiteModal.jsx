@@ -6,7 +6,7 @@ import Button from "./Button";
 import Badge from "./Badge";
 
 const GenerateTestSuiteModal = ({ isOpen, onClose, flowId, agentId, onTestSuiteGenerated }) => {
-    const [callType, setCallType] = useState("inbound");
+    const [callType, setCallType] = useState("outbound");
     const [maxPaths, setMaxPaths] = useState(10);
     const [includeEdgeCases, setIncludeEdgeCases] = useState(true);
     const [region] = useState("apac_india");
@@ -77,31 +77,7 @@ const GenerateTestSuiteModal = ({ isOpen, onClose, flowId, agentId, onTestSuiteG
                     {/* Step 0: Configuration */}
                     {generationStep === 0 && (
                         <div className="space-y-6">
-                            {/* Call Type */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-3">
-                                    Call Type <span className="text-red-400">*</span>
-                                </label>
-                                <div className="grid grid-cols-2 gap-4">
-                                    {["inbound", "outbound"].map((type) => (
-                                        <button
-                                            key={type}
-                                            onClick={() => setCallType(type)}
-                                            className={`p-4 rounded-lg border-2 transition-all ${callType === type
-                                                ? 'border-teal-400 bg-teal-400/10'
-                                                : 'border-gray-700 bg-gray-800 hover:border-gray-600'
-                                                }`}
-                                        >
-                                            <div className="text-lg font-semibold text-white mb-1">
-                                                {type.charAt(0).toUpperCase() + type.slice(1)}
-                                            </div>
-                                            <div className="text-sm text-gray-400">
-                                                {type === 'inbound' ? 'Customer calls agent' : 'Agent calls customer'}
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
+                            {/* Call Type — always outbound for now, hidden from UI */}
 
                             {/* Max Paths */}
                             <div>

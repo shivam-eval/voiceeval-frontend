@@ -24,7 +24,6 @@ import SessionReportPage from "./pages/simulations/SessionReportPage";
 import EvaluationsPage from './pages/simulations/EvaluationsPage';
 import EvaluationDashboard from "./pages/evaluation";
 import EvaluationReportPage from "./pages/evaluation/EvaluationReportPage";
-import V2EvaluationsPage from "./pages/evaluations/V2EvaluationsPage";
 import V2EvalDetailPage from "./pages/evaluations/V2EvalDetailPage";
 import AuthScreen from "./pages/auth/AuthScreen";
 import CallsPage from "./pages/observability/CallsPage";
@@ -36,6 +35,7 @@ import Dashboard from "./pages/dasbhboard";
 import WorkspaceLoader from "./pages/workspace/WorkspaceLoader";
 import InboundPage from "./pages/inbound/InboundPage";
 import DocsPage from "./pages/docs";
+import RunsPage from "./pages/runs/RunsPage";
 
 import { useWorkflow } from "./context/WorkFlowContext";
 import { EventsProvider } from "./context/EventsContext";
@@ -136,6 +136,11 @@ function App() {
       return { section: "test-cases", tab: "inbound" };
     }
 
+    // Runs section
+    if (path.startsWith("/runs")) {
+      return { section: "test-cases", tab: "runs" };
+    }
+
     // Simulations section (Outbound)
     if (path.startsWith("/simulations") || path.startsWith("/simulation")) {
       return { section: "test-cases", tab: "outbound" };
@@ -196,8 +201,12 @@ function App() {
                 <Route path="/testing/scenario-configs/:configId" element={<ScenarioConfigDetail />} />
                 <Route path="/testing/test-cases/:suiteId" element={<TestSuiteDetailView />} />
                 {/* <Route path="/testing/personas" element={<PersonasPage />} /> */}
-                <Route path="/testing/evaluations" element={<V2EvaluationsPage />} />
+                <Route path="/testing/evaluations" element={<Navigate to="/runs" replace />} />
                 <Route path="/testing/evaluations/call/:callId" element={<V2EvalDetailPage />} />
+
+                {/* === RUNS SECTION === */}
+                <Route path="/runs" element={<RunsPage />} />
+                <Route path="/runs/call/:callId" element={<V2EvalDetailPage />} />
 
                 {/* Legacy routes - redirect to new structure */}
                 <Route path="/test-cases" element={<Navigate to="/testing/test-cases" replace />} />

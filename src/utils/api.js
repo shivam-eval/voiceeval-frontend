@@ -143,11 +143,7 @@ export const scenarioConfigsApi = {
     listByAgent: (agentId, params = {}) => apiClient.get(`/scenario-configs/agent/${agentId}`, params),
     get: (id) => apiClient.get(`/scenario-configs/${id}`),
     // Generate scenario configs (server-side generation)
-    // Always force count = 1 for now regardless of caller input
-    generate: (data) => apiClient.post('/scenario-configs/generate', {
-        ...data,
-        count: 1,
-    }),
+    generate: (data) => apiClient.post('/scenario-configs/generate', data),
     createManual: (data) => apiClient.post('/scenario-configs/create-manual', data),
 };
 
@@ -257,6 +253,7 @@ export const v2EvalsApi = {
     listByFolder: (folderId) => apiClient.get(`/v2-evals/folder/${folderId}`),
     get: (evalId) => apiClient.get(`/v2-evals/${evalId}`),
     getByCall: (callId) => apiClient.get(`/v2-evals/call/${callId}`),
+    getTranscriptByCall: (callId) => apiClient.get(`/v2-evals/call/${callId}/transcript`),
 };
 
 export default apiClient;

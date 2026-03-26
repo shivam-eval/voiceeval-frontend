@@ -29,7 +29,7 @@ const TestCasesGenerationLoading = ({ flowData, onComplete, onError, region }) =
         const payload = {
           flow_tree: flowData,
           region: region,
-          call_type: "inbound",
+          call_type: "outbound",
           max_paths: 1,
           include_edge_cases: true
         }

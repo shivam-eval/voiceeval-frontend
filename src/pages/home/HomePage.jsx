@@ -1,10 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
-import RunSimulationModal from "../../components/RunSimulationModal";
 
 const HomePage = () => {
     const navigate = useNavigate();
-    const [isRunSimulationModalOpen, setIsRunSimulationModalOpen] = useState(false);
 
     // Quick action handlers
     const handleConnectAgent = () => {
@@ -16,7 +13,7 @@ const HomePage = () => {
     };
 
     const handleRunSimulation = () => {
-        setIsRunSimulationModalOpen(true);
+        navigate("/runs");
     };
 
     return (
@@ -144,11 +141,6 @@ const HomePage = () => {
                 </div> */}
             </div >
 
-            {/* Run Simulation Modal */}
-            <RunSimulationModal
-                isOpen={isRunSimulationModalOpen}
-                onClose={() => setIsRunSimulationModalOpen(false)}
-            />
         </div >
     );
 };

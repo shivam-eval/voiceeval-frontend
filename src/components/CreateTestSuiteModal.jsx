@@ -3,12 +3,34 @@ import { toast } from "react-toastify";
 import Button from "./Button";
 import { scenarioConfigsApi } from "../utils/api";
 
+const AVAILABLE_LANGUAGES = [
+    "Hindi", "Bengali", "Tamil", "Telugu", "Gujarati",
+    "Kannada", "Malayalam", "Marathi", "Punjabi", "Odia", "English",
+];
+
 const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, defaultAgentId }) => {
-    const [callType, setCallType] = useState("inbound");
+    const [callType, setCallType] = useState("outbound");
     const [maxPaths, setMaxPaths] = useState(10);
+    const [selectedLanguages, setSelectedLanguages] = useState([...AVAILABLE_LANGUAGES]);
+
+    const allSelected = selectedLanguages.length === AVAILABLE_LANGUAGES.length;
+
+    const toggleLanguage = (lang) => {
+        setSelectedLanguages((prev) =>
+            prev.includes(lang) ? prev.filter((l) => l !== lang) : [...prev, lang]
+        );
+    };
+
+    const toggleAll = () => {
+        setSelectedLanguages(allSelected ? [] : [...AVAILABLE_LANGUAGES]);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (selectedLanguages.length === 0) {
+            toast.error("Please select at least one language");
+            return;
+        }
         onClose();
         toast.info('Creating test case...');
         try {
@@ -18,6 +40,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                 count: maxPaths,
                 call_type: callType,
                 dry_run: false,
+                languages: selectedLanguages,
             };
             await scenarioConfigsApi.generate(payload);
             toast.success("Scenario configs generation requested");
@@ -50,32 +73,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    {/* Call Type */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-3">
-                            Call Type <span className="text-red-400">*</span>
-                        </label>
-                        <div className="grid grid-cols-2 gap-4">
-                            {["inbound", "outbound"].map((type) => (
-                                <button
-                                    key={type}
-                                    type="button"
-                                    onClick={() => setCallType(type)}
-                                    className={`p-4 rounded-lg border-2 transition-all ${callType === type
-                                        ? 'border-teal-400 bg-teal-400/10'
-                                        : 'border-gray-700 bg-gray-800 hover:border-gray-600'
-                                    }`}
-                                >
-                                    <div className="text-lg font-semibold text-white mb-1">
-                                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                                    </div>
-                                    <div className="text-sm text-gray-400">
-                                        {type === 'inbound' ? 'Customer calls agent' : 'Agent calls customer'}
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+                    {/* Call Type — always outbound for now, hidden from UI */}
 
                     {/* Region */}
                     <div>
@@ -84,6 +82,44 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                             India
                         </div>
                         <p className="text-xs text-gray-500 mt-1">Personas will be assigned based on this region</p>
+                    </div>
+
+                    {/* Languages */}
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="block text-sm font-medium text-gray-300">
+                                Simulation Languages
+                            </label>
+                            <button
+                                type="button"
+                                onClick={toggleAll}
+                                className="text-xs text-teal-400 hover:text-teal-300 transition-colors"
+                            >
+                                {allSelected ? "Deselect All" : "Select All"}
+                            </button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {AVAILABLE_LANGUAGES.map((lang) => {
+                                const isSelected = selectedLanguages.includes(lang);
+                                return (
+                                    <button
+                                        key={lang}
+                                        type="button"
+                                        onClick={() => toggleLanguage(lang)}
+                                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all border ${
+                                            isSelected
+                                                ? "border-teal-400 bg-teal-400/15 text-teal-300"
+                                                : "border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600"
+                                        }`}
+                                    >
+                                        {lang}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            {selectedLanguages.length} of {AVAILABLE_LANGUAGES.length} languages selected
+                        </p>
                     </div>
 
                     {/* Maximum Test Paths */}
@@ -111,7 +147,7 @@ const CreateTestSuiteModal = ({ isOpen, onClose, onSubmit, isLoading, agents, de
                         <Button type="button" variant="secondary" onClick={onClose}>
                             Cancel
                         </Button>
-                        <Button type="submit" loading={isLoading}>
+                        <Button type="submit" loading={isLoading} disabled={selectedLanguages.length === 0}>
                             Generate
                         </Button>
                     </div>

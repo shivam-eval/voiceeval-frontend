@@ -6,8 +6,8 @@ export const v2Keys = {
     calls: (folderId) => ['v2-calls', folderId],
     call: (callId) => ['v2-calls', 'detail', callId],
     evals: (folderId) => ['v2-evals', folderId],
-    eval: (evalId) => ['v2-evals', 'detail', evalId],
     evalByCall: (callId) => ['v2-evals', 'by-call', callId],
+    transcriptByCall: (callId) => ['v2-transcripts', 'by-call', callId],
 };
 
 export const useV2Folders = (agentId) => {
@@ -37,18 +37,18 @@ export const useV2Evals = (folderId) => {
     });
 };
 
-export const useV2Eval = (evalId) => {
-    return useQuery({
-        queryKey: v2Keys.eval(evalId),
-        queryFn: () => v2EvalsApi.get(evalId),
-        enabled: !!evalId,
-    });
-};
-
 export const useV2EvalByCall = (callId) => {
     return useQuery({
         queryKey: v2Keys.evalByCall(callId),
         queryFn: () => v2EvalsApi.getByCall(callId),
+        enabled: !!callId,
+    });
+};
+
+export const useV2TranscriptByCall = (callId) => {
+    return useQuery({
+        queryKey: v2Keys.transcriptByCall(callId),
+        queryFn: () => v2EvalsApi.getTranscriptByCall(callId),
         enabled: !!callId,
     });
 };

@@ -8,27 +8,27 @@ import { scenarioConfigsApi } from "../utils/api";
 import { API_BASE_URL } from "../config/constants";
 
 const SARVAM_VOICES = [
-    { name: "Anushka", gender: "Female" },
-    { name: "Manisha", gender: "Female" },
-    { name: "Vidya", gender: "Female" },
-    { name: "Arya", gender: "Male" },
-    { name: "Abhilash", gender: "Male" },
-    { name: "Karun", gender: "Male" },
-    { name: "Hitesh", gender: "Male" },
+    { name: "Shubh", gender: "Male", starred: true },
+    { name: "Priya", gender: "Female", starred: true },
+    { name: "Suhani", gender: "Female", starred: true },
+    { name: "Ashutosh", gender: "Male", starred: true },
+    { name: "Ritu", gender: "Female" },
+    { name: "Amit", gender: "Male" },
+    { name: "Sumit", gender: "Male" },
+    { name: "Pooja", gender: "Female" },
+    { name: "Manan", gender: "Male" },
+    { name: "Simran", gender: "Female" },
+    { name: "Rahul", gender: "Male" },
+    { name: "Kavya", gender: "Female" },
+    { name: "Ratan", gender: "Male" },
+    { name: "Ishita", gender: "Female" },
+    { name: "Shreya", gender: "Female" },
+    { name: "Shruti", gender: "Female" },
 ];
 
 const SARVAM_LANGUAGES = [
-    { code: "bn-IN", label: "Bengali" },
-    { code: "en-IN", label: "English" },
-    { code: "gu-IN", label: "Gujarati" },
-    { code: "hi-IN", label: "Hindi" },
-    { code: "kn-IN", label: "Kannada" },
-    { code: "ml-IN", label: "Malayalam" },
-    { code: "mr-IN", label: "Marathi" },
-    { code: "od-IN", label: "Odia" },
-    { code: "pa-IN", label: "Punjabi" },
-    { code: "ta-IN", label: "Tamil" },
-    { code: "te-IN", label: "Telugu" },
+    "Bengali", "English", "Gujarati", "Hindi", "Kannada",
+    "Malayalam", "Marathi", "Odia", "Punjabi", "Tamil", "Telugu",
 ];
 
 const INTERRUPTION_LEVELS = [
@@ -40,7 +40,7 @@ const INTERRUPTION_LEVELS = [
 const CreateManualTestCaseModal = ({ isOpen, onClose, agentId, onCreated }) => {
     const [formData, setFormData] = useState({
         speaker_name: "",
-        primary_language: "hi-IN",
+        primary_language: "Hindi",
         secondary_language: "",
         code_switching: false,
         interruption_level: "medium",
@@ -65,7 +65,7 @@ const CreateManualTestCaseModal = ({ isOpen, onClose, agentId, onCreated }) => {
         if (isOpen) {
             setFormData({
                 speaker_name: "",
-                primary_language: "hi-IN",
+                primary_language: "Hindi",
                 secondary_language: "",
                 code_switching: false,
                 interruption_level: "medium",
@@ -276,7 +276,7 @@ const CreateManualTestCaseModal = ({ isOpen, onClose, agentId, onCreated }) => {
                             <option value="">Select a voice...</option>
                             {SARVAM_VOICES.map((v) => (
                                 <option key={v.name} value={v.name}>
-                                    {v.name} ({v.gender})
+                                    {v.name} ({v.gender}){v.starred ? " \u2605" : ""}
                                 </option>
                             ))}
                         </select>
@@ -293,9 +293,9 @@ const CreateManualTestCaseModal = ({ isOpen, onClose, agentId, onCreated }) => {
                             className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
                             required
                         >
-                            {SARVAM_LANGUAGES.map((l) => (
-                                <option key={l.code} value={l.code}>
-                                    {l.label}
+                            {SARVAM_LANGUAGES.map((lang) => (
+                                <option key={lang} value={lang}>
+                                    {lang}
                                 </option>
                             ))}
                         </select>
@@ -312,9 +312,9 @@ const CreateManualTestCaseModal = ({ isOpen, onClose, agentId, onCreated }) => {
                             className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-teal-400"
                         >
                             <option value="">None</option>
-                            {SARVAM_LANGUAGES.filter((l) => l.code !== formData.primary_language).map((l) => (
-                                <option key={l.code} value={l.code}>
-                                    {l.label}
+                            {SARVAM_LANGUAGES.filter((lang) => lang !== formData.primary_language).map((lang) => (
+                                <option key={lang} value={lang}>
+                                    {lang}
                                 </option>
                             ))}
                         </select>

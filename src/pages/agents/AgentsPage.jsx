@@ -28,9 +28,7 @@ const AgentsPage = () => {
     // Options for dropdowns
     const directionOptions = useMemo(() => [
         { label: "All Directions", value: "" },
-        { label: "Inbound", value: "inbound" },
         { label: "Outbound", value: "outbound" },
-        { label: "Both", value: "both" },
     ], []);
 
     const statusOptions = useMemo(() => [
@@ -212,7 +210,7 @@ const AgentsPage = () => {
             render: (value, row) => {
                 const direction = row.metadata?.direction || value || "unknown";
                 return (
-                    <Badge variant={direction === "inbound" ? "info" : "primary"} size="sm">
+                    <Badge variant="primary" size="sm">
                         {direction}
                     </Badge>
                 );

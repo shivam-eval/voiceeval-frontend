@@ -41,8 +41,7 @@ const Sidebar = ({
         { id: "test-cases", label: "Test Cases", path: "/testing/test-cases" },
         // { id: "personas", label: "Personas", path: "/testing/personas" },
         // { id: "inbound", label: "Inbound", path: "/inbound/runs" },
-        { id: "outbound", label: "Outbound", path: "/simulations/runs" },
-        { id: "evaluations", label: "Evaluations", path: "/testing/evaluations" },
+        { id: "runs", label: "Runs", path: "/runs" },
       ],
     },
     {

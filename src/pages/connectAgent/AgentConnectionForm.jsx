@@ -10,7 +10,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
   const [name, setName] = useState("")
   const [customPrompt, setCustomPrompt] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
-  const [direction, setDirection] = useState("inbound")
+  const [direction, setDirection] = useState("outbound")
   const [focusedField, setFocusedField] = useState(null)
   const [params, setParams] = useState([])
 
@@ -83,7 +83,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
         agentId: selectedBolnaAgent.agent_id,
         name: name || selectedBolnaAgent.agent_name || "Bolna Agent",
         direction,
-        phoneNumber: direction === "inbound" ? phoneNumber : "",
+        phoneNumber: "",
         params: normalizedParams,
       })
       return
@@ -96,7 +96,7 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
       name,
       customPrompt: platform === 'custom' ? customPrompt : "",
       direction,
-      phoneNumber: direction === "inbound" ? phoneNumber : "",
+      phoneNumber: "",
       params: normalizedParams,
     })
   }
@@ -139,13 +139,12 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
   const isFormValid = (() => {
     if (isBolna) {
       if (bolnaStep === 'api-key') return apiKey.trim()
-      return selectedBolnaAgent && (direction === "inbound" ? phoneNumber.trim() : true)
+      return selectedBolnaAgent
     }
     return name.trim() &&
       (platform === 'custom'
         ? customPrompt.trim()
-        : (apiKey.trim() && agentId.trim())) &&
-      (direction === "inbound" ? phoneNumber.trim() : true)
+        : (apiKey.trim() && agentId.trim()))
   })()
 
   // Get platform-specific labels
@@ -336,35 +335,10 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
         </div>
       </div>
 
-      <div className="space-y-1.5">
-        <label className="text-xs font-medium text-gray-300 ml-1">Direction</label>
-        <select
-          value={direction}
-          onChange={(e) => setDirection(e.target.value)}
-          className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-teal-400 transition-colors"
-          disabled={isConnecting}
-        >
-          <option value="inbound">Inbound</option>
-          <option value="outbound">Outbound</option>
-        </select>
-      </div>
+      {/* Direction hardcoded to outbound — inbound UI removed for now */}
 
-      {direction === "inbound" && (
-        <FormInput
-          label="Agent Phone Number *"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          onFocus={() => setFocusedField("phoneNumber")}
-          onBlur={() => setFocusedField(null)}
-          focused={focusedField === "phoneNumber"}
-          placeholder="+1234567890"
-          disabled={isConnecting}
-          required
-        />
-      )}
-
-      {/* Parameters Section - Only for Outbound */}
-      {direction === "outbound" && (
+      {/* Parameters Section */}
+      {(
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-gray-300 ml-1">Parameters</label>
@@ -529,35 +503,10 @@ const AgentConnectionForm = ({ platform, onConnect, isConnecting }) => {
                 </>
               )}
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-gray-300 ml-1">Direction</label>
-                <select
-                  value={direction}
-                  onChange={(e) => setDirection(e.target.value)}
-                  className="w-full bg-dark-input border border-gray-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-teal-400 transition-colors"
-                  disabled={isConnecting}
-                >
-                  <option value="inbound">Inbound</option>
-                  <option value="outbound">Outbound</option>
-                </select>
-              </div>
+              {/* Direction hardcoded to outbound — inbound UI removed for now */}
 
-              {direction === "inbound" && (
-                <FormInput
-                  label="Agent Phone Number *"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  onFocus={() => setFocusedField("phoneNumber")}
-                  onBlur={() => setFocusedField(null)}
-                  focused={focusedField === "phoneNumber"}
-                  placeholder="+1234567890"
-                  disabled={isConnecting}
-                  required
-                />
-              )}
-
-              {/* Parameters Section - Only for Outbound */}
-              {direction === "outbound" && (
+              {/* Parameters Section */}
+              {(
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-medium text-gray-300 ml-1">Parameters</label>

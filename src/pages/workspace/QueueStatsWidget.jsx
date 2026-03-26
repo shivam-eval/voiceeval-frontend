@@ -1,39 +1,7 @@
-import { useState, useEffect } from "react";
-import { toast } from "react-toastify";
-import { getQueueStats } from "../../api";
 import { useEvents } from "../../context/EventsContext";
 
 const QueueStatsWidget = () => {
-  const [localStats, setLocalStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const { queueStats: sseStats, isConnected } = useEvents();
-
-  // Initial Fetch
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await getQueueStats();
-        setLocalStats(response.data);
-      } catch (err) {
-        console.error("Failed to fetch queue stats:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchStats();
-  }, []);
-
-  // Use SSE stats if available, otherwise local stats
-  const stats = sseStats || localStats;
-
-  if (loading && !stats) {
-    return (
-      <div className="bg-gray-800 rounded-xl p-4 border border-gray-700 animate-pulse">
-        <div className="h-4 bg-gray-700 rounded w-24 mb-2"></div>
-        <div className="h-6 bg-gray-700 rounded w-16"></div>
-      </div>
-    );
-  }
+  const { queueStats: stats, isConnected } = useEvents();
 
   if (!stats) {
     return (
